@@ -52,19 +52,14 @@ namespace DMagic
         [KSPField(isPersistant = true)]
         public int experimentNumber = 0;        
         [KSPField(isPersistant = false)]
-        public string expid = null;
+        public string expID = null;
         [KSPField(isPersistant = false)]
         public float xmitDataValue = 0f;
-        [KSPField(isPersistant = false)]
-        public float labBoostValue = 0f;
 
-        public string currentBiome = null;
         public int labSource = 0;
         public bool labPresent = false;
-        public bool labOperating = false;
-        public int i = 0;
-        public double cosineAngle;
-        public double processedRot;
+        public int storedDataCount = 0;
+        public int labint = 0;
 
         protected Animation anim;
         protected Animation animSample;
@@ -97,9 +92,13 @@ namespace DMagic
                     sampleAnimation(sampleAnim, 0f, 0.3f * storedScienceList.Count, 1f);
                     sampleAnimation(indicatorAnim, 0f, 0.15f * experimentNumber, 1f);
                     if (experimentNumber > 0)
-                    {    
-                        Events["labCleanExperiment"].active = labList.Count > 0;                        
-                    }                                       
+                    {
+                        Events["labCleanExperiment"].active = labList.Count > 0;
+                    }
+                    else
+                    {
+                        Events["labCleanExperiment"].active = false;
+                    }
                 }        
         }
 
@@ -111,15 +110,11 @@ namespace DMagic
             if (anim != null)
             {
                 anim[drillAnimator].speed = drillSpeed;
-                if (anim.IsPlaying(drillAnimator)) { return; }
-                else
-                {
-                    anim[drillAnimator].normalizedTime = drillTime;
-                    anim.Blend(drillAnimator, 1f);
-                }
+                anim[drillAnimator].normalizedTime = drillTime;
+                anim.Blend(drillAnimator, 1f);
             }
         }
-
+        
         //Sample container and indicator animations.
         public void sampleAnimation(string whichAnim, float sampleSpeed, float sampleTime, float waitTime)
         {
@@ -142,8 +137,9 @@ namespace DMagic
         
         public void startDrill(float drillStartSpeed, float drillStartTime)
         {
-            //findrot();
-            cosineAngle = Mathf.Rad2Deg * Math.Acos(Vector3d.Dot(part.transform.up, part.localRoot.transform.up));
+            double cosineAngle = 0;
+            double processedRot = 0;
+            cosineAngle = Mathf.Rad2Deg * Math.Acos(Vector3d.Dot(part.transform.up, part.parent.transform.up));//part.localRoot.transform.up));
             if (cosineAngle > 180)
             {
                 cosineAngle = 360 - cosineAngle;
@@ -158,10 +154,6 @@ namespace DMagic
             {
                 deployDrill(verticalDrillName, drillStartSpeed, drillStartTime);
             }
-                //if (rotz < 30 && rotz >= 0 || rotz > 330 && rotz < 0 || rotz < 210 && rotz >= 180 || rotz > 150 && rotz < 180)
-                //{
-                    
-                //}
                 else
                 {
                     deployDrill(animationName, drillStartSpeed, drillStartTime);
@@ -175,43 +167,50 @@ namespace DMagic
         [KSPEvent(guiActive = true, guiName = "Clean Experiment", active = false)]
         public void labCleanExperiment()
         {
+            bool labOperating = checkLabOps();
             if (labList.Count > 0 && labOperating)
             {
                 experimentNumber = 0;
-                ScreenMessages.PostScreenMessage("Resetting BioDrill experiment count.", 4f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("Resetting XKCD experiment count.", 4f, ScreenMessageStyle.UPPER_CENTER);
                 sampleAnimation(indicatorAnim, 0f, 0.15f * experimentNumber, 1f);
                 Events["labCleanExperiment"].active = experimentNumber > 0;
             }
             else
             {
-                ScreenMessages.PostScreenMessage("No operational science lab available, cannot reset drill supplies.", 4f, ScreenMessageStyle.UPPER_CENTER);
-                //Events["labCleanExperiment"].active = false;
+                ScreenMessages.PostScreenMessage("No operational science lab available, cannot resupply the drill.", 4f, ScreenMessageStyle.UPPER_CENTER);
             }
         }
 
         [KSPEvent(guiActive = true, guiName = "Review Stored Data", active = false)]
         public void ReviewStoredDataEvent()
         {
-            ReviewStoredData();
+            GetData(); //Make science lab behave correctly
+            storedDataCount = 0;
+            foreach (ScienceData data in storedScienceList) //Open all stored science reports
+            {
+                ReviewData();
+                storedDataCount++;
+            }
         }
 
         [KSPEvent(guiActive = true, guiName = "Review Primary Data", active = false)]
         public void ReviewDataEvent()
         {
-            ReviewData();
+            ReviewPrimaryData();
         }
 
-        [KSPEvent(guiActive = true, guiName = "Check Supplies", active = true)]
-        public void supplycheck()
-        {
-            print(experimentNumber + " experiments used, and " + storedScienceList.Count.ToString() + " samples used.");
-        }
+        //[KSPEvent(guiActive = true, guiName = "Check Supplies", active = true)]
+        //public void supplycheck()
+        //{
+        //    print(experimentNumber + " experiments used, and " + storedScienceList.Count.ToString() + " samples used.");
+        //}
 
-        [KSPEvent(guiActive = true, guiName = "Check Situation", active = true)]
-        public void checkSituation()
-        {
-            print(vessel.situation + ", and " + vessel.landedAt.ToString());
-        }
+        //[KSPEvent(guiActive = true, guiName = "Check Situation", active = true)]
+        //public void checkSituation()
+        //{
+        //    string currentBiome = BiomeCheck();
+        //    print(vessel.situation + ", at " + currentBiome);
+        //}
 
         [KSPAction("Test Drill")]
         public void testDrillAnimator(KSPActionParam param)
@@ -223,25 +222,22 @@ namespace DMagic
         [KSPAction("Review Stored Sample Data")]
         public void reviewStoredDataAG(KSPActionParam param)
         {
-            ReviewStoredData();
+            ReviewStoredDataEvent();
         }
 
         [KSPEvent(guiActiveUnfocused = true, guiName = "Collect Stored Data", externalToEVAOnly = true, unfocusedRange = 1.5f, active = false)]
         public void EVACollect()
         {
-            List<ModuleScienceContainer> containers = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-            foreach (ModuleScienceContainer container in containers)
+            List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
+            if (storedScienceList.Count > 0)
             {
-                if (storedScienceList.Count > 0)
+                if (EVACont.First().StoreData(new List<IScienceDataContainer>() { this }, false))
                 {
-                    if (container.StoreData(new List<IScienceDataContainer>() { this }, false))
-                    {
-                        ScreenMessages.PostScreenMessage("Transferred Data to " + vessel.vesselName, 3f, ScreenMessageStyle.UPPER_CENTER);
-                        Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
-                        Events["EVACollect"].active = storedScienceList.Count > 0;
-                    }
+                    ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
+                    Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
+                    Events["EVACollect"].active = storedScienceList.Count > 0;
                 }
-            }                
+            }
         }
 
         [KSPEvent(guiActiveEditor = true, guiName = "Preview Drill", active = true)]
@@ -255,17 +251,11 @@ namespace DMagic
         [KSPEvent(guiActiveEditor = true, guiName = "Reset Drill", active = false)]
         public void editorRetract()
         {            
-                if (anim.IsPlaying(animationName))
-                {
-                    anim[animationName].enabled = false;
-                }
-                if (anim.IsPlaying(verticalDrillName))
-                {
-                    anim[verticalDrillName].enabled = false;
-                }
-                startDrill(-1f, 0f);
-                Events["editorDeploy"].active = true;
-                Events["editorRetract"].active = false;
+            anim[animationName].enabled = false;
+            anim[verticalDrillName].enabled = false;
+            startDrill(-1f, 0f);
+            Events["editorDeploy"].active = true;
+            Events["editorRetract"].active = false;
         }
 
         # endregion
@@ -273,63 +263,78 @@ namespace DMagic
         # region Science data setup
         
         //Determine current biome based on vessel position, special cases for KSC area.
-        public void BiomeCheck()
+        public string BiomeCheck()
         {
-            if (vessel.landedAt == "LaunchPad")
+            switch (vessel.landedAt)
             {
-                currentBiome = "LaunchPad";
-            }
-            else if (vessel.landedAt == "Runway")
-            {
-                currentBiome = "Runway";
-            }
-            else if (vessel.landedAt == "KSC")
-            {
-                currentBiome = "KSC";
-            }
-            else
-            {
-                currentBiome = FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name;
+                case "LaunchPad":
+                    return vessel.landedAt;
+                case "Runway":
+                    return vessel.landedAt;
+                case "KSC":
+                    return vessel.landedAt;
+                default:
+                    return FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name;
             }
         }
 
         //Create new science results, find current vessel position and biome to get the right result.
-        public void makeNewScience() 
+        public ScienceData makeNewScience() 
         {
-            BiomeCheck();            
-            ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(expid);
+            string currentBiome = BiomeCheck();
+            ScienceData data = null;
+            ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(expID);
             ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, ExperimentSituations.SrfLanded, vessel.mainBody, currentBiome);
-            ScienceData data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataValue, labBoostValue, expid, exp.experimentTitle + " of " + vessel.mainBody.theName + " " + currentBiome);
+            if (vessel.mainBody.name == "Eve") // Big boost for reports returned from Eve.
+            {
+                data = new ScienceData(exp.baseValue * sub.dataScale * 3f, xmitDataValue / 3f, 0.15f, expID, exp.experimentTitle + " of " + vessel.mainBody.theName + " " + currentBiome);
+            }
+            else
+            {
+                data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataValue, 0.15f, expID, exp.experimentTitle + " of " + vessel.mainBody.theName + " " + currentBiome);
+            }
             data.subjectID = sub.id;
             print("Data is: " + data.dataAmount.ToString() + ", Cap is: " + sub.scienceCap.ToString() + ", SciValue is: " + sub.scientificValue.ToString() + ", Science is: " + sub.science.ToString()  + ", SubValue is: " + sub.subjectValue.ToString() + ", Scale is: " + sub.dataScale.ToString());
-            scienceList.Add(data);
+            return data;
         }
         
         //Data collection event, plays drill animation and collects science result. Not functional after six uses.
         [KSPEvent(guiActive = true, guiName = "Collect Core Sample", active = true)]
         public void StartExperiment()
         {
-            if (vessel.situation == Vessel.Situations.LANDED || vessel.situation == Vessel.Situations.PRELAUNCH) //ExperimentSituations.SrfLanded)
+            if (vessel.situation == Vessel.Situations.LANDED || vessel.situation == Vessel.Situations.PRELAUNCH)
             {
-                if (experimentNumber >= 6)
+                if (vessel.mainBody.name == "Eve" || vessel.mainBody.name == "Kerbin" || vessel.mainBody.name == "Duna" || vessel.mainBody.name == "Laythe" || vessel.mainBody.name == "Bop" || vessel.mainBody.name == "Vall")
                 {
-                    ScreenMessages.PostScreenMessage("All sample resources have been used, please return to the KSC or ressuply with a science lab", 4f, ScreenMessageStyle.UPPER_CENTER);
-                    return;
+                    if (experimentNumber >= 6)
+                    {
+                        ScreenMessages.PostScreenMessage("All sample resources have been used, please return to Kerbin or resupply with a science lab.", 4f, ScreenMessageStyle.UPPER_CENTER);
+                    }
+                    else
+                    {
+                        if (scienceList.Count > 0)
+                        {
+                            ScreenMessages.PostScreenMessage("Initial data must be stored or transmitted before more can be collected.", 4f, ScreenMessageStyle.UPPER_CENTER);
+                        }
+                        else
+                        {
+                            if (anim.IsPlaying(animationName) || anim.IsPlaying(verticalDrillName)) { return; }
+                            else
+                            {
+                                startDrill(1f, 0f);
+                                StartCoroutine(WaitForAnimation(anim[animationName].length));
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    if (anim.IsPlaying(animationName) || anim.IsPlaying(verticalDrillName)) { return; }
-                    else
-                    {
-                        startDrill(1f, 0f);
-                        StartCoroutine(WaitForAnimation(anim[animationName].length));
-                    }
+                    ScreenMessages.PostScreenMessage("The XKCD is only meant to be used on atmospheric planets.", 3f, ScreenMessageStyle.UPPER_CENTER);
                 }
             }
             else
             {
-                ScreenMessages.PostScreenMessage("Bio Drill can only be used on the surface.", 3f, ScreenMessageStyle.UPPER_CENTER);
-                return;
+                ScreenMessages.PostScreenMessage("The XKCD can only be used on the surface.", 3f, ScreenMessageStyle.UPPER_CENTER);
             }
         }
 
@@ -343,8 +348,9 @@ namespace DMagic
             {
                 {
                     yield return new WaitForSeconds(animTime);
-                    makeNewScience();
-                    ReviewData();
+                    ScienceData data = makeNewScience();
+                    scienceList.Add(data);
+                    ReviewPrimaryData();
                     print("Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
                     Events["ReviewDataEvent"].active = scienceList.Count > 0;
                 }
@@ -382,11 +388,13 @@ namespace DMagic
         {
             labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             labPresent = labList.Count > 0;
-            Events["labCleanExperiment"].active = labList.Count > 0;
+            if (experimentNumber > 0)
+            {
+                Events["labCleanExperiment"].active = labList.Count > 0;
+            }
         }
-
-        //Only return stored data to main SciencData list.
-        public ScienceData[] GetData()
+       
+        public ScienceData[] GetData()     //Only return stored data to main SciencData list.
         {
             return storedScienceList.ToArray();
         }
@@ -400,18 +408,19 @@ namespace DMagic
         {
             return true;
         }
-
-        //Make sure any science labs present are operational.
-        public void checkLabOps()
+              
+        public bool checkLabOps()  //Make sure any science labs present are operational.
         {
-            for (int i = 0; i < labList.Count; i++)
+            bool labOp = false;
+            for (labint = 0; labint < labList.Count; labint++)
             {
-                if (labList[i].IsOperational())
+                if (labList[labint].IsOperational())
                 {
-                    labOperating = true;
+                    labOp = true;
                     break;
                 }
             }
+            return labOp;
         }
 
         //IScienceDataContainer functions for initial Science Data list.
@@ -432,15 +441,15 @@ namespace DMagic
         {
             if (storedScienceList.Count > 2)
             {
-                ScreenMessages.PostScreenMessage("All sample containers full, data can only be transmitted.", 4f, ScreenMessageStyle.UPPER_CENTER);
-                ReviewData();
+                ScreenMessages.PostScreenMessage("All sample incubation chambers full, data can only be transmitted.", 4f, ScreenMessageStyle.UPPER_CENTER);
+                ReviewPrimaryData();
             }
             else
             {
                 sampleAnimation(sampleAnim, 1f, 0.3f * storedScienceList.Count, 3f);
                 storedScienceList.Add(scienceList[0]);
                 scienceList.Remove(data);
-                checkLabOps();
+                bool labOperating = checkLabOps();
                 if (!labOperating)
                 {
                     sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
@@ -470,11 +479,11 @@ namespace DMagic
                             tranData.Add(data);
                             tran.TransmitData(tranData);
                             scienceList.Remove(data);
-                            checkLabOps();
+                            bool labOperating = checkLabOps();
                             if (!labOperating)
                             {
                                 sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
-                                experimentNumber++;         //Experiment infinitely repeatable if operational science lab is connected.
+                                experimentNumber++;        
                                 Events["labCleanExperiment"].active = labList.Count > 0;
                             }
                             Events["ReviewDataEvent"].active = scienceList.Count > 0;
@@ -494,11 +503,11 @@ namespace DMagic
                     tranData.Add(data);
                     tranList.First().TransmitData(tranData);
                     scienceList.Remove(data);
-                    checkLabOps();
+                    bool labOperating = checkLabOps();
                     if (!labOperating)
                     {
                         sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
-                        experimentNumber++;         //Experiment infinitely repeatable if operational science lab is connected.
+                        experimentNumber++;        
                         Events["labCleanExperiment"].active = labList.Count > 0;
                     }
                     Events["ReviewDataEvent"].active = scienceList.Count > 0;
@@ -509,11 +518,11 @@ namespace DMagic
 
         private void onSendPrimaryToLab(ScienceData data)
         {
-            checkLabOps();
+            bool labOperating = checkLabOps();
             if (labOperating) //Process data if operational science lab is present.
             {
                 labSource = 1; //Mark data source as the primary experiment dialog.
-                labList[i].StartCoroutine(labList[i].ProcessData(data, new Callback<ScienceData>(onComplete)));
+                labList[labint].StartCoroutine(labList[labint].ProcessData(data, new Callback<ScienceData>(onComplete)));
                 print("SendToLab Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
             }
             else
@@ -522,19 +531,19 @@ namespace DMagic
             }            
         }
 
-        public void ReviewData()
+        public void ReviewPrimaryData()
         {
             ScienceData exp = scienceList[0];
-                    ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, xmitDataValue, labBoostValue, experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, labPresent, new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
-                    ExperimentsResultDialog.DisplayResult(page);
-                    print("ReviewData Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, exp.transmitValue, 0.15f, experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, labPresent, new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
+            ExperimentsResultDialog.DisplayResult(page);
+            print("ReviewData Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
         }        
         
-        public void ReviewDataItem(ScienceData data)
+        public void ReviewPrimaryDataItem(ScienceData data)
         {
             ScienceData exp = scienceList[0];
-                ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, xmitDataValue, labBoostValue, experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, labPresent, new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
-                ExperimentsResultDialog.DisplayResult(page);
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, exp.transmitValue, 0.15f, experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, labPresent, new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
+            ExperimentsResultDialog.DisplayResult(page);
             print("ReviewData Primary AG: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
         }
         
@@ -543,13 +552,13 @@ namespace DMagic
         {
             if (labSource == 2)  //Restart the correct experiment dialog page, remove the science lab boost option.
             {
-                labPresent = false;
-                ReviewStoredData();
+                //labPresent = false;
+                ReviewStoredDataEvent();
             }
             else if (labSource == 1)
             {
                 labPresent = false;
-                ReviewData();
+                ReviewPrimaryData();
             }
         }
 
@@ -621,16 +630,15 @@ namespace DMagic
                     print("TransmitData Secondary in Queue: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
                 }
             }
-            
         }
 
         private void onSendToLab(ScienceData data)
         {
-            checkLabOps();
+            bool labOperating = checkLabOps();
             if (labOperating)
             {
                 labSource = 2; //Mark source as the stored data dialog.
-                labList[i].StartCoroutine(labList[i].ProcessData(data, new Callback<ScienceData>(onComplete)));
+                labList[labint].StartCoroutine(labList[labint].ProcessData(data, new Callback<ScienceData>(onComplete)));
                 print("SendToLab Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
             }
             else
@@ -639,19 +647,21 @@ namespace DMagic
             }              
         }
 
-        public void ReviewStoredData()
+        public void ReviewData()
         {
-            ScienceData storedExp = storedScienceList[0];
-            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, xmitDataValue, labBoostValue, experimentNumber == 6, "No more samples can be collected or stored after this data is transmitted.", false, labPresent, new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
-                ExperimentsResultDialog.DisplayResult(page);
-                print("ReviewData Secondary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
-                }
-
-        public void ReviewStoredDataItem(ScienceData data)
-        {
-            ScienceData storedExp = storedScienceList[0];
-            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, xmitDataValue, labBoostValue, experimentNumber == 0, "No more samples can be collected or stored after this data is transmitted.", false, labPresent, new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+            ScienceData storedExp = storedScienceList[storedDataCount];
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, 0.15f, experimentNumber == 6, "No more samples can be collected or stored after this data is transmitted.", false, labPresent, new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
             ExperimentsResultDialog.DisplayResult(page);
+            print("ReviewData Secondary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list. Lab boost: " + storedExp.labBoost.ToString() + " Transmit Value: " + storedExp.transmitValue.ToString() + ".");
+        }
+
+        public void ReviewDataItem(ScienceData data)
+        {
+            ReviewStoredDataEvent();
+            //GetData();
+            //ScienceData storedExp = storedScienceList[storedDataCount];
+            //ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, processedXmitValue, labBoostValue, experimentNumber == 0, "No more samples can be collected or stored after this data is transmitted.", false, false, new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), null);//new Callback<ScienceData>(onSendToLab));
+            //ExperimentsResultDialog.DisplayResult(page);
         }
 
         # endregion
@@ -660,76 +670,3 @@ namespace DMagic
 }
 
 
-//public float rotx;
-//public float roty;
-//public float rotz;
-
-//public void findrot()
-//{
-//    rotx = this.part.transform.eulerAngles.x;
-//    roty = this.part.transform.eulerAngles.y;
-//    rotz = this.part.transform.eulerAngles.z;
-//}
-
-//public void findrot()
-//{
-//    double cosineAngle = Mathf.Rad2Deg * Math.Acos(Vector3d.Dot(part.transform.up, part.localRoot.transform.up));
-
-//    if (cosineAngle > 180)
-//    {
-//        cosineAngle = 360 - cosineAngle;
-//    }
-
-//    if (cosineAngle > 90)
-//    {
-//        cosineAngle -= 180;
-//    }
-
-//    // angle is in range of [-90, 90]
-//    if (Math.Abs(cosineAngle) < 30d)
-//    {
-//    }
-//    // ... within 30 degrees of parent's up/down axis
-//}
-
-
-
-//[KSPEvent(guiActive = true, guiName = "Check Rotation", active = true)]
-//public void checkRotation()
-//{
-//    findrot();
-//    print(rotx.ToString() + "x, " + roty.ToString() + "y, " + rotz.ToString() + "z.");
-//}
-
-//Drill rotation function, determines which drill animation to use.
-//[KSPEvent(guiActive = true, guiName = "Deploy Drill", active = true)]
-//public void driller()
-//{
-//    startDrill(1f, 0f);
-//}
-
-//[KSPEvent(guiActiveEditor = true, guiName = "Preview Horizontal Drill", active = true)]
-//public void editorHorizontalDeploy()
-//{
-//    if (anim != null)
-//    {
-//        anim[animationName].speed = 0f;
-//        anim[animationName].normalizedTime = 0.43f;
-//        anim.Play(animationName);
-//        Events["editorHorizontalDeploy"].active = false;
-//        Events["editorHorizontalRetract"].active = true;
-//    }
-//}
-
-//[KSPEvent(guiActiveEditor = true, guiName = "Reset Horizontal Drill", active = false)]
-//public void editorHorizontalRetract()
-//{
-//    if (anim != null)
-//    {
-//        anim[animationName].speed = -1f;
-//        anim[animationName].normalizedTime = 0f;
-//        anim.Play(animationName);
-//        Events["editorHorizontalDeploy"].active = true;
-//        Events["editorHorizontalRetract"].active = false;
-//    }
-//}
