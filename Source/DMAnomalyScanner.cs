@@ -89,7 +89,6 @@ namespace DMagic
             else
             {
                 cam = this.part.transform.FindChild("model").FindChild("anom scanner v4").FindChild("base").FindChild("camBaseArm0").FindChild("camBaseArm1").FindChild("camBaseArm2").FindChild("camBase");
-                anomList.Clear();
                 GameEvents.onVesselSOIChanged.Add(ScanOnSOIChange);
                 pqsBuild();
                 if (IsDeployed)
@@ -106,8 +105,7 @@ namespace DMagic
         
         public void ScanOnSOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
         {
-            anomList.Clear(); //Reset PQSCity list when SOI changes
-            pqsBuild();
+            pqsBuild();     //Reset PQSCity list when SOI changes.
         }
 
         public override void OnUpdate()
@@ -120,7 +118,6 @@ namespace DMagic
                 }
             }
         }
-
 
 
         # region Animators
@@ -149,7 +146,6 @@ namespace DMagic
         IEnumerator WaitForAnim(float coWaitTime)
         {
             yield return new WaitForSeconds(coWaitTime);
-            animSecondary[dishAnimate].enabled = false;
             secondaryAnimator(dishAnimate, 1f, 0f, WrapMode.Loop);
             IsDeployed = true;
         }
@@ -209,7 +205,7 @@ namespace DMagic
             toggleDish();
         }
 
-        [KSPEvent(guiActiveEditor = true, guiName = "Deploy Dish", active = true)]
+        [KSPEvent(guiActiveEditor = true, guiName = "Deploy Scanner", active = true)]
         public void deployDishEditor()
         {
             deployDish(1f, 0f);
@@ -219,7 +215,7 @@ namespace DMagic
             Events["retractDishEditor"].active = true;
         }
 
-        [KSPEvent(guiActiveEditor = true, guiName = "Retract Dish", active = false)]
+        [KSPEvent(guiActiveEditor = true, guiName = "Retract Scanner", active = false)]
         public void retractDishEditor()
         {
 
@@ -243,7 +239,7 @@ namespace DMagic
             cam.localRotation = Quaternion.Slerp(cam.localRotation, lookToTarget, Time.deltaTime * 2f);
         }
 
-        //Control camera and light states based on distance to anomaly.
+        //Control camera and light animation states based on distance to anomaly.
         public void inRange()
         {
             bool anomInRange = false;
@@ -283,13 +279,11 @@ namespace DMagic
                             {
                                 secondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
                                 closeRange = true;
-                                print("In range");
                             }
                             if (vdiff >= 275 && closeRange == true)
                             {
                                 animSecondary[foundAnimate].wrapMode = WrapMode.Default;
                                 closeRange = false;
-                                print("Moved out of range");
                             }
                         }
                     }
@@ -301,7 +295,6 @@ namespace DMagic
                 cam.localRotation = Quaternion.Slerp(cam.localRotation, new Quaternion(0, 0, 0, 1), 1f);
                 secondaryAnimator(camAnimate, -1f, 1f, WrapMode.Default);
                 camDeployed = false;
-                print("No more anom in range");
             }
         }
 
@@ -313,6 +306,7 @@ namespace DMagic
         
         public void pqsBuild() //Build PQSCity list for all anomalies on the current planet.
         {
+            anomList.Clear();
             PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
             foreach (PQSCity anomalyObject in Cities)
             {
@@ -356,11 +350,11 @@ namespace DMagic
                     else if (Math.Abs(vheight) > 10000)             //Use alternate message when more than 10km above the anomaly.
                     {
                         
-                        ScreenMessages.PostScreenMessage("Anomalous signal detected approximately " + Math.Round(vdiffd / 1000 + RandomDouble((2 * (vdiffd / 1000) / 30), (4 * (vdiffd / 1000) / 30)), 1).ToString() + "km below current position, get closer for a better signal", 4f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage("Anomalous signal detected approximately " + Math.Round(vdiffd / 1000 + RandomDouble((2 * (vdiffd / 1000) / 30), (4 * (vdiffd / 1000) / 30)), 1).ToString() + "km below current position, get closer for a better signal", 6f, ScreenMessageStyle.UPPER_CENTER);
                     }
                     else
                     {
-                        ScreenMessages.PostScreenMessage("Anomalous signal detected approximately " + Math.Round(vdiffd / 1000 + RandomDouble((2 * (vdiffd / 1000) / 30), (4 * (vdiffd / 1000) / 30)), 1).ToString() + "km away to the " + anomDirection + ", get closer for a better signal.", 4f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage("Anomalous signal detected approximately " + Math.Round(vdiffd / 1000 + RandomDouble((2 * (vdiffd / 1000) / 30), (4 * (vdiffd / 1000) / 30)), 1).ToString() + "km away to the " + anomDirection + ", get closer for a better signal.", 6f, ScreenMessageStyle.UPPER_CENTER);
                     }
                 }
             }
@@ -678,7 +672,6 @@ namespace DMagic
                             tranData.Add(data);
                             tran.TransmitData(tranData);
                             anomalyData.Remove(data);
-                            print("Transmitting now.");
                             break;
                         }
                         else
@@ -693,21 +686,19 @@ namespace DMagic
                     tranData.Add(data);
                     tranList.First().TransmitData(tranData);
                     anomalyData.Remove(data);
-                    print("Transmitting now from queue.");
                 }
             }            
         }
         
         private void onSendToLab(ScienceData data)
         {
-            bool labOperating = checkLabOps();
-            if (labOperating)           
+            if (checkLabOps())           
             {
                 labList[labint].StartCoroutine(labList[labint].ProcessData(data, new Callback<ScienceData>(onComplete)));
             }
             else
             {
-                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 3f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
             }   
         }
 
@@ -718,9 +709,8 @@ namespace DMagic
 
         public void ReviewData()
         {
-            checkLabOps();
             ScienceData storedExp = anomalyData[0];
-            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, 0.25f, false, "", true, labList.Count > 0, new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, 0.25f, false, "", true, checkLabOps(), new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
             ExperimentsResultDialog.DisplayResult(page);
         }
 
