@@ -164,16 +164,16 @@ namespace DMagic
             }
         }
 
-        public void BiomeCheck()
-        {
-            print(FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name + FlightGlobals.currentMainBody.GetComponentsInChildren<PQSCity>().ToString());
-        }
+        //public void BiomeCheck()
+        //{
+        //    print(FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name + FlightGlobals.currentMainBody.GetComponentsInChildren<PQSCity>().ToString());
+        //}
 
-        [KSPEvent(guiActive = true, guiName = "Check Biome", active = true)]
-        public void currentBiome()
-        {
-            BiomeCheck();
-        }
+        //[KSPEvent(guiActive = true, guiName = "Check Biome", active = true)]
+        //public void currentBiome()
+        //{
+        //    BiomeCheck();
+        //}
 
         //[KSPEvent(guiActive = true, guiName = "Check Position", active = true)]
         //public void CheckPosition()
