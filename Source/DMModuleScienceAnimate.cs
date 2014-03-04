@@ -78,9 +78,9 @@ namespace DMagicOrbital
         [KSPField]
         new public float xmitDataScalar = 0.5f;
         [KSPField]
-        public bool customFailFlag = false;
-        [KSPField]
         public string customFailMessage = null;
+        [KSPField]
+        public string deployingMessage = null;
 
         [KSPField(isPersistant = true)]
         public bool IsDeployed;
@@ -108,6 +108,8 @@ namespace DMagicOrbital
         public string toggleEventGUIName = "Toggle";
         [KSPField]
         public bool showToggleEvent = false;
+        [KSPField]
+        public bool showEditorEvents = true;
         [KSPField(guiName = "Status", isPersistant = true, guiActive = true)]
         public string status;
 
@@ -122,19 +124,22 @@ namespace DMagicOrbital
 
         protected Animation anim;
         protected CelestialBody Cbody = null;
-        protected ScienceExperiment science;
-        
+        protected ScienceExperiment scienceExp;
+        protected IScienceDataTransmitter transmit;
+        protected ExperimentResultDialogPage expPage;
+
         public override void OnStart(StartState state)
         {
             base.OnStart(state);
             anim = part.FindModelAnimators(animationName)[0];
-            setup();
             if (state == StartState.Editor)
             {
+                editorSetup();
             }
             else
             {
-                if (IsDeployed) deployEvent();
+                setup();
+                if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
         }
         
@@ -171,22 +176,34 @@ namespace DMagicOrbital
             Events["ReviewDataEvent"].guiName = reviewActionName;
             Actions["ReviewDataItem"].guiName = reviewActionName;
             Actions["ReviewDataItem"].active = useActionGroups;
-            science = ResearchAndDevelopment.GetExperiment(experimentID);
-
-
             if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length;
+
+            scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);            
+        }
+        
+        public void editorSetup()
+        {
+            Events["editorDeployEvent"].guiName = startEventGUIName;
+            Events["editorRetractEvent"].guiName = endEventGUIName;
+            Events["editorDeployEvent"].active = showEditorEvents;
+            Events["editorRetractEvent"].active = false;
         }
 
-        public void deployAnimation()
+        public void primaryAnimator(float speed, float time, WrapMode wrap)
         {
-            anim[animationName].speed = animSpeed;
-            anim[animationName].normalizedTime = animTime;
-            anim.Blend(animationName, 1f);
+            anim[animationName].speed = speed;
+            if (!anim.IsPlaying(animationName))
+            {
+                anim[animationName].wrapMode = wrap;
+                anim[animationName].normalizedTime = time;
+                anim.Play(animationName);
+            }
         }
 
         [KSPEvent(guiActive = true, guiName = "Deploy", active = true)]
         public void deployEvent()
         {
+            primaryAnimator(1f, 0f, WrapMode.Default);
             IsDeployed = true;
             Events["deployEvent"].active = false;
             Events["retractEvent"].active = true;
@@ -201,6 +218,7 @@ namespace DMagicOrbital
         [KSPEvent(guiActive = true, guiName = "Retract", active = false)]
         public void retractEvent()
         {
+            primaryAnimator(-1f, 1f, WrapMode.Default);
             IsDeployed = false;
             Events["deployEvent"].active = true;
             Events["retractEvent"].active = false;
@@ -225,6 +243,22 @@ namespace DMagicOrbital
             toggleEvent();
         }
 
+        [KSPEvent(guiActiveEditor = true, guiName = "Deploy", active = true)]
+        public void editorDeployEvent()
+        {
+            deployEvent();
+            Events["editorDeployEvent"].active = false;
+            Events["editorRetractEvent"].active = true;
+        }
+
+        [KSPEvent(guiActiveEditor = true, guiName = "Retract", active = false)]
+        public void editorRetractEvent()
+        {
+            retractEvent();
+            Events["editorDeployEvent"].active = true;
+            Events["editorRetractEvent"].active = false;
+        }
+
         [KSPEvent(guiActive = true, guiName = "Deploy Experiment", active = true)]
         new public void DeployExperiment()
         {
@@ -232,7 +266,8 @@ namespace DMagicOrbital
             {
                 if (experimentAnimation)
                 {
-                    if (!IsDeployed) deployEvent();
+                    if (!IsDeployed) deployEvent(); 
+                    if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                     if (experimentWaitForAnimation) StartCoroutine(WaitForAnimation(waitForAnimationTime));
                     else base.DeployExperiment();
                 }
@@ -240,7 +275,7 @@ namespace DMagicOrbital
             }
             else
             {
-                if (customFailFlag) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+                if (customFailMessage != null) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                 else base.DeployExperiment();
             }
         }
@@ -253,6 +288,7 @@ namespace DMagicOrbital
                 if (experimentAnimation)
                 {
                     if (!IsDeployed) deployEvent();
+                    if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                     if (experimentWaitForAnimation) StartCoroutine(WaitForAnimationAction(param, waitForAnimationTime));
                     else base.DeployAction(param);
                 }
@@ -260,7 +296,7 @@ namespace DMagicOrbital
             }
             else
             {
-                if (customFailFlag) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+                if (customFailMessage != null) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                 else base.DeployAction(param);
             }
         }
@@ -268,14 +304,12 @@ namespace DMagicOrbital
         public IEnumerator WaitForAnimation(float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
-            if (!keepDeployed) retractEvent();
             base.DeployExperiment();
         }
 
         public IEnumerator WaitForAnimationAction(KSPActionParam param, float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
-            if (!keepDeployed) retractEvent();
             base.DeployAction(param);
         }
 
@@ -308,18 +342,20 @@ namespace DMagicOrbital
         [KSPEvent(externalToEVAOnly = true, guiActiveUnfocused = true, guiActive = false, guiName = "Collect Data", active = true, unfocusedRange = 1.5f)]
         new public void CollectDataExternalEvent()
         {
+            if (!keepDeployed) retractEvent();
             base.CollectDataExternalEvent();
         }
 
         [KSPEvent(guiName = "Reset", active = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiActive = false, unfocusedRange = 1.5f)]
         new public void ResetExperimentExternal()
         {
+            if (!keepDeployed) retractEvent();
             base.ResetExperimentExternal();
         }
-
+        
         public bool canConduct()
         {
-            return experiment.IsAvailableWhile(getSituation(), vessel.mainBody);
+            return scienceExp.IsAvailableWhile(getSituation(), vessel.mainBody);
         }
 
         public ExperimentSituations getSituation()
