@@ -41,9 +41,7 @@ namespace DMagic
             public string animationName;
 
             protected Animation anim;
-            private KSPActionParam actParams;
             
-            //Get first animation name from part. Force module activation.
             public override void OnStart(PartModule.StartState state)
             {
                 base.OnStart(state);
@@ -73,11 +71,11 @@ namespace DMagic
                 }
             }
 
-            IEnumerator ActionDeploy(float animTime)
+            IEnumerator ActionDeploy(float animTime, KSPActionParam param)
             {
                 {
                     yield return new WaitForSeconds(animTime);
-                    base.DeployAction(actParams);
+                    base.DeployAction(param);
                 }
             }
 
@@ -125,7 +123,7 @@ namespace DMagic
                         {
                             anim[animationName].normalizedTime = 0f;
                             anim.Play(animationName);
-                            StartCoroutine(ActionDeploy(4f));
+                            StartCoroutine(ActionDeploy(4f, p));
                         }
                     }
                 }
