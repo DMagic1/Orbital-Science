@@ -70,7 +70,6 @@ namespace DMagic
             if (anim[animationName] != null)
             {
                 anim[animationName].speed = 1.5f;
-
                 //Check if animation is stopped, if not animating and undeployed, start deploy animation. If already deployed do nothing.
                 if (!anim.IsPlaying(animationName))
                 {
@@ -80,12 +79,8 @@ namespace DMagic
                         anim[animationName].normalizedTime = 0f;
                         anim.Play(animationName);
                     }
-                }
-                
+                }                
                 IsEnabled = true;
-
-                //print("Deploying Magnetometer with " + animationName);
-                
                 Events["DeployEvent"].active = false;
                 Events["RetractEvent"].active = true;
             }
@@ -107,11 +102,7 @@ namespace DMagic
                         anim.Play(animationName);
                     }
                 }
-
                 IsEnabled = false;
-
-                //print("Retracting Magnetometer with " + animationName);
-
                 Events["DeployEvent"].active = true;
                 Events["RetractEvent"].active = false;
             }
@@ -138,7 +129,6 @@ namespace DMagic
             anim.Play(animationName);
         }
 
-
         //VAB action group toggle animation.
         [KSPAction("Toggle Magnetometer")]
         public void ToggleEventAction(KSPActionParam param)
@@ -153,7 +143,6 @@ namespace DMagic
         //Check craft position and situation.
         public bool VesselSituation()
         {
-            //print(vessel.orbit.referenceBody.name + ", " + vessel.situation + ", " + vessel.landedAt + ", " + vessel.altitude + ", " + FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude, vessel.longitude).name + ", " + FlightGlobals.currentMainBody.position.x + ", " + FlightGlobals.currentMainBody.position.y + ", " + vessel.latitude + ".");
             if (vessel.situation == Vessel.Situations.FLYING)
             {
                 ScreenMessages.PostScreenMessage("The magnetometer is not suitable for use during atmospheric flight, try again on the ground or in space.", 4f, ScreenMessageStyle.UPPER_CENTER);
@@ -164,29 +153,6 @@ namespace DMagic
             }
         }
 
-        //public void BiomeCheck()
-        //{
-        //    print(FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name + FlightGlobals.currentMainBody.GetComponentsInChildren<PQSCity>().ToString());
-        //}
-
-        //[KSPEvent(guiActive = true, guiName = "Check Biome", active = true)]
-        //public void currentBiome()
-        //{
-        //    BiomeCheck();
-        //}
-
-        //[KSPEvent(guiActive = true, guiName = "Check Position", active = true)]
-        //public void CheckPosition()
-        //{
-        //    VesselSituation();
-        //}
-
-        //[KSPAction("Check Position")]
-        // public void PositionCheckAction(KSPActionParam param)
-        //{ CheckPosition();
-        //}
-
-               
        //Replace default science collection mechanism
         //If the part is stowed call the deploy animation and collect science when it completes
         //If the part is in deploy animation, wait until finished and collect science
@@ -229,16 +195,15 @@ namespace DMagic
                     DeployEvent();
                     DeployExperiment();
                 }
-
                 else if (VesselSituation())
                 {
                     DeployEvent();
                     ScreenMessages.PostScreenMessage("Close proximity to the craft scrambles the magnetometer's sensors, deploying the scanner now.", 4f, ScreenMessageStyle.UPPER_CENTER);
                     StartCoroutine(WaitForDeploy(anim[animationName].length / 1.5f));
                     IsExperimenting = true;
-                }
-            
-        }                   
+                }            
+        } 
+                  
         //Replace default science collection VAB action group function.
         new public void DeployAction(KSPActionParam p)
         {
