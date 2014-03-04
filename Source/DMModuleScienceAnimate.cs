@@ -37,46 +37,46 @@ using System.Collections;
 
 namespace DMagicOrbital
 {
-    public class DMModuleScienceAnimate : ModuleScienceExperiment
+    public class DMModuleScienceAnimate : PartModule, IScienceDataContainer
     {
         [KSPField]
-        new public string collectActionName = "Collect Science Report";
+        public string collectActionName = "Collect Science Report";
         [KSPField]
-        new public string collectWarningText = "This science experiment will be inoperable once this data is collected";
+        public string collectWarningText = "This science experiment will be inoperable once this data is collected";
         [KSPField]
-        new public bool dataIsCollectable = true;
+        public bool dataIsCollectable = true;
         [KSPField]
-        new public float interactionRange = 1.2f;
+        public float interactionRange = 1.2f;
         [KSPField]
-        new public bool resettableOnEVA = true;
+        public bool resettableOnEVA = true;
         [KSPField]
-        new public string experimentActionName = "Collect Data";
+        public string experimentActionName = "Collect Data";
         [KSPField]
-        new public string resetActionName = "Reset Experiment";
+        public string resetActionName = "Reset Experiment";
         [KSPField]
-        new public string reviewActionName = "Review Data";
+        public string reviewActionName = "Review Data";
         [KSPField]
-        new public string transmitWarningText = "This science experiment will be inoperable after tranmission";
+        public string transmitWarningText = null;
         [KSPField]
-        new public string experimentID = null;
+        public string experimentID = null;
         [KSPField]
-        new public bool hideUIwhenUnavailable = false;        
+        public bool hideUIwhenUnavailable = false;
         [KSPField]
-        new public bool rerunnable = true;
+        public bool rerunnable = true;
         [KSPField]
-        new public bool resettable = true;        
-        [KSPField]
-        new public float resourceResetCost;
-        [KSPField]
-        new public string resourceToReset;
+        public bool resettable = true;
+        //[KSPField]
+        //public float resourceResetCost;
+        //[KSPField]
+        //public string resourceToReset;
         [KSPField(isPersistant = true)]
-        new public bool Inoperable;      
+        public bool Inoperable;
         [KSPField]
-        new public bool useActionGroups = true;
+        public bool useActionGroups = true;
         [KSPField]
-        new public bool useStaging = false;
+        public bool useStaging = false;
         [KSPField]
-        new public float xmitDataScalar = 0.5f;
+        public float xmitDataScalar = 0.5f;
         [KSPField]
         public string customFailMessage = null;
         [KSPField]
@@ -88,8 +88,8 @@ namespace DMagicOrbital
         public bool allowManualControl;
         [KSPField]
         public string animationName;
-        [KSPField(isPersistant = true)]
-        public float animSpeed;
+        [KSPField(isPersistant = false)]
+        public float animSpeed = 1f;
         [KSPField(isPersistant = true)]
         public bool animSwitch;
         [KSPField(isPersistant = true)]
@@ -121,16 +121,24 @@ namespace DMagicOrbital
         public float waitForAnimationTime = -1;
         [KSPField]
         public bool keepDeployed = false;
+        [KSPField]
+        public bool oneWayAnimation = false;
 
         protected Animation anim;
         protected CelestialBody Cbody = null;
         protected ScienceExperiment scienceExp;
         protected IScienceDataTransmitter transmit;
+        protected ModuleScienceLab sciLab;
+        protected ExperimentsResultDialog expDialog;
+        protected IScienceDataContainer ISciCont;
         protected ExperimentResultDialogPage expPage;
+        List<ScienceData> newData = new List<ScienceData>();
+
 
         public override void OnStart(StartState state)
         {
             base.OnStart(state);
+            this.part.force_activate();
             anim = part.FindModelAnimators(animationName)[0];
             if (state == StartState.Editor)
             {
@@ -142,47 +150,84 @@ namespace DMagicOrbital
                 if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
         }
-        
+
+        public override void OnSave(ConfigNode node)
+        {
+            base.OnSave(node);
+            foreach (ScienceData storedData in newData)
+            {
+                ConfigNode storedDataNode = node.AddNode("ScienceData");
+                storedData.Save(storedDataNode);
+            }
+        }
+
+        public override void OnLoad(ConfigNode node)
+        {
+            base.OnLoad(node);
+            if (node.HasNode("ScienceData"))
+            {
+                foreach (ConfigNode storedDataNode in node.GetNodes("ScienceData"))
+                {
+                    ScienceData data = new ScienceData(storedDataNode);
+                    newData.Add(data);
+                }
+            }
+        }
+
         public void setup()
         {
-            Events["deployEvent"].active = showStartEvent;
+            //Events["deployEvent"].active = showStartEvent;
+            Events["deployEvent"].guiActive = showStartEvent;
             Actions["deployAction"].active = showStartEvent;
-            Events["retractEvent"].active = showEndEvent;
+            //Events["retractEvent"].active = showEndEvent;
+            Events["retractEvent"].guiActive = showEndEvent;
             Actions["retractAction"].active = showEndEvent;
             Events["toggleEvent"].active = showToggleEvent;
             Actions["toggleAction"].active = showToggleEvent;
             Events["deployEvent"].guiName = startEventGUIName;
             Actions["deployAction"].guiName = startEventGUIName;
             Events["retractEvent"].guiName = endEventGUIName;
-            Actions["retractEvent"].guiName = endEventGUIName;
+            Actions["retractAction"].guiName = endEventGUIName;
             Events["toggleEvent"].guiName = toggleEventGUIName;
-            Actions["toggeleAction"].guiName = toggleEventGUIName;
-            Events["DeployExperiment"].guiName = experimentActionName;
-            Actions["DeployAction"].guiName = experimentActionName;
-            Actions["DeployAction"].active = useActionGroups;
-            Events["ResetExperiment"].guiName = resetActionName;
-            Actions["ResetAction"].guiName = resetActionName;
-            Actions["ResetAction"].active = useActionGroups;
-            Events["CollectDataExternalEvent"].active = dataIsCollectable;
-            Events["CollectDataExternalEvent"].guiActiveUnfocused = dataIsCollectable;
-            Events["CollectDataExternalEvent"].externalToEVAOnly = dataIsCollectable;
-            Events["CollectDataExternalEvent"].guiName = collectActionName;
-            Events["CollectDataExternalEvent"].unfocusedRange = interactionRange;
-            Events["ResetExperimentExternal"].active = resettableOnEVA;
-            Events["ResetExperimentExternal"].externalToEVAOnly = resettableOnEVA;
-            Events["ResetExperimentExternal"].guiActiveUnfocused = resettableOnEVA;
-            Events["ResetExperimentExternal"].guiName = resetActionName;
-            Events["ResetExperimentExternal"].unfocusedRange = interactionRange;
-            Events["ReviewDataEvent"].guiName = reviewActionName;
-            Actions["ReviewDataItem"].guiName = reviewActionName;
-            Actions["ReviewDataItem"].active = useActionGroups;
-            if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length;
+            Actions["toggleAction"].guiName = toggleEventGUIName;
+            //Events["StartExperiment"].guiName = experimentActionName;
+            //Actions["StartExperimentAction"].guiName = experimentActionName;
+            //Actions["StartExperimentAction"].active = useActionGroups;
+            //Events["ResetExperiment"].guiName = resetActionName;
+            //Actions["ResetAction"].guiName = resetActionName;
+            //Actions["ResetAction"].active = useActionGroups;
+            //Events["CollectDataExternalEvent"].active = dataIsCollectable;
+            //Events["CollectDataExternalEvent"].guiActiveUnfocused = dataIsCollectable;
+            //Events["CollectDataExternalEvent"].externalToEVAOnly = dataIsCollectable;
+            //Events["CollectDataExternalEvent"].guiName = collectActionName;
+            //Events["CollectDataExternalEvent"].unfocusedRange = interactionRange;
+            //Events["ResetExperimentExternal"].active = resettableOnEVA;
+            //Events["ResetExperimentExternal"].externalToEVAOnly = resettableOnEVA;
+            //Events["ResetExperimentExternal"].guiActiveUnfocused = resettableOnEVA;
+            //Events["ResetExperimentExternal"].guiName = resetActionName;
+            //Events["ResetExperimentExternal"].unfocusedRange = interactionRange;
+            //Events["ReviewPage"].guiName = reviewActionName;
+            //Actions["ReviewPageAction"].guiName = reviewActionName;
+            //Actions["ReviewPageAction"].active = useActionGroups;
+            if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length / animSpeed;
 
             scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);            
         }
         
         public void editorSetup()
         {
+            Actions["deployAction"].active = showStartEvent;
+            Actions["retractAction"].active = showEndEvent;
+            Actions["toggleAction"].active = showToggleEvent;
+            Actions["deployAction"].guiName = startEventGUIName;
+            Actions["retractAction"].guiName = endEventGUIName;
+            Actions["toggleAction"].guiName = toggleEventGUIName;
+            Actions["ReviewPageAction"].guiName = reviewActionName;
+            Actions["ReviewPageAction"].active = useActionGroups;
+            //Actions["StartExperimentAction"].guiName = experimentActionName;
+            //Actions["StartExperimentAction"].active = useActionGroups;
+            Actions["ResetAction"].guiName = resetActionName;
+            Actions["ResetAction"].active = useActionGroups;
             Events["editorDeployEvent"].guiName = startEventGUIName;
             Events["editorRetractEvent"].guiName = endEventGUIName;
             Events["editorDeployEvent"].active = showEditorEvents;
@@ -203,10 +248,10 @@ namespace DMagicOrbital
         [KSPEvent(guiActive = true, guiName = "Deploy", active = true)]
         public void deployEvent()
         {
-            primaryAnimator(1f, 0f, WrapMode.Default);
-            IsDeployed = true;
-            Events["deployEvent"].active = false;
-            Events["retractEvent"].active = true;
+            primaryAnimator((animSpeed * 1f), 0f, WrapMode.Default);
+            IsDeployed = !oneWayAnimation;
+            Events["deployEvent"].active = oneWayAnimation;
+            Events["retractEvent"].active = showEndEvent;
         }
 
         [KSPAction("Deploy")]
@@ -218,10 +263,10 @@ namespace DMagicOrbital
         [KSPEvent(guiActive = true, guiName = "Retract", active = false)]
         public void retractEvent()
         {
-            primaryAnimator(-1f, 1f, WrapMode.Default);
+            primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default);
             IsDeployed = false;
-            Events["deployEvent"].active = true;
-            Events["retractEvent"].active = false;
+            Events["deployEvent"].active = showStartEvent;
+            Events["retractEvent"].active = !showEndEvent;
         }
 
         [KSPAction("Retract")]
@@ -247,110 +292,219 @@ namespace DMagicOrbital
         public void editorDeployEvent()
         {
             deployEvent();
-            Events["editorDeployEvent"].active = false;
-            Events["editorRetractEvent"].active = true;
+            Events["editorDeployEvent"].active = !showStartEvent;
+            Events["editorRetractEvent"].active = showEndEvent;
         }
 
         [KSPEvent(guiActiveEditor = true, guiName = "Retract", active = false)]
         public void editorRetractEvent()
         {
             retractEvent();
-            Events["editorDeployEvent"].active = true;
-            Events["editorRetractEvent"].active = false;
+            Events["editorDeployEvent"].active = showStartEvent;
+            Events["editorRetractEvent"].active = !showEndEvent;
         }
 
-        [KSPEvent(guiActive = true, guiName = "Deploy Experiment", active = true)]
-        new public void DeployExperiment()
+        [KSPEvent(guiActive = true, guiName = "Start Experiment", active = true)]
+        public void StartExperiment()
         {
             if (canConduct())
             {
                 if (experimentAnimation)
                 {
-                    if (!IsDeployed) deployEvent(); 
-                    if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-                    if (experimentWaitForAnimation) StartCoroutine(WaitForAnimation(waitForAnimationTime));
-                    else base.DeployExperiment();
+                    if (anim.IsPlaying(animationName)) return;
+                    else
+                    {
+                        if (!IsDeployed)
+                        {
+                            deployEvent();
+                            if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+                            if (experimentWaitForAnimation) StartCoroutine(WaitForAnimation(waitForAnimationTime));
+                            else runExperiment();
+                        }
+                        else runExperiment();
+                    }
                 }
-                else base.DeployExperiment();
+                else runExperiment();
             }
             else
             {
                 if (customFailMessage != null) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-                else base.DeployExperiment();
+                else runExperiment();
             }
         }
 
-        [KSPAction("Deploy Experiment")]
-        new public void DeployAction(KSPActionParam param)
+        [KSPAction("Start Experiment")]
+        public void StartExperimentAction(KSPActionParam param)
         {
             if (canConduct())
             {
                 if (experimentAnimation)
                 {
-                    if (!IsDeployed) deployEvent();
-                    if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-                    if (experimentWaitForAnimation) StartCoroutine(WaitForAnimationAction(param, waitForAnimationTime));
-                    else base.DeployAction(param);
+                    if (anim.IsPlaying(animationName)) return;
+                    else
+                    {
+                        if (!IsDeployed)
+                        {
+                            deployEvent();
+                            if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+                            if (experimentWaitForAnimation) StartCoroutine(WaitForAnimationAction(param, waitForAnimationTime));
+                            else runExperiment();
+                        }
+                        else runExperiment();
+                    }
                 }
-                else base.DeployAction(param);
+                else runExperiment();
             }
             else
             {
                 if (customFailMessage != null) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-                else base.DeployAction(param);
+                else runExperiment();
             }
         }
 
         public IEnumerator WaitForAnimation(float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
-            base.DeployExperiment();
+            runExperiment();
         }
 
         public IEnumerator WaitForAnimationAction(KSPActionParam param, float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
-            base.DeployAction(param);
+            runExperiment();
         }
 
-        [KSPEvent(guiActive = true, guiName = "Reset Experiment", active = false)]
-        new public void ResetExperiment()
+        [KSPEvent(guiActive = true, guiName = "Reset", active = false)]
+        public void ResetExperiment()
         {
             if (!keepDeployed) retractEvent();
-            base.ResetExperiment();
+            newData.Clear();
         }
 
-        [KSPAction("Reset Experiment")]
-        new public void ResetAction(KSPActionParam param)
+        [KSPAction("Reset")]
+        public void ResetAction(KSPActionParam param)
         {
             if (!keepDeployed) retractEvent();
-            base.ResetAction(param);
+            newData.Clear();
         }
 
-        [KSPEvent(guiActive = true, guiName = "Review Data")]
-        new public void ReviewDataEvent()
+        public ScienceData[] GetData()
         {
-            base.ReviewDataEvent();
+            return newData.ToArray();
+        }
+
+        public bool IsRerunnable()
+        {
+            return rerunnable;
+        }
+
+        public int GetScienceCount()
+        {
+            return newData.Count;
+        }
+
+        [KSPEvent(guiActive = true, guiName = "Review Data", active = true)]
+        public void reviewPage()
+        {
+            ReviewData();
         }
 
         [KSPAction("Review Data")]
-        new public void ReviewDataItem(ScienceData data)
+        public void reviewPageAction(KSPActionParam param)
         {
-            base.ReviewDataItem(data);
+            ReviewData();
         }
 
-        [KSPEvent(externalToEVAOnly = true, guiActiveUnfocused = true, guiActive = false, guiName = "Collect Data", active = true, unfocusedRange = 1.5f)]
-        new public void CollectDataExternalEvent()
+        //[KSPEvent(guiActive = true, guiName = "Review Science Data", active = true)]
+        public void ReviewData()
         {
-            if (!keepDeployed) retractEvent();
-            base.CollectDataExternalEvent();
+            ScienceData data = newData[0];
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, transmitWarningText != null, transmitWarningText, true, false, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+            ExperimentsResultDialog.DisplayResult(page);
         }
 
-        [KSPEvent(guiName = "Reset", active = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiActive = false, unfocusedRange = 1.5f)]
-        new public void ResetExperimentExternal()
+        //[KSPAction("Review Science Data")]
+        public void ReviewDataItem(ScienceData data)
+        {
+            data = newData[0];
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, transmitWarningText != null, transmitWarningText, true, false, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+            ExperimentsResultDialog.DisplayResult(page);
+        }
+
+        [KSPEvent(externalToEVAOnly = true, guiActiveUnfocused = true, guiActive = false, guiName = "CollectEVA", active = true, unfocusedRange = 1.5f)]
+        public void CollectDataExternalEvent()
         {
             if (!keepDeployed) retractEvent();
-            base.ResetExperimentExternal();
+            
+        }
+
+        [KSPEvent(guiName = "ResetEVA", active = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiActive = false, unfocusedRange = 1.5f)]
+        public void ResetExperimentExternal()
+        {
+            if (!keepDeployed) retractEvent();
+            newData.Clear();
+        }
+
+        public ScienceData makeScience()
+        {
+            ScienceData data = null;
+            ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(experimentID);
+            ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, getSituation(), vessel.mainBody, getBiome());
+            data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, 0.25f, experimentID, "Scan of " + vessel.mainBody.theName + " " + getBiome());
+            data.subjectID = sub.id;
+            return data;
+        }
+
+        public void runExperiment()
+        {
+            ScienceData data = makeScience();
+            newData.Add(data);
+            ReviewData();
+        }
+
+        public string getBiome()
+        {
+            if (scienceExp.BiomeIsRelevantWhile(getSituation()))
+            {
+                switch (vessel.landedAt)
+                {
+                    case "LaunchPad":
+                        return vessel.landedAt;
+                    case "Runway":
+                        return vessel.landedAt;
+                    case "KSC":
+                        return vessel.landedAt;
+                    default:
+                        return FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name;
+                }
+            }
+            else return "";
+        }
+
+        public void DumpData(ScienceData data)
+        {
+            newData.Clear();
+        }
+
+        private void onDiscardData(ScienceData data)
+        {
+            ResetExperiment();
+        }
+
+        private void onKeepData(ScienceData data)
+        {
+            expPage.OnKeepData(data);
+        }
+
+        private void onTransmitData(ScienceData data)
+        {
+            if (!keepDeployed) retractEvent();
+            expPage.OnTransmitData(data);
+        }
+
+        private void onSendToLab(ScienceData data)
+        {
+            expPage.OnSendToLab(data);
         }
         
         public bool canConduct()
@@ -368,17 +522,17 @@ namespace DMagicOrbital
                 case Vessel.Situations.SPLASHED:
                     return ExperimentSituations.SrfSplashed;
                 default:
-                    if (vessel.altitude < Cbody.maxAtmosphereAltitude && Cbody.atmosphere)
+                    if (vessel.altitude < vessel.mainBody.maxAtmosphereAltitude && vessel.mainBody.atmosphere)
                     {
-                        if (vessel.altitude < Cbody.scienceValues.flyingAltitudeThreshold)
+                        if (vessel.altitude < vessel.mainBody.scienceValues.flyingAltitudeThreshold)
                             return ExperimentSituations.FlyingLow;
                         else
                             return ExperimentSituations.FlyingHigh;
                     }
-                    if (vessel.altitude < Cbody.scienceValues.spaceAltitudeThreshold)
-                        return ExperimentSituations.InSpaceLow;
-                    else
-                        return ExperimentSituations.InSpaceHigh;
+                        if (vessel.altitude < vessel.mainBody.scienceValues.spaceAltitudeThreshold)
+                            return ExperimentSituations.InSpaceLow;
+                        else
+                            return ExperimentSituations.InSpaceHigh;
             }
         }
 
