@@ -152,7 +152,7 @@ namespace DMagicOrbital
                 if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
         }
-
+        
         public override void OnSave(ConfigNode node)
         {
             base.OnSave(node);
@@ -386,6 +386,7 @@ namespace DMagicOrbital
             ReviewData();
             Events["reviewPage"].active = newData.Count > 0;
             Events["ResetExperiment"].active = newData.Count > 0;
+            Events["CollectDataExternalEvent"].active = newData.Count > 0;
         }
 
         public ScienceData makeScience()
@@ -480,6 +481,7 @@ namespace DMagicOrbital
             newData.Clear();
             Events["reviewPage"].active = newData.Count > 0;
             Events["ResetExperiment"].active = newData.Count > 0;
+            Events["CollectDataExternalEvent"].active = newData.Count > 0;
         }
 
         [KSPAction("Reset")]
@@ -489,6 +491,7 @@ namespace DMagicOrbital
             newData.Clear();
             Events["reviewPage"].active = newData.Count > 0;
             Events["ResetExperiment"].active = newData.Count > 0;
+            Events["CollectDataExternalEvent"].active = newData.Count > 0;
         }
 
         public ScienceData[] GetData()
@@ -535,8 +538,18 @@ namespace DMagicOrbital
         [KSPEvent(externalToEVAOnly = true, guiActiveUnfocused = true, guiActive = false, guiName = "CollectEVA", active = true, unfocusedRange = 1.5f)]
         public void CollectDataExternalEvent()
         {
-            if (!keepDeployed) retractEvent();
-            
+            List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
+            if (newData.Count > 0)
+            {
+                if (EVACont.First().StoreData(new List<IScienceDataContainer>() { this }, false))
+                {
+                    if (!keepDeployed) retractEvent();
+                    ScreenMessages.PostScreenMessage("Science report transferred to " + FlightGlobals.ActiveVessel.name, 5f, ScreenMessageStyle.UPPER_CENTER);
+                    Events["reviewPage"].active = newData.Count > 0;
+                    Events["ResetExperiment"].active = newData.Count > 0;
+                    Events["CollectDataExternalEvent"].active = newData.Count > 0;
+                }
+            }
         }
 
         [KSPEvent(guiName = "ResetEVA", active = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiActive = false, unfocusedRange = 1.5f)]
@@ -544,6 +557,9 @@ namespace DMagicOrbital
         {
             if (!keepDeployed) retractEvent();
             newData.Clear();
+            Events["reviewPage"].active = newData.Count > 0;
+            Events["ResetExperiment"].active = newData.Count > 0;
+            Events["CollectDataExternalEvent"].active = newData.Count > 0;
         }
 
         public void DumpData(ScienceData data)
@@ -552,6 +568,7 @@ namespace DMagicOrbital
             newData.Clear();
             Events["reviewPage"].active = newData.Count > 0;
             Events["ResetExperiment"].active = newData.Count > 0;
+            Events["CollectDataExternalEvent"].active = newData.Count > 0;
         }
 
         private void onDiscardData(ScienceData data)
@@ -573,7 +590,7 @@ namespace DMagicOrbital
                 {
                     if (tran.CanTransmit())
                     {
-                        if (!tran.IsBusy())         //Check for non-busy transmitters to use.
+                        if (!tran.IsBusy())         
                         {
                             List<ScienceData> tranData = new List<ScienceData>();
                             tranData.Add(data);
@@ -590,7 +607,7 @@ namespace DMagicOrbital
                         }
                     }
                 }
-                if (tranBusy)               //If all transmitters are busy add data to queue for first transmitter.
+                if (tranBusy)               
                 {
                     List<ScienceData> tranData = new List<ScienceData>();
                     tranData.Add(data);
