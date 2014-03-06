@@ -132,7 +132,7 @@ namespace DMagicOrbital
         protected ExperimentsResultDialog expDialog;
         protected IScienceDataContainer ISciCont;
         protected ExperimentResultDialogPage expPage;
-        List<ScienceData> newData = new List<ScienceData>();
+        List<ScienceData> scienceReportList = new List<ScienceData>();
         public int labint = 0;
         protected List<ModuleScienceLab> labList = new List<ModuleScienceLab>();    
 
@@ -156,7 +156,7 @@ namespace DMagicOrbital
         public override void OnSave(ConfigNode node)
         {
             base.OnSave(node);
-            foreach (ScienceData storedData in newData)
+            foreach (ScienceData storedData in scienceReportList)
             {
                 ConfigNode storedDataNode = node.AddNode("ScienceData");
                 storedData.Save(storedDataNode);
@@ -171,7 +171,7 @@ namespace DMagicOrbital
                 foreach (ConfigNode storedDataNode in node.GetNodes("ScienceData"))
                 {
                     ScienceData data = new ScienceData(storedDataNode);
-                    newData.Add(data);
+                    scienceReportList.Add(data);
                 }
             }
         }
@@ -196,7 +196,7 @@ namespace DMagicOrbital
             //Actions["StartExperimentAction"].guiName = experimentActionName;
             //Actions["StartExperimentAction"].active = useActionGroups;
             Events["ResetExperiment"].guiName = resetActionName;
-            Events["ResetExperiment"].active = newData.Count > 0;
+            Events["ResetExperiment"].active = scienceReportList.Count > 0;
             //Actions["ResetAction"].guiName = resetActionName;
             //Actions["ResetAction"].active = useActionGroups;
             Events["CollectDataExternalEvent"].active = dataIsCollectable;
@@ -210,7 +210,7 @@ namespace DMagicOrbital
             Events["ResetExperimentExternal"].guiName = resetActionName;
             Events["ResetExperimentExternal"].unfocusedRange = interactionRange;
             Events["reviewPage"].guiName = reviewActionName;
-            Events["reviewPage"].active = newData.Count > 0;
+            Events["reviewPage"].active = scienceReportList.Count > 0;
             //Actions["ReviewPageAction"].guiName = reviewActionName;
             //Actions["ReviewPageAction"].active = useActionGroups;
             if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length / animSpeed;
@@ -382,11 +382,12 @@ namespace DMagicOrbital
         public void runExperiment()
         {
             ScienceData data = makeScience();
-            newData.Add(data);
+            scienceReportList.Add(data);
             ReviewData();
-            Events["reviewPage"].active = newData.Count > 0;
-            Events["ResetExperiment"].active = newData.Count > 0;
-            Events["CollectDataExternalEvent"].active = newData.Count > 0;
+            Events["reviewPage"].active = scienceReportList.Count > 0;
+            Events["ResetExperiment"].active = scienceReportList.Count > 0;
+            Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
+            Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
         }
 
         public ScienceData makeScience()
@@ -396,7 +397,7 @@ namespace DMagicOrbital
             ScienceData data = null;
             ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(experimentID);
             ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, vessel.mainBody, biome);
-            data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, xmitDataScalar/2, experimentID, exp.experimentTitle + " of " + " " + biomeCleanup(biome) + " " + situationCleanup(vesselSituation));
+            data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, xmitDataScalar/2, experimentID, exp.experimentTitle + situationCleanup(vesselSituation, biome));
             data.subjectID = sub.id;
             return data;
         }      
@@ -421,28 +422,44 @@ namespace DMagicOrbital
             else return "";
         }
 
-        public string situationCleanup(ExperimentSituations expSit)
+        public string situationCleanup(ExperimentSituations expSit, string b)
         {
-            switch (expSit)
+            if (b == "")
             {
-                case ExperimentSituations.SrfLanded:
-                    return "on the surface of " + vessel.mainBody.name + ".";
-                case ExperimentSituations.SrfSplashed:
-                    return "while splashed down on " + vessel.mainBody.name + ".";
-                case ExperimentSituations.FlyingLow:
-                    return "while flying above " + vessel.mainBody.name + ".";
-                case ExperimentSituations.FlyingHigh:
-                    return "while flying in " + vessel.mainBody.name + "'s upper atmosphere.";
-                case ExperimentSituations.InSpaceLow:
-                    return "while in space near " + vessel.mainBody.name + ".";
-                default:
-                    return "while high in space above " + vessel.mainBody.name + ".";
+                switch (expSit)
+                {
+                    case ExperimentSituations.SrfLanded:
+                        return " from  " + vessel.mainBody.name + "'s surface";
+                    case ExperimentSituations.SrfSplashed:
+                        return " from " + vessel.mainBody.name + "'s oceans";
+                    case ExperimentSituations.FlyingLow:
+                        return " while flying at " + vessel.mainBody.name;
+                    case ExperimentSituations.FlyingHigh:
+                        return " from " + vessel.mainBody.name + "'s upper atmosphere";
+                    case ExperimentSituations.InSpaceLow:
+                        return " while in space near " + vessel.mainBody.name;
+                    default:
+                        return " while in space high over " + vessel.mainBody.name;
+                }
             }
-        }
-
-        public string biomeCleanup(string biome)
-        {
-            return "";
+            else
+            {
+                switch (expSit)
+                {
+                    case ExperimentSituations.SrfLanded:
+                        return " from " + vessel.mainBody.name + "'s " + b;
+                    case ExperimentSituations.SrfSplashed:
+                        return " from " + vessel.mainBody.name + "'s " + b;
+                    case ExperimentSituations.FlyingLow:
+                        return " while flying over " + vessel.mainBody.name + "'s " + b;
+                    case ExperimentSituations.FlyingHigh:
+                        return " from the upper atmosphere over " + vessel.mainBody.name + "'s " + b; 
+                    case ExperimentSituations.InSpaceLow:
+                        return " from space just above " + vessel.mainBody.name + "'s " + b;
+                    default:
+                        return " while in space high over " + vessel.mainBody.name + "'s " + b;
+                }
+            }
         }
 
         public bool canConduct()
@@ -478,25 +495,27 @@ namespace DMagicOrbital
         public void ResetExperiment()
         {
             if (!keepDeployed) retractEvent();
-            newData.Clear();
-            Events["reviewPage"].active = newData.Count > 0;
-            Events["ResetExperiment"].active = newData.Count > 0;
-            Events["CollectDataExternalEvent"].active = newData.Count > 0;
+            scienceReportList.Clear();
+            Events["reviewPage"].active = scienceReportList.Count > 0;
+            Events["ResetExperiment"].active = scienceReportList.Count > 0;
+            Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
+            Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
         }
 
         [KSPAction("Reset")]
         public void ResetAction(KSPActionParam param)
         {
             if (!keepDeployed) retractEvent();
-            newData.Clear();
-            Events["reviewPage"].active = newData.Count > 0;
-            Events["ResetExperiment"].active = newData.Count > 0;
-            Events["CollectDataExternalEvent"].active = newData.Count > 0;
+            scienceReportList.Clear();
+            Events["reviewPage"].active = scienceReportList.Count > 0;
+            Events["ResetExperiment"].active = scienceReportList.Count > 0;
+            Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
+            Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
         }
 
         public ScienceData[] GetData()
         {
-            return newData.ToArray();
+            return scienceReportList.ToArray();
         }
 
         public bool IsRerunnable()
@@ -506,7 +525,7 @@ namespace DMagicOrbital
 
         public int GetScienceCount()
         {
-            return newData.Count;
+            return scienceReportList.Count;
         }
 
         [KSPEvent(guiActive = true, guiName = "Review Data", active = false)]
@@ -523,14 +542,14 @@ namespace DMagicOrbital
 
         public void ReviewData()
         {
-            ScienceData data = newData[0];
+            ScienceData data = scienceReportList[0];
             ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, xmitDataScalar/2, transmitWarningText != "", transmitWarningText, true, checkLabOps(), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
             ExperimentsResultDialog.DisplayResult(page);
         }
 
         public void ReviewDataItem(ScienceData data)
         {
-            data = newData[0];
+            data = scienceReportList[0];
             ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, xmitDataScalar/2, transmitWarningText != "", transmitWarningText, true, checkLabOps(), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
             ExperimentsResultDialog.DisplayResult(page);
         }
@@ -539,15 +558,16 @@ namespace DMagicOrbital
         public void CollectDataExternalEvent()
         {
             List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-            if (newData.Count > 0)
+            if (scienceReportList.Count > 0)
             {
                 if (EVACont.First().StoreData(new List<IScienceDataContainer>() { this }, false))
                 {
                     if (!keepDeployed) retractEvent();
                     ScreenMessages.PostScreenMessage("Science report transferred to " + FlightGlobals.ActiveVessel.name, 5f, ScreenMessageStyle.UPPER_CENTER);
-                    Events["reviewPage"].active = newData.Count > 0;
-                    Events["ResetExperiment"].active = newData.Count > 0;
-                    Events["CollectDataExternalEvent"].active = newData.Count > 0;
+                    Events["reviewPage"].active = scienceReportList.Count > 0;
+                    Events["ResetExperiment"].active = scienceReportList.Count > 0;
+                    Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
+                    Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
                 }
             }
         }
@@ -556,19 +576,21 @@ namespace DMagicOrbital
         public void ResetExperimentExternal()
         {
             if (!keepDeployed) retractEvent();
-            newData.Clear();
-            Events["reviewPage"].active = newData.Count > 0;
-            Events["ResetExperiment"].active = newData.Count > 0;
-            Events["CollectDataExternalEvent"].active = newData.Count > 0;
+            scienceReportList.Clear();
+            Events["reviewPage"].active = scienceReportList.Count > 0;
+            Events["ResetExperiment"].active = scienceReportList.Count > 0;
+            Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
+            Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
         }
 
         public void DumpData(ScienceData data)
         {
             if (!keepDeployed) retractEvent();
-            newData.Clear();
-            Events["reviewPage"].active = newData.Count > 0;
-            Events["ResetExperiment"].active = newData.Count > 0;
-            Events["CollectDataExternalEvent"].active = newData.Count > 0;
+            scienceReportList.Clear();
+            Events["reviewPage"].active = scienceReportList.Count > 0;
+            Events["ResetExperiment"].active = scienceReportList.Count > 0;
+            Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
+            Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
         }
 
         private void onDiscardData(ScienceData data)
@@ -584,7 +606,7 @@ namespace DMagicOrbital
         {
             bool tranBusy = false;
             List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
-            if (tranList.Count > 0 && newData.Contains(data))
+            if (tranList.Count > 0 && scienceReportList.Contains(data))
             {
                 foreach (IScienceDataTransmitter tran in tranList)
                 {
@@ -592,44 +614,33 @@ namespace DMagicOrbital
                     {
                         if (!tran.IsBusy())         
                         {
-                            List<ScienceData> tranData = new List<ScienceData>();
-                            tranData.Add(data);
-                            tran.TransmitData(tranData);
-                            newData.Remove(data);
-                            Events["reviewPage"].active = newData.Count > 0;
-                            Events["ResetExperiment"].active = newData.Count > 0;
-                            if (!keepDeployed) retractEvent();
+                            transmission(data, tran);
                             break;
                         }
-                        else
-                        {
-                            tranBusy = true;
-                        }
+                        else tranBusy = true;
                     }
                 }
-                if (tranBusy)               
-                {
-                    List<ScienceData> tranData = new List<ScienceData>();
-                    tranData.Add(data);
-                    tranList.First().TransmitData(tranData);
-                    newData.Remove(data);
-                    Events["reviewPage"].active = newData.Count > 0;
-                    Events["ResetExperiment"].active = newData.Count > 0;
-                    if (!keepDeployed) retractEvent();
-                }
+                if (tranBusy) transmission(data, tranList.First());
             }   
+        }
+
+        public void transmission(ScienceData data, IScienceDataTransmitter tran)
+        {
+            List<ScienceData> tranData = new List<ScienceData>();
+            tranData.Add(data);
+            tran.TransmitData(tranData);
+            scienceReportList.Remove(data);
+            Events["reviewPage"].active = scienceReportList.Count > 0;
+            Events["ResetExperiment"].active = scienceReportList.Count > 0;
+            Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
+            Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
+            if (!keepDeployed) retractEvent();
         }
 
         private void onSendToLab(ScienceData data)
         {
-            if (checkLabOps())
-            {
-                labList[labint].StartCoroutine(labList[labint].ProcessData(data, new Callback<ScienceData>(onComplete)));
-            }
-            else
-            {
-                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
-            }  
+            if (checkLabOps()) labList[labint].StartCoroutine(labList[labint].ProcessData(data, new Callback<ScienceData>(onComplete)));
+            else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);  
         }
 
         private void onComplete(ScienceData data)
