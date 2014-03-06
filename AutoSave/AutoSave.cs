@@ -49,7 +49,7 @@ namespace AutoSave
                 scene = HighLogic.LoadedScene;
                 if (scene == GameScenes.MAINMENU)
                 {
-                    var save = GamePersistence.SaveGame("Persistent Backup " + DateTime.Now.ToString(), folder, 0);
+                    var save = GamePersistence.SaveGame("Persistent Backup", folder, 0);
                     makeBackup = false;
                     print("New savefile created in " + folder);
                     GameEvents.onGameSceneLoadRequested.Remove(saveBackup);
