@@ -85,9 +85,9 @@ namespace DMagicOrbital
         [KSPField(isPersistant = true)]
         public bool IsDeployed;
         [KSPField]
-        public bool allowManualControl;
+        public string animationName = null;
         [KSPField]
-        public string animationName;
+        public bool allowManualControl = false;
         [KSPField(isPersistant = false)]
         public float animSpeed = 1f;
         [KSPField(isPersistant = true)]
@@ -114,7 +114,7 @@ namespace DMagicOrbital
         public string status;
 
         [KSPField]
-        public bool experimentAnimation = false;
+        public bool experimentAnimation = true;
         [KSPField]
         public bool experimentWaitForAnimation = false;        
         [KSPField]
