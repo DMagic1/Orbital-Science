@@ -27,35 +27,42 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
+using System.IO;
+
 
 namespace AutoSave
 {
     [KSPAddon(KSPAddon.Startup.MainMenu, false)]
     public class AutoSave : MonoBehaviour
     {
-        public static bool makeBackup = true;
         public void Start()
         {
             GameEvents.onGameSceneLoadRequested.Add(saveBackup);
-        }
-
+        }        
+        
         public void saveBackup(GameScenes scene)
         {
-            if (makeBackup)
+            scene = HighLogic.LoadedScene;
+            if (scene == GameScenes.MAINMENU)
             {
-                string folder = HighLogic.fetch.GameSaveFolder;
-                scene = HighLogic.LoadedScene;
-                if (scene == GameScenes.MAINMENU)
+                //This doesn't seem to like combining three strings into one path for some reason, so I combine two strings twice, I'm guessing the "saves" string needs some kind of / \.
+                string activeDirectory = Path.Combine(Path.Combine(new System.IO.DirectoryInfo(KSPUtil.ApplicationRootPath).FullName, "saves"), HighLogic.fetch.GameSaveFolder);
+                System.IO.FileInfo oldBackup = new System.IO.FileInfo(Path.Combine(activeDirectory, "Persistent Backup.sfs"));
+                if (oldBackup.Exists)
                 {
-                    var save = GamePersistence.SaveGame("Persistent Backup", folder, 0);
-                    makeBackup = false;
-                    print("New savefile created in " + folder);
+                    System.IO.FileInfo newBackup = new System.IO.FileInfo(Path.Combine(activeDirectory, "Persistent Backup Most Recent.sfs"));
+                    if (newBackup.Exists) newBackup.Replace(Path.Combine(activeDirectory, "Persistent Backup.sfs"), Path.Combine(activeDirectory, "Persistent Backup Most Recent.sfs"));
+                    var save = GamePersistence.SaveGame("Persistent Backup Most Recent", HighLogic.fetch.GameSaveFolder, 0);
+                    GameEvents.onGameSceneLoadRequested.Remove(saveBackup);
+                }
+                else
+                {
+                    var save = GamePersistence.SaveGame("Persistent Backup", HighLogic.fetch.GameSaveFolder, 0);
                     GameEvents.onGameSceneLoadRequested.Remove(saveBackup);
                 }
             }
         }
-        
+
     }
 }
