@@ -91,6 +91,9 @@ namespace DMagic
                 cam = this.part.transform.FindChild("model").FindChild("anom scanner v4").FindChild("base").FindChild("camBaseArm0").FindChild("camBaseArm1").FindChild("camBaseArm2").FindChild("camBase");
                 GameEvents.onVesselSOIChanged.Add(ScanOnSOIChange);
                 pqsBuild();
+                Events["reviewPage"].active = anomalyData.Count > 0;
+                Events["resetExperiment"].active = anomalyData.Count > 0;
+                Events["resetExperimentEVA"].active = anomalyData.Count > 0;
                 if (IsDeployed)
                 {
                     deployDish(1f, 0f);
@@ -581,6 +584,42 @@ namespace DMagic
             ScienceData data = makeNewScience();
             anomalyData.Add(data);
             ReviewData();
+            Events["reviewPage"].active = anomalyData.Count > 0;
+            Events["resetExperiment"].active = anomalyData.Count > 0;
+            Events["resetExperimentEVA"].active = anomalyData.Count > 0;
+        }
+
+        [KSPEvent(guiActive = true, guiName = "Review Anomalous Data", active = false)]
+        public void reviewPage()
+        {
+            ReviewData();
+        }
+
+        [KSPAction("Review Anomalous Data")]
+        public void reviewPageItem(KSPActionParam param)
+        {
+            ReviewData();
+        }
+
+        [KSPEvent(guiActive = true, guiName = "Discard Anomalous Data", active = false)]
+        public void resetExperiment()
+        {
+            anomalyData.Clear();
+            Events["reviewPage"].active = anomalyData.Count > 0;
+            Events["resetExperiment"].active = anomalyData.Count > 0;
+            Events["resetExperimentEVA"].active = anomalyData.Count > 0;
+        }
+
+        [KSPAction("Discard Anomalous Data")]
+        public void resetExperimentAction(KSPActionParam param)
+        {
+            resetExperiment();
+        }
+
+        [KSPEvent(guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Discard Anomalous Data", active = false)]
+        public void resetExperimentEVA()
+        {
+            resetExperiment();
         }
 
         #endregion
@@ -668,10 +707,7 @@ namespace DMagic
                     {
                         if (!tran.IsBusy())         //Check for non-busy transmitters to use.
                         {
-                            List<ScienceData> tranData = new List<ScienceData>();
-                            tranData.Add(data);
-                            tran.TransmitData(tranData);
-                            anomalyData.Remove(data);
+                            transmission(data, tran);
                             break;
                         }
                         else
@@ -679,15 +715,25 @@ namespace DMagic
                             tranBusy = true;
                         }
                     }
-                }
-                if (tranBusy)               //If all transmitters are busy add data to queue for first transmitter.
+                }                
+                if (tranBusy)           //If all transmitters are busy assign data to the queue of a random transmitter
                 {
-                    List<ScienceData> tranData = new List<ScienceData>();
-                    tranData.Add(data);
-                    tranList.First().TransmitData(tranData);
-                    anomalyData.Remove(data);
+                    System.Random randomTran = new System.Random();
+                    int i = randomTran.Next(0, tranList.Count);
+                    transmission(data, tranList[i]);
                 }
             }            
+        }
+
+        public void transmission(ScienceData data, IScienceDataTransmitter tran)
+        {
+            List<ScienceData> tranData = new List<ScienceData>();
+            tranData.Add(data);
+            tran.TransmitData(tranData);
+            anomalyData.Remove(data);
+            Events["reviewPage"].active = anomalyData.Count > 0;
+            Events["resetExperiment"].active = anomalyData.Count > 0;
+            Events["resetExperimentEVA"].active = anomalyData.Count > 0;
         }
         
         private void onSendToLab(ScienceData data)
