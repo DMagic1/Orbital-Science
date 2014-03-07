@@ -26,41 +26,56 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using System.IO;
-
 
 namespace AutoSave
 {
     [KSPAddon(KSPAddon.Startup.MainMenu, false)]
     public class AutoSave : MonoBehaviour
     {
+
+        /*
+         * Set max to number of backups desired
+        */ 
+        public int max = 3;
+
+
         public void Start()
         {
             GameEvents.onGameSceneLoadRequested.Add(saveBackup);
-        }        
+        }
         
         public void saveBackup(GameScenes scene)
         {
             scene = HighLogic.LoadedScene;
             if (scene == GameScenes.MAINMENU)
             {
+                DateTime oldestFile = new DateTime(2050,1,1);
+                string replaceBackup = null;
+                
                 //This doesn't seem to like combining three strings into one path for some reason, so I combine two strings twice, I'm guessing the "saves" string needs some kind of / \.
                 string activeDirectory = Path.Combine(Path.Combine(new System.IO.DirectoryInfo(KSPUtil.ApplicationRootPath).FullName, "saves"), HighLogic.fetch.GameSaveFolder);
-                System.IO.FileInfo oldBackup = new System.IO.FileInfo(Path.Combine(activeDirectory, "Persistent Backup.sfs"));
-                if (oldBackup.Exists)
+                for (int i = 0; i < max; i++)
                 {
-                    System.IO.FileInfo newBackup = new System.IO.FileInfo(Path.Combine(activeDirectory, "Persistent Backup Most Recent.sfs"));
-                    if (newBackup.Exists) newBackup.Replace(Path.Combine(activeDirectory, "Persistent Backup.sfs"), Path.Combine(activeDirectory, "Persistent Backup Most Recent.sfs"));
-                    var save = GamePersistence.SaveGame("Persistent Backup Most Recent", HighLogic.fetch.GameSaveFolder, 0);
-                    GameEvents.onGameSceneLoadRequested.Remove(saveBackup);
+                    System.IO.FileInfo backup = new System.IO.FileInfo(Path.Combine(activeDirectory, "Persistent Backup " + i.ToString() + ".sfs"));
+                    if (!backup.Exists)
+                    {
+                        replaceBackup = "Persistent Backup " + i.ToString();
+                        break;
+                    }
+                    else
+                    {
+                        DateTime modified = backup.LastAccessTime;
+                        if (modified < oldestFile)
+                        {
+                            replaceBackup = "Persistent Backup " + i.ToString();
+                            oldestFile = modified;
+                        }
+                    }
                 }
-                else
-                {
-                    var save = GamePersistence.SaveGame("Persistent Backup", HighLogic.fetch.GameSaveFolder, 0);
-                    GameEvents.onGameSceneLoadRequested.Remove(saveBackup);
-                }
+                var save = GamePersistence.SaveGame(replaceBackup, HighLogic.fetch.GameSaveFolder, 0);
+                GameEvents.onGameSceneLoadRequested.Remove(saveBackup);
             }
         }
 
