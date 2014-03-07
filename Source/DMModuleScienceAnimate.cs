@@ -127,11 +127,11 @@ namespace DMagicOrbital
         protected Animation anim;
         protected CelestialBody Cbody = null;
         protected ScienceExperiment scienceExp;
-        protected IScienceDataTransmitter transmit;
-        protected ModuleScienceLab sciLab;
-        protected ExperimentsResultDialog expDialog;
-        protected IScienceDataContainer ISciCont;
-        protected ExperimentResultDialogPage expPage;
+        //protected IScienceDataTransmitter transmit;
+        //protected ModuleScienceLab sciLab;
+        //protected ExperimentsResultDialog expDialog;
+        //protected IScienceDataContainer ISciCont;
+        //protected ExperimentResultDialogPage expPage;
         List<ScienceData> scienceReportList = new List<ScienceData>();
         public int labint = 0;
         protected List<ModuleScienceLab> labList = new List<ModuleScienceLab>();    
@@ -214,8 +214,7 @@ namespace DMagicOrbital
             //Actions["ReviewPageAction"].guiName = reviewActionName;
             //Actions["ReviewPageAction"].active = useActionGroups;
             if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length / animSpeed;
-
-            scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);            
+            if (experimentID != null) scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);            
         }
         
         public void editorSetup()
@@ -620,7 +619,12 @@ namespace DMagicOrbital
                         else tranBusy = true;
                     }
                 }
-                if (tranBusy) transmission(data, tranList.First());
+                if (tranBusy)
+                {
+                    System.Random randomTran = new System.Random();
+                    int i = randomTran.Next(0, tranList.Count);
+                    transmission(data, tranList[i]); 
+                }
             }   
         }
 
