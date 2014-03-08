@@ -63,8 +63,8 @@ namespace DMagic
 
         protected Animation anim;
         protected Animation animSample;
-        protected List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
 
+        protected List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
         //Science data lists to store initial and stored science results.
         protected List<ScienceData> scienceList = new List<ScienceData>();
         protected List<ScienceData> storedScienceList = new List<ScienceData>();
@@ -80,8 +80,7 @@ namespace DMagic
                 animSample = part.FindModelAnimators(sampleEmptyAnim)[0];
                 if (state == StartState.Editor)
                 {
-                    Events["editorDeploy"].active = true;
-                    Events["editorRetract"].active = false;
+                    editorRetract();
                 }
                 else
                 {
@@ -135,22 +134,22 @@ namespace DMagic
             }
         }
         
-        public void startDrill(float drillStartSpeed, float drillStartTime)
+        public void startDrill(float drillStartSpeed, float drillStartTime) //Determine drill orientation relative to parent part, set angle to -90 to 90.
         {
             double cosineAngle = 0;
             double processedRot = 0;
-            cosineAngle = Mathf.Rad2Deg * Math.Acos(Vector3d.Dot(part.transform.up, part.parent.transform.up));//part.localRoot.transform.up));
+            cosineAngle = Mathf.Rad2Deg * Math.Acos(Vector3d.Dot(part.transform.up, part.parent.transform.up));
             if (cosineAngle > 180)
             {
-                cosineAngle = 360 - cosineAngle;
+                cosineAngle = 360 - cosineAngle;  
             }
             if (cosineAngle > 90)
             {
                 cosineAngle -= 180;
             }            
             processedRot = Math.Abs(cosineAngle);
-            print("Current rot is: " + processedRot.ToString() + ". Values between 0 and 50 play the horizontal drill animation, values between 50 and 90 play the vertical animation.");            
-            if (processedRot < 90d && processedRot >= 50)
+            
+                if (processedRot < 90 && processedRot >= 50)
             {
                 deployDrill(verticalDrillName, drillStartSpeed, drillStartTime);
             }
@@ -158,6 +157,10 @@ namespace DMagic
                 {
                     deployDrill(animationName, drillStartSpeed, drillStartTime);
                 }
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                print("Current rot is: " + Math.Round(processedRot, 2).ToString() + ". Values between 0 and 50 play the horizontal drill animation, values between 50 and 90 play the vertical animation.");            
+            }
         }
         
         # endregion 
@@ -199,19 +202,6 @@ namespace DMagic
             ReviewPrimaryData();
         }
 
-        //[KSPEvent(guiActive = true, guiName = "Check Supplies", active = true)]
-        //public void supplycheck()
-        //{
-        //    print(experimentNumber + " experiments used, and " + storedScienceList.Count.ToString() + " samples used.");
-        //}
-
-        //[KSPEvent(guiActive = true, guiName = "Check Situation", active = true)]
-        //public void checkSituation()
-        //{
-        //    string currentBiome = BiomeCheck();
-        //    print(vessel.situation + ", at " + currentBiome);
-        //}
-
         [KSPAction("Test Drill")]
         public void testDrillAnimator(KSPActionParam param)
         {
@@ -234,6 +224,7 @@ namespace DMagic
                 if (EVACont.First().StoreData(new List<IScienceDataContainer>() { this }, false))
                 {
                     ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
+                    sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), 3f * storedScienceList.Count);
                     Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
                     Events["EVACollect"].active = storedScienceList.Count > 0;
                 }
@@ -287,14 +278,13 @@ namespace DMagic
             ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, ExperimentSituations.SrfLanded, vessel.mainBody, currentBiome);
             if (vessel.mainBody.name == "Eve") // Big boost for reports returned from Eve.
             {
-                data = new ScienceData(exp.baseValue * sub.dataScale * 3f, xmitDataValue / 3f, 0.15f, expID, exp.experimentTitle + " of " + vessel.mainBody.theName + " " + currentBiome);
+                data = new ScienceData(exp.baseValue * sub.dataScale * 2.5f, xmitDataValue / 2.5f, 0.15f, expID, exp.experimentTitle + " of " + vessel.mainBody.theName + " " + currentBiome);
             }
             else
             {
                 data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataValue, 0.15f, expID, exp.experimentTitle + " of " + vessel.mainBody.theName + " " + currentBiome);
             }
             data.subjectID = sub.id;
-            print("Data is: " + data.dataAmount.ToString() + ", Cap is: " + sub.scienceCap.ToString() + ", SciValue is: " + sub.scientificValue.ToString() + ", Science is: " + sub.science.ToString()  + ", SubValue is: " + sub.subjectValue.ToString() + ", Scale is: " + sub.dataScale.ToString());
             return data;
         }
         
@@ -329,12 +319,12 @@ namespace DMagic
                 }
                 else
                 {
-                    ScreenMessages.PostScreenMessage("The XKCD is only meant to be used on atmospheric planets.", 3f, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage("The XKCD is only meant to be used on atmospheric planets.", 4f, ScreenMessageStyle.UPPER_CENTER);
                 }
             }
             else
             {
-                ScreenMessages.PostScreenMessage("The XKCD can only be used on the surface.", 3f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("The XKCD can only be used on the surface.", 4f, ScreenMessageStyle.UPPER_CENTER);
             }
         }
 
@@ -351,7 +341,6 @@ namespace DMagic
                     ScienceData data = makeNewScience();
                     scienceList.Add(data);
                     ReviewPrimaryData();
-                    print("Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
                     Events["ReviewDataEvent"].active = scienceList.Count > 0;
                 }
             }
@@ -428,7 +417,6 @@ namespace DMagic
         {
             scienceList.Remove(data);
             Events["ReviewDataEvent"].active = scienceList.Count > 0;
-            print("DumpData Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
         }
 
         private void onPrimaryPageDiscard(ScienceData data)
@@ -458,8 +446,7 @@ namespace DMagic
                 }
                 Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
                 Events["EVACollect"].active = storedScienceList.Count > 0;
-                Events["ReviewDataEvent"].active = scienceList.Count > 0;                
-                print("KeepData Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
+                Events["ReviewDataEvent"].active = scienceList.Count > 0;
             }
         }
        
@@ -487,7 +474,6 @@ namespace DMagic
                                 Events["labCleanExperiment"].active = labList.Count > 0;
                             }
                             Events["ReviewDataEvent"].active = scienceList.Count > 0;
-                            print("TransmitData Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
                             tranBusy = false;
                             break;
                         }
@@ -511,7 +497,6 @@ namespace DMagic
                         Events["labCleanExperiment"].active = labList.Count > 0;
                     }
                     Events["ReviewDataEvent"].active = scienceList.Count > 0;
-                    print("TransmitData Primary in Queue: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
                 }
             }            
         }        
@@ -519,15 +504,14 @@ namespace DMagic
         private void onSendPrimaryToLab(ScienceData data)
         {
             bool labOperating = checkLabOps();
-            if (labOperating) //Process data if operational science lab is present.
+            if (labOperating)          //Process data if operational science lab is present.
             {
-                labSource = 1; //Mark data source as the primary experiment dialog.
+                labSource = 1;      //Mark data source as the primary experiment dialog.
                 labList[labint].StartCoroutine(labList[labint].ProcessData(data, new Callback<ScienceData>(onComplete)));
-                print("SendToLab Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
             }
             else
             {
-                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 3f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel, cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
             }            
         }
 
@@ -536,7 +520,6 @@ namespace DMagic
             ScienceData exp = scienceList[0];
             ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, exp.transmitValue, 0.15f, experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, labPresent, new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
             ExperimentsResultDialog.DisplayResult(page);
-            print("ReviewData Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
         }        
         
         public void ReviewPrimaryDataItem(ScienceData data)
@@ -544,7 +527,6 @@ namespace DMagic
             ScienceData exp = scienceList[0];
             ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, exp.transmitValue, 0.15f, experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, labPresent, new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
             ExperimentsResultDialog.DisplayResult(page);
-            print("ReviewData Primary AG: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
         }
         
         //Science lab data processing function.
@@ -552,7 +534,6 @@ namespace DMagic
         {
             if (labSource == 2)  //Restart the correct experiment dialog page, remove the science lab boost option.
             {
-                //labPresent = false;
                 ReviewStoredDataEvent();
             }
             else if (labSource == 1)
@@ -573,10 +554,9 @@ namespace DMagic
             Events["EVACollect"].active = storedScienceList.Count > 0;
             if (experimentNumber <= 0)
             {
-                experimentNumber = 0; //Don't allow negative experimentNumber. 
+                experimentNumber = 0;     //Don't allow negative experimentNumber. 
                 Events["labCleanExperiment"].active = false;
             }
-            print("DumpData Secondary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
         }
 
         private void onPageDiscard(ScienceData data)
@@ -586,7 +566,6 @@ namespace DMagic
 
         private void onKeepData(ScienceData data)
         {
-            print("KeepData Secondary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
         }
 
         private void onTransmitData(ScienceData data)
@@ -609,7 +588,6 @@ namespace DMagic
                             Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
                             Events["EVACollect"].active = storedScienceList.Count > 0;
                             tranBusy = false;
-                            print("TransmitData Secondary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
                             break;
                         }
                         else
@@ -627,7 +605,6 @@ namespace DMagic
                     storedScienceList.Remove(data);
                     Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
                     Events["EVACollect"].active = storedScienceList.Count > 0;
-                    print("TransmitData Secondary in Queue: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
                 }
             }
         }
@@ -639,11 +616,10 @@ namespace DMagic
             {
                 labSource = 2; //Mark source as the stored data dialog.
                 labList[labint].StartCoroutine(labList[labint].ProcessData(data, new Callback<ScienceData>(onComplete)));
-                print("SendToLab Primary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list.");
             }
             else
             {
-                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 3f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel, cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
             }              
         }
 
@@ -652,16 +628,11 @@ namespace DMagic
             ScienceData storedExp = storedScienceList[storedDataCount];
             ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, 0.15f, experimentNumber == 6, "No more samples can be collected or stored after this data is transmitted.", false, labPresent, new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
             ExperimentsResultDialog.DisplayResult(page);
-            print("ReviewData Secondary: Now " + scienceList.Count.ToString() + " experiments in the active list, and " + storedScienceList.Count.ToString() + " experiments in the stored list. Lab boost: " + storedExp.labBoost.ToString() + " Transmit Value: " + storedExp.transmitValue.ToString() + ".");
         }
 
         public void ReviewDataItem(ScienceData data)
         {
             ReviewStoredDataEvent();
-            //GetData();
-            //ScienceData storedExp = storedScienceList[storedDataCount];
-            //ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, processedXmitValue, labBoostValue, experimentNumber == 0, "No more samples can be collected or stored after this data is transmitted.", false, false, new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), null);//new Callback<ScienceData>(onSendToLab));
-            //ExperimentsResultDialog.DisplayResult(page);
         }
 
         # endregion

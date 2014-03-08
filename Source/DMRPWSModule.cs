@@ -70,6 +70,7 @@ namespace DMagic
             if (anim[animationName] != null)
             {
                 anim[animationName].speed = 2f;
+
                 //Check if animation is stopped, if not animating and undeployed, start deploy animation. If already deployed do nothing.
                 if (!anim.IsPlaying(animationName))
                 {
@@ -80,12 +81,16 @@ namespace DMagic
                         anim.Play(animationName);
                     }
                 }
-                IsEnabled = true;               
+
+                IsEnabled = true;
+                
+                //Trigger retract right click option.
                 Events["DeployEvent"].active = false;
                 Events["RetractEvent"].active = true;
             }
         }
 
+        //Right click retract animation, same as deploy animation.
         [KSPEvent(guiActive = true, guiName = "Retract RPWS Antenna", active = false)]
         public void RetractEvent()
         {
@@ -101,7 +106,9 @@ namespace DMagic
                         anim.Play(animationName);
                     }
                 }
+
                 IsEnabled = false;
+
                 Events["DeployEvent"].active = true;
                 Events["RetractEvent"].active = false;
             }
@@ -145,6 +152,7 @@ namespace DMagic
         //Check craft position and situation.
         public bool VesselSituation()
         {
+            //print(vessel.orbit.referenceBody.name + ", " + vessel.situation + ", " + vessel.landedAt + ", " + vessel.altitude + ".");
             if (vessel.situation == Vessel.Situations.PRELAUNCH || vessel.situation == Vessel.Situations.LANDED || vessel.situation == Vessel.Situations.SPLASHED)
             {
                 ScreenMessages.PostScreenMessage("Try again when you're in space!", 2f, ScreenMessageStyle.UPPER_CENTER);
