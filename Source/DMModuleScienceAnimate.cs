@@ -88,10 +88,9 @@ namespace DMagic
         protected Animation anim;
         protected CelestialBody Cbody = null;
         protected ScienceExperiment scienceExp;
-
         
         List<ScienceData> scienceReportList = new List<ScienceData>();
-        protected List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
+        List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
 
         public override void OnStart(StartState state)
         {
@@ -142,7 +141,7 @@ namespace DMagic
             //Events["retractEvent"].active = showEndEvent;
             Events["retractEvent"].guiActive = showEndEvent;
             //Actions["retractAction"].active = showEndEvent;
-            Events["toggleEvent"].active = showToggleEvent;
+            Events["toggleEvent"].guiActive = showToggleEvent;
             //Actions["toggleAction"].active = showToggleEvent;
             Events["deployEvent"].guiName = startEventGUIName;
             //Actions["deployAction"].guiName = startEventGUIName;
@@ -299,12 +298,7 @@ namespace DMagic
         //[KSPAction("Reset")]
         new public void ResetAction(KSPActionParam param)
         {
-            if (scienceReportList.Count > 0)
-            {
-                if (keepDeployedMode == 0) retractEvent();
-                scienceReportList.Clear();
-                eventsCheck();
-            }
+            ResetExperiment();
         }
 
         //[KSPEvent(externalToEVAOnly = true, guiActiveUnfocused = true, guiActive = false, guiName = "CollectEVA", active = true, unfocusedRange = 1.5f)]
@@ -316,7 +310,6 @@ namespace DMagic
                 if (EVACont.First().StoreData(new List<IScienceDataContainer>() { this }, false))
                 {
                     if (!keepDeployed) retractEvent();
-                    ScreenMessages.PostScreenMessage("Science report transferred to " + FlightGlobals.ActiveVessel.name, 5f, ScreenMessageStyle.UPPER_CENTER);
                     eventsCheck();
                 }
             }
@@ -325,21 +318,18 @@ namespace DMagic
         //[KSPEvent(guiName = "ResetEVA", active = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiActive = false, unfocusedRange = 1.5f)]
         new public void ResetExperimentExternal()
         {
-            if (scienceReportList.Count > 0)
-            {
-                if (keepDeployedMode == 0) retractEvent();
-                scienceReportList.Clear();
-                eventsCheck();
-            }
+            ResetExperiment();
         }
 
         public void eventsCheck()
         {
             Events["reviewPage"].active = scienceReportList.Count > 0;
+            //Unnecessary???
             Events["ResetExperiment"].active = scienceReportList.Count > 0;
             Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
             Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
-            Events["DeployExperiment"].active = !Inoperable;
+            Events["DeployExperiment"].guiActive = !Inoperable;
+            Events["DeployExperiment"].active = scienceReportList.Count == 0;
         }
 
         #endregion
@@ -381,42 +371,10 @@ namespace DMagic
         //[KSPAction("Start Experiment")]
         new public void DeployAction(KSPActionParam param)
         {
-            if (Inoperable) ScreenMessages.PostScreenMessage("Experiment is no longer functional; must be reset at a science lab or returned to Kerbin", 6f, ScreenMessageStyle.UPPER_CENTER);
-            else
-            {
-                if (canConduct())
-                {
-                    if (experimentAnimation)
-                    {
-                        if (anim.IsPlaying(animationName)) return;
-                        else
-                        {
-                            if (!IsDeployed)
-                            {
-                                deployEvent();
-                                if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-                                if (experimentWaitForAnimation) StartCoroutine(WaitForAnimationAction(param, waitForAnimationTime));
-                                else runExperiment();
-                            }
-                            else runExperiment();
-                        }
-                    }
-                    else runExperiment();
-                }
-                else
-                {
-                    if (customFailMessage != null) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-                }
-            }
+            DeployExperiment();
         }
 
         public IEnumerator WaitForAnimation(float waitTime)
-        {
-            yield return new WaitForSeconds(waitTime);
-            runExperiment();
-        }
-
-        public IEnumerator WaitForAnimationAction(KSPActionParam param, float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
             runExperiment();
@@ -462,6 +420,35 @@ namespace DMagic
             else return "";
         }
 
+        public bool canConduct()
+        {
+            return scienceExp.IsAvailableWhile(getSituation(), vessel.mainBody);
+        }
+
+        public ExperimentSituations getSituation()
+        {
+            switch (vessel.situation)
+            {
+                case Vessel.Situations.LANDED:
+                case Vessel.Situations.PRELAUNCH:
+                    return ExperimentSituations.SrfLanded;
+                case Vessel.Situations.SPLASHED:
+                    return ExperimentSituations.SrfSplashed;
+                default:
+                    if (vessel.altitude < vessel.mainBody.maxAtmosphereAltitude && vessel.mainBody.atmosphere)
+                    {
+                        if (vessel.altitude < vessel.mainBody.scienceValues.flyingAltitudeThreshold)
+                            return ExperimentSituations.FlyingLow;
+                        else
+                            return ExperimentSituations.FlyingHigh;
+                    }
+                    if (vessel.altitude < vessel.mainBody.scienceValues.spaceAltitudeThreshold)
+                        return ExperimentSituations.InSpaceLow;
+                    else
+                        return ExperimentSituations.InSpaceHigh;
+            }
+        }
+
         //This is for the title bar of the experiment results page
         public string situationCleanup(ExperimentSituations expSit, string b)
         {
@@ -503,35 +490,6 @@ namespace DMagic
             }
         }
 
-        public bool canConduct()
-        {
-            return scienceExp.IsAvailableWhile(getSituation(), vessel.mainBody);
-        }
-
-        public ExperimentSituations getSituation()
-        {
-            switch (vessel.situation)
-            {
-                case Vessel.Situations.LANDED:
-                case Vessel.Situations.PRELAUNCH:
-                    return ExperimentSituations.SrfLanded;
-                case Vessel.Situations.SPLASHED:
-                    return ExperimentSituations.SrfSplashed;
-                default:
-                    if (vessel.altitude < vessel.mainBody.maxAtmosphereAltitude && vessel.mainBody.atmosphere)
-                    {
-                        if (vessel.altitude < vessel.mainBody.scienceValues.flyingAltitudeThreshold)
-                            return ExperimentSituations.FlyingLow;
-                        else
-                            return ExperimentSituations.FlyingHigh;
-                    }
-                    if (vessel.altitude < vessel.mainBody.scienceValues.spaceAltitudeThreshold)
-                        return ExperimentSituations.InSpaceLow;
-                    else
-                        return ExperimentSituations.InSpaceHigh;
-            }
-        }
-
         //Custom experiment results dialog page, allows full control over the buttons on that page
         new public void ReviewData()
         {
@@ -546,13 +504,7 @@ namespace DMagic
 
         new public void ReviewDataItem(ScienceData data)
         {
-            if (scienceReportList.Count > 0)
-            {
-                GetData();
-                data = scienceReportList[0];
-                ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, xmitDataScalar / 2, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
-                ExperimentsResultDialog.DisplayResult(page);
-            }
+            ReviewData();
         }
 
         #endregion   
@@ -561,13 +513,14 @@ namespace DMagic
 
         new public ScienceData[] GetData()
         {
+            print("fetching data");
             return scienceReportList.ToArray();
         }
 
         new public bool IsRerunnable()
         {
-            base.IsRerunnable();
-            return rerunnable;
+            return base.IsRerunnable();
+            //return rerunnable;
         }
 
         new public int GetScienceCount()
@@ -584,16 +537,19 @@ namespace DMagic
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Clear();
                 eventsCheck();
+                print("Dump Data");
             }
         }
 
         private void onDiscardData(ScienceData data)
         {            
             ResetExperiment();
+            print("Discard data from page");
         }
 
         private void onKeepData(ScienceData data)
         {
+            print("store date from page");
         }
 
         private void onTransmitData(ScienceData data)
@@ -601,8 +557,9 @@ namespace DMagic
             List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
             if (tranList.Count > 0 && scienceReportList.Count > 0)
             {
-                tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
+                tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> {data});
                 DumpData(data);
+                print("transmit data from page");
             }
             else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
         }
@@ -611,12 +568,13 @@ namespace DMagic
         {
             if (checkLabOps() && scienceReportList.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
-            
+            print("send data to lab");
         }
 
         private void onComplete(ScienceData data)
         {
             ReviewData();
+            print("data processed");
         }
 
         public bool checkLabOps()
