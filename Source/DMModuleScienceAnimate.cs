@@ -297,20 +297,55 @@ namespace DMagic
         {
             ResetExperiment();
         }
-        
+
+        //This ridiculous chunk of code seems to make the EVA data collection work properly
+        public class EVAIScienceContainer: IScienceDataContainer
+        {
+            List<ScienceData> EVADataList = new List<ScienceData>();
+            public EVAIScienceContainer(ScienceData data)
+            {
+                EVADataList.Add(data);
+            }
+            public bool IsRerunnable()
+            {
+                return true;
+            }
+            public int GetScienceCount()
+            {
+                return 1;
+            }
+            public void ReviewData()
+            {
+            }
+            public void ReviewDataItem(ScienceData data)
+            {
+            }
+            public void DumpData(ScienceData data)
+            {
+            }
+            public ScienceData[] GetData()
+            {
+                return EVADataList.ToArray();
+            }
+        }
+
+        EVAIScienceContainer EVAIScience;
+
         //[KSPEvent(externalToEVAOnly = true, guiActiveUnfocused = true, guiActive = false, guiName = "CollectEVA", active = true, unfocusedRange = 1.5f)]
         new public void CollectDataExternalEvent()
         {
             List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-            List<ScienceData> EVAdata = new List<ScienceData>();
-            EVAdata.Add(scienceReportList[0]);
+            //List<ScienceData> EVAdata = new List<ScienceData>();
+            //EVAdata.Add(scienceReportList[0]);
+            EVAIScience = new EVAIScienceContainer(scienceReportList[0]);
             if (scienceReportList.Count > 0)
-            {               
-                if (EVACont.First().AddData(EVAdata[0]))          //StoreData(new List<IScienceDataContainer>() { this }, false))
+            {
+                if (EVACont.First().StoreData(new List<IScienceDataContainer> { EVAIScience }, false))    //scienceReportList[0])}, false))
                 {                    
                     scienceReportList.Clear();
                     ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
                     if (keepDeployedMode == 0) retractEvent();
+                    eventsCheck();
                 }
             }
         }
