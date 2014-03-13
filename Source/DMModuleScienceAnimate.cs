@@ -31,7 +31,7 @@ using System.Text;
 using UnityEngine;
 using System.Collections;
 
-namespace DMagic
+namespace DMModuleScienceAnimate
 {
     class DMModuleScienceAnimate : ModuleScienceExperiment
     {
@@ -74,8 +74,8 @@ namespace DMagic
         public bool experimentWaitForAnimation = false;
         [KSPField]
         public float waitForAnimationTime = -1;
-        [KSPField]
-        public bool keepDeployed = false;
+        //[KSPField]
+        //public bool keepDeployed = false;
         [KSPField]
         public int keepDeployedMode = 0;
         [KSPField]
@@ -98,9 +98,9 @@ namespace DMagic
                 editorSetup();
             }
             else
-            {
-                eventsCheck();
+            {                
                 setup();
+                eventsCheck();
                 GetData();
                 if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
@@ -342,10 +342,10 @@ namespace DMagic
             {
                 if (EVACont.First().StoreData(new List<IScienceDataContainer> { EVAIScience }, false))    //scienceReportList[0])}, false))
                 {                    
-                    scienceReportList.Clear();
-                    ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
-                    if (keepDeployedMode == 0) retractEvent();
-                    eventsCheck();
+                    //scienceReportList.Clear();
+                    //ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
+                    //if (keepDeployedMode == 0) retractEvent();
+                    DumpData(scienceReportList[0]);
                 }
             }
         }
@@ -423,7 +423,7 @@ namespace DMagic
             ScienceData data = makeScience();
             scienceReportList.Add(data);
             ReviewData();
-            eventsCheck();
+            //eventsCheck();
             if (keepDeployedMode == 1) retractEvent();
         }
 
@@ -540,6 +540,7 @@ namespace DMagic
                 ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, xmitDataScalar / 2, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
                 ExperimentsResultDialog.DisplayResult(page);
             }
+            eventsCheck();
         }
 
         new public void ReviewDataEvent()
