@@ -14,9 +14,6 @@
  * this list of conditions and the following disclaimer in the documentation and/or other materials 
  * provided with the distribution.
  * 
- * 3. Neither the name of the copyright holder nor the names of its contributors may be used 
- * to endorse or promote products derived from this software without specific prior written permission.
- * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
@@ -42,7 +39,6 @@ namespace DMagic
         public string customFailMessage = null;
         [KSPField]
         public string deployingMessage = null;
-
         [KSPField(isPersistant = true)]
         public bool IsDeployed;
         [KSPField]
@@ -166,8 +162,8 @@ namespace DMagic
             //Events["ResetExperimentExternal"].guiActiveUnfocused = resettableOnEVA;
             //Events["ResetExperimentExternal"].guiName = resetActionName;
             //Events["ResetExperimentExternal"].unfocusedRange = interactionRange;
-            Events["reviewPage"].guiName = reviewActionName;
-            Events["reviewPage"].active = scienceReportList.Count > 0;
+            //Events["reviewPage"].guiName = reviewActionName;
+            //Events["reviewPage"].active = scienceReportList.Count > 0;
             //Actions["ReviewPageAction"].guiName = reviewActionName;
             //Actions["ReviewPageAction"].active = useActionGroups;
             if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length / animSpeed;
@@ -182,8 +178,8 @@ namespace DMagic
             Actions["deployAction"].guiName = startEventGUIName;
             Actions["retractAction"].guiName = endEventGUIName;
             Actions["toggleAction"].guiName = toggleEventGUIName;
-            Actions["reviewPageAction"].guiName = reviewActionName;
-            Actions["reviewPageAction"].active = useActionGroups;
+            //Actions["reviewPageAction"].guiName = reviewActionName;
+            //Actions["reviewPageAction"].active = useActionGroups;
             //Actions["StartExperimentAction"].guiName = experimentActionName;
             //Actions["StartExperimentAction"].active = useActionGroups;
             //Actions["ResetAction"].guiName = resetActionName;
@@ -272,17 +268,18 @@ namespace DMagic
 
         #region Science Events and Actions
 
-        [KSPEvent(guiActive = true, guiName = "Review Data", active = false)]
-        public void reviewPage()
-        {
-            if (scienceReportList.Count > 0) ReviewData();
-        }
+        //[KSPEvent(guiActive = true, guiName = "Review Data", active = false)]
+        //public void reviewPage()
+        //{
+        //    if (scienceReportList.Count > 0) ReviewData();
+        //}
 
-        [KSPAction("Review Data")]
-        public void reviewPageAction(KSPActionParam param)
-        {
-            if (scienceReportList.Count > 0) ReviewData();
-        }        
+        //Maybe remove this altogether
+        //[KSPAction("Review Data")]
+        //public void reviewPageAction(KSPActionParam param)
+        //{
+        //    if (scienceReportList.Count > 0) ReviewData();
+        //}        
 
         //[KSPEvent(guiActive = true, guiName = "Reset", active = false)]
         new public void ResetExperiment()
@@ -300,17 +297,20 @@ namespace DMagic
         {
             ResetExperiment();
         }
-
+        
         //[KSPEvent(externalToEVAOnly = true, guiActiveUnfocused = true, guiActive = false, guiName = "CollectEVA", active = true, unfocusedRange = 1.5f)]
         new public void CollectDataExternalEvent()
         {
             List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
+            List<ScienceData> EVAdata = new List<ScienceData>();
+            EVAdata.Add(scienceReportList[0]);
             if (scienceReportList.Count > 0)
-            {
-                if (EVACont.First().StoreData(new List<IScienceDataContainer>() { this }, false))
-                {
-                    if (!keepDeployed) retractEvent();
-                    eventsCheck();
+            {               
+                if (EVACont.First().AddData(EVAdata[0]))          //StoreData(new List<IScienceDataContainer>() { this }, false))
+                {                    
+                    scienceReportList.Clear();
+                    ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
+                    if (keepDeployedMode == 0) retractEvent();
                 }
             }
         }
@@ -323,13 +323,15 @@ namespace DMagic
 
         public void eventsCheck()
         {
-            Events["reviewPage"].active = scienceReportList.Count > 0;
+            //Events["reviewPage"].active = scienceReportList.Count > 0;
+            
             //Unnecessary???
             Events["ResetExperiment"].active = scienceReportList.Count > 0;
             Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
             Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
-            Events["DeployExperiment"].guiActive = !Inoperable;
-            Events["DeployExperiment"].active = scienceReportList.Count == 0;
+            Events["DeployExperiment"].active = !Inoperable;
+            //Events["DeployExperiment"].active = scienceReportList.Count == 0;
+            Events["ReviewDataEvent"].active = scienceReportList.Count > 0;
         }
 
         #endregion
@@ -374,6 +376,7 @@ namespace DMagic
             DeployExperiment();
         }
 
+        //In case we need to wait for an animation to finish before running the experiment
         public IEnumerator WaitForAnimation(float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
@@ -389,6 +392,7 @@ namespace DMagic
             if (keepDeployedMode == 1) retractEvent();
         }
 
+        //Create the science data
         public ScienceData makeScience()
         {
             ExperimentSituations vesselSituation = getSituation();
@@ -425,6 +429,7 @@ namespace DMagic
             return scienceExp.IsAvailableWhile(getSituation(), vessel.mainBody);
         }
 
+        //Get our experimental situation based on the vessel's current flight situation, fix stock bugs with aerobraking and reentry.
         public ExperimentSituations getSituation()
         {
             switch (vessel.situation)
@@ -502,7 +507,7 @@ namespace DMagic
             }
         }
 
-        new public void ReviewDataItem(ScienceData data)
+        new public void ReviewDataEvent()
         {
             ReviewData();
         }
@@ -511,16 +516,15 @@ namespace DMagic
 
         #region Experiment Results Control
 
+        //Still not quite sure what exactly this is doing
         new public ScienceData[] GetData()
         {
-            print("fetching data");
             return scienceReportList.ToArray();
         }
 
         new public bool IsRerunnable()
         {
             return base.IsRerunnable();
-            //return rerunnable;
         }
 
         new public int GetScienceCount()
@@ -528,7 +532,7 @@ namespace DMagic
             return scienceReportList.Count;
         }
 
-        //This is called after data is transmitted
+        //This is called after data is transmitted by right-clicking on the transmitter itself
         new public void DumpData(ScienceData data)
         {
             if (scienceReportList.Count > 0)
@@ -536,7 +540,7 @@ namespace DMagic
                 base.DumpData(data);
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Clear();
-                eventsCheck();
+                Events["DeployExperiment"].active = !Inoperable;
                 print("Dump Data");
             }
         }
@@ -549,7 +553,7 @@ namespace DMagic
 
         private void onKeepData(ScienceData data)
         {
-            print("store date from page");
+            print("Store date from page");
         }
 
         private void onTransmitData(ScienceData data)
@@ -559,7 +563,7 @@ namespace DMagic
             {
                 tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> {data});
                 DumpData(data);
-                print("transmit data from page");
+                print("Transmit data from page");
             }
             else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
         }
@@ -568,15 +572,16 @@ namespace DMagic
         {
             if (checkLabOps() && scienceReportList.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
-            print("send data to lab");
+            print("Send data to lab");
         }
 
         private void onComplete(ScienceData data)
         {
             ReviewData();
-            print("data processed");
+            print("Data processed in lab");
         }
 
+        //Maybe unnecessary, can be folded into a simpler method???
         public bool checkLabOps()
         {
             labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
