@@ -576,7 +576,8 @@ namespace DMModuleScienceAnimate
                 base.DumpData(data);
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Clear();
-                Events["DeployExperiment"].active = !Inoperable;
+                eventsCheck();
+                //Events["DeployExperiment"].active = !Inoperable;
                 print("Dump Data");
             }
         }
