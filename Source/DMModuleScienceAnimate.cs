@@ -80,6 +80,10 @@ namespace DMModuleScienceAnimate
         public int keepDeployedMode = 0;
         [KSPField]
         public bool oneWayAnimation = false;
+        [KSPField]
+        public string resourceToUse = null;
+        [KSPField]
+        public float resourceCost = 1;
 
         protected Animation anim;
         protected CelestialBody Cbody = null;
@@ -390,7 +394,11 @@ namespace DMModuleScienceAnimate
                             {
                                 deployEvent();
                                 if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-                                if (experimentWaitForAnimation) StartCoroutine(WaitForAnimation(waitForAnimationTime));
+                                if (experimentWaitForAnimation)
+                                {
+                                    if (resourceToUse != null) part.RequestResource(resourceToUse, resourceCost);
+                                    StartCoroutine(WaitForAnimation(waitForAnimationTime));
+                                }
                                 else runExperiment();
                             }
                             else runExperiment();
@@ -415,6 +423,7 @@ namespace DMModuleScienceAnimate
         public IEnumerator WaitForAnimation(float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
+            if(resourceToUse != null) part.RequestResource(resourceToUse, 0f);
             runExperiment();
         }
 
