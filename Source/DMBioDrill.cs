@@ -14,9 +14,6 @@
  * this list of conditions and the following disclaimer in the documentation and/or other materials 
  * provided with the distribution.
  * 
- * 3. Neither the name of the copyright holder nor the names of its contributors may be used 
- * to endorse or promote products derived from this software without specific prior written permission.
- * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
@@ -55,11 +52,11 @@ namespace DMagic
         public string expID = null;
         [KSPField(isPersistant = false)]
         public float xmitDataValue = 0f;
+        [KSPField(isPersistant = true)]
+        public bool Inoperable = false;
 
         public int labSource = 0;
-        public bool labPresent = false;
         public int storedDataCount = 0;
-        public int labint = 0;
 
         protected Animation anim;
         protected Animation animSample;
@@ -85,9 +82,7 @@ namespace DMagic
                 else
                 {
                     labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-                    labPresent = labList.Count > 0;
-                    Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
-                    Events["EVACollect"].active = storedScienceList.Count > 0;
+                    eventsCheck();
                     sampleAnimation(sampleAnim, 0f, 0.3f * storedScienceList.Count, 1f);
                     sampleAnimation(indicatorAnim, 0f, 0.15f * experimentNumber, 1f);
                     if (experimentNumber > 0)
@@ -223,12 +218,36 @@ namespace DMagic
             {
                 if (EVACont.First().StoreData(new List<IScienceDataContainer>() { this }, false))
                 {
-                    ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
+                    //ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
                     sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), 3f * storedScienceList.Count);
-                    Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
-                    Events["EVACollect"].active = storedScienceList.Count > 0;
+                    storedScienceList.Clear();
+                    eventsCheck();
                 }
             }
+        }
+
+        [KSPEvent(guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Discard Stored Data", unfocusedRange = 1.5f, active = false)]
+        public void ResetExperimentExternal()
+        {
+            sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), storedScienceList.Count * 3f);
+            sampleAnimation(indicatorAnim, -0.5f, 0.15f * experimentNumber, storedScienceList.Count * 3f);
+            foreach (ScienceData data in storedScienceList)
+            {
+                ResetExperiment(data);
+            }
+        }
+
+        [KSPEvent(guiActive = true, guiName = "Discard Stored Data", active = false)]
+        public void ResetExperiment(ScienceData data)
+        {
+            experimentNumber--;
+            storedScienceList.Remove(data);
+            if (experimentNumber <= 0)
+            {
+                experimentNumber = 0;     //Don't allow negative experimentNumber. 
+                Events["labCleanExperiment"].active = false;
+            }
+            eventsCheck();
         }
 
         [KSPEvent(guiActiveEditor = true, guiName = "Preview Drill", active = true)]
@@ -247,6 +266,16 @@ namespace DMagic
             startDrill(-1f, 0f);
             Events["editorDeploy"].active = true;
             Events["editorRetract"].active = false;
+        }
+
+        public void eventsCheck()
+        {
+            Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
+            Events["ReviewDataEvent"].active = scienceList.Count > 0;
+            Events["EVACollect"].active = storedScienceList.Count > 0;
+            Events["StartExperiment"].active = !Inoperable;
+            Events["ResetExperiment"].active = storedScienceList.Count > 0;
+            Events["ResetExperimentExternal"].active = storedScienceList.Count > 0;
         }
 
         # endregion
@@ -341,7 +370,14 @@ namespace DMagic
                     ScienceData data = makeNewScience();
                     scienceList.Add(data);
                     ReviewPrimaryData();
-                    Events["ReviewDataEvent"].active = scienceList.Count > 0;
+                    if (!checkLabOps())
+                    {
+                        sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
+                        experimentNumber++;           //Experiment infinitely repeatable if operational science lab is connected.
+                        Events["labCleanExperiment"].active = labList.Count > 0;
+                    }
+                    Inoperable = IsRerunnable();
+                    eventsCheck();
                 }
             }
 
@@ -376,7 +412,6 @@ namespace DMagic
         public override void OnUpdate() //Check for labs after docking.
         {
             labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-            labPresent = labList.Count > 0;
             if (experimentNumber > 0)
             {
                 Events["labCleanExperiment"].active = labList.Count > 0;
@@ -395,15 +430,15 @@ namespace DMagic
 
         public bool IsRerunnable()
         {
-            return true;
+            return experimentNumber < 6;
         }
               
         public bool checkLabOps()  //Make sure any science labs present are operational.
         {
             bool labOp = false;
-            for (labint = 0; labint < labList.Count; labint++)
+            for (int i = 0; i < labList.Count; i++)
             {
-                if (labList[labint].IsOperational())
+                if (labList[i].IsOperational())
                 {
                     labOp = true;
                     break;
@@ -413,15 +448,12 @@ namespace DMagic
         }
         
         //IScienceDataContainer functions for initial Science Data list.
-        public void DumpPrimaryData(ScienceData data)
-        {
-            scienceList.Remove(data);
-            Events["ReviewDataEvent"].active = scienceList.Count > 0;
-        }
-
         private void onPrimaryPageDiscard(ScienceData data)
         {
-            DumpPrimaryData(data);
+            scienceList.Remove(data);
+            sampleAnimation(indicatorAnim, -0.5f, 0.15f * experimentNumber, 3f);
+            experimentNumber--;
+            eventsCheck();
         }
 
         //Transfer data from primary Science data list to stored data list. Only allow three stored samples.
@@ -437,131 +469,65 @@ namespace DMagic
                 sampleAnimation(sampleAnim, 1f, 0.3f * storedScienceList.Count, 3f);
                 storedScienceList.Add(scienceList[0]);
                 scienceList.Remove(data);
-                bool labOperating = checkLabOps();
-                if (!labOperating)
-                {
-                    sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
-                    experimentNumber++;           //Experiment infinitely repeatable if operational science lab is connected.
-                    Events["labCleanExperiment"].active = labList.Count > 0;
-                }
-                Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
-                Events["EVACollect"].active = storedScienceList.Count > 0;
-                Events["ReviewDataEvent"].active = scienceList.Count > 0;
+                eventsCheck();
             }
         }
        
         private void onTransmitPrimaryData(ScienceData data)
         {
-            bool tranBusy = false;
             List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
-            if (tranList.Count > 0 && scienceList.Contains(data))
+            if (tranList.Count > 0 && scienceList.Count > 0)
             {
-                foreach (IScienceDataTransmitter tran in tranList)
-                {
-                    if (tran.CanTransmit())
-                    {
-                        if (!tran.IsBusy()) //Check for non-busy transmitters to use.
-                        {
-                            List<ScienceData> tranData = new List<ScienceData>();
-                            tranData.Add(data);
-                            tran.TransmitData(tranData);
-                            scienceList.Remove(data);
-                            bool labOperating = checkLabOps();
-                            if (!labOperating)
-                            {
-                                sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
-                                experimentNumber++;        
-                                Events["labCleanExperiment"].active = labList.Count > 0;
-                            }
-                            Events["ReviewDataEvent"].active = scienceList.Count > 0;
-                            tranBusy = false;
-                            break;
-                        }
-                        else
-                        {
-                            tranBusy = true; 
-                        }
-                    }
-                }
-                if (tranBusy)   //If all transmitters are busy add data to queue for first transmitter.
-                {
-                    List<ScienceData> tranData = new List<ScienceData>();
-                    tranData.Add(data);
-                    tranList.First().TransmitData(tranData);
-                    scienceList.Remove(data);
-                    bool labOperating = checkLabOps();
-                    if (!labOperating)
-                    {
-                        sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
-                        experimentNumber++;        
-                        Events["labCleanExperiment"].active = labList.Count > 0;
-                    }
-                    Events["ReviewDataEvent"].active = scienceList.Count > 0;
-                }
-            }            
+                tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
+                scienceList.Clear();
+            }
+            else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);                          
         }        
 
         private void onSendPrimaryToLab(ScienceData data)
         {
-            bool labOperating = checkLabOps();
-            if (labOperating)          //Process data if operational science lab is present.
+            if (checkLabOps() && scienceList.Count > 0)
             {
-                labSource = 1;      //Mark data source as the primary experiment dialog.
-                labList[labint].StartCoroutine(labList[labint].ProcessData(data, new Callback<ScienceData>(onComplete)));
+                labSource = 1;
+                labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             }
-            else
-            {
-                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel, cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
-            }            
+            else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);      
         }
 
         public void ReviewPrimaryData()
         {
             ScienceData exp = scienceList[0];
-            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, exp.transmitValue, 0.15f, experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, labPresent, new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, exp.transmitValue, xmitDataValue / 2 , experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, exp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
             ExperimentsResultDialog.DisplayResult(page);
         }        
-        
-        public void ReviewPrimaryDataItem(ScienceData data)
-        {
-            ScienceData exp = scienceList[0];
-            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, exp.transmitValue, 0.15f, experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, labPresent, new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
-            ExperimentsResultDialog.DisplayResult(page);
-        }
         
         //Science lab data processing function.
         private void onComplete(ScienceData data)
         {
-            if (labSource == 2)  //Restart the correct experiment dialog page, remove the science lab boost option.
+            if (labSource == 2)  //Restart the correct experiment dialog page.
             {
                 ReviewStoredDataEvent();
             }
             else if (labSource == 1)
             {
-                labPresent = false;
                 ReviewPrimaryData();
             }
         }
 
         //IScienceDataContainer functions for stored science data.
-        public void DumpData(ScienceData data)
+        public void DumpData(ScienceData data)  //Method called when data is transmitted from transmitter button, clears all data.
         {
-            sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count/3f), 3f);
-            sampleAnimation(indicatorAnim, -0.5f, 0.15f * experimentNumber, 3f);
-            experimentNumber--;
-            storedScienceList.Remove(data);
-            Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
-            Events["EVACollect"].active = storedScienceList.Count > 0;
-            if (experimentNumber <= 0)
-            {
-                experimentNumber = 0;     //Don't allow negative experimentNumber. 
-                Events["labCleanExperiment"].active = false;
-            }
+            sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), storedScienceList.Count * 3f);
+            storedScienceList.Clear();
+            scienceList.Clear();
+            eventsCheck();
         }
 
         private void onPageDiscard(ScienceData data)
         {
-            DumpData(data);
+            sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), 3f);
+            sampleAnimation(indicatorAnim, -0.5f, 0.15f * experimentNumber, 3f);
+            ResetExperiment(data);
         }
 
         private void onKeepData(ScienceData data)
@@ -570,63 +536,30 @@ namespace DMagic
 
         private void onTransmitData(ScienceData data)
         {
-            bool tranBusy = false;
             List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
-            if (tranList.Count > 0 && storedScienceList.Contains(data))
+            if (tranList.Count > 0 && storedScienceList.Count > 0)
             {
-                foreach (IScienceDataTransmitter tran in tranList)
-                {
-                    if (tran.CanTransmit())
-                    {
-                        if (!tran.IsBusy())
-                        {
-                            List<ScienceData> tranData = new List<ScienceData>();
-                            tranData.Add(data);
-                            tran.TransmitData(tranData);
-                            sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), 3f);
-                            storedScienceList.Remove(data);
-                            Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
-                            Events["EVACollect"].active = storedScienceList.Count > 0;
-                            tranBusy = false;
-                            break;
-                        }
-                        else
-                        {
-                            tranBusy = true;
-                        }
-                    }
-                }
-                if (tranBusy)
-                {
-                    List<ScienceData> tranData = new List<ScienceData>();
-                    tranData.Add(data);
-                    tranList.First().TransmitData(tranData);
-                    sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), 3f);
-                    storedScienceList.Remove(data);
-                    Events["ReviewStoredDataEvent"].active = storedScienceList.Count > 0;
-                    Events["EVACollect"].active = storedScienceList.Count > 0;
-                }
+                tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
+                sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), 3f);
+                storedScienceList.Remove(data);
             }
+            else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
         }
 
         private void onSendToLab(ScienceData data)
         {
-            bool labOperating = checkLabOps();
-            if (labOperating)
+            if (checkLabOps() && storedScienceList.Count > 0)
             {
-                labSource = 2; //Mark source as the stored data dialog.
-                labList[labint].StartCoroutine(labList[labint].ProcessData(data, new Callback<ScienceData>(onComplete)));
+                labSource = 2;
+                labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             }
-            else
-            {
-                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel, cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
-            }              
+            else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);      
         }
 
         public void ReviewData()
         {
             ScienceData storedExp = storedScienceList[storedDataCount];
-            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, 0.15f, experimentNumber == 6, "No more samples can be collected or stored after this data is transmitted.", false, labPresent, new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, xmitDataValue / 2, experimentNumber == 6, "No more samples can be collected or stored after this data is transmitted.", false, storedExp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
             ExperimentsResultDialog.DisplayResult(page);
         }
 
