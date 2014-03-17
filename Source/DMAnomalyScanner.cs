@@ -14,9 +14,6 @@
  * this list of conditions and the following disclaimer in the documentation and/or other materials 
  * provided with the distribution.
  * 
- * 3. Neither the name of the copyright holder nor the names of its contributors may be used 
- * to endorse or promote products derived from this software without specific prior written permission.
- * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
@@ -36,7 +33,7 @@ using System.Collections;
 
 namespace DMagic
 {
-    class DMAnomalyScanner : PartModule , IScienceDataContainer
+    class DMAnomalyScanner : ModuleScienceExperiment
     {
         [KSPField]
         public string animationName = null;
@@ -48,16 +45,9 @@ namespace DMagic
         public string foundAnimate = null;
 
         [KSPField]
-        public string experimentID = null;
-        [KSPField]
-        public float xmitDataValue = 0f;
-        [KSPField]
-        public bool rerunnable = false;
-
-        [KSPField]
         public bool IsEnabled = false;
-        [KSPField(isPersistant = true)]
-        public bool Inoperable = false;
+        //[KSPField(isPersistant = true)]
+        //public bool Inoperable = false;
         [KSPField(isPersistant = true)]
         public bool IsDeployed = false;         
          
@@ -102,8 +92,9 @@ namespace DMagic
             }
         }
 
-        public void OnDestroy()
+        new public void OnDestroy()
         {
+            base.OnDestroy();
             GameEvents.onVesselSOIChanged.Remove(ScanOnSOIChange);
         }
         
@@ -114,10 +105,11 @@ namespace DMagic
 
         public override void OnUpdate()
         {
+            base.OnUpdate();
             if (!HighLogic.LoadedSceneIsEditor)
             {
-                labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-                if (labList.Count > 0) Events["cleanExperiment"].active = true;
+                //labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+                //if (labList.Count > 0) Events["cleanExperiment"].active = true;
                 if (IsDeployed)                 //Don't waste OnUpdate unless the part is deployed.
                 {
                     inRange();
@@ -475,8 +467,8 @@ namespace DMagic
             }
         }
 
-        [KSPEvent(guiActive = true, guiName = "Collect Data", active = true)]
-        public void collectScience()
+        //[KSPEvent(guiActive = true, guiName = "Collect Data", active = true)]
+        new public void DeployExperiment()
         {
             if (Inoperable) ScreenMessages.PostScreenMessage("Anomalous Signal Scanner is no longer functional; must be reset at a science lab or returned to Kerbin", 6f, ScreenMessageStyle.UPPER_CENTER);
             else
@@ -497,15 +489,15 @@ namespace DMagic
             }
         }
         
-        [KSPAction("Collect Data")]
-        public void collectScienceAction(KSPActionParam param)
+        //[KSPAction("Collect Data")]
+        new public void DeployAction(KSPActionParam param)
         {
             if (anomalyData.Count > 0)
             {
                 eventsCheck();
                 return;
             }
-            else collectScience();
+            else DeployExperiment();
         }
 
         public ScienceData makeNewScience()
@@ -513,7 +505,7 @@ namespace DMagic
             ScienceData data = null;
             ScienceExperiment anomExp = ResearchAndDevelopment.GetExperiment(experimentID);
             ScienceSubject anomSub = ResearchAndDevelopment.GetExperimentSubject(anomExp, currentExpSit(), vessel.mainBody, biomeResultName(closestAnom));
-            data = new ScienceData(anomExp.baseValue * anomSub.dataScale, xmitDataValue, xmitDataValue/2, experimentID, "Scan of the " + biomeResultName(closestAnom) + " on " + vessel.mainBody.theName + ".");
+            data = new ScienceData(anomExp.baseValue * anomSub.dataScale, xmitDataScalar, xmitDataScalar/2, experimentID, "Scan of the " + biomeResultName(closestAnom) + " on " + vessel.mainBody.theName + ".");
             data.subjectID = anomSub.id;
             return data;            
         }
@@ -523,62 +515,62 @@ namespace DMagic
             ScienceData data = makeNewScience();
             anomalyData.Add(data);
             ReviewData();
-            eventsCheck();
+            //eventsCheck();
         }
 
         public void eventsCheck()
         {
-            Events["reviewPage"].active = anomalyData.Count > 0;
-            Events["resetExperiment"].active = anomalyData.Count > 0;
-            Events["resetExperimentEVA"].active = anomalyData.Count > 0;
-            Events["cleanExperiment"].active = checkLabOps();
-            Events["cleanExperiment"].guiActive = Inoperable;
-            Events["collectScience"].guiActive = !Inoperable;
-            Events["collectScience"].active = anomalyData.Count == 0;
+            Events["ReviewDataEvent"].active = anomalyData.Count > 0;
+            Events["ResetExperiment"].active = anomalyData.Count > 0;
+            Events["ResetExperimentExternal"].active = anomalyData.Count > 0;
+            //Events["cleanExperiment"].active = checkLabOps();
+            //Events["cleanExperiment"].guiActive = Inoperable;
+            Events["DeployExperiment"].active = !Inoperable;
+            //Events["DeployExperiment"].active = anomalyData.Count == 0;
         }
 
-        [KSPEvent(guiActive = true, guiName = "Review Anomalous Data", active = false)]
-        public void reviewPage()
+        //[KSPEvent(guiActive = true, guiName = "Review Anomalous Data", active = false)]
+        new public void ReviewDataEvent()
         {
             if (anomalyData.Count > 0) ReviewData();
             eventsCheck();
         }
 
-        [KSPEvent(guiActive = true, guiName = "Discard Anomalous Data", active = false)]
-        public void resetExperiment()
+        //[KSPEvent(guiActive = true, guiName = "Discard Anomalous Data", active = false)]
+        new public void ResetExperiment()
         {
             if (anomalyData.Count > 0) anomalyData.Clear();
                 eventsCheck();
         }
 
-        [KSPEvent(guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Discard Anomalous Data", active = false)]
-        public void resetExperimentEVA()
+        //[KSPEvent(guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Discard Anomalous Data", active = false)]
+        new public void ResetExperimentExternal()
         {
-            resetExperiment();
+            ResetExperiment();
         }
         
         //Replace the lab clean function - needs some work
-        [KSPEvent(guiActive = false, guiName = "Clean Experiment", active = false)]
-        public void cleanExperiment()
-        {
-            if (checkLabOps())
-            {
-                ScreenMessages.PostScreenMessage("Cleaning Anomalous Signal Scanner", 5f, ScreenMessageStyle.UPPER_LEFT);
-                StartCoroutine("waitForClean");
-            }
-            else
-            {
-                ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot clean this experiment.", 4f, ScreenMessageStyle.UPPER_CENTER);
-            }   
-        }
+        //[KSPEvent(guiActive = false, guiName = "Clean Experiment", active = false)]
+        //public void cleanExperiment()
+        //{
+        //    if (checkLabOps())
+        //    {
+        //        ScreenMessages.PostScreenMessage("Cleaning Anomalous Signal Scanner", 5f, ScreenMessageStyle.UPPER_LEFT);
+        //        StartCoroutine("waitForClean");
+        //    }
+        //    else
+        //    {
+        //        ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot clean this experiment.", 4f, ScreenMessageStyle.UPPER_CENTER);
+        //    }   
+        //}
 
-        IEnumerator waitForClean()
-        {
-            yield return new WaitForSeconds(5f);
-            Inoperable = false;
-            eventsCheck();
-            ScreenMessages.PostScreenMessage("Anomalous Signal Scanner ready for use", 4f, ScreenMessageStyle.UPPER_LEFT);
-        }
+        //IEnumerator waitForClean()
+        //{
+        //    yield return new WaitForSeconds(5f);
+        //    Inoperable = false;
+        //    eventsCheck();
+        //    ScreenMessages.PostScreenMessage("Anomalous Signal Scanner ready for use", 4f, ScreenMessageStyle.UPPER_LEFT);
+        //}
 
         #endregion
 
@@ -609,40 +601,40 @@ namespace DMagic
             }
         }
 
-        public ScienceData[] GetData()     
+        new public ScienceData[] GetData()     
         {
             return anomalyData.ToArray();
         }
 
-        public int GetScienceCount()
+        new public int GetScienceCount()
         {
             return anomalyData.Count;
         }
 
-        public bool IsRerunnable()
+        new public bool IsRerunnable()
         {
-            return rerunnable;
+            return base.IsRerunnable();
         }
 
-        public void DumpData(ScienceData data)      //This is what the transmitter module calls after transmitting data
+        new public void DumpData(ScienceData data)      //This is what the transmitter module calls after transmitting data
         {
             if (anomalyData.Count > 0)
             {
+                base.DumpData(data);
                 anomalyData.Clear();
-                Inoperable = !IsRerunnable();
-                ScreenMessages.PostScreenMessage("[Anomalous Signal Scanner Unit]: Data removed. Experiment module inoperable.", 4f, ScreenMessageStyle.UPPER_LEFT);
+                //Inoperable = !IsRerunnable();
+                //ScreenMessages.PostScreenMessage("[Anomalous Signal Scanner Unit]: Data removed. Experiment module inoperable.", 4f, ScreenMessageStyle.UPPER_LEFT);
                 eventsCheck();
             }
         }
 
         private void onPageDiscard(ScienceData data)
         {
-            resetExperiment();
+            ResetExperiment();
         }
 
         private void onKeepData(ScienceData data)
         {
-            eventsCheck();
         }
 
         private void onTransmitData(ScienceData data)   
@@ -650,7 +642,7 @@ namespace DMagic
             List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
             if (tranList.Count > 0 && anomalyData.Count > 0)
             {
-                tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> {data});
+                tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
                 DumpData(data);
             }
             else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
@@ -683,21 +675,20 @@ namespace DMagic
         private void onComplete(ScienceData data)
         {
             ReviewData();
-            eventsCheck();
         }
 
-        public void ReviewData()
+        new public void ReviewData()
         {
             if (anomalyData.Count > 0)
             {
                 GetData();
                 ScienceData storedExp = anomalyData[0];
-                ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, xmitDataValue / 2, true, "Transmitting this experiment will render this module inoperable.", true, storedExp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+                ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, xmitDataScalar / 2, true, "Transmitting this experiment will render this module inoperable.", true, storedExp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
                 ExperimentsResultDialog.DisplayResult(page);
             }
         }
 
-        public void ReviewDataItem(ScienceData data)
+        new public void ReviewDataItem(ScienceData data)
         {
             ReviewData();
         }
