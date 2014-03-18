@@ -74,8 +74,6 @@ namespace DMModuleScienceAnimate
         public bool experimentWaitForAnimation = false;
         [KSPField]
         public float waitForAnimationTime = -1;
-        //[KSPField]
-        //public bool keepDeployed = false;
         [KSPField]
         public int keepDeployedMode = 0;
         [KSPField]
@@ -89,6 +87,7 @@ namespace DMModuleScienceAnimate
         protected CelestialBody Cbody = null;
         protected ScienceExperiment scienceExp;
         private bool resourceOn = false;
+        private int dataIndex = 0;
         
         List<ScienceData> scienceReportList = new List<ScienceData>();
         List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
@@ -106,9 +105,9 @@ namespace DMModuleScienceAnimate
             {                
                 setup();
                 eventsCheck();
-                IScienceDataContainer obj = new DMModuleScienceAnimate();
-                GetData();
-                obj.GetData();
+                //IScienceDataContainer obj = new DMModuleScienceAnimate();
+                //GetData();
+                //obj.GetData();
                 if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
         }
@@ -139,46 +138,26 @@ namespace DMModuleScienceAnimate
         public override void OnUpdate()
         {
             base.OnUpdate();
-            if (resourceOn) part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
+            if (resourceOn)
+            {
+                float cost = resourceCost * Time.deltaTime;
+                if (part.RequestResource(resourceToUse, cost) < cost)
+                {
+                    StopCoroutine("WaitForAnimation");
+                    ScreenMessages.PostScreenMessage("Not enough power, shutting down experiment", 4f, ScreenMessageStyle.UPPER_LEFT);
+                    if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
+                }
+            }
         }
 
         public void setup()
         {
-            //Events["deployEvent"].active = showStartEvent;
             Events["deployEvent"].guiActive = showStartEvent;
-            //Actions["deployAction"].active = showStartEvent;
-            //Events["retractEvent"].active = showEndEvent;
             Events["retractEvent"].guiActive = showEndEvent;
-            //Actions["retractAction"].active = showEndEvent;
             Events["toggleEvent"].guiActive = showToggleEvent;
-            //Actions["toggleAction"].active = showToggleEvent;
             Events["deployEvent"].guiName = startEventGUIName;
-            //Actions["deployAction"].guiName = startEventGUIName;
             Events["retractEvent"].guiName = endEventGUIName;
-            //Actions["retractAction"].guiName = endEventGUIName;
             Events["toggleEvent"].guiName = toggleEventGUIName;
-            //Actions["toggleAction"].guiName = toggleEventGUIName;
-            //Events["StartExperiment"].guiName = experimentActionName;
-            //Actions["StartExperimentAction"].guiName = experimentActionName;
-            //Actions["StartExperimentAction"].active = useActionGroups;
-            //Events["ResetExperiment"].guiName = resetActionName;
-            //Events["ResetExperiment"].active = scienceReportList.Count > 0;
-            //Actions["ResetAction"].guiName = resetActionName;
-            //Actions["ResetAction"].active = useActionGroups;
-            //Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
-            //Events["CollectDataExternalEvent"].guiActiveUnfocused = dataIsCollectable;
-            //Events["CollectDataExternalEvent"].externalToEVAOnly = dataIsCollectable;
-            //Events["CollectDataExternalEvent"].guiName = collectActionName;
-            //Events["CollectDataExternalEvent"].unfocusedRange = interactionRange;
-            //Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
-            //Events["ResetExperimentExternal"].externalToEVAOnly = resettableOnEVA;
-            //Events["ResetExperimentExternal"].guiActiveUnfocused = resettableOnEVA;
-            //Events["ResetExperimentExternal"].guiName = resetActionName;
-            //Events["ResetExperimentExternal"].unfocusedRange = interactionRange;
-            //Events["reviewPage"].guiName = reviewActionName;
-            //Events["reviewPage"].active = scienceReportList.Count > 0;
-            //Actions["ReviewPageAction"].guiName = reviewActionName;
-            //Actions["ReviewPageAction"].active = useActionGroups;
             if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length / animSpeed;
             if (experimentID != null) scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
         }
@@ -191,12 +170,6 @@ namespace DMModuleScienceAnimate
             Actions["deployAction"].guiName = startEventGUIName;
             Actions["retractAction"].guiName = endEventGUIName;
             Actions["toggleAction"].guiName = toggleEventGUIName;
-            //Actions["reviewPageAction"].guiName = reviewActionName;
-            //Actions["reviewPageAction"].active = useActionGroups;
-            //Actions["StartExperimentAction"].guiName = experimentActionName;
-            //Actions["StartExperimentAction"].active = useActionGroups;
-            //Actions["ResetAction"].guiName = resetActionName;
-            //Actions["ResetAction"].active = useActionGroups;
             Events["editorDeployEvent"].guiName = startEventGUIName;
             Events["editorRetractEvent"].guiName = endEventGUIName;
             Events["editorDeployEvent"].active = showEditorEvents;
@@ -207,12 +180,15 @@ namespace DMModuleScienceAnimate
 
         public void primaryAnimator(float speed, float time, WrapMode wrap)
         {
-            anim[animationName].speed = speed;
-            if (!anim.IsPlaying(animationName))
+            if (anim != null)
             {
-                anim[animationName].wrapMode = wrap;
-                anim[animationName].normalizedTime = time;
-                anim.Play(animationName);
+                anim[animationName].speed = speed;
+                if (!anim.IsPlaying(animationName))
+                {
+                    anim[animationName].wrapMode = wrap;
+                    anim[animationName].normalizedTime = time;
+                    anim.Play(animationName);
+                }
             }
         }
 
@@ -281,31 +257,16 @@ namespace DMModuleScienceAnimate
 
         #region Science Events and Actions
 
-        //[KSPEvent(guiActive = true, guiName = "Review Data", active = false)]
-        //public void reviewPage()
-        //{
-        //    if (scienceReportList.Count > 0) ReviewData();
-        //}
-
-        //Maybe remove this altogether
-        //[KSPAction("Review Data")]
-        //public void reviewPageAction(KSPActionParam param)
-        //{
-        //    if (scienceReportList.Count > 0) ReviewData();
-        //}        
-
-        //[KSPEvent(guiActive = true, guiName = "Reset", active = false)]
         new public void ResetExperiment()
         {
             if (scienceReportList.Count > 0)
             {
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Clear();
-                eventsCheck();
             }
+            eventsCheck();
         }
 
-        //[KSPAction("Reset")]
         new public void ResetAction(KSPActionParam param)
         {
             ResetExperiment();
@@ -314,19 +275,24 @@ namespace DMModuleScienceAnimate
         //This ridiculous chunk of code seems to make the EVA data collection work properly
         public class EVAIScienceContainer : IScienceDataContainer
         {
-            DMModuleScienceAnimate obj = new DMModuleScienceAnimate();
+            //DMModuleScienceAnimate obj = new DMModuleScienceAnimate();
+            private bool rerunnable = true;
             List<ScienceData> EVADataList = new List<ScienceData>();
-            public EVAIScienceContainer(ScienceData data)
+            public EVAIScienceContainer(List<ScienceData> dataList, bool rerun)
             {
-                EVADataList.Add(data);
+                foreach (ScienceData data in dataList)
+                {
+                    EVADataList.Add(data);
+                }
+                rerunnable = rerun;
             }
             public bool IsRerunnable()
             {
-                return obj.rerunnable;
+                return rerunnable;
             }
             public int GetScienceCount()
             {
-                return 1;
+                return EVADataList.Count;
             }
             public void ReviewData()
             {
@@ -345,45 +311,16 @@ namespace DMModuleScienceAnimate
 
         EVAIScienceContainer EVAIScience;
 
-        //[KSPEvent(externalToEVAOnly = true, guiActiveUnfocused = true, guiActive = false, guiName = "CollectEVA", active = true, unfocusedRange = 1.5f)]
         new public void CollectDataExternalEvent()
-        {
+        {   
             List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-            //List<ScienceData> EVAdata = new List<ScienceData>();
-            //EVAdata.Add(scienceReportList[0]);
-            EVAIScience = new EVAIScienceContainer(scienceReportList[0]);
+            EVAIScience = new EVAIScienceContainer(scienceReportList, rerunnable);
             if (scienceReportList.Count > 0)
             {
-                if (EVACont.First().StoreData(new List<IScienceDataContainer> { EVAIScience }, false))    //scienceReportList[0])}, false))
-                {
-                    //scienceReportList.Clear();
-                    //ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
-                    //if (keepDeployedMode == 0) retractEvent();
-                    DumpData(scienceReportList[0]);
-                }
+                if (EVACont.First().StoreData(new List<IScienceDataContainer> { EVAIScience }, false)) DumpAllData(scienceReportList);
             }
-            
-            
-            //IScienceDataContainer obj = new DMModuleScienceAnimate();
-            //obj.GetData();
-            //obj.GetScienceCount();
-            //obj.IsRerunnable();
-            //obj.ReviewData();
-            //obj.ReviewDataItem(scienceReportList[0]);
-            //List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-            //if (scienceReportList.Count > 0)
-            //{
-            //    if (EVACont.First().StoreData(new List<IScienceDataContainer> { obj }, false))    //scienceReportList[0])}, false))
-            //    {                    
-            //        //scienceReportList.Clear();
-            //        //ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
-            //        //if (keepDeployedMode == 0) retractEvent();
-            //        DumpData(scienceReportList[0]);                    
-            //    }
-            //}
         }
-
-        //[KSPEvent(guiName = "ResetEVA", active = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiActive = false, unfocusedRange = 1.5f)]
+        
         new public void ResetExperimentExternal()
         {
             ResetExperiment();
@@ -391,14 +328,10 @@ namespace DMModuleScienceAnimate
 
         public void eventsCheck()
         {
-            //Events["reviewPage"].active = scienceReportList.Count > 0;
-            
-            //Unnecessary???
             Events["ResetExperiment"].active = scienceReportList.Count > 0;
             Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
             Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
             Events["DeployExperiment"].active = !Inoperable;
-            //Events["DeployExperiment"].active = scienceReportList.Count == 0;
             Events["ReviewDataEvent"].active = scienceReportList.Count > 0;
         }
 
@@ -423,12 +356,17 @@ namespace DMModuleScienceAnimate
                             {
                                 deployEvent();
                                 if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-                                if (experimentWaitForAnimation)
-                                {
-                                    if (resourceCost > 0) resourceOn = true;
-                                    StartCoroutine(WaitForAnimation(waitForAnimationTime));
-                                }
-                                else runExperiment();
+                                //if (experimentWaitForAnimation)
+                                //{
+                                //    if (resourceCost > 0) resourceOn = true;
+                                //    StartCoroutine("WaitForAnimation", waitForAnimationTime);
+                                //}
+                                //else runExperiment();
+                            }
+                            if (experimentWaitForAnimation)
+                            {
+                                if (resourceCost > 0) resourceOn = true;
+                                StartCoroutine("WaitForAnimation", waitForAnimationTime);
                             }
                             else runExperiment();
                         }
@@ -442,7 +380,6 @@ namespace DMModuleScienceAnimate
             }
         }
 
-        //[KSPAction("Start Experiment")]
         new public void DeployAction(KSPActionParam param)
         {
             DeployExperiment();
@@ -460,8 +397,8 @@ namespace DMModuleScienceAnimate
         {
             ScienceData data = makeScience();
             scienceReportList.Add(data);
+            dataIndex = scienceReportList.Count - 1;
             ReviewData();
-            //eventsCheck();
             if (keepDeployedMode == 1) retractEvent();
         }
 
@@ -569,18 +506,28 @@ namespace DMModuleScienceAnimate
         }
 
         //Custom experiment results dialog page, allows full control over the buttons on that page
-        new public void ReviewData()
+        public void newResultPage()
         {
             if (scienceReportList.Count > 0)
             {
-                IScienceDataContainer obj = new DMModuleScienceAnimate();
-                GetData();
-                obj.GetData();
-                ScienceData data = scienceReportList[0];
+                ScienceData data = scienceReportList[dataIndex];
                 ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, xmitDataScalar / 2, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
                 ExperimentsResultDialog.DisplayResult(page);
             }
             eventsCheck();
+        }
+
+        new public void ReviewData()
+        {
+            //IScienceDataContainer obj = new DMModuleScienceAnimate();
+            //GetData();
+            //obj.GetData();
+            dataIndex = 0;
+            foreach (ScienceData data in scienceReportList)
+            {
+                newResultPage();
+                dataIndex++;
+            }
         }
 
         new public void ReviewDataEvent()
@@ -590,8 +537,9 @@ namespace DMModuleScienceAnimate
 
         #endregion   
 
-        #region Experiment Results Control
-
+        #region IScienceDataContainer methods
+        
+        //Implement these interface methods to make the science lab and tranmitters function properly.
         ScienceData[] IScienceDataContainer.GetData()
         {
             return scienceReportList.ToArray();
@@ -620,7 +568,6 @@ namespace DMModuleScienceAnimate
         //Still not quite sure what exactly this is doing
         new public ScienceData[] GetData()
         {
-            //return base.GetData();
             return scienceReportList.ToArray();
         }
 
@@ -634,7 +581,7 @@ namespace DMModuleScienceAnimate
             return scienceReportList.Count;
         }
 
-        //This is called after data is transmitted by right-clicking on the transmitter itself
+        //This is called after data is transmitted by right-clicking on the transmitter itself, removes all reports.
         void IScienceDataContainer.DumpData(ScienceData data)
         {
             if (scienceReportList.Count > 0)
@@ -642,27 +589,52 @@ namespace DMModuleScienceAnimate
                 base.DumpData(data);
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Clear();
-                eventsCheck();
                 print("Dump Data");
             }
+            eventsCheck();
         }
 
+        //This one is called after external data collection, removes all science reports.
+        public void DumpAllData(List<ScienceData> dataList)
+        {
+            if (scienceReportList.Count > 0)
+            {
+                foreach (ScienceData data in dataList)
+                {
+                    base.DumpData(data);
+                }
+                scienceReportList.Clear();
+                if (keepDeployedMode == 0) retractEvent();
+                print("Dump All Data");
+            }
+            eventsCheck();
+        }
+
+        //This one is called from the results page, removes only one report.
         new public void DumpData(ScienceData data)
         {
             if (scienceReportList.Count > 0)
             {
                 base.DumpData(data);
                 if (keepDeployedMode == 0) retractEvent();
-                scienceReportList.Clear();
-                eventsCheck();
-                //Events["DeployExperiment"].active = !Inoperable;
+                scienceReportList.Remove(data);
                 print("Dump Data Local");
             }
+            eventsCheck();
         }
 
+        #endregion
+
+        #region Experiment Results Control
+
         private void onDiscardData(ScienceData data)
-        {            
-            ResetExperiment();
+        {
+            if (scienceReportList.Count > 0)
+            {
+                scienceReportList.Remove(data);
+                if (keepDeployedMode == 0) retractEvent();
+            }
+            eventsCheck();
             print("Discard data from page");
         }
 
