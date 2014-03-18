@@ -607,6 +607,26 @@ namespace DMModuleScienceAnimate
             return anomalyData.ToArray();
         }
 
+        int IScienceDataContainer.GetScienceCount()
+        {
+            return anomalyData.Count;
+        }
+
+        bool IScienceDataContainer.IsRerunnable()
+        {
+            return base.IsRerunnable();
+        }
+
+        void IScienceDataContainer.ReviewData()
+        {
+            ReviewData();
+        }
+
+        void IScienceDataContainer.ReviewDataItem(ScienceData data)
+        {
+            ReviewData();
+        }
+
         new public ScienceData[] GetData()     
         {
             //return base.GetData();
@@ -622,6 +642,7 @@ namespace DMModuleScienceAnimate
         {
             return base.IsRerunnable();
         }
+
         
         void IScienceDataContainer.DumpData(ScienceData data)      //This is what the transmitter module calls after transmitting data
         {
