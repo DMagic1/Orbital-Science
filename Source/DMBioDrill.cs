@@ -31,7 +31,7 @@ using System.Text;
 using UnityEngine;
 using System.Collections;
 
-namespace DMagic
+namespace DMModuleScienceAnimate
 {
     class DMBioDrill : PartModule, IScienceDataContainer
     {
@@ -237,7 +237,7 @@ namespace DMagic
             }
         }
 
-        [KSPEvent(guiActive = true, guiName = "Discard Stored Data", active = false)]
+        //[KSPEvent(guiActive = true, guiName = "Discard Stored Data", active = false)]
         public void ResetExperiment(ScienceData data)
         {
             experimentNumber--;
@@ -274,7 +274,6 @@ namespace DMagic
             Events["ReviewDataEvent"].active = scienceList.Count > 0;
             Events["EVACollect"].active = storedScienceList.Count > 0;
             Events["StartExperiment"].active = !Inoperable;
-            Events["ResetExperiment"].active = storedScienceList.Count > 0;
             Events["ResetExperimentExternal"].active = storedScienceList.Count > 0;
         }
 
@@ -368,15 +367,15 @@ namespace DMagic
                 {
                     yield return new WaitForSeconds(animTime);
                     ScienceData data = makeNewScience();
-                    scienceList.Add(data);
-                    ReviewPrimaryData();
+                    scienceList.Add(data);                    
                     if (!checkLabOps())
                     {
                         sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
                         experimentNumber++;           //Experiment infinitely repeatable if operational science lab is connected.
                         Events["labCleanExperiment"].active = labList.Count > 0;
                     }
-                    Inoperable = IsRerunnable();
+                    ReviewPrimaryData();
+                    Inoperable = !IsRerunnable();
                     eventsCheck();
                 }
             }
@@ -480,6 +479,7 @@ namespace DMagic
             {
                 tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
                 scienceList.Clear();
+                eventsCheck();
             }
             else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);                          
         }        
@@ -497,7 +497,7 @@ namespace DMagic
         public void ReviewPrimaryData()
         {
             ScienceData exp = scienceList[0];
-            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, exp.transmitValue, xmitDataValue / 2 , experimentNumber >= 5, "The drill will not be functional after transmitting this data.", true, exp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, exp, exp.transmitValue, xmitDataValue / 2 , experimentNumber >= 6, "The drill will not be functional after transmitting this data.", true, exp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPrimaryPageDiscard), new Callback<ScienceData>(onKeepPrimaryData), new Callback<ScienceData>(onTransmitPrimaryData), new Callback<ScienceData>(onSendPrimaryToLab));
             ExperimentsResultDialog.DisplayResult(page);
         }        
         
@@ -542,6 +542,7 @@ namespace DMagic
                 tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
                 sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), 3f);
                 storedScienceList.Remove(data);
+                eventsCheck();
             }
             else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
         }
