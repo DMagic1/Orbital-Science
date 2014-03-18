@@ -33,7 +33,7 @@ using System.Collections;
 
 namespace DMModuleScienceAnimate
 {
-    class DMModuleScienceAnimate : ModuleScienceExperiment
+    class DMModuleScienceAnimate : ModuleScienceExperiment, IScienceDataContainer
     {
         [KSPField]
         public string customFailMessage = null;
@@ -81,13 +81,14 @@ namespace DMModuleScienceAnimate
         [KSPField]
         public bool oneWayAnimation = false;
         [KSPField]
-        public string resourceToUse = null;
+        public string resourceToUse = "ElectricCharge";
         [KSPField]
-        public float resourceCost = 1;
+        public float resourceCost = 0;
 
         protected Animation anim;
         protected CelestialBody Cbody = null;
         protected ScienceExperiment scienceExp;
+        private bool resourceOn = false;
         
         List<ScienceData> scienceReportList = new List<ScienceData>();
         List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
@@ -105,7 +106,9 @@ namespace DMModuleScienceAnimate
             {                
                 setup();
                 eventsCheck();
+                IScienceDataContainer obj = new DMModuleScienceAnimate();
                 GetData();
+                obj.GetData();
                 if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
         }
@@ -131,6 +134,12 @@ namespace DMModuleScienceAnimate
                     scienceReportList.Add(data);
                 }
             }
+        }
+
+        public override void OnUpdate()
+        {
+            base.OnUpdate();
+            if (resourceOn) part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
         }
 
         public void setup()
@@ -303,8 +312,9 @@ namespace DMModuleScienceAnimate
         }
 
         //This ridiculous chunk of code seems to make the EVA data collection work properly
-        public class EVAIScienceContainer: IScienceDataContainer
+        public class EVAIScienceContainer : IScienceDataContainer
         {
+            DMModuleScienceAnimate obj = new DMModuleScienceAnimate();
             List<ScienceData> EVADataList = new List<ScienceData>();
             public EVAIScienceContainer(ScienceData data)
             {
@@ -312,7 +322,7 @@ namespace DMModuleScienceAnimate
             }
             public bool IsRerunnable()
             {
-                return true;
+                return obj.rerunnable;
             }
             public int GetScienceCount()
             {
@@ -345,13 +355,32 @@ namespace DMModuleScienceAnimate
             if (scienceReportList.Count > 0)
             {
                 if (EVACont.First().StoreData(new List<IScienceDataContainer> { EVAIScience }, false))    //scienceReportList[0])}, false))
-                {                    
+                {
                     //scienceReportList.Clear();
                     //ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
                     //if (keepDeployedMode == 0) retractEvent();
                     DumpData(scienceReportList[0]);
                 }
             }
+            
+            
+            //IScienceDataContainer obj = new DMModuleScienceAnimate();
+            //obj.GetData();
+            //obj.GetScienceCount();
+            //obj.IsRerunnable();
+            //obj.ReviewData();
+            //obj.ReviewDataItem(scienceReportList[0]);
+            //List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
+            //if (scienceReportList.Count > 0)
+            //{
+            //    if (EVACont.First().StoreData(new List<IScienceDataContainer> { obj }, false))    //scienceReportList[0])}, false))
+            //    {                    
+            //        //scienceReportList.Clear();
+            //        //ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
+            //        //if (keepDeployedMode == 0) retractEvent();
+            //        DumpData(scienceReportList[0]);                    
+            //    }
+            //}
         }
 
         //[KSPEvent(guiName = "ResetEVA", active = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiActive = false, unfocusedRange = 1.5f)]
@@ -396,7 +425,7 @@ namespace DMModuleScienceAnimate
                                 if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                                 if (experimentWaitForAnimation)
                                 {
-                                    if (resourceToUse != null) part.RequestResource(resourceToUse, resourceCost);
+                                    if (resourceCost > 0) resourceOn = true;
                                     StartCoroutine(WaitForAnimation(waitForAnimationTime));
                                 }
                                 else runExperiment();
@@ -423,7 +452,7 @@ namespace DMModuleScienceAnimate
         public IEnumerator WaitForAnimation(float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
-            if(resourceToUse != null) part.RequestResource(resourceToUse, 0f);
+            resourceOn = false;
             runExperiment();
         }
 
@@ -544,7 +573,9 @@ namespace DMModuleScienceAnimate
         {
             if (scienceReportList.Count > 0)
             {
+                IScienceDataContainer obj = new DMModuleScienceAnimate();
                 GetData();
+                obj.GetData();
                 ScienceData data = scienceReportList[0];
                 ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, xmitDataScalar / 2, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
                 ExperimentsResultDialog.DisplayResult(page);
@@ -561,9 +592,35 @@ namespace DMModuleScienceAnimate
 
         #region Experiment Results Control
 
+        ScienceData[] IScienceDataContainer.GetData()
+        {
+            return scienceReportList.ToArray();
+        }
+
+        int IScienceDataContainer.GetScienceCount()
+        {
+            return scienceReportList.Count;
+        }
+
+        bool IScienceDataContainer.IsRerunnable()
+        {
+            return base.IsRerunnable();
+        }
+
+        void IScienceDataContainer.ReviewData()
+        {
+            ReviewData();
+        }
+
+        void IScienceDataContainer.ReviewDataItem(ScienceData data)
+        {
+            ReviewData();
+        }
+
         //Still not quite sure what exactly this is doing
         new public ScienceData[] GetData()
         {
+            //return base.GetData();
             return scienceReportList.ToArray();
         }
 
@@ -578,6 +635,18 @@ namespace DMModuleScienceAnimate
         }
 
         //This is called after data is transmitted by right-clicking on the transmitter itself
+        void IScienceDataContainer.DumpData(ScienceData data)
+        {
+            if (scienceReportList.Count > 0)
+            {
+                base.DumpData(data);
+                if (keepDeployedMode == 0) retractEvent();
+                scienceReportList.Clear();
+                eventsCheck();
+                print("Dump Data");
+            }
+        }
+
         new public void DumpData(ScienceData data)
         {
             if (scienceReportList.Count > 0)
@@ -587,7 +656,7 @@ namespace DMModuleScienceAnimate
                 scienceReportList.Clear();
                 eventsCheck();
                 //Events["DeployExperiment"].active = !Inoperable;
-                print("Dump Data");
+                print("Dump Data Local");
             }
         }
 
@@ -601,7 +670,7 @@ namespace DMModuleScienceAnimate
         {
             print("Store date from page");
         }
-
+        
         private void onTransmitData(ScienceData data)
         {
             List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
