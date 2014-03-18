@@ -113,7 +113,7 @@ namespace DMModuleScienceAnimate
                 if (IsDeployed)                 //Don't waste OnUpdate unless the part is deployed.
                 {
                     inRange();
-                    part.RequestResource("ElectricCharge", 2 * Time.deltaTime);
+                    part.RequestResource("ElectricCharge", 1 * Time.deltaTime);
                 }
             }
         }
@@ -188,14 +188,8 @@ namespace DMModuleScienceAnimate
         [KSPEvent(guiActive = true, guiName = "Toggle Scanner", active = true)]
         public void toggleDish()
         {
-            if (!IsEnabled)
-            {
-                deployDish(0f, anim[animationName].length);
-            }
-            else
-            {
-                retractDish();
-            }
+            if (!IsEnabled) deployDish(0f, anim[animationName].length);
+            else retractDish();
         }
 
         [KSPAction("Toggle Scanner")]
@@ -468,37 +462,34 @@ namespace DMModuleScienceAnimate
             }
         }
 
-        //[KSPEvent(guiActive = true, guiName = "Collect Data", active = true)]
         new public void DeployExperiment()
         {
-            if (Inoperable) ScreenMessages.PostScreenMessage("Anomalous Signal Scanner is no longer functional; must be reset at a science lab or returned to Kerbin", 6f, ScreenMessageStyle.UPPER_CENTER);
-            else
+            if (anomalyData.Count == 0)
             {
-                if (!IsEnabled) toggleDish();
-                getAnomValues();
-                if (anomInRange)                //Give location and direction info only for anomalies within 30km.
+                if (Inoperable) ScreenMessages.PostScreenMessage("Anomalous Signal Scanner is no longer functional; must be reset at a science lab or returned to Kerbin", 6f, ScreenMessageStyle.UPPER_CENTER);
+                else
                 {
-                    if (anomCloseRange)         //Only collect science for close range anomalies.
+                    if (!IsEnabled) toggleDish();
+                    getAnomValues();
+                    if (anomInRange)                //Give location and direction info only for anomalies within 30km.
                     {
-                        startExperiment();
+                        if (anomCloseRange)         //Only collect science for close range anomalies.
+                        {
+                            startExperiment();
+                        }
+                    }
+                    else                        //Put this message here to simplify the getAnomValues() method.
+                    {
+                        ScreenMessages.PostScreenMessage("No anomalous signals detected.", 4f, ScreenMessageStyle.UPPER_CENTER);
                     }
                 }
-                else                        //Put this message here to simplify the getAnomValues() method.
-                {
-                    ScreenMessages.PostScreenMessage("No anomalous signals detected.", 4f, ScreenMessageStyle.UPPER_CENTER);
-                }
             }
+            else ReviewData();
         }
         
-        //[KSPAction("Collect Data")]
         new public void DeployAction(KSPActionParam param)
         {
-            if (anomalyData.Count > 0)
-            {
-                eventsCheck();
-                return;
-            }
-            else DeployExperiment();
+            DeployExperiment();
         }
 
         public ScienceData makeNewScience()
@@ -524,57 +515,22 @@ namespace DMModuleScienceAnimate
             Events["ReviewDataEvent"].active = anomalyData.Count > 0;
             Events["ResetExperiment"].active = anomalyData.Count > 0;
             Events["ResetExperimentExternal"].active = anomalyData.Count > 0;
-            //Events["cleanExperiment"].active = checkLabOps();
-            //Events["cleanExperiment"].guiActive = Inoperable;
             Events["DeployExperiment"].active = !Inoperable;
-            //Events["DeployExperiment"].active = anomalyData.Count == 0;
         }
 
-        //[KSPEvent(guiActive = true, guiName = "Review Anomalous Data", active = false)]
-        new public void ReviewDataEvent()
-        {
-            if (anomalyData.Count > 0) ReviewData();
-            eventsCheck();
-        }
-
-        //[KSPEvent(guiActive = true, guiName = "Discard Anomalous Data", active = false)]
         new public void ResetExperiment()
         {
             if (anomalyData.Count > 0) anomalyData.Clear();
-                eventsCheck();
+            eventsCheck();
         }
 
-        //[KSPEvent(guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Discard Anomalous Data", active = false)]
         new public void ResetExperimentExternal()
         {
             ResetExperiment();
         }
-        
-        //Replace the lab clean function - needs some work
-        //[KSPEvent(guiActive = false, guiName = "Clean Experiment", active = false)]
-        //public void cleanExperiment()
-        //{
-        //    if (checkLabOps())
-        //    {
-        //        ScreenMessages.PostScreenMessage("Cleaning Anomalous Signal Scanner", 5f, ScreenMessageStyle.UPPER_LEFT);
-        //        StartCoroutine("waitForClean");
-        //    }
-        //    else
-        //    {
-        //        ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot clean this experiment.", 4f, ScreenMessageStyle.UPPER_CENTER);
-        //    }   
-        //}
-
-        //IEnumerator waitForClean()
-        //{
-        //    yield return new WaitForSeconds(5f);
-        //    Inoperable = false;
-        //    eventsCheck();
-        //    ScreenMessages.PostScreenMessage("Anomalous Signal Scanner ready for use", 4f, ScreenMessageStyle.UPPER_LEFT);
-        //}
-
+                
         #endregion
-
+        
 
 
         # region IScienceDataContainer Stuff
@@ -629,7 +585,6 @@ namespace DMModuleScienceAnimate
 
         new public ScienceData[] GetData()     
         {
-            //return base.GetData();
             return anomalyData.ToArray();
         }
 
@@ -643,17 +598,14 @@ namespace DMModuleScienceAnimate
             return base.IsRerunnable();
         }
 
-        
         void IScienceDataContainer.DumpData(ScienceData data)      //This is what the transmitter module calls after transmitting data
         {
             if (anomalyData.Count > 0)
             {
                 base.DumpData(data);
                 anomalyData.Clear();
-                //Inoperable = !IsRerunnable();
-                //ScreenMessages.PostScreenMessage("[Anomalous Signal Scanner Unit]: Data removed. Experiment module inoperable.", 4f, ScreenMessageStyle.UPPER_LEFT);
-                eventsCheck();
             }
+            eventsCheck();
         }
 
         new public void DumpData(ScienceData data)
@@ -662,10 +614,8 @@ namespace DMModuleScienceAnimate
             {
                 base.DumpData(data);
                 anomalyData.Clear();
-                //Inoperable = !IsRerunnable();
-                //ScreenMessages.PostScreenMessage("[Anomalous Signal Scanner Unit]: Data removed. Experiment module inoperable.", 4f, ScreenMessageStyle.UPPER_LEFT);
-                eventsCheck();
             }
+            eventsCheck();
         }
         
         private void onPageDiscard(ScienceData data)
@@ -726,9 +676,15 @@ namespace DMModuleScienceAnimate
                 ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, xmitDataScalar / 2, true, "Transmitting this experiment will render this module inoperable.", true, storedExp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
                 ExperimentsResultDialog.DisplayResult(page);
             }
+            eventsCheck();
         }
 
         new public void ReviewDataItem(ScienceData data)
+        {
+            ReviewData();
+        }
+
+        new public void ReviewDataEvent()
         {
             ReviewData();
         }
