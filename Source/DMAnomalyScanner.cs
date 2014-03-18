@@ -31,9 +31,9 @@ using System.Text;
 using UnityEngine;
 using System.Collections;
 
-namespace DMagic
+namespace DMModuleScienceAnimate
 {
-    class DMAnomalyScanner : ModuleScienceExperiment
+    class DMAnomalyScanner : ModuleScienceExperiment, IScienceDataContainer
     {
         [KSPField]
         public string animationName = null;
@@ -113,6 +113,7 @@ namespace DMagic
                 if (IsDeployed)                 //Don't waste OnUpdate unless the part is deployed.
                 {
                     inRange();
+                    part.RequestResource("ElectricCharge", 2 * Time.deltaTime);
                 }
             }
         }
@@ -515,7 +516,7 @@ namespace DMagic
             ScienceData data = makeNewScience();
             anomalyData.Add(data);
             ReviewData();
-            //eventsCheck();
+            eventsCheck();
         }
 
         public void eventsCheck()
@@ -601,8 +602,14 @@ namespace DMagic
             }
         }
 
+        ScienceData[] IScienceDataContainer.GetData()
+        {
+            return anomalyData.ToArray();
+        }
+
         new public ScienceData[] GetData()     
         {
+            //return base.GetData();
             return anomalyData.ToArray();
         }
 
@@ -615,8 +622,8 @@ namespace DMagic
         {
             return base.IsRerunnable();
         }
-
-        new public void DumpData(ScienceData data)      //This is what the transmitter module calls after transmitting data
+        
+        void IScienceDataContainer.DumpData(ScienceData data)      //This is what the transmitter module calls after transmitting data
         {
             if (anomalyData.Count > 0)
             {
@@ -628,6 +635,18 @@ namespace DMagic
             }
         }
 
+        new public void DumpData(ScienceData data)
+        {
+            if (anomalyData.Count > 0)
+            {
+                base.DumpData(data);
+                anomalyData.Clear();
+                //Inoperable = !IsRerunnable();
+                //ScreenMessages.PostScreenMessage("[Anomalous Signal Scanner Unit]: Data removed. Experiment module inoperable.", 4f, ScreenMessageStyle.UPPER_LEFT);
+                eventsCheck();
+            }
+        }
+        
         private void onPageDiscard(ScienceData data)
         {
             ResetExperiment();
