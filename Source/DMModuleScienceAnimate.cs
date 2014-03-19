@@ -147,6 +147,17 @@ namespace DMModuleScienceAnimate
             }
         }
 
+        public override string GetInfo()
+        {
+            if (resourceCost > 0)
+            {
+                string info = base.GetInfo();
+                info += "Requires " + resourceToUse + ": " + resourceCost.ToString() + "/s for " + waitForAnimationTime.ToString() + "s";
+                return info;
+            }
+            else return base.GetInfo();
+        }
+
         public void setup()
         {
             Events["deployEvent"].guiActive = showStartEvent;
