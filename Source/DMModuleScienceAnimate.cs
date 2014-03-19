@@ -90,7 +90,6 @@ namespace DMModuleScienceAnimate
         private int dataIndex = 0;
         
         List<ScienceData> scienceReportList = new List<ScienceData>();
-        List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
 
         public override void OnStart(StartState state)
         {
@@ -105,9 +104,6 @@ namespace DMModuleScienceAnimate
             {                
                 setup();
                 eventsCheck();
-                //IScienceDataContainer obj = new DMModuleScienceAnimate();
-                //GetData();
-                //obj.GetData();
                 if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
         }
@@ -144,7 +140,8 @@ namespace DMModuleScienceAnimate
                 if (part.RequestResource(resourceToUse, cost) < cost)
                 {
                     StopCoroutine("WaitForAnimation");
-                    ScreenMessages.PostScreenMessage("Not enough power, shutting down experiment", 4f, ScreenMessageStyle.UPPER_LEFT);
+                    resourceOn = false;
+                    ScreenMessages.PostScreenMessage("Not enough power, shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
                     if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
                 }
             }
@@ -275,7 +272,6 @@ namespace DMModuleScienceAnimate
         //This ridiculous chunk of code seems to make the EVA data collection work properly
         public class EVAIScienceContainer : IScienceDataContainer
         {
-            //DMModuleScienceAnimate obj = new DMModuleScienceAnimate();
             private bool rerunnable = true;
             List<ScienceData> EVADataList = new List<ScienceData>();
             public EVAIScienceContainer(List<ScienceData> dataList, bool rerun)
@@ -343,7 +339,7 @@ namespace DMModuleScienceAnimate
         new public void DeployExperiment()
         {
             if (Inoperable) ScreenMessages.PostScreenMessage("Experiment is no longer functional; must be reset at a science lab or returned to Kerbin", 6f, ScreenMessageStyle.UPPER_CENTER);
-            else
+            else if (scienceReportList.Count == 0)
             {
                 if (canConduct())
                 {
@@ -356,18 +352,18 @@ namespace DMModuleScienceAnimate
                             {
                                 deployEvent();
                                 if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-                                //if (experimentWaitForAnimation)
-                                //{
-                                //    if (resourceCost > 0) resourceOn = true;
-                                //    StartCoroutine("WaitForAnimation", waitForAnimationTime);
-                                //}
-                                //else runExperiment();
+                                if (experimentWaitForAnimation)
+                                {
+                                    if (resourceCost > 0) resourceOn = true;
+                                    StartCoroutine("WaitForAnimation", waitForAnimationTime);
+                                }
+                                else runExperiment();
                             }
-                            if (experimentWaitForAnimation)
-                            {
-                                if (resourceCost > 0) resourceOn = true;
-                                StartCoroutine("WaitForAnimation", waitForAnimationTime);
-                            }
+                            //if (experimentWaitForAnimation)
+                            //{
+                            //    if (resourceCost > 0) resourceOn = true;
+                            //    StartCoroutine("WaitForAnimation", waitForAnimationTime);
+                            //}
                             else runExperiment();
                         }
                     }
@@ -378,6 +374,7 @@ namespace DMModuleScienceAnimate
                     if (customFailMessage != null) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                 }
             }
+            else ScreenMessages.PostScreenMessage("Cannot collect more data; reset or transmit current science report", 5f, ScreenMessageStyle.UPPER_CENTER);
         }
 
         new public void DeployAction(KSPActionParam param)
@@ -519,9 +516,6 @@ namespace DMModuleScienceAnimate
 
         new public void ReviewData()
         {
-            //IScienceDataContainer obj = new DMModuleScienceAnimate();
-            //GetData();
-            //obj.GetData();
             dataIndex = 0;
             foreach (ScienceData data in scienceReportList)
             {
@@ -657,6 +651,7 @@ namespace DMModuleScienceAnimate
 
         private void onSendToLab(ScienceData data)
         {
+            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
             if (checkLabOps() && scienceReportList.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
             print("Send data to lab");
@@ -671,6 +666,7 @@ namespace DMModuleScienceAnimate
         //Maybe unnecessary, can be folded into a simpler method???
         public bool checkLabOps()
         {
+            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
             labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             bool labOp = false;
             for (int i = 0; i < labList.Count; i++)
