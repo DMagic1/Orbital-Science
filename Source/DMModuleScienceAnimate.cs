@@ -56,8 +56,6 @@ namespace DMModuleScienceAnimate
         [KSPField]
         public bool showEndEvent = true;
         [KSPField]
-        public bool isOneShot = false;
-        [KSPField]
         public string startEventGUIName = "Deploy";
         [KSPField]
         public bool showStartEvent = true;
@@ -79,12 +77,11 @@ namespace DMModuleScienceAnimate
         [KSPField]
         public bool oneWayAnimation = false;
         [KSPField]
-        public string resourceToUse = "ElectricCharge";
+        public string resourceExperiment = "ElectricCharge";
         [KSPField]
-        public float resourceCost = 0;
+        public float resourceExpCost = 0;
 
         protected Animation anim;
-        protected CelestialBody Cbody = null;
         protected ScienceExperiment scienceExp;
         private bool resourceOn = false;
         private int dataIndex = 0;
@@ -136,8 +133,8 @@ namespace DMModuleScienceAnimate
             base.OnUpdate();
             if (resourceOn)
             {
-                float cost = resourceCost * Time.deltaTime;
-                if (part.RequestResource(resourceToUse, cost) < cost)
+                float cost = resourceExpCost * Time.deltaTime;
+                if (part.RequestResource(resourceExperiment, cost) < cost)
                 {
                     StopCoroutine("WaitForAnimation");
                     resourceOn = false;
@@ -149,10 +146,10 @@ namespace DMModuleScienceAnimate
 
         public override string GetInfo()
         {
-            if (resourceCost > 0)
+            if (resourceExpCost > 0)
             {
                 string info = base.GetInfo();
-                info += "Requires:\n-" + resourceToUse + ": " + resourceCost.ToString() + "/s for " + waitForAnimationTime.ToString() + "s\n";
+                info += "Requires:\n-" + resourceExperiment + ": " + resourceExpCost.ToString() + "/s for " + waitForAnimationTime.ToString() + "s\n";
                 return info;
             }
             else return base.GetInfo();
@@ -365,12 +362,12 @@ namespace DMModuleScienceAnimate
                                 if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                                 if (experimentWaitForAnimation)
                                 {
-                                    if (resourceCost > 0) resourceOn = true;
+                                    if (resourceExpCost > 0) resourceOn = true;
                                     StartCoroutine("WaitForAnimation", waitForAnimationTime);
                                 }
                                 else runExperiment();
                             }
-                            if (resourceCost > 0)
+                            else if (resourceExpCost > 0)
                             {
                                 resourceOn = true;
                                 StartCoroutine("WaitForAnimation", waitForAnimationTime);
