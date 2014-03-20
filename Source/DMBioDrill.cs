@@ -54,9 +54,14 @@ namespace DMModuleScienceAnimate
         public float xmitDataValue = 0f;
         [KSPField(isPersistant = true)]
         public bool Inoperable = false;
+        [KSPField]
+        public string resourceToUse = null;
+        [KSPField]
+        public float resourceCost = 0f;
 
-        public int labSource = 0;
-        public int storedDataCount = 0;
+        private int labSource = 0;
+        private int storedDataCount = 0;
+        private bool resourceOn = false;
 
         protected Animation anim;
         protected Animation animSample;
@@ -77,7 +82,8 @@ namespace DMModuleScienceAnimate
                 animSample = part.FindModelAnimators(sampleEmptyAnim)[0];
                 if (state == StartState.Editor)
                 {
-                    editorRetract();
+                    Events["editorDeploy"].active = true;
+                    Events["editorRetract"].active = false;
                 }
                 else
                 {
@@ -96,6 +102,13 @@ namespace DMModuleScienceAnimate
                 }        
         }
 
+        public override string GetInfo()
+        {
+            string info = base.GetInfo();
+            info += "Requires:\n-" + resourceToUse + ": " + resourceCost.ToString() + "/s for 10s\n"; 
+            return info;
+        }
+        
         # region Animator stuff
 
         //Primary drill animator, takes input from startDrill() to determine which animation to play.
@@ -340,7 +353,8 @@ namespace DMModuleScienceAnimate
                             else
                             {
                                 startDrill(1f, 0f);
-                                StartCoroutine(WaitForAnimation(anim[animationName].length));
+                                resourceOn = true;
+                                StartCoroutine("WaitForAnimation", anim[animationName].length);
                             }
                         }
                     }
@@ -367,7 +381,8 @@ namespace DMModuleScienceAnimate
                 {
                     yield return new WaitForSeconds(animTime);
                     ScienceData data = makeNewScience();
-                    scienceList.Add(data);                    
+                    scienceList.Add(data);
+                    resourceOn = false;
                     if (!checkLabOps())
                     {
                         sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
@@ -414,6 +429,16 @@ namespace DMModuleScienceAnimate
             if (experimentNumber > 0)
             {
                 Events["labCleanExperiment"].active = labList.Count > 0;
+            }
+            if (resourceOn)
+            {
+                float cost = 8 * Time.deltaTime;
+                if (part.RequestResource("ElectricCharge", cost) < cost)
+                {
+                    StopCoroutine("WaitForAnimation");
+                    resourceOn = false;
+                    ScreenMessages.PostScreenMessage("Not enough power, shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
+                }
             }
         }
        
@@ -468,8 +493,8 @@ namespace DMModuleScienceAnimate
                 sampleAnimation(sampleAnim, 1f, 0.3f * storedScienceList.Count, 3f);
                 storedScienceList.Add(scienceList[0]);
                 scienceList.Remove(data);
-                eventsCheck();
             }
+            eventsCheck();
         }
        
         private void onTransmitPrimaryData(ScienceData data)
@@ -479,9 +504,9 @@ namespace DMModuleScienceAnimate
             {
                 tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
                 scienceList.Clear();
-                eventsCheck();
             }
-            else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);                          
+            else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
+            eventsCheck();
         }        
 
         private void onSendPrimaryToLab(ScienceData data)
@@ -542,9 +567,9 @@ namespace DMModuleScienceAnimate
                 tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
                 sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), 3f);
                 storedScienceList.Remove(data);
-                eventsCheck();
             }
             else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
+            eventsCheck();
         }
 
         private void onSendToLab(ScienceData data)
