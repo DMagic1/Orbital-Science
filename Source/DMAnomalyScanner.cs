@@ -49,7 +49,11 @@ namespace DMModuleScienceAnimate
         //[KSPField(isPersistant = true)]
         //public bool Inoperable = false;
         [KSPField(isPersistant = true)]
-        public bool IsDeployed = false;         
+        public bool IsDeployed = false;
+        [KSPField]
+        public string resourceToUse = "ElectricCharge";
+        [KSPField]
+        public float resourceCost = 0f; 
          
         private string closestAnom = null;
         private bool anomCloseRange = false;
@@ -59,7 +63,6 @@ namespace DMModuleScienceAnimate
 
         protected Animation anim;
         protected Animation animSecondary;        
-        protected CelestialBody CBody = null;
         protected Transform cam = null;
 
         List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
@@ -108,14 +111,19 @@ namespace DMModuleScienceAnimate
             base.OnUpdate();
             if (!HighLogic.LoadedSceneIsEditor)
             {
-                //labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-                //if (labList.Count > 0) Events["cleanExperiment"].active = true;
                 if (IsDeployed)                 //Don't waste OnUpdate unless the part is deployed.
                 {
                     inRange();
-                    part.RequestResource("ElectricCharge", 1 * Time.deltaTime);
+                    part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
                 }
             }
+        }
+
+        public override string GetInfo()
+        {
+            string info = base.GetInfo();
+            info += "Requires:\n- " + resourceToUse + ": " + resourceCost.ToString() + "/s\n";
+            return info;
         }
 
 
