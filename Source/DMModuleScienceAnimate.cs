@@ -152,7 +152,7 @@ namespace DMModuleScienceAnimate
             if (resourceCost > 0)
             {
                 string info = base.GetInfo();
-                info += "Requires " + resourceToUse + ": " + resourceCost.ToString() + "/s for " + waitForAnimationTime.ToString() + "s";
+                info += "Requires:\n-" + resourceToUse + ": " + resourceCost.ToString() + "/s for " + waitForAnimationTime.ToString() + "s\n";
                 return info;
             }
             else return base.GetInfo();
@@ -370,11 +370,11 @@ namespace DMModuleScienceAnimate
                                 }
                                 else runExperiment();
                             }
-                            //if (experimentWaitForAnimation)
-                            //{
-                            //    if (resourceCost > 0) resourceOn = true;
-                            //    StartCoroutine("WaitForAnimation", waitForAnimationTime);
-                            //}
+                            if (resourceCost > 0)
+                            {
+                                resourceOn = true;
+                                StartCoroutine("WaitForAnimation", waitForAnimationTime);
+                            }
                             else runExperiment();
                         }
                     }
