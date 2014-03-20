@@ -231,7 +231,6 @@ namespace DMModuleScienceAnimate
             {
                 if (EVACont.First().StoreData(new List<IScienceDataContainer>() { this }, false))
                 {
-                    //ScreenMessages.PostScreenMessage("Sample data transferred to " + FlightGlobals.ActiveVessel.name, 3f, ScreenMessageStyle.UPPER_CENTER);
                     sampleAnimation(sampleEmptyAnim, 1f, 1f - (storedScienceList.Count / 3f), 3f * storedScienceList.Count);
                     storedScienceList.Clear();
                     eventsCheck();
@@ -250,7 +249,7 @@ namespace DMModuleScienceAnimate
             }
         }
 
-        //[KSPEvent(guiActive = true, guiName = "Discard Stored Data", active = false)]
+        [KSPEvent(guiActive = true, guiName = "Discard Stored Data", active = false)]
         public void ResetExperiment(ScienceData data)
         {
             experimentNumber--;
@@ -274,9 +273,9 @@ namespace DMModuleScienceAnimate
         [KSPEvent(guiActiveEditor = true, guiName = "Reset Drill", active = false)]
         public void editorRetract()
         {            
-            anim[animationName].enabled = false;
-            anim[verticalDrillName].enabled = false;
-            startDrill(-1f, 0f);
+            //anim[animationName].enabled = false;
+            //anim[verticalDrillName].enabled = false;
+            startDrill(0f, 0f);
             Events["editorDeploy"].active = true;
             Events["editorRetract"].active = false;
         }
