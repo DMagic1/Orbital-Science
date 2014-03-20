@@ -46,8 +46,6 @@ namespace DMModuleScienceAnimate
 
         [KSPField]
         public bool IsEnabled = false;
-        //[KSPField(isPersistant = true)]
-        //public bool Inoperable = false;
         [KSPField(isPersistant = true)]
         public bool IsDeployed = false;
         [KSPField]
