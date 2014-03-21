@@ -29,6 +29,7 @@
 
 
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -46,8 +47,23 @@ namespace DMagic
 
         [KSPField(isPersistant = false)]
         bool IsExperimenting = false;
+        [KSPField(guiActive = false, guiName = "Bt", isPersistant = true)]
+        public string Bt;
+        [KSPField(guiActive = false, guiName = "Inc")]
+        public string inc;
+        [KSPField(guiActive = false, guiName = "Dec")]
+        public string dec;
+        [KSPField(guiActive = false, guiName = "nDay")]
+        public string nDays;
+        [KSPField(guiActive = false, guiName = "Lat")]
+        public string lats;
+        [KSPField(guiActive = false, guiName = "Lon")]
+        public string lons;
+        [KSPField(guiActive = false, guiName = "Sun")]
+        public string suns;
 
         protected Animation anim;
+        private static double sDay = 21650.81276574;
 
         //Get first animation name from part. Force module activation and make deployed animation stick.
         public override void OnStart(PartModule.StartState state)
@@ -61,6 +77,13 @@ namespace DMagic
                 anim[animationName].normalizedTime = 1f;
                 anim.Play(animationName);
             }
+            Fields["Bt"].guiActive = IsEnabled;
+            Fields["inc"].guiActive = IsEnabled;
+            Fields["dec"].guiActive = IsEnabled;
+            Fields["nDays"].guiActive = IsEnabled;
+            Fields["lats"].guiActive = IsEnabled;
+            Fields["lons"].guiActive = IsEnabled;
+            Fields["suns"].guiActive = IsEnabled;
         }
 
         //Right click deploy animation. Animation is reversible while playing.
@@ -83,6 +106,16 @@ namespace DMagic
                 IsEnabled = true;
                 Events["DeployEvent"].active = false;
                 Events["RetractEvent"].active = true;
+                double pTime = Planetarium.GetUniversalTime();
+                double uDay = (pTime % sDay) / sDay;
+                Fields["Bt"].guiActive = IsEnabled;
+                Fields["inc"].guiActive = IsEnabled;
+                Fields["dec"].guiActive = IsEnabled;
+                Fields["nDays"].guiActive = IsEnabled;
+                Fields["lats"].guiActive = IsEnabled;
+                Fields["lons"].guiActive = IsEnabled;
+                Fields["suns"].guiActive = IsEnabled;
+                print("Day: " + Math.Round(uDay, 2) + " Planetarium time: " + Math.Round(pTime, 2));
             }
         }
 
@@ -103,15 +136,101 @@ namespace DMagic
                     }
                 }
                 IsEnabled = false;
+                Fields["Bt"].guiActive = IsEnabled;
+                Fields["inc"].guiActive = IsEnabled;
+                Fields["dec"].guiActive = IsEnabled;
+                Fields["nDays"].guiActive = IsEnabled;
+                Fields["lats"].guiActive = IsEnabled;
+                Fields["lons"].guiActive = IsEnabled;
+                Fields["suns"].guiActive = IsEnabled;
                 Events["DeployEvent"].active = true;
                 Events["RetractEvent"].active = false;
             }
         }
-        
+
+        MagVar magValues = new MagVar();
+
+        public double[] getMag(double lat, double lon, double alt, long date, int i, double[] field)
+        {
+            return magValues.SGMagVar(lat, lon, alt, date, i, field);
+        }
+
+        //[KSPEvent(guiActive = true, guiName = "Mag Values", active = true)]
+        //public void mags()
+        //{
+            
+        //    //print("Mag Int: " + Math.Round(magComp[0], 2).ToString() + " / Inlination: " + Math.Round(magComp[1], 2).ToString() + " / Declination: " + Math.Round(magComp[2], 2).ToString());
+        //}
+
+        public override void OnUpdate()
+        {
+            base.OnUpdate();
+            if (IsEnabled)
+            {
+                double lat = vessel.latitude * Mathf.Deg2Rad;
+                double lon = vessel.longitude * Mathf.Deg2Rad;
+                double latDeg = (vessel.latitude + 90 + 180) % 180 - 90;
+                double lonDeg = (vessel.longitude + 180 + 360) % 360 - 180;
+                double alt = vessel.altitude / 1000;
+                double uTime = Planetarium.GetUniversalTime();
+                double uDay = uTime / sDay;
+                double nDay = uDay % 1;
+                alt *= 1.5 + Math.Sin(((1 + 2*nDay) % 2) * Math.PI + lon);
+                int localDay = Convert.ToInt32(uDay);
+                long date = 2455197 + localDay;
+                int i = 10;
+                double[] field = new double[6];
+                double[] magComp = getMag(lat, lon, alt, date, i, field);
+                
+                //Magnetic field components
+                double Bx = magComp[3];
+                double By = magComp[4];
+                double Bz = magComp[5];
+                double Bh = Math.Sqrt((Bx * Bx) + (By * By));
+                double Bti = Math.Sqrt((Bh * Bh) + (Bz * Bz));
+                double dip = Math.Atan2(Bz, Bh);
+                double decD;
+                if (Bx != 0.0 || By != 0.0) decD = Math.Atan2(By, Bx);
+                else decD = 0.0;
+
+                dip *= Mathf.Rad2Deg;
+                decD *= Mathf.Rad2Deg;
+
+                //Convert doubles to floats for better display
+                float Btf = (float)Bti;
+                float incf = (float)dip;
+                float decf = (float)decD;
+                float altf = (float)alt;
+
+                Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
+                Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
+
+                //Display in right-click menu
+                Bt = Btf.ToString("F2") + " nT / Alt: " + altf.ToString("F4");
+                //Bt = uTime.ToString();
+                inc = incf.ToString("F2") + " Deg";
+                dec = decf.ToString("F2") + " Deg";
+                float nDayf = (float)nDay;
+                nDays = nDayf.ToString("F4");
+                float latf = (float)latDeg;
+                float lonf = (float)lonDeg;
+                lats = latf.ToString("F3") + " Deg";
+                lons = lonf.ToString("F3") + " Deg";
+
+                //field[0] = B_r;
+                //field[1] = B_theta;
+                //field[2] = B_phi;
+                //field[3] = X;
+                //field[4] = Y;
+                //field[5] = Z;
+            }
+        }
+            
         //VAB/SPH tweakable deploy/retract toggle.
         [KSPEvent(guiActiveEditor = true, guiName = "Deploy", active = true)]
         public void VABDeploy()
         {
+            
             Events["VABDeploy"].active = false;
             Events["VABRetract"].active = true;
             anim[animationName].speed = 1f;
