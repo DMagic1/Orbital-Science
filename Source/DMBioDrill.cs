@@ -213,7 +213,7 @@ namespace DMModuleScienceAnimate
         [KSPAction("Test Drill")]
         public void testDrillAnimator(KSPActionParam param)
         {
-            if (anim.IsPlaying(animationName) || anim.IsPlaying(verticalDrillName)) { return; }
+            if (anim.IsPlaying(animationName) || anim.IsPlaying(verticalDrillName)) return;
             startDrill(1f, 0f);
         }
 
@@ -257,7 +257,6 @@ namespace DMModuleScienceAnimate
             if (experimentNumber <= 0)
             {
                 experimentNumber = 0;     //Don't allow negative experimentNumber. 
-                Events["labCleanExperiment"].active = false;
             }
             eventsCheck();
         }
@@ -273,8 +272,6 @@ namespace DMModuleScienceAnimate
         [KSPEvent(guiActiveEditor = true, guiName = "Reset Drill", active = false)]
         public void editorRetract()
         {            
-            //anim[animationName].enabled = false;
-            //anim[verticalDrillName].enabled = false;
             startDrill(0f, 0f);
             Events["editorDeploy"].active = true;
             Events["editorRetract"].active = false;
@@ -386,7 +383,7 @@ namespace DMModuleScienceAnimate
                     {
                         sampleAnimation(indicatorAnim, 0.5f, 0.15f * experimentNumber, 3f);
                         experimentNumber++;           //Experiment infinitely repeatable if operational science lab is connected.
-                        Events["labCleanExperiment"].active = labList.Count > 0;
+                        //Events["labCleanExperiment"].active = labList.Count > 0;
                     }
                     ReviewPrimaryData();
                     Inoperable = !IsRerunnable();
@@ -424,9 +421,9 @@ namespace DMModuleScienceAnimate
 
         public override void OnUpdate() //Check for labs after docking.
         {
-            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             if (experimentNumber > 0)
             {
+                labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
                 Events["labCleanExperiment"].active = labList.Count > 0;
             }
             if (resourceOn)
@@ -459,6 +456,7 @@ namespace DMModuleScienceAnimate
         public bool checkLabOps()  //Make sure any science labs present are operational.
         {
             bool labOp = false;
+            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             for (int i = 0; i < labList.Count; i++)
             {
                 if (labList[i].IsOperational())
@@ -475,7 +473,7 @@ namespace DMModuleScienceAnimate
         {
             scienceList.Remove(data);
             sampleAnimation(indicatorAnim, -0.5f, 0.15f * experimentNumber, 3f);
-            experimentNumber--;
+            if (!checkLabOps()) experimentNumber--;
             eventsCheck();
         }
 
