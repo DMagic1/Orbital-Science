@@ -47,7 +47,7 @@ namespace DMagic
 
         [KSPField(isPersistant = false)]
         bool IsExperimenting = false;
-        [KSPField(guiActive = false, guiName = "Bt", isPersistant = true)]
+        [KSPField(guiActive = false, guiName = "Bt")]
         public string Bt;
         [KSPField(guiActive = false, guiName = "Inc")]
         public string inc;
@@ -167,19 +167,34 @@ namespace DMagic
             base.OnUpdate();
             if (IsEnabled)
             {
-                double lat = vessel.latitude * Mathf.Deg2Rad;
-                double lon = vessel.longitude * Mathf.Deg2Rad;
+                
                 double latDeg = (vessel.latitude + 90 + 180) % 180 - 90;
                 double lonDeg = (vessel.longitude + 180 + 360) % 360 - 180;
+                double lat = latDeg * Mathf.Deg2Rad;
+                double lon = lonDeg * Mathf.Deg2Rad;
                 double alt = vessel.altitude / 1000;
                 double uTime = Planetarium.GetUniversalTime();
                 double uDay = uTime / sDay;
                 double nDay = uDay % 1;
-                alt *= 1.5 + Math.Sin(((1 + 2*nDay) % 2) * Math.PI + lon);
                 int localDay = Convert.ToInt32(uDay);
                 long date = 2455197 + localDay;
                 int i = 10;
                 double[] field = new double[6];
+
+                //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon
+                double lonShift = lon + (Math.PI / 2) * ((1 + 4 * nDay));
+
+                //Simulate magnetosphere distortion by solar wind with stretched torus shape, determine our position on the surface of the torus
+                double radiusx = ((3.5 + (1 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) + (3.5 + (1.3 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) * Math.Cos(lat * 2)) * Math.Cos(lonShift);
+                double radiusy = (0.75 + 0.9 * Math.Cos(lat * 2)) * Math.Sin(lonShift);
+                double radiusz = (1 + 0.2 * Math.Cos(lonShift)) * Math.Sin(lat * 2);
+                double Radius = Math.Sqrt((radiusx * radiusx) + (radiusy * radiusy) + (radiusz * radiusz));
+
+                //Scale our altitude by our position on the simulated torus, ignore at altitudes below 250km, ramp up quickly above high scaled altitude
+                if (alt < 250) alt = alt;
+                else alt *= 1 / (1.4 * Radius);
+                if (alt > 2000) alt *= (alt / 2000) * (2 * (alt / 4000));
+
                 double[] magComp = getMag(lat, lon, alt, date, i, field);
                 
                 //Magnetic field components
@@ -201,21 +216,29 @@ namespace DMagic
                 float incf = (float)dip;
                 float decf = (float)decD;
                 float altf = (float)alt;
-
-                Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
-                Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
-
+                float nDayf = (float)nDay;
+                
+                //Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
+                //Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
+                                
                 //Display in right-click menu
-                Bt = Btf.ToString("F2") + " nT / Alt: " + altf.ToString("F4");
+                Bt = Btf.ToString("F2") + " nT / nDay: " + nDayf.ToString("F2");
                 //Bt = uTime.ToString();
+                //Bt = "X: " + radiusx.ToString();
                 inc = incf.ToString("F2") + " Deg";
                 dec = decf.ToString("F2") + " Deg";
-                float nDayf = (float)nDay;
-                nDays = nDayf.ToString("F4");
+                //inc = "Y: " + radiusy.ToString();
+                //dec = "Z: " + radiusz.ToString();
+                
+                //nDays = nDayf.ToString("F4");
+                nDays = "R: " + Radius.ToString();
                 float latf = (float)latDeg;
                 float lonf = (float)lonDeg;
-                lats = latf.ToString("F3") + " Deg";
-                lons = lonf.ToString("F3") + " Deg";
+                //lats = latf.ToString("F3") + " Deg";
+                lats = "Scaled Alt: " + alt.ToString();
+                //lons = lonf.ToString("F3") + " Deg";
+                //lons = Btf.ToString("F2") + " nT";
+                lons = "Shifted long: " + (((lonShift * Mathf.Rad2Deg)+ 180 + 360) % 360 - 180).ToString();
 
                 //field[0] = B_r;
                 //field[1] = B_theta;
