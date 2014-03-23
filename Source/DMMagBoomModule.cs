@@ -1,34 +1,27 @@
 ﻿/* DMagic Orbital Science - Magnetometer
- * Magnetometer animation and science collection.
+ * Magnetosphere simulation.
  *
- * Copyright (c) 2014, DMagic
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
- * are permitted provided that the following conditions are met:
- * 
- * 1. Redistributions of source code must retain the above copyright notice, 
- * this list of conditions and the following disclaimer.
- * 
- * 2. Redistributions in binary form must reproduce the above copyright notice, 
- * this list of conditions and the following disclaimer in the documentation and/or other materials 
- * provided with the distribution.
- * 
- * 3. Neither the name of the copyright holder nor the names of its contributors may be used 
- * to endorse or promote products derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (C) 2014  David Grandy
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
  *  
  */
 
 
 using UnityEngine;
+using System.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -36,116 +29,46 @@ using System.Collections.Generic;
 namespace DMagic
 {
     //Inherit default science experiment module.
-    public class DMMagBoomModule : ModuleScienceExperiment
-    {
-
-        [KSPField(isPersistant = false)]
-        public string animationName;
-
-        [KSPField(isPersistant = true)]
-        bool IsEnabled = false;
-
-        [KSPField(isPersistant = false)]
-        bool IsExperimenting = false;
+    public class DMMagBoomModule : PartModule
+    {        
         [KSPField(guiActive = false, guiName = "Bt")]
         public string Bt;
-        [KSPField(guiActive = false, guiName = "Inc")]
+        [KSPField(guiActive = false, guiName = "Inclination")]
         public string inc;
-        [KSPField(guiActive = false, guiName = "Dec")]
+        [KSPField(guiActive = false, guiName = "Declination")]
         public string dec;
-        [KSPField(guiActive = false, guiName = "nDay")]
-        public string nDays;
-        [KSPField(guiActive = false, guiName = "Lat")]
-        public string lats;
-        [KSPField(guiActive = false, guiName = "Lon")]
-        public string lons;
-        [KSPField(guiActive = false, guiName = "Sun")]
-        public string suns;
+        //[KSPField(guiActive = false, guiName = "Radius")]
+        //public string radius;
+        //[KSPField(guiActive = false, guiName = "Alt")]
+        //public string altScaled;
+        //[KSPField(guiActive = false, guiName = "Lon")]
+        //public string lons;
 
-        protected Animation anim;
+        [KSPField]
+        public bool runMagnetometer;
+        [KSPField]
+        public string resourceToUse = "ElectricCharge";
+        [KSPField]
+        public float resourceCost = 0;
+
+        private DMModuleScienceAnimate primaryModule;
+
+        //Kerbin solar day length
         private static double sDay = 21650.81276574;
 
-        //Get first animation name from part. Force module activation and make deployed animation stick.
         public override void OnStart(PartModule.StartState state)
         {
             base.OnStart(state);
             this.part.force_activate();
-            anim = part.FindModelAnimators(animationName)[0];
-            if (IsEnabled && anim[animationName] != null)
-            {
-                anim[animationName].speed = 1f;
-                anim[animationName].normalizedTime = 1f;
-                anim.Play(animationName);
-            }
-            Fields["Bt"].guiActive = IsEnabled;
-            Fields["inc"].guiActive = IsEnabled;
-            Fields["dec"].guiActive = IsEnabled;
-            Fields["nDays"].guiActive = IsEnabled;
-            Fields["lats"].guiActive = IsEnabled;
-            Fields["lons"].guiActive = IsEnabled;
-            Fields["suns"].guiActive = IsEnabled;
+            if (part.FindModulesImplementing<DMModuleScienceAnimate>().Count > 1)
+                primaryModule = part.FindModulesImplementing<DMModuleScienceAnimate>().First();
         }
 
-        //Right click deploy animation. Animation is reversible while playing.
-        [KSPEvent(guiActive = true, guiName = "Deploy Magnetometer", active = true)]
-        public void DeployEvent()
+        public override string GetInfo()
         {
-            if (anim[animationName] != null)
-            {
-                anim[animationName].speed = 1.5f;
-                //Check if animation is stopped, if not animating and undeployed, start deploy animation. If already deployed do nothing.
-                if (!anim.IsPlaying(animationName))
-                {
-                    if (IsEnabled) { return; }
-                    else
-                    {
-                        anim[animationName].normalizedTime = 0f;
-                        anim.Play(animationName);
-                    }
-                }                
-                IsEnabled = true;
-                Events["DeployEvent"].active = false;
-                Events["RetractEvent"].active = true;
-                double pTime = Planetarium.GetUniversalTime();
-                double uDay = (pTime % sDay) / sDay;
-                Fields["Bt"].guiActive = IsEnabled;
-                Fields["inc"].guiActive = IsEnabled;
-                Fields["dec"].guiActive = IsEnabled;
-                Fields["nDays"].guiActive = IsEnabled;
-                Fields["lats"].guiActive = IsEnabled;
-                Fields["lons"].guiActive = IsEnabled;
-                Fields["suns"].guiActive = IsEnabled;
-                print("Day: " + Math.Round(uDay, 2) + " Planetarium time: " + Math.Round(pTime, 2));
-            }
-        }
-
-        //Right click retract animation, same as deploy animation.
-        [KSPEvent(guiActive = true, guiName = "Retract Magnetometer", active = false)]
-        public void RetractEvent()
-        {
-            if (anim[animationName] != null)
-            {
-                anim[animationName].speed = -1.5f;
-                if (!anim.IsPlaying(animationName))
-                {
-                    if (!IsEnabled) { return; }
-                    else
-                    {
-                        anim[animationName].normalizedTime = 1f;
-                        anim.Play(animationName);
-                    }
-                }
-                IsEnabled = false;
-                Fields["Bt"].guiActive = IsEnabled;
-                Fields["inc"].guiActive = IsEnabled;
-                Fields["dec"].guiActive = IsEnabled;
-                Fields["nDays"].guiActive = IsEnabled;
-                Fields["lats"].guiActive = IsEnabled;
-                Fields["lons"].guiActive = IsEnabled;
-                Fields["suns"].guiActive = IsEnabled;
-                Events["DeployEvent"].active = true;
-                Events["RetractEvent"].active = false;
-            }
+            string info = base.GetInfo();
+            info += "Requires:\n- " + resourceToUse + ": " + resourceCost.ToString() + "/s\n";
+            return info;
         }
 
         MagVar magValues = new MagVar();
@@ -154,234 +77,110 @@ namespace DMagic
         {
             return magValues.SGMagVar(lat, lon, alt, date, i, field);
         }
-
-        //[KSPEvent(guiActive = true, guiName = "Mag Values", active = true)]
-        //public void mags()
-        //{
-            
-        //    //print("Mag Int: " + Math.Round(magComp[0], 2).ToString() + " / Inlination: " + Math.Round(magComp[1], 2).ToString() + " / Declination: " + Math.Round(magComp[2], 2).ToString());
-        //}
-
+        
         public override void OnUpdate()
         {
             base.OnUpdate();
-            if (IsEnabled)
+
+            //Only functional on Kerbin for now
+            if (vessel.mainBody.name == "Kerbin" && runMagnetometer)
             {
-                
-                double latDeg = (vessel.latitude + 90 + 180) % 180 - 90;
-                double lonDeg = (vessel.longitude + 180 + 360) % 360 - 180;
-                double lat = latDeg * Mathf.Deg2Rad;
-                double lon = lonDeg * Mathf.Deg2Rad;
-                double alt = vessel.altitude / 1000;
-                double uTime = Planetarium.GetUniversalTime();
-                double uDay = uTime / sDay;
-                double nDay = uDay % 1;
-                int localDay = Convert.ToInt32(uDay);
-                long date = 2455197 + localDay;
-                int i = 10;
-                double[] field = new double[6];
+                Fields["Bt"].guiActive = primaryModule.IsDeployed;
+                Fields["inc"].guiActive = primaryModule.IsDeployed;
+                Fields["dec"].guiActive = primaryModule.IsDeployed;
+                //Fields["radius"].guiActive = primaryModule.IsDeployed;
+                //Fields["altScaled"].guiActive = primaryModule.IsDeployed;
+                //Fields["lons"].guiActive = primaryModule.IsDeployed;
 
-                //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon
-                double lonShift = lon + (Math.PI / 2) * ((1 + 4 * nDay));
-
-                //Simulate magnetosphere distortion by solar wind with stretched torus shape, determine our position on the surface of the torus
-                double radiusx = ((3.5 + (1 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) + (3.5 + (1.3 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) * Math.Cos(lat * 2)) * Math.Cos(lonShift);
-                double radiusy = (0.75 + 0.9 * Math.Cos(lat * 2)) * Math.Sin(lonShift);
-                double radiusz = (1 + 0.2 * Math.Cos(lonShift)) * Math.Sin(lat * 2);
-                double Radius = Math.Sqrt((radiusx * radiusx) + (radiusy * radiusy) + (radiusz * radiusz));
-
-                //Scale our altitude by our position on the simulated torus, ignore at altitudes below 250km, ramp up quickly above high scaled altitude
-                if (alt < 250) alt = alt;
-                else alt *= 1 / (1.4 * Radius);
-                if (alt > 2000) alt *= (alt / 2000) * (2 * (alt / 4000));
-
-                double[] magComp = getMag(lat, lon, alt, date, i, field);
-                
-                //Magnetic field components
-                double Bx = magComp[3];
-                double By = magComp[4];
-                double Bz = magComp[5];
-                double Bh = Math.Sqrt((Bx * Bx) + (By * By));
-                double Bti = Math.Sqrt((Bh * Bh) + (Bz * Bz));
-                double dip = Math.Atan2(Bz, Bh);
-                double decD;
-                if (Bx != 0.0 || By != 0.0) decD = Math.Atan2(By, Bx);
-                else decD = 0.0;
-
-                dip *= Mathf.Rad2Deg;
-                decD *= Mathf.Rad2Deg;
-
-                //Convert doubles to floats for better display
-                float Btf = (float)Bti;
-                float incf = (float)dip;
-                float decf = (float)decD;
-                float altf = (float)alt;
-                float nDayf = (float)nDay;
-                
-                //Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
-                //Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
-                                
-                //Display in right-click menu
-                Bt = Btf.ToString("F2") + " nT / nDay: " + nDayf.ToString("F2");
-                //Bt = uTime.ToString();
-                //Bt = "X: " + radiusx.ToString();
-                inc = incf.ToString("F2") + " Deg";
-                dec = decf.ToString("F2") + " Deg";
-                //inc = "Y: " + radiusy.ToString();
-                //dec = "Z: " + radiusz.ToString();
-                
-                //nDays = nDayf.ToString("F4");
-                nDays = "R: " + Radius.ToString();
-                float latf = (float)latDeg;
-                float lonf = (float)lonDeg;
-                //lats = latf.ToString("F3") + " Deg";
-                lats = "Scaled Alt: " + alt.ToString();
-                //lons = lonf.ToString("F3") + " Deg";
-                //lons = Btf.ToString("F2") + " nT";
-                lons = "Shifted long: " + (((lonShift * Mathf.Rad2Deg)+ 180 + 360) % 360 - 180).ToString();
-
-                //field[0] = B_r;
-                //field[1] = B_theta;
-                //field[2] = B_phi;
-                //field[3] = X;
-                //field[4] = Y;
-                //field[5] = Z;
-            }
-        }
-            
-        //VAB/SPH tweakable deploy/retract toggle.
-        [KSPEvent(guiActiveEditor = true, guiName = "Deploy", active = true)]
-        public void VABDeploy()
-        {
-            
-            Events["VABDeploy"].active = false;
-            Events["VABRetract"].active = true;
-            anim[animationName].speed = 1f;
-            anim[animationName].normalizedTime = 1f;
-            anim.Play(animationName);
-        }
-
-        [KSPEvent(guiActiveEditor = true, guiName = "Retract", active = false)]
-        public void VABRetract()
-        {
-            Events["VABDeploy"].active = true;
-            Events["VABRetract"].active = false;
-            anim[animationName].speed = -1f;
-            anim[animationName].normalizedTime = 0f;
-            anim.Play(animationName);
-        }
-
-        //VAB action group toggle animation.
-        [KSPAction("Toggle Magnetometer")]
-        public void ToggleEventAction(KSPActionParam param)
-        {
-            if (IsEnabled)
-            {
-                RetractEvent();
-            }
-            else
-            {
-                DeployEvent();
-            }
-        }
-
-        //Check craft position and situation.
-        public bool VesselSituation()
-        {
-            if (vessel.situation == Vessel.Situations.FLYING)
-            {
-                ScreenMessages.PostScreenMessage("The magnetometer is not suitable for use during atmospheric flight, try again on the ground or in space.", 4f, ScreenMessageStyle.UPPER_CENTER);
-                return false;
-            } else 
-            {
-                return true;
-            }
-        }
-
-       //Replace default science collection mechanism
-        //If the part is stowed call the deploy animation and collect science when it completes
-        //If the part is in deploy animation, wait until finished and collect science
-        //If the part is in the retract animation, reverse the animation and wait until finished to collect science
-        //Check that the vessel is in the proper situation for science collection
-        //Only allow one data collection operation at a time
-        
-       IEnumerator WaitForDeploy(float animTime)
-       {
-        if (anim[animationName] != null)
-        {
-            yield return new WaitForSeconds(animTime);
-            base.DeployExperiment();
-            IsExperimenting = false;
-        }
-       }
-
-        new public void DeployExperiment()
-        {
-            if (IsExperimenting) { return; }
-            else if (IsEnabled)
+                if (primaryModule.IsDeployed)
                 {
-                    if (VesselSituation())
+                    part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
+
+                    double latDeg = (vessel.latitude + 90 + 180) % 180 - 90;
+                    double lonDeg = (vessel.longitude + 180 + 360) % 360 - 180;
+                    double lat = latDeg * Mathf.Deg2Rad;
+                    double lon = lonDeg * Mathf.Deg2Rad;
+                    double alt = vessel.altitude / 1000;
+
+                    //Get universal time in seconds and calculate our time during the current, normalized solar day
+                    double uTime = Planetarium.GetUniversalTime();
+                    double uDay = uTime / sDay;
+                    double nDay = uDay % 1;
+
+                    //Change the simulation day to add some variability, start with Jan 1 2010 in Julian Date format
+                    int localDay = Convert.ToInt32(uDay);
+                    long date = 2455197 + (localDay % 500);
+
+                    //Paramaters for mag field model
+                    int i = 10;
+                    double[] field = new double[6];
+
+                    //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon, bring everything down to -Pi to Pi just to be safe
+                    //For reference, at time zero the sun is directly above -90.158 Deg West on Kerbin, I'm rounding that to -90, or -Pi/2
+                    double lonShift = ((lon + (Math.PI / 2) * ((1 + 4 * nDay))) + Math.PI + Math.PI * 2) % (2 * Math.PI) - Math.PI;
+
+                    //Simulate magnetosphere distortion by solar wind with stretched torus shape, determine our position on the surface of the torus
+                    double radiusx = ((3.5 + (1 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) + (3.5 + (1.3 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) * Math.Cos(lat * 2)) * Math.Cos(lonShift);
+                    double radiusy = (0.75 + 0.9 * Math.Cos(lat * 2)) * Math.Sin(lonShift);
+                    double radiusz = (1 + 0.2 * Math.Cos(lonShift)) * Math.Sin(lat * 2);
+                    double Radius = Math.Sqrt((radiusx * radiusx) + (radiusy * radiusy) + (radiusz * radiusz));
+                    if (Radius == 0) Radius += 0.001;
+
+                    //Scale our altitude by our position on the simulated torus, ignore at altitudes below 250km, ramp up quickly above high scaled altitude up to a max value
+                    if (alt > 250)
                     {
-                        if (anim.IsPlaying(animationName))
-                        {
-                            ScreenMessages.PostScreenMessage("You can't expect good results while the boom is still extending!", 3f, ScreenMessageStyle.UPPER_CENTER);
-                            StartCoroutine(WaitForDeploy((anim[animationName].length / 1.5f) - (anim[animationName].normalizedTime * (anim[animationName].length / 1.5f))));
-                            IsExperimenting = true;
-                        }
-                        else
-                        {
-                            base.DeployExperiment();
-                            IsExperimenting = false;
-                        }
-                    }
+                        alt *= 1 / Radius;
+                        if (alt < 250) alt = 250;
+                    }                    
+                    if (alt > 500) alt *= Math.Pow((alt / 500), 3);
+                    if (alt > 5000) alt = 5000;
+
+                    //Send all of our modified parameters to the field model
+                    double[] magComp = getMag(lat, lon, alt, date, i, field);
+
+                    //Magnetic field components
+                    double Bx = magComp[3];
+                    double By = magComp[4];
+                    double Bz = magComp[5];
+
+                    //Calculate various magenetic field components based on 3-axis field strength 
+                    double Bh = Math.Sqrt((Bx * Bx) + (By * By));
+                    double Bti = Math.Sqrt((Bh * Bh) + (Bz * Bz));
+                    double dip = Math.Atan2(Bz, Bh);
+                    double decD;
+                    //Return 0 declination at magnetic poles
+                    if (Bx != 0.0 || By != 0.0) decD = Math.Atan2(By, Bx);
+                    else decD = 0.0;
+                    
+                    //Convert values for better display
+                    dip *= Mathf.Rad2Deg;
+                    decD *= Mathf.Rad2Deg;                    
+                    float Btf = (float)Bti;
+                    float incf = (float)dip;
+                    float decf = (float)decD;                   
+
+                    //Display in right-click menu
+                    Bt = Btf.ToString("F2") + " nT";
+                    inc = incf.ToString("F2") + " Deg";
+                    dec = decf.ToString("F2") + " Deg";
+
+                    //Extra variables - used in development
+                    //float altf = (float)alt;
+                    //float nDayf = (float)nDay;
+                    //Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
+                    //Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
+                    //lons = nDayf.ToString("F5");
+                    //nDays = nDayf.ToString("F4");
+                    //radius = Radius.ToString();
+                    //float latf = (float)latDeg;
+                    //float lonf = (float)lonDeg;
+                    //lats = latf.ToString("F3") + " Deg";
+                    //altScaled = alt.ToString();
+                    //lons = lonf.ToString("F3") + " Deg";
+                    //lons = Btf.ToString("F2") + " nT";
+                    //lons = "Shifted long: " + (((lonShift * Mathf.Rad2Deg) + 180 + 360) % 360 - 180).ToString();
                 }
-                else if (VesselSituation() && anim.IsPlaying(animationName) == true)
-                {
-                    DeployEvent();
-                    DeployExperiment();
-                }
-                else if (VesselSituation())
-                {
-                    DeployEvent();
-                    ScreenMessages.PostScreenMessage("Close proximity to the craft scrambles the magnetometer's sensors, deploying the scanner now.", 4f, ScreenMessageStyle.UPPER_CENTER);
-                    StartCoroutine(WaitForDeploy(anim[animationName].length / 1.5f));
-                    IsExperimenting = true;
-                }            
-        } 
-                  
-        //Replace default science collection VAB action group function.
-        new public void DeployAction(KSPActionParam p)
-        {
-            if (IsExperimenting) { return; }
-            else if (IsEnabled)
-                {
-                    if (VesselSituation())
-                    {
-                        if (anim.IsPlaying(animationName))
-                        {
-                            ScreenMessages.PostScreenMessage("You can't expect good results while the boom is still extending!", 3f, ScreenMessageStyle.UPPER_CENTER);
-                            StartCoroutine(WaitForDeploy((anim[animationName].length / 1.5f) - (anim[animationName].normalizedTime * (anim[animationName].length / 1.5f))));
-                            IsExperimenting = true;
-                        }
-                        else
-                        {
-                            base.DeployAction(p);
-                            IsExperimenting = false;
-                        }
-                    }
-                }
-                else if (VesselSituation() && anim.IsPlaying(animationName) == true)
-                {
-                    DeployEvent();
-                    DeployAction(p);
-                }
-                else if (VesselSituation())
-                {
-                    DeployEvent();
-                    ScreenMessages.PostScreenMessage("Close proximity to the craft scrambles the magnetometer's sensors, deploying the scanner now.", 4f, ScreenMessageStyle.UPPER_CENTER);
-                    StartCoroutine(WaitForDeploy(anim[animationName].length / 1.5f));
-                    IsExperimenting = true;
-                }
+            }
         }
         
     }
