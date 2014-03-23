@@ -57,6 +57,9 @@ namespace DMagic
     ** correction to be omitted.
     ** 01/31/01 Jim Seymour (jseymour@LinxNet.com)
     ** 23/01/13 POrt to C# (michael.coyle@BlueToque.ca)
+    ** 03/22/2014 -- david.grandy@gmail.com
+    ** Modified to return array with all magnetic field components.
+    ** 
     **
     ** This program is free software; you can redistribute it and/or
     ** modify it under the terms of the GNU General Public Licence as
@@ -1143,19 +1146,8 @@ namespace DMagic
             field[3] = X;
             field[4] = Y;
             field[5] = Z;   /* output fields */
-            /* find variation in radians */
-            /* return zero variation at magnetic pole X=Y=0. */
-            /* E is positive */
-            //double[] magComponents = new double[3];
-            //double bh = Math.Sqrt((X * X) + (Y * Y));
-            //double ti = Math.Sqrt((bh * bh) + (Z* Z));
-            //magComponents[0] = ti;
-            //double dip = Math.Atan2(Z, bh);
-            //magComponents[1] = dip;
-            //if (X != 0.0 || Y != 0.0) magComponents[2] = atan2(Y, X);
-            //else magComponents[2] = 0.0;
+            /* return all six values in an array */
             return field;
-            //return (X != 0.0 || Y != 0.0) ? atan2(Y, X) : (double)0.0;
         }
     }
 #if DE
