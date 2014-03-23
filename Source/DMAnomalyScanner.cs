@@ -1,26 +1,21 @@
 ﻿/* DMagic Orbital Science - Anomaly Scanner
  * Anomaly detection and science data setup.
  *
- * Copyright (c) 2014, DMagic
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
- * are permitted provided that the following conditions are met:
- * 
- * 1. Redistributions of source code must retain the above copyright notice, 
- * this list of conditions and the following disclaimer.
- * 
- * 2. Redistributions in binary form must reproduce the above copyright notice, 
- * this list of conditions and the following disclaimer in the documentation and/or other materials 
- * provided with the distribution.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (C) 2014  David Grandy
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
  *  
  */
 
@@ -31,8 +26,9 @@ using System.Text;
 using UnityEngine;
 using System.Collections;
 
-namespace DMModuleScienceAnimate
+namespace DMagic
 {
+    
     class DMAnomalyScanner : ModuleScienceExperiment, IScienceDataContainer
     {
         [KSPField]
@@ -43,7 +39,7 @@ namespace DMModuleScienceAnimate
         public string camAnimate = null;
         [KSPField]
         public string foundAnimate = null;
-
+        
         [KSPField]
         public bool IsEnabled = false;
         [KSPField(isPersistant = true)]
@@ -63,7 +59,6 @@ namespace DMModuleScienceAnimate
         protected Animation animSecondary;        
         protected Transform cam = null;
 
-        List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
         List<ScienceData> anomalyData = new List<ScienceData>();
         List<PQSCity> anomList = new List<PQSCity>();       //Master PQSCity list for all anomalies on current planet.
         
@@ -109,7 +104,7 @@ namespace DMModuleScienceAnimate
             base.OnUpdate();
             if (!HighLogic.LoadedSceneIsEditor)
             {
-                if (IsDeployed)                 //Don't waste OnUpdate unless the part is deployed.
+                if (IsDeployed)                
                 {
                     inRange();
                     part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
@@ -544,6 +539,7 @@ namespace DMModuleScienceAnimate
         public override void OnSave(ConfigNode node)
         {
             base.OnSave(node);
+            node.RemoveNodes("ScienceData");
             foreach (ScienceData storedData in anomalyData)
             {
                 ConfigNode anomalyDataNode = node.AddNode("ScienceData");
@@ -646,12 +642,15 @@ namespace DMModuleScienceAnimate
         
         private void onSendToLab(ScienceData data)
         {
+            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
+            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             if (checkLabOps() && anomalyData.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);      
         }
 
         public bool checkLabOps()       //Make sure any science labs present are operational, can probably be removed
         {
+            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
             labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             bool labOp = false;
             if (labList.Count > 0)
@@ -677,7 +676,7 @@ namespace DMModuleScienceAnimate
         {
             if (anomalyData.Count > 0)
             {
-                GetData();
+                //GetData();
                 ScienceData storedExp = anomalyData[0];
                 ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, xmitDataScalar / 2, true, "Transmitting this experiment will render this module inoperable.", true, storedExp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
                 ExperimentsResultDialog.DisplayResult(page);
