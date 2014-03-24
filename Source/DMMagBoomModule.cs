@@ -121,7 +121,7 @@ namespace DMagic
                     double lon = lonDeg * Mathf.Deg2Rad;
                     double alt = vessel.altitude / 1000;
 
-                    //Get universal time in seconds and calculate our time during the current, normalized solar day
+                    //Get universal time in seconds and calculate our time during the normalized solar day
                     double uTime = Planetarium.GetUniversalTime();
                     double uDay = uTime / sDay;
                     double nDay = uDay % 1;
@@ -145,11 +145,11 @@ namespace DMagic
                     double Radius = Math.Sqrt((radiusx * radiusx) + (radiusy * radiusy) + (radiusz * radiusz));
                     if (Radius == 0) Radius += 0.001;
 
-                    //Scale our altitude by our position on the simulated torus, ignore at altitudes below 250km, ramp up quickly above high scaled altitude up to a max value
-                    if (alt > 250)
+                    //Scale our altitude by our position on the simulated torus, ignore at altitudes below 600km, ramp up quickly above high scaled altitude up to a max value
+                    if (alt > 600)
                     {
                         alt *= 1 / Radius;
-                        if (alt < 250) alt = 250;
+                        if (alt < 600) alt = 600;
                     }                    
                     if (alt > 1000) alt *= Math.Pow((alt / 1000), 3);
                     if (alt > 20000) alt = 20000;
