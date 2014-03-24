@@ -37,12 +37,21 @@ namespace DMagic
         public string inc;
         [KSPField(guiActive = false, guiName = "Declination")]
         public string dec;
+
+        //Development fields
+
         //[KSPField(guiActive = false, guiName = "Radius")]
         //public string radius;
         //[KSPField(guiActive = false, guiName = "Alt")]
         //public string altScaled;
         //[KSPField(guiActive = false, guiName = "Lon")]
         //public string lons;
+        //[KSPField(guiActive = false, guiName = "Bz")]
+        //public string Bzold;
+        //[KSPField(guiActive = false, guiName = "BzS")]
+        //public string Bznew;
+        //[KSPField(guiActive = false, guiName = "Bh")]
+        //public string Bhold;
 
         [KSPField]
         public bool runMagnetometer;
@@ -53,14 +62,13 @@ namespace DMagic
 
         private DMModuleScienceAnimate primaryModule;
 
-        //Kerbin solar day length
-        private static double sDay = 21650.81276574;
+        
 
         public override void OnStart(PartModule.StartState state)
         {
             base.OnStart(state);
             this.part.force_activate();
-            if (part.FindModulesImplementing<DMModuleScienceAnimate>().Count > 1)
+            if (part.FindModulesImplementing<DMModuleScienceAnimate>().Count > 0)
                 primaryModule = part.FindModulesImplementing<DMModuleScienceAnimate>().First();
         }
 
@@ -77,11 +85,19 @@ namespace DMagic
         {
             return magValues.SGMagVar(lat, lon, alt, date, i, field);
         }
-        
+
+        //Kerbin solar day length
+        private static double sDay = 21650.81276574;
+
         public override void OnUpdate()
         {
             base.OnUpdate();
-
+            if (vessel.mainBody.name != "Kerbin")
+            {
+                Fields["Bt"].guiActive = false;
+                Fields["inc"].guiActive = false;
+                Fields["dec"].guiActive = false;
+            }
             //Only functional on Kerbin for now
             if (vessel.mainBody.name == "Kerbin" && runMagnetometer)
             {
@@ -91,6 +107,9 @@ namespace DMagic
                 //Fields["radius"].guiActive = primaryModule.IsDeployed;
                 //Fields["altScaled"].guiActive = primaryModule.IsDeployed;
                 //Fields["lons"].guiActive = primaryModule.IsDeployed;
+                //Fields["Bzold"].guiActive = primaryModule.IsDeployed;
+                //Fields["Bznew"].guiActive = primaryModule.IsDeployed;
+                //Fields["Bhold"].guiActive = primaryModule.IsDeployed;
 
                 if (primaryModule.IsDeployed)
                 {
@@ -132,8 +151,8 @@ namespace DMagic
                         alt *= 1 / Radius;
                         if (alt < 250) alt = 250;
                     }                    
-                    if (alt > 500) alt *= Math.Pow((alt / 500), 3);
-                    if (alt > 5000) alt = 5000;
+                    if (alt > 1000) alt *= Math.Pow((alt / 1000), 3);
+                    if (alt > 20000) alt = 20000;
 
                     //Send all of our modified parameters to the field model
                     double[] magComp = getMag(lat, lon, alt, date, i, field);
@@ -145,9 +164,24 @@ namespace DMagic
 
                     //Calculate various magenetic field components based on 3-axis field strength 
                     double Bh = Math.Sqrt((Bx * Bx) + (By * By));
+                    //Bzold = "Bz: " + Bz.ToString();
+                    //Bhold = "Bh: " + Bh.ToString();
+
+                    //Alter the magnetic field line vector when far away from Kerbin
+                    if (alt > 2000)
+                    {
+                        Bh /= (alt / 2000);
+                        Bz *= (alt / 2000);
+                        if (alt > 10000)
+                        {
+                            Bz /= (alt / 10000);
+                        }
+                    }
+
                     double Bti = Math.Sqrt((Bh * Bh) + (Bz * Bz));
                     double dip = Math.Atan2(Bz, Bh);
                     double decD;
+
                     //Return 0 declination at magnetic poles
                     if (Bx != 0.0 || By != 0.0) decD = Math.Atan2(By, Bx);
                     else decD = 0.0;
@@ -165,6 +199,7 @@ namespace DMagic
                     dec = decf.ToString("F2") + " Deg";
 
                     //Extra variables - used in development
+
                     //float altf = (float)alt;
                     //float nDayf = (float)nDay;
                     //Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
@@ -179,6 +214,8 @@ namespace DMagic
                     //lons = lonf.ToString("F3") + " Deg";
                     //lons = Btf.ToString("F2") + " nT";
                     //lons = "Shifted long: " + (((lonShift * Mathf.Rad2Deg) + 180 + 360) % 360 - 180).ToString();
+                    //lons = "Scaled Bh: " + Bh.ToString();
+                    //Bznew = "Scaled Bz: " + Bz.ToString();
                 }
             }
         }
