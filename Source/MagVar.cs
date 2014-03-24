@@ -880,6 +880,8 @@ namespace DMagic
          * model=1 is IGRF90, 2 is WMM85, 3 is WMM90, 4 is WMM95, 
          * 5 is IGRF95, 6 is WMM2000, 7 is IGRF2000, 8 is WMM2005, 9 is IGRF2005, 10 is WMM2010, 11 is IGRF2010
          * N and E lat and long are positive, S and W negative
+         * 
+         * Alter this to return double array with all six magnetic field components
          */
         /// <summary>
         /// 
