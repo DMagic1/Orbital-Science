@@ -422,8 +422,8 @@ namespace DMagic
             }
             if (resourceOn)
             {
-                float cost = 8 * Time.deltaTime;
-                if (part.RequestResource("ElectricCharge", cost) < cost)
+                float cost = resourceCost * Time.deltaTime;
+                if (part.RequestResource(resourceToUse, cost) < cost)
                 {
                     StopCoroutine("WaitForAnimation");
                     resourceOn = false;
