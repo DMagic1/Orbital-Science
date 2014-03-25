@@ -459,7 +459,7 @@ namespace DMagic
                 case "RockArch02":
                     return "Rock Arch 3";
                 default:
-                    return "???";
+                    return anomName;
             }
         }
 
