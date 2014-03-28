@@ -386,7 +386,7 @@ namespace DMagic
                     if (customFailMessage != null) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                 }
             }
-            else ScreenMessages.PostScreenMessage("Cannot collect more data; reset or transmit current science report", 5f, ScreenMessageStyle.UPPER_CENTER);
+            else ReviewData();
         }
 
         new public void DeployAction(KSPActionParam param)
@@ -476,40 +476,45 @@ namespace DMagic
         //This is for the title bar of the experiment results page
         public string situationCleanup(ExperimentSituations expSit, string b)
         {
-            if (b == "")
-            {
-                switch (expSit)
-                {
-                    case ExperimentSituations.SrfLanded:
-                        return " from  " + vessel.mainBody.name + "'s surface";
-                    case ExperimentSituations.SrfSplashed:
-                        return " from " + vessel.mainBody.name + "'s oceans";
-                    case ExperimentSituations.FlyingLow:
-                        return " while flying at " + vessel.mainBody.name;
-                    case ExperimentSituations.FlyingHigh:
-                        return " from " + vessel.mainBody.name + "'s upper atmosphere";
-                    case ExperimentSituations.InSpaceLow:
-                        return " while in space near " + vessel.mainBody.name;
-                    default:
-                        return " while in space high over " + vessel.mainBody.name;
-                }
-            }
+            if (vessel.landedAt != null)
+                return " from " + b;
             else
             {
-                switch (expSit)
+                if (b == "")
                 {
-                    case ExperimentSituations.SrfLanded:
-                        return " from " + vessel.mainBody.name + "'s " + b;
-                    case ExperimentSituations.SrfSplashed:
-                        return " from " + vessel.mainBody.name + "'s " + b;
-                    case ExperimentSituations.FlyingLow:
-                        return " while flying over " + vessel.mainBody.name + "'s " + b;
-                    case ExperimentSituations.FlyingHigh:
-                        return " from the upper atmosphere over " + vessel.mainBody.name + "'s " + b;
-                    case ExperimentSituations.InSpaceLow:
-                        return " from space just above " + vessel.mainBody.name + "'s " + b;
-                    default:
-                        return " while in space high over " + vessel.mainBody.name + "'s " + b;
+                    switch (expSit)
+                    {
+                        case ExperimentSituations.SrfLanded:
+                            return " from  " + vessel.mainBody.theName + "'s surface";
+                        case ExperimentSituations.SrfSplashed:
+                            return " from " + vessel.mainBody.theName + "'s oceans";
+                        case ExperimentSituations.FlyingLow:
+                            return " while flying at " + vessel.mainBody.theName;
+                        case ExperimentSituations.FlyingHigh:
+                            return " from " + vessel.mainBody.theName + "'s upper atmosphere";
+                        case ExperimentSituations.InSpaceLow:
+                            return " while in space near " + vessel.mainBody.theName;
+                        default:
+                            return " while in space high over " + vessel.mainBody.theName;
+                    }
+                }
+                else
+                {
+                    switch (expSit)
+                    {
+                        case ExperimentSituations.SrfLanded:
+                            return " from " + vessel.mainBody.theName + "'s " + b;
+                        case ExperimentSituations.SrfSplashed:
+                            return " from " + vessel.mainBody.theName + "'s " + b;
+                        case ExperimentSituations.FlyingLow:
+                            return " while flying over " + vessel.mainBody.theName + "'s " + b;
+                        case ExperimentSituations.FlyingHigh:
+                            return " from the upper atmosphere over " + vessel.mainBody.theName + "'s " + b;
+                        case ExperimentSituations.InSpaceLow:
+                            return " from space just above " + vessel.mainBody.theName + "'s " + b;
+                        default:
+                            return " while in space high over " + vessel.mainBody.theName + "'s " + b;
+                    }
                 }
             }
         }
@@ -595,7 +600,7 @@ namespace DMagic
                 base.DumpData(data);
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Clear();
-                print("Dump Data");
+                //print("Dump Data");
             }
             eventsCheck();
         }
@@ -611,7 +616,7 @@ namespace DMagic
                 }
                 scienceReportList.Clear();
                 if (keepDeployedMode == 0) retractEvent();
-                print("Dump All Data");
+                //print("Dump All Data");
             }
             eventsCheck();
         }
@@ -624,7 +629,7 @@ namespace DMagic
                 base.DumpData(data);
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Remove(data);
-                print("Dump Data Local");
+                //print("Dump Data Local");
             }
             eventsCheck();
         }
@@ -641,12 +646,12 @@ namespace DMagic
                 if (keepDeployedMode == 0) retractEvent();
             }
             eventsCheck();
-            print("Discard data from page");
+            //print("Discard data from page");
         }
 
         private void onKeepData(ScienceData data)
         {
-            print("Store date from page");
+            //print("Store date from page");
         }
         
         private void onTransmitData(ScienceData data)
@@ -656,7 +661,7 @@ namespace DMagic
             {
                 tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> {data});
                 DumpData(data);
-                print("Transmit data from page");
+                //print("Transmit data from page");
             }
             else ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
         }
@@ -667,13 +672,13 @@ namespace DMagic
             labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             if (checkLabOps() && scienceReportList.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
-            print("Send data to lab");
+            //print("Send data to lab");
         }
 
         private void onComplete(ScienceData data)
         {
             ReviewData();
-            print("Data processed in lab");
+            //print("Data processed in lab");
         }
 
         //Maybe unnecessary, can be folded into a simpler method???
