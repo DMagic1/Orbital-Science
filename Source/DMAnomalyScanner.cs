@@ -506,7 +506,7 @@ namespace DMagic
             ScienceData data = null;
             ScienceExperiment anomExp = ResearchAndDevelopment.GetExperiment(experimentID);
             ScienceSubject anomSub = ResearchAndDevelopment.GetExperimentSubject(anomExp, currentExpSit(), vessel.mainBody, biomeResultName(closestAnom));
-            data = new ScienceData(anomExp.baseValue * anomSub.dataScale, xmitDataScalar, xmitDataScalar/2, experimentID, "Scan of the " + biomeResultName(closestAnom) + " on " + vessel.mainBody.theName + ".");
+            data = new ScienceData(anomExp.baseValue * anomSub.dataScale, xmitDataScalar, xmitDataScalar/2, experimentID, "Scan of the " + biomeResultName(closestAnom) + " on " + vessel.mainBody.theName);
             data.subjectID = anomSub.id;
             return data;            
         }
