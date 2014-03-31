@@ -36,7 +36,7 @@ using System.Collections;
 
 namespace DMagic
 {
-    class DMModuleScienceAnimate : ModuleScienceExperiment, IScienceDataContainer
+    public class DMModuleScienceAnimate : ModuleScienceExperiment, IScienceDataContainer
     {
         [KSPField]
         public string customFailMessage = null;
@@ -476,7 +476,7 @@ namespace DMagic
         //This is for the title bar of the experiment results page
         public string situationCleanup(ExperimentSituations expSit, string b)
         {
-            if (vessel.landedAt != null)
+            if (vessel.landedAt != "")
                 return " from " + b;
             else
             {
