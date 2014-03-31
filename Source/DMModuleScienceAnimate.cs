@@ -550,7 +550,7 @@ namespace DMagic
 
         #region IScienceDataContainer methods
         
-        //Implement these interface methods to make the science lab and tranmitters function properly.
+        //Implement these interface methods to make the science lab and transmitters function properly.
         ScienceData[] IScienceDataContainer.GetData()
         {
             return scienceReportList.ToArray();
@@ -668,8 +668,7 @@ namespace DMagic
 
         private void onSendToLab(ScienceData data)
         {
-            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
-            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             if (checkLabOps() && scienceReportList.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
             //print("Send data to lab");
@@ -684,8 +683,7 @@ namespace DMagic
         //Maybe unnecessary, can be folded into a simpler method???
         public bool checkLabOps()
         {
-            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
-            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             bool labOp = false;
             for (int i = 0; i < labList.Count; i++)
             {

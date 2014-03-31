@@ -650,16 +650,14 @@ namespace DMagic
         
         private void onSendToLab(ScienceData data)
         {
-            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
-            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             if (checkLabOps() && anomalyData.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);      
         }
 
         public bool checkLabOps()       //Make sure any science labs present are operational, can probably be removed
         {
-            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
-            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             bool labOp = false;
             if (labList.Count > 0)
             {
