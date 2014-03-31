@@ -36,7 +36,7 @@ using System.Collections;
 
 namespace DMagic
 {
-    class DMBioDrill : PartModule, IScienceDataContainer
+    public class DMBioDrill : PartModule, IScienceDataContainer
     {
         [KSPField(isPersistant = false)]
         public string animationName = null;
