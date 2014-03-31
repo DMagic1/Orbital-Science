@@ -37,7 +37,7 @@ using System.Collections;
 namespace DMagic
 {
     
-    class DMAnomalyScanner : ModuleScienceExperiment, IScienceDataContainer
+    public class DMAnomalyScanner : ModuleScienceExperiment, IScienceDataContainer
     {
         [KSPField]
         public string animationName = null;
