@@ -36,7 +36,7 @@ using System.Collections.Generic;
 
 namespace DMagic
 {
-    //Inherit default science experiment module.
+    
     public class DMMagBoomModule : PartModule
     {        
         [KSPField(guiActive = false, guiName = "Bt")]
@@ -45,6 +45,14 @@ namespace DMagic
         public string inc;
         [KSPField(guiActive = false, guiName = "Declination")]
         public string dec;
+
+
+        //public string Br;
+        //public string Btheta;
+        //public string Bpsi;
+        //public string BX;
+        //public string BY;
+        //public string BZ;
 
         //Development fields
 
@@ -166,6 +174,9 @@ namespace DMagic
                     double[] magComp = getMag(lat, lon, alt, date, i, field);
 
                     //Magnetic field components
+                    //double Brad = magComp[0];
+                    //double BPsi = magComp[2];
+                    //double BTheta = magComp[1];
                     double Bx = magComp[3];
                     double By = magComp[4];
                     double Bz = magComp[5];
@@ -199,12 +210,24 @@ namespace DMagic
                     decD *= Mathf.Rad2Deg;                    
                     float Btf = (float)Bti;
                     float incf = (float)dip;
-                    float decf = (float)decD;                   
+                    float decf = (float)decD;
+                    //float BRf = (float)Brad;
+                    //float BPsif = (float)BPsi;
+                    //float BThetaf = (float)BTheta;
+                    //float Bxf = (float)Bx;
+                    //float Byf = (float)By;
+                    //float Bzf = (float)Bz;
 
                     //Display in right-click menu
                     Bt = Btf.ToString("F2") + " nT";
-                    inc = incf.ToString("F2") + " Deg";
-                    dec = decf.ToString("F2") + " Deg";
+                    inc = incf.ToString("F2") + "°";
+                    dec = decf.ToString("F2") + "°";
+                    //Br = BRf.ToString("F2") + " nT";
+                    //Bpsi = BPsif.ToString("F2") + " nT";
+                    //Btheta = BThetaf.ToString("F2") + " nT";
+                    //BX = Bxf.ToString("F2") + " nT";
+                    //BY = Byf.ToString("F2") + " nT";
+                    //BZ = Bzf.ToString("F2") + " nT";
 
                     //Extra variables - used in development
 
