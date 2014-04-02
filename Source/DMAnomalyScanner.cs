@@ -650,14 +650,16 @@ namespace DMagic
         
         private void onSendToLab(ScienceData data)
         {
-            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
+            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             if (checkLabOps() && anomalyData.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);      
         }
 
         public bool checkLabOps()       //Make sure any science labs present are operational, can probably be removed
         {
-            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
+            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             bool labOp = false;
             if (labList.Count > 0)
             {
@@ -672,19 +674,20 @@ namespace DMagic
             }
             return labOp;
         }
-
+        
         private void onComplete(ScienceData data)
         {
+            data.transmitValue = 0.95f;
             ReviewData();
         }
-
+        
         new public void ReviewData()
         {
             if (anomalyData.Count > 0)
             {
                 //GetData();
                 ScienceData storedExp = anomalyData[0];
-                ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, xmitDataScalar / 2, true, "Transmitting this experiment will render this module inoperable.", true, storedExp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+                ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, storedExp, storedExp.transmitValue, 0.45f, true, "Transmitting this experiment will render this module inoperable.", true, storedExp.labBoost < 1 && checkLabOps(), new Callback<ScienceData>(onPageDiscard), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
                 ExperimentsResultDialog.DisplayResult(page);
             }
             eventsCheck();
