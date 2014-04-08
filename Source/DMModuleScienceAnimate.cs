@@ -14,9 +14,6 @@
  * this list of conditions and the following disclaimer in the documentation and/or other materials 
  * provided with the distribution.
  * 
- * 3. Neither the name of the copyright holder nor the names of its contributors may be used 
- * to endorse or promote products derived from this software without specific prior written permission.
- * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
@@ -83,11 +80,19 @@ namespace DMagic
         public string resourceExperiment = "ElectricCharge";
         [KSPField]
         public float resourceExpCost = 0;
+        [KSPField]
+        public bool asteroidReports = false;
 
         protected Animation anim;
         protected ScienceExperiment scienceExp;
         private bool resourceOn = false;
         private int dataIndex = 0;
+
+        //Record some default values for Eeloo here to prevent the asteroid science method from screwing them up
+        private string bodyDescription = "There’s been a considerable amount of controversy around the status of Eeloo as being a proper planet or a just “lump of ice going around the Sun”. The debate is still ongoing, since most academic summits held to address the issue have devolved into, on good days, petty name calling, and on worse ones, all-out brawls.";
+        private string bodyName = "Eeloo";
+        private float bodyLandedValue = 15;
+        private float bodySpaceValue = 12;
         
         List<ScienceData> scienceReportList = new List<ScienceData>();
 
@@ -96,14 +101,10 @@ namespace DMagic
             base.OnStart(state);
             this.part.force_activate();
             anim = part.FindModelAnimators(animationName)[0];
-            if (state == StartState.Editor)
-            {
-                editorSetup();
-            }
+            if (state == StartState.Editor) editorSetup();
             else
-            {                
+            {
                 setup();
-                eventsCheck();
                 if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
         }
@@ -130,6 +131,12 @@ namespace DMagic
                     scienceReportList.Add(data);
                 }
             }
+        }
+
+        public override void OnInitialize()
+        {
+            base.OnInitialize();
+            eventsCheck();
         }
 
         public override void OnUpdate()
@@ -416,14 +423,37 @@ namespace DMagic
         {
             ExperimentSituations vesselSituation = getSituation();
             string biome = getBiome(vesselSituation);
+            CelestialBody mainBody = vessel.mainBody;
+            bool asteroid = false;            
+            
+            //Check for asteroids and alter the biome and celestialbody values as necessary
+            if (asteroidReports && AsteroidScience.asteroidGrappled() || asteroidReports && AsteroidScience.asteroidNear())
+            {
+                asteroid = true;
+                mainBody = AsteroidScience.Asteroid();
+                biome = mainBody.bodyDescription;
+            }
+
             ScienceData data = null;
             ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(experimentID);
-            ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, vessel.mainBody, biome);
+            ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, mainBody, biome);
+
+            //Replace Eeloo's CelestialBody values with defaults if necessary
+            if (asteroid)
+            {
+                mainBody.bodyDescription = bodyDescription;
+                mainBody.bodyName = bodyName;
+                mainBody.scienceValues.LandedDataValue = bodyLandedValue;
+                mainBody.scienceValues.InSpaceLowDataValue = bodySpaceValue;
+                asteroid = false;
+            }
+
             data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, xmitDataScalar / 2, experimentID, exp.experimentTitle + situationCleanup(vesselSituation, biome));
             data.subjectID = sub.id;
+            sub.title = data.title;
             return data;
         }
-
+        
         public string getBiome(ExperimentSituations s)
         {
             if (scienceExp.BiomeIsRelevantWhile(s))
@@ -451,6 +481,9 @@ namespace DMagic
         //Get our experimental situation based on the vessel's current flight situation, fix stock bugs with aerobraking and reentry.
         public ExperimentSituations getSituation()
         {
+            //Check for asteroids, return values that should sync with existing parts
+            if (asteroidReports && AsteroidScience.asteroidGrappled()) return ExperimentSituations.SrfLanded;
+            if (asteroidReports && AsteroidScience.asteroidNear()) return ExperimentSituations.InSpaceLow;
             switch (vessel.situation)
             {
                 case Vessel.Situations.LANDED:
@@ -472,49 +505,48 @@ namespace DMagic
                         return ExperimentSituations.InSpaceHigh;
             }
         }
-        
+
         //This is for the title bar of the experiment results page
         public string situationCleanup(ExperimentSituations expSit, string b)
         {
-            if (vessel.landedAt != "")
-                return " from " + b;
+            //Add some asteroid specefic results
+            if (asteroidReports && AsteroidScience.asteroidGrappled()) return " from the surface of a " + b + " asteroid";
+            if (asteroidReports && AsteroidScience.asteroidNear()) return " while in space near a " + b + " asteroid";
+            if (vessel.landedAt != "") return " from " + b;
+            if (b == "")
+            {
+                switch (expSit)
+                {
+                    case ExperimentSituations.SrfLanded:
+                        return " from  " + vessel.mainBody.theName + "'s surface";
+                    case ExperimentSituations.SrfSplashed:
+                        return " from " + vessel.mainBody.theName + "'s oceans";
+                    case ExperimentSituations.FlyingLow:
+                        return " while flying at " + vessel.mainBody.theName;
+                    case ExperimentSituations.FlyingHigh:
+                        return " from " + vessel.mainBody.theName + "'s upper atmosphere";
+                    case ExperimentSituations.InSpaceLow:
+                        return " while in space near " + vessel.mainBody.theName;
+                    default:
+                        return " while in space high over " + vessel.mainBody.theName;
+                }
+            }
             else
             {
-                if (b == "")
+                switch (expSit)
                 {
-                    switch (expSit)
-                    {
-                        case ExperimentSituations.SrfLanded:
-                            return " from  " + vessel.mainBody.theName + "'s surface";
-                        case ExperimentSituations.SrfSplashed:
-                            return " from " + vessel.mainBody.theName + "'s oceans";
-                        case ExperimentSituations.FlyingLow:
-                            return " while flying at " + vessel.mainBody.theName;
-                        case ExperimentSituations.FlyingHigh:
-                            return " from " + vessel.mainBody.theName + "'s upper atmosphere";
-                        case ExperimentSituations.InSpaceLow:
-                            return " while in space near " + vessel.mainBody.theName;
-                        default:
-                            return " while in space high over " + vessel.mainBody.theName;
-                    }
-                }
-                else
-                {
-                    switch (expSit)
-                    {
-                        case ExperimentSituations.SrfLanded:
-                            return " from " + vessel.mainBody.theName + "'s " + b;
-                        case ExperimentSituations.SrfSplashed:
-                            return " from " + vessel.mainBody.theName + "'s " + b;
-                        case ExperimentSituations.FlyingLow:
-                            return " while flying over " + vessel.mainBody.theName + "'s " + b;
-                        case ExperimentSituations.FlyingHigh:
-                            return " from the upper atmosphere over " + vessel.mainBody.theName + "'s " + b;
-                        case ExperimentSituations.InSpaceLow:
-                            return " from space just above " + vessel.mainBody.theName + "'s " + b;
-                        default:
-                            return " while in space high over " + vessel.mainBody.theName + "'s " + b;
-                    }
+                    case ExperimentSituations.SrfLanded:
+                        return " from " + vessel.mainBody.theName + "'s " + b;
+                    case ExperimentSituations.SrfSplashed:
+                        return " from " + vessel.mainBody.theName + "'s " + b;
+                    case ExperimentSituations.FlyingLow:
+                        return " while flying over " + vessel.mainBody.theName + "'s " + b;
+                    case ExperimentSituations.FlyingHigh:
+                        return " from the upper atmosphere over " + vessel.mainBody.theName + "'s " + b;
+                    case ExperimentSituations.InSpaceLow:
+                        return " from space just above " + vessel.mainBody.theName + "'s " + b;
+                    default:
+                        return " while in space high over " + vessel.mainBody.theName + "'s " + b;
                 }
             }
         }
@@ -550,7 +582,7 @@ namespace DMagic
 
         #region IScienceDataContainer methods
         
-        //Implement these interface methods to make the science lab and tranmitters function properly.
+        //Implement these interface methods to make the science lab and transmitters function properly.
         ScienceData[] IScienceDataContainer.GetData()
         {
             return scienceReportList.ToArray();
@@ -668,8 +700,7 @@ namespace DMagic
 
         private void onSendToLab(ScienceData data)
         {
-            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
-            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             if (checkLabOps() && scienceReportList.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
             //print("Send data to lab");
@@ -684,8 +715,7 @@ namespace DMagic
         //Maybe unnecessary, can be folded into a simpler method???
         public bool checkLabOps()
         {
-            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
-            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             bool labOp = false;
             for (int i = 0; i < labList.Count; i++)
             {
