@@ -39,13 +39,13 @@ namespace DMagic
     
     public class DMMagBoomModule : PartModule
     {        
-        [KSPField(guiActive = false, guiName = "Bt")]
+        //[KSPField(guiActive = false, guiName = "Bt")]
         public string Bt;
-        [KSPField(guiActive = false, guiName = "Inclination")]
+        //[KSPField(guiActive = false, guiName = "Inclination")]
         public string inc;
-        [KSPField(guiActive = false, guiName = "Declination")]
+        //[KSPField(guiActive = false, guiName = "Declination")]
         public string dec;
-
+        
 
         //public string Br;
         //public string Btheta;
@@ -56,16 +56,16 @@ namespace DMagic
 
         //Development fields
 
-        //[KSPField(guiActive = false, guiName = "Radius")]
-        //public string radius;
-        //[KSPField(guiActive = false, guiName = "Alt")]
-        //public string altScaled;
-        //[KSPField(guiActive = false, guiName = "Lon")]
-        //public string lons;
-        //[KSPField(guiActive = false, guiName = "Bz")]
-        //public string Bzold;
-        //[KSPField(guiActive = false, guiName = "BzS")]
-        //public string Bznew;
+        [KSPField(guiActive = false, guiName = "X: ")]
+        public string sunX;
+        [KSPField(guiActive = false, guiName = "Z: ")]
+        public string sunZ;
+        [KSPField(guiActive = false, guiName = "Lat: ")]
+        public string lats;
+        [KSPField(guiActive = false, guiName = "nDay")]
+        public string nDays;
+        [KSPField(guiActive = false, guiName = "Long: ")]
+        public string lons;
         //[KSPField(guiActive = false, guiName = "Bh")]
         //public string Bhold;
 
@@ -103,28 +103,28 @@ namespace DMagic
         }
 
         //Kerbin solar day length
-        private static double sDay = 21650.81276574;
+        private static double sDay = 21650.82353;
 
         public override void OnUpdate()
         {
             base.OnUpdate();
-            if (vessel.mainBody.name != "Kerbin")
-            {
-                Fields["Bt"].guiActive = false;
-                Fields["inc"].guiActive = false;
-                Fields["dec"].guiActive = false;
-            }
+            //if (vessel.mainBody.name != "Kerbin")
+            //{
+            //    Fields["Bt"].guiActive = false;
+            //    Fields["inc"].guiActive = false;
+            //    Fields["dec"].guiActive = false;
+            //}
             //Only functional on Kerbin for now
-            if (vessel.mainBody.name == "Kerbin" && runMagnetometer)
+            if (runMagnetometer)  //vessel.mainBody.name == "Kerbin" && 
             {
-                Fields["Bt"].guiActive = primaryModule.IsDeployed;
-                Fields["inc"].guiActive = primaryModule.IsDeployed;
-                Fields["dec"].guiActive = primaryModule.IsDeployed;
-                //Fields["radius"].guiActive = primaryModule.IsDeployed;
-                //Fields["altScaled"].guiActive = primaryModule.IsDeployed;
-                //Fields["lons"].guiActive = primaryModule.IsDeployed;
-                //Fields["Bzold"].guiActive = primaryModule.IsDeployed;
-                //Fields["Bznew"].guiActive = primaryModule.IsDeployed;
+                //Fields["Bt"].guiActive = primaryModule.IsDeployed;
+                //Fields["inc"].guiActive = primaryModule.IsDeployed;
+                //Fields["dec"].guiActive = primaryModule.IsDeployed;
+                Fields["sunX"].guiActive = primaryModule.IsDeployed;
+                Fields["sunZ"].guiActive = primaryModule.IsDeployed;
+                Fields["lats"].guiActive = primaryModule.IsDeployed;
+                Fields["nDays"].guiActive = primaryModule.IsDeployed;
+                Fields["lons"].guiActive = primaryModule.IsDeployed;
                 //Fields["Bhold"].guiActive = primaryModule.IsDeployed;
 
                 if (primaryModule.IsDeployed)
@@ -217,7 +217,7 @@ namespace DMagic
                     //float Bxf = (float)Bx;
                     //float Byf = (float)By;
                     //float Bzf = (float)Bz;
-
+                    
                     //Display in right-click menu
                     Bt = Btf.ToString("F2") + " nT";
                     inc = incf.ToString("F2") + "°";
@@ -231,14 +231,22 @@ namespace DMagic
 
                     //Extra variables - used in development
 
+                    nDays = nDay.ToString();
                     //float altf = (float)alt;
                     //float nDayf = (float)nDay;
-                    //Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
-                    //Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
+                    Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
+                    Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
                     //lons = nDayf.ToString("F5");
+                    double sunXd = sunD.x;
+                    double sunZd = sunD.z;
+                    sunX = sunXd.ToString();
+                    sunZ = sunZd.ToString();
+
                     //nDays = nDayf.ToString("F4");
                     //radius = Radius.ToString();
                     //float latf = (float)latDeg;
+                    lats = latDeg.ToString();
+                    lons = lonDeg.ToString();
                     //float lonf = (float)lonDeg;
                     //lats = latf.ToString("F3") + " Deg";
                     //altScaled = alt.ToString();
