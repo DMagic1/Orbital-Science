@@ -102,15 +102,12 @@ namespace DMagic
             return magValues.SGMagVar(lat, lon, alt, date, i, field);
         }
 
-        //Kerbin solar day length
-        //private static double sDay = 21650.82353;
-
         public void Update()
         {
             if ((Time.time - lastUpdate) > updateInterval)
             {
                 lastUpdate = Time.time;
-                int planetID = vessel.mainBody.flightGlobalsIndex;
+                CelestialBody planetID = vessel.mainBody;
                 
                 if (runMagnetometer && vessel.mainBody.name == "Kerbin" || runMagnetometer && vessel.mainBody.name == "Eve" || runMagnetometer && vessel.mainBody.name == "Duna")
                 {
@@ -257,41 +254,43 @@ namespace DMagic
             }
         }
 
-        private double longShift(int planet, double nDay)
+        private double longShift(CelestialBody planet, double nDay)
         {
             double shift = 1;
-            if (planet == 1)
-            {
-                shift = (Math.PI / 2) * (1 + 4 * nDay);
-            }
+            if (planet.flightGlobalsIndex == 1) shift = (Math.PI / 2) * (1 + 4 * nDay);
+            if (planet.flightGlobalsIndex == 5) shift = 1; // (-0.041 * Math.PI) * (1 + 48.780 * nDay);
+            if (planet.flightGlobalsIndex == 6) shift = 1;
             return shift;
         }
 
-        private double altScale(int planet)
+        private double altScale(CelestialBody planet)
         {
-            double scale = 1;
-            if (planet == 1) scale = 600;
+            double scale = planet.Radius / 1000;
             return scale;
         }
 
-        private double altMax(int planet)
+        private double altMax(CelestialBody planet)
         {
             double max = 1;
-            if (planet == 1) max = 20000;
+            if (planet.flightGlobalsIndex == 1) max = 20000;
+            if (planet.flightGlobalsIndex == 5) max = 10000;
+            if (planet.flightGlobalsIndex == 6) max = 5000;
             return max;
         }
 
-        private double solarDay(int planet)
+        private double solarDay(CelestialBody planet)
         {
-            double solarDay = 1;
-            if (planet == 1) solarDay = 21600 / (1 - (21600 / 9201600));
+            double solarDay = planet.rotationPeriod;
+            if (planet.flightGlobalsIndex > 0) solarDay = planet.rotationPeriod / (1 - (planet.rotationPeriod / planet.orbit.period));
             return solarDay;
         }
 
-        private double planetScale(int planet)
+        private double planetScale(CelestialBody planet)
         {
             double pScale = 1;
-            if (planet == 1) pScale = 1;
+            if (planet.flightGlobalsIndex == 1) pScale = 1;
+            if (planet.flightGlobalsIndex == 5) pScale = 4;
+            if (planet.flightGlobalsIndex == 6) pScale = 0.1;
             return pScale;
         }
         
