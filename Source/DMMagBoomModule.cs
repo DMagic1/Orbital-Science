@@ -77,9 +77,9 @@ namespace DMagic
         public float resourceCost = 0;
 
         private DMModuleScienceAnimate primaryModule;
-
+        private float lastUpdate = 0f;
+        private float updateInterval = 0.2f;
         
-
         public override void OnStart(PartModule.StartState state)
         {
             base.OnStart(state);
@@ -103,160 +103,195 @@ namespace DMagic
         }
 
         //Kerbin solar day length
-        private static double sDay = 21650.82353;
+        //private static double sDay = 21650.82353;
 
-        public override void OnUpdate()
+        public void Update()
         {
-            base.OnUpdate();
-            //if (vessel.mainBody.name != "Kerbin")
-            //{
-            //    Fields["Bt"].guiActive = false;
-            //    Fields["inc"].guiActive = false;
-            //    Fields["dec"].guiActive = false;
-            //}
-            //Only functional on Kerbin for now
-            if (runMagnetometer)  //vessel.mainBody.name == "Kerbin" && 
+            if ((Time.time - lastUpdate) > updateInterval)
             {
-                //Fields["Bt"].guiActive = primaryModule.IsDeployed;
-                //Fields["inc"].guiActive = primaryModule.IsDeployed;
-                //Fields["dec"].guiActive = primaryModule.IsDeployed;
-                Fields["sunX"].guiActive = primaryModule.IsDeployed;
-                Fields["sunZ"].guiActive = primaryModule.IsDeployed;
-                Fields["lats"].guiActive = primaryModule.IsDeployed;
-                Fields["nDays"].guiActive = primaryModule.IsDeployed;
-                Fields["lons"].guiActive = primaryModule.IsDeployed;
-                //Fields["Bhold"].guiActive = primaryModule.IsDeployed;
-
-                if (primaryModule.IsDeployed)
+                lastUpdate = Time.time;
+                int planetID = vessel.mainBody.flightGlobalsIndex;
+                //if (vessel.mainBody.name != "Kerbin")
+                //{
+                //    Fields["Bt"].guiActive = false;
+                //    Fields["inc"].guiActive = false;
+                //    Fields["dec"].guiActive = false;
+                //}
+                //Only functional on Kerbin for now
+                if (runMagnetometer && vessel.mainBody.name == "Kerbin" || runMagnetometer && vessel.mainBody.name == "Eve" || runMagnetometer && vessel.mainBody.name == "Duna")
                 {
-                    part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
+                    //Fields["Bt"].guiActive = primaryModule.IsDeployed;
+                    //Fields["inc"].guiActive = primaryModule.IsDeployed;
+                    //Fields["dec"].guiActive = primaryModule.IsDeployed;
+                    Fields["sunX"].guiActive = primaryModule.IsDeployed;
+                    Fields["sunZ"].guiActive = primaryModule.IsDeployed;
+                    Fields["lats"].guiActive = primaryModule.IsDeployed;
+                    Fields["nDays"].guiActive = primaryModule.IsDeployed;
+                    Fields["lons"].guiActive = primaryModule.IsDeployed;
+                    //Fields["Bhold"].guiActive = primaryModule.IsDeployed;
 
-                    double latDeg = (vessel.latitude + 90 + 180) % 180 - 90;
-                    double lonDeg = (vessel.longitude + 180 + 360) % 360 - 180;
-                    double lat = latDeg * Mathf.Deg2Rad;
-                    double lon = lonDeg * Mathf.Deg2Rad;
-                    double alt = vessel.altitude / 1000;
-
-                    //Get universal time in seconds and calculate our time during the normalized solar day
-                    double uTime = Planetarium.GetUniversalTime();
-                    double uDay = uTime / sDay;
-                    double nDay = uDay % 1;
-
-                    //Change the simulation day to add some variability, start with Jan 1 2010 in Julian Date format
-                    int localDay = Convert.ToInt32(uDay);
-                    long date = 2455197 + (localDay % 500);
-
-                    //Paramaters for mag field model
-                    int i = 10;
-                    double[] field = new double[6];
-
-                    //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon, bring everything down to -Pi to Pi just to be safe
-                    //For reference, at time zero the sun is directly above -90.158 Deg West on Kerbin, I'm rounding that to -90, or -Pi/2
-                    double lonShift = ((lon + (Math.PI / 2) * ((1 + 4 * nDay))) + Math.PI + Math.PI * 2) % (2 * Math.PI) - Math.PI;
-
-                    //Simulate magnetosphere distortion by solar wind with stretched torus shape, determine our position on the surface of the torus
-                    double radiusx = ((3.5 + (1 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) + (3.5 + (1.3 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) * Math.Cos(lat * 2)) * Math.Cos(lonShift);
-                    double radiusy = (0.75 + 0.9 * Math.Cos(lat * 2)) * Math.Sin(lonShift);
-                    double radiusz = (1 + 0.2 * Math.Cos(lonShift)) * Math.Sin(lat * 2);
-                    double Radius = Math.Sqrt((radiusx * radiusx) + (radiusy * radiusy) + (radiusz * radiusz));
-                    if (Radius == 0) Radius += 0.001;
-
-                    //Scale our altitude by our position on the simulated torus, ignore at altitudes below 600km, ramp up quickly above high scaled altitude up to a max value
-                    if (alt > 600)
+                    if (primaryModule.IsDeployed)
                     {
-                        alt *= 1 / Radius;
-                        if (alt < 600) alt = 600;
-                    }                    
-                    if (alt > 1000) alt *= Math.Pow((alt / 1000), 3);
-                    if (alt > 20000) alt = 20000;
+                        part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
 
-                    //Send all of our modified parameters to the field model
-                    double[] magComp = getMag(lat, lon, alt, date, i, field);
+                        double latDeg = (vessel.latitude + 90 + 180) % 180 - 90;
+                        double lonDeg = (vessel.longitude + 180 + 360) % 360 - 180;
+                        double lat = latDeg * Mathf.Deg2Rad;
+                        double lon = lonDeg * Mathf.Deg2Rad;
+                        double alt = vessel.altitude / 1000;
 
-                    //Magnetic field components
-                    //double Brad = magComp[0];
-                    //double BPsi = magComp[2];
-                    //double BTheta = magComp[1];
-                    double Bx = magComp[3];
-                    double By = magComp[4];
-                    double Bz = magComp[5];
+                        //Get universal time in seconds and calculate our time during the normalized solar day
+                        double uTime = Planetarium.GetUniversalTime();
+                        double uDay = uTime / solarDay(planetID);
+                        double nDay = uDay % 1;
 
-                    //Calculate various magenetic field components based on 3-axis field strength 
-                    double Bh = Math.Sqrt((Bx * Bx) + (By * By));
-                    //Bzold = "Bz: " + Bz.ToString();
-                    //Bhold = "Bh: " + Bh.ToString();
+                        //Change the simulation day to add some variability, start with Jan 1 2010 in Julian Date format
+                        int localDay = Convert.ToInt32(uDay);
+                        long date = 2455197 + (localDay % 500);
 
-                    //Alter the magnetic field line vector when far away from Kerbin
-                    if (alt > 2000)
-                    {
-                        Bh /= (alt / 2000);
-                        Bz *= (alt / 2000);
-                        if (alt > 10000)
+                        //Paramaters for mag field model
+                        int i = 10;
+                        double[] field = new double[6];
+
+                        //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon, bring everything down to -Pi to Pi just to be safe
+                        //For reference, at time zero the sun is directly above -90.158 Deg West on Kerbin, I'm rounding that to -90, or -Pi/2
+                        double lonShift = ((lon + (Math.PI / 2) * longShift(planetID, nDay)) + Math.PI + Math.PI * 2) % (2 * Math.PI) - Math.PI;
+
+                        //Simulate magnetosphere distortion by solar wind with stretched torus shape, determine our position on the surface of the torus
+                        double radiusx = ((3.5 + (1 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) + (3.5 + (1.3 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) * Math.Cos(lat * 2)) * Math.Cos(lonShift);
+                        double radiusy = (0.75 + 0.9 * Math.Cos(lat * 2)) * Math.Sin(lonShift);
+                        double radiusz = (1 + 0.2 * Math.Cos(lonShift)) * Math.Sin(lat * 2);
+                        double Radius = Math.Sqrt((radiusx * radiusx) + (radiusy * radiusy) + (radiusz * radiusz));
+                        if (Radius == 0) Radius += 0.001;
+
+                        //Scale our altitude by our position on the simulated torus, ignore at altitudes below 600km, ramp up quickly above high scaled altitude up to a max value
+                        if (alt > altScale(planetID))
                         {
-                            Bz /= (alt / 10000);
+                            alt *= 1 / Radius;
+                            if (alt < altScale(planetID)) alt = altScale(planetID);
                         }
+                        if (alt > 1000) alt *= Math.Pow((alt / 1000), 3);
+                        if (alt > altMax(planetID)) alt = altMax(planetID);
+
+                        //Send all of our modified parameters to the field model
+                        double[] magComp = getMag(lat, lon, alt, date, i, field);
+
+                        //Magnetic field components
+                        //double Brad = magComp[0];
+                        //double BPsi = magComp[2];
+                        //double BTheta = magComp[1];
+                        double Bx = magComp[3];
+                        double By = magComp[4];
+                        double Bz = magComp[5];
+
+                        //Calculate various magenetic field components based on 3-axis field strength 
+                        double Bh = Math.Sqrt((Bx * Bx) + (By * By));
+                        //Bzold = "Bz: " + Bz.ToString();
+                        //Bhold = "Bh: " + Bh.ToString();
+
+                        //Alter the magnetic field line vector when far away from Kerbin
+                        if (alt > 2000)
+                        {
+                            Bh /= (alt / 2000);
+                            Bz *= (alt / 2000);
+                            if (alt > 10000)
+                            {
+                                Bz /= (alt / 10000);
+                            }
+                        }
+
+                        double Bti = Math.Sqrt((Bh * Bh) + (Bz * Bz));
+                        double dip = Math.Atan2(Bz, Bh);
+                        double decD;
+
+                        //Return 0 declination at magnetic poles
+                        if (Bx != 0.0 || By != 0.0) decD = Math.Atan2(By, Bx);
+                        else decD = 0.0;
+
+                        //Convert values for better display
+                        dip *= Mathf.Rad2Deg;
+                        decD *= Mathf.Rad2Deg;
+                        float Btf = (float)Bti;
+                        float incf = (float)dip;
+                        float decf = (float)decD;
+                        //float BRf = (float)Brad;
+                        //float BPsif = (float)BPsi;
+                        //float BThetaf = (float)BTheta;
+                        //float Bxf = (float)Bx;
+                        //float Byf = (float)By;
+                        //float Bzf = (float)Bz;
+
+                        //Display in right-click menu
+                        Bt = Btf.ToString("F2") + " nT";
+                        inc = incf.ToString("F2") + "°";
+                        dec = decf.ToString("F2") + "°";
+                        //Br = BRf.ToString("F2") + " nT";
+                        //Bpsi = BPsif.ToString("F2") + " nT";
+                        //Btheta = BThetaf.ToString("F2") + " nT";
+                        //BX = Bxf.ToString("F2") + " nT";
+                        //BY = Byf.ToString("F2") + " nT";
+                        //BZ = Bzf.ToString("F2") + " nT";
+
+                        //Extra variables - used in development
+
+                        nDays = nDay.ToString();
+                        //float altf = (float)alt;
+                        //float nDayf = (float)nDay;
+                        Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
+                        Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
+                        //lons = nDayf.ToString("F5");
+                        double sunXd = sunD.x;
+                        double sunZd = sunD.z;
+                        sunX = sunXd.ToString();
+                        sunZ = sunZd.ToString();
+
+                        //nDays = nDayf.ToString("F4");
+                        //radius = Radius.ToString();
+                        //float latf = (float)latDeg;
+                        lats = latDeg.ToString();
+                        lons = lonDeg.ToString();
+                        //float lonf = (float)lonDeg;
+                        //lats = latf.ToString("F3") + " Deg";
+                        //altScaled = alt.ToString();
+                        //lons = lonf.ToString("F3") + " Deg";
+                        //lons = Btf.ToString("F2") + " nT";
+                        //lons = "Shifted long: " + (((lonShift * Mathf.Rad2Deg) + 180 + 360) % 360 - 180).ToString();
+                        //lons = "Scaled Bh: " + Bh.ToString();
+                        //Bznew = "Scaled Bz: " + Bz.ToString();
                     }
-
-                    double Bti = Math.Sqrt((Bh * Bh) + (Bz * Bz));
-                    double dip = Math.Atan2(Bz, Bh);
-                    double decD;
-
-                    //Return 0 declination at magnetic poles
-                    if (Bx != 0.0 || By != 0.0) decD = Math.Atan2(By, Bx);
-                    else decD = 0.0;
-                    
-                    //Convert values for better display
-                    dip *= Mathf.Rad2Deg;
-                    decD *= Mathf.Rad2Deg;                    
-                    float Btf = (float)Bti;
-                    float incf = (float)dip;
-                    float decf = (float)decD;
-                    //float BRf = (float)Brad;
-                    //float BPsif = (float)BPsi;
-                    //float BThetaf = (float)BTheta;
-                    //float Bxf = (float)Bx;
-                    //float Byf = (float)By;
-                    //float Bzf = (float)Bz;
-                    
-                    //Display in right-click menu
-                    Bt = Btf.ToString("F2") + " nT";
-                    inc = incf.ToString("F2") + "°";
-                    dec = decf.ToString("F2") + "°";
-                    //Br = BRf.ToString("F2") + " nT";
-                    //Bpsi = BPsif.ToString("F2") + " nT";
-                    //Btheta = BThetaf.ToString("F2") + " nT";
-                    //BX = Bxf.ToString("F2") + " nT";
-                    //BY = Byf.ToString("F2") + " nT";
-                    //BZ = Bzf.ToString("F2") + " nT";
-
-                    //Extra variables - used in development
-
-                    nDays = nDay.ToString();
-                    //float altf = (float)alt;
-                    //float nDayf = (float)nDay;
-                    Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
-                    Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
-                    //lons = nDayf.ToString("F5");
-                    double sunXd = sunD.x;
-                    double sunZd = sunD.z;
-                    sunX = sunXd.ToString();
-                    sunZ = sunZd.ToString();
-
-                    //nDays = nDayf.ToString("F4");
-                    //radius = Radius.ToString();
-                    //float latf = (float)latDeg;
-                    lats = latDeg.ToString();
-                    lons = lonDeg.ToString();
-                    //float lonf = (float)lonDeg;
-                    //lats = latf.ToString("F3") + " Deg";
-                    //altScaled = alt.ToString();
-                    //lons = lonf.ToString("F3") + " Deg";
-                    //lons = Btf.ToString("F2") + " nT";
-                    //lons = "Shifted long: " + (((lonShift * Mathf.Rad2Deg) + 180 + 360) % 360 - 180).ToString();
-                    //lons = "Scaled Bh: " + Bh.ToString();
-                    //Bznew = "Scaled Bz: " + Bz.ToString();
                 }
             }
+        }
+
+        private double longShift(int planet, double nDay)
+        {
+            double shift = 0;
+            if (planet == 1)
+            {
+                shift = 1 + 4 * nDay;
+            }
+            return shift;
+        }
+
+        private double altScale(int planet)
+        {
+            double scale = 0;
+            if (planet == 1) scale = 600;
+            return scale;
+        }
+
+        private double altMax(int planet)
+        {
+            double max = 0;
+            if (planet == 1) max = 20000;
+            return max;
+        }
+
+        private double solarDay(int planet)
+        {
+            double solarDay = 0;
+            if (planet == 1) solarDay = 21600 / (1 - (21600 / 9201600));
+            return solarDay;
         }
         
     }
