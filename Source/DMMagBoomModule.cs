@@ -111,13 +111,7 @@ namespace DMagic
             {
                 lastUpdate = Time.time;
                 int planetID = vessel.mainBody.flightGlobalsIndex;
-                //if (vessel.mainBody.name != "Kerbin")
-                //{
-                //    Fields["Bt"].guiActive = false;
-                //    Fields["inc"].guiActive = false;
-                //    Fields["dec"].guiActive = false;
-                //}
-                //Only functional on Kerbin for now
+                
                 if (runMagnetometer && vessel.mainBody.name == "Kerbin" || runMagnetometer && vessel.mainBody.name == "Eve" || runMagnetometer && vessel.mainBody.name == "Duna")
                 {
                     //Fields["Bt"].guiActive = primaryModule.IsDeployed;
@@ -155,7 +149,7 @@ namespace DMagic
 
                         //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon, bring everything down to -Pi to Pi just to be safe
                         //For reference, at time zero the sun is directly above -90.158 Deg West on Kerbin, I'm rounding that to -90, or -Pi/2
-                        double lonShift = ((lon + (Math.PI / 2) * longShift(planetID, nDay)) + Math.PI + Math.PI * 2) % (2 * Math.PI) - Math.PI;
+                        double lonShift = ((lon + longShift(planetID, nDay)) + Math.PI + Math.PI * 2) % (2 * Math.PI) - Math.PI;
 
                         //Simulate magnetosphere distortion by solar wind with stretched torus shape, determine our position on the surface of the torus
                         double radiusx = ((3.5 + (1 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) + (3.5 + (1.3 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) * Math.Cos(lat * 2)) * Math.Cos(lonShift);
@@ -265,33 +259,40 @@ namespace DMagic
 
         private double longShift(int planet, double nDay)
         {
-            double shift = 0;
+            double shift = 1;
             if (planet == 1)
             {
-                shift = 1 + 4 * nDay;
+                shift = (Math.PI / 2) * (1 + 4 * nDay);
             }
             return shift;
         }
 
         private double altScale(int planet)
         {
-            double scale = 0;
+            double scale = 1;
             if (planet == 1) scale = 600;
             return scale;
         }
 
         private double altMax(int planet)
         {
-            double max = 0;
+            double max = 1;
             if (planet == 1) max = 20000;
             return max;
         }
 
         private double solarDay(int planet)
         {
-            double solarDay = 0;
+            double solarDay = 1;
             if (planet == 1) solarDay = 21600 / (1 - (21600 / 9201600));
             return solarDay;
+        }
+
+        private double planetScale(int planet)
+        {
+            double pScale = 1;
+            if (planet == 1) pScale = 1;
+            return pScale;
         }
         
     }
