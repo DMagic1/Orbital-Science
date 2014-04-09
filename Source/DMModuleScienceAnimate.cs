@@ -92,10 +92,10 @@ namespace DMagic
         private int dataIndex = 0;
 
         //Record some default values for Eeloo here to prevent the asteroid science method from screwing them up
-        private string bodyDescription = "There’s been a considerable amount of controversy around the status of Eeloo as being a proper planet or a just “lump of ice going around the Sun”. The debate is still ongoing, since most academic summits held to address the issue have devolved into, on good days, petty name calling, and on worse ones, all-out brawls.";
-        private string bodyName = "Eeloo";
-        private float bodyLandedValue = 15;
-        private float bodySpaceValue = 12;
+        private const string bodyDescription = "There’s been a considerable amount of controversy around the status of Eeloo as being a proper planet or a just “lump of ice going around the Sun”. The debate is still ongoing, since most academic summits held to address the issue have devolved into, on good days, petty name calling, and on worse ones, all-out brawls.";
+        private const string bodyName = "Eeloo";
+        private const float bodyLandedValue = 15;
+        private const float bodySpaceValue = 12;
         
         List<ScienceData> scienceReportList = new List<ScienceData>();
 
