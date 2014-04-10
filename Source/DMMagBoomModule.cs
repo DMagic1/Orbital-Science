@@ -107,10 +107,10 @@ namespace DMagic
             if ((Time.time - lastUpdate) > updateInterval)
             {
                 lastUpdate = Time.time;
-                CelestialBody planetID = vessel.mainBody;
 
-                if (runMagnetometer && planetID.flightGlobalsIndex == 0 || runMagnetometer && planetID.flightGlobalsIndex == 5 || runMagnetometer && planetID.flightGlobalsIndex == 6 || runMagnetometer && planetID.flightGlobalsIndex == 0)
+                if (runMagnetometer) // && planetID.flightGlobalsIndex == 0 || runMagnetometer && planetID.flightGlobalsIndex == 5 || runMagnetometer && planetID.flightGlobalsIndex == 6 || runMagnetometer && planetID.flightGlobalsIndex == 0)
                 {
+                    
                     //Fields["Bt"].guiActive = primaryModule.IsDeployed;
                     //Fields["inc"].guiActive = primaryModule.IsDeployed;
                     //Fields["dec"].guiActive = primaryModule.IsDeployed;
@@ -123,6 +123,7 @@ namespace DMagic
 
                     if (primaryModule.IsDeployed)
                     {
+                        CelestialBody planetID = vessel.mainBody;
                         part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
 
                         double latDeg = (vessel.latitude + 90 + 180) % 180 - 90;
@@ -144,7 +145,9 @@ namespace DMagic
                         int i = 10;
                         double[] field = new double[6];
                         double lonShift = 1;
-                        if (planetID.flightGlobalsIndex > 0)
+
+
+                        if (planetID.flightGlobalsIndex == 1 || planetID.flightGlobalsIndex == 5 || planetID.flightGlobalsIndex == 6 || planetID.flightGlobalsIndex == 8)
                         {
                             //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon, bring everything down to -Pi to Pi just to be safe
                             //For reference, at time zero the sun is directly above -90.158 Deg West on Kerbin, I'm rounding that to -90, or -Pi/2
@@ -163,9 +166,21 @@ namespace DMagic
                                 alt *= 1 / Radius;
                                 if (alt < altScale(planetID)) alt = altScale(planetID);
                             }
-                            if (alt > 1000) alt *= Math.Pow((alt / 1000), 3);
+                            if (alt > altScale(planetID) * 2) alt *= Math.Pow((alt / (altScale(planetID) * 2)), 3);
                             if (alt > altMax(planetID)) alt = altMax(planetID);
                         }
+                        else if (planetID.flightGlobalsIndex == 0)
+                        {
+                            alt /= 10;
+                        }
+                        else
+                        {
+                            Vector3 planetPosition = planetID.position;
+                            alt = FlightGlobals.fetch.bodies[0].GetAltitude(planetPosition) / 10000;
+                            lat = ((FlightGlobals.fetch.bodies[0].GetLatitude(planetPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
+                            lon = ((FlightGlobals.fetch.bodies[0].GetLongitude(planetPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
+                        }
+
                         //Send all of our modified parameters to the field model
                         double[] magComp = getMag(lat, lon, alt, date, i, field);
 
@@ -183,7 +198,7 @@ namespace DMagic
                         //Bhold = "Bh: " + Bh.ToString();
 
                         //Alter the magnetic field line vector when far away from Kerbin
-                        if (planetID.flightGlobalsIndex > 0)
+                        if (planetID.flightGlobalsIndex == 1 || planetID.flightGlobalsIndex == 5 || planetID.flightGlobalsIndex == 6 || planetID.flightGlobalsIndex == 8)
                         {
                             if (alt > altScale(planetID) * 3)
                             {
@@ -256,18 +271,18 @@ namespace DMagic
                         //Bznew = "Scaled Bz: " + Bz.ToString();
                     }
                 }
-                else
-                {
-                    //Fields["Bt"].guiActive = false;
-                    //Fields["inc"].guiActive = false;
-                    //Fields["dec"].guiActive = false;
-                    Fields["sunX"].guiActive = false;
-                    Fields["sunZ"].guiActive = false;
-                    Fields["lats"].guiActive = false;
-                    Fields["nDays"].guiActive = false;
-                    Fields["lons"].guiActive = false;
-                    //Fields["Bhold"].guiActive = false;
-                }
+                //else
+                //{
+                //    //Fields["Bt"].guiActive = false;
+                //    //Fields["inc"].guiActive = false;
+                //    //Fields["dec"].guiActive = false;
+                //    Fields["sunX"].guiActive = false;
+                //    Fields["sunZ"].guiActive = false;
+                //    Fields["lats"].guiActive = false;
+                //    Fields["nDays"].guiActive = false;
+                //    Fields["lons"].guiActive = false;
+                //    //Fields["Bhold"].guiActive = false;
+                //}
             }
         }
 
@@ -277,6 +292,7 @@ namespace DMagic
             if (planet.flightGlobalsIndex == 1) shift = (0.5 * Math.PI) + (2 * nDay * Math.PI);
             if (planet.flightGlobalsIndex == 5) shift = (1.958985598 * Math.PI) + (2 * nDay * Math.PI);
             if (planet.flightGlobalsIndex == 6) shift = (1.767319403 * Math.PI) + (2 * nDay * Math.PI);
+            if (planet.flightGlobalsIndex == 8) shift = 1;
             return shift;
         }
 
@@ -293,6 +309,7 @@ namespace DMagic
             if (planet.flightGlobalsIndex == 1) max = 20000;
             if (planet.flightGlobalsIndex == 5) max = 10000;
             if (planet.flightGlobalsIndex == 6) max = 5000;
+            if (planet.flightGlobalsIndex == 8) max = 100000;
             return max;
         }
 
@@ -305,11 +322,11 @@ namespace DMagic
 
         private double planetScale(CelestialBody planet)
         {
-            double pScale = 1;
-            if (planet.flightGlobalsIndex == 0) pScale = 1000;
+            double pScale = 100;
             if (planet.flightGlobalsIndex == 1) pScale = 1;
             if (planet.flightGlobalsIndex == 5) pScale = 4;
             if (planet.flightGlobalsIndex == 6) pScale = 0.1;
+            if (planet.flightGlobalsIndex == 8) pScale = 10;
             return pScale;
         }
         
