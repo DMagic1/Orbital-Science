@@ -60,11 +60,11 @@ namespace DMagic
         public string sunX;
         [KSPField(guiActive = false, guiName = "Z: ")]
         public string sunZ;
-        [KSPField(guiActive = false, guiName = "Lat: ")]
+        [KSPField(guiActive = false, guiName = "Long: ")]
         public string lats;
         [KSPField(guiActive = false, guiName = "nDay")]
         public string nDays;
-        [KSPField(guiActive = false, guiName = "Long: ")]
+        [KSPField(guiActive = false, guiName = "Long Shifted: ")]
         public string lons;
         //[KSPField(guiActive = false, guiName = "Bh")]
         //public string Bhold;
@@ -108,8 +108,8 @@ namespace DMagic
             {
                 lastUpdate = Time.time;
                 CelestialBody planetID = vessel.mainBody;
-                
-                if (runMagnetometer && vessel.mainBody.name == "Kerbin" || runMagnetometer && vessel.mainBody.name == "Eve" || runMagnetometer && vessel.mainBody.name == "Duna")
+
+                if (runMagnetometer && planetID.flightGlobalsIndex == 0 || runMagnetometer && planetID.flightGlobalsIndex == 5 || runMagnetometer && planetID.flightGlobalsIndex == 6 || runMagnetometer && planetID.flightGlobalsIndex == 0)
                 {
                     //Fields["Bt"].guiActive = primaryModule.IsDeployed;
                     //Fields["inc"].guiActive = primaryModule.IsDeployed;
@@ -138,32 +138,34 @@ namespace DMagic
 
                         //Change the simulation day to add some variability, start with Jan 1 2010 in Julian Date format
                         int localDay = Convert.ToInt32(uDay);
-                        long date = 2455197 + (localDay % 500);
+                        long date = 2455197 + (localDay % 500) + planetID.flightGlobalsIndex * 25;
 
                         //Paramaters for mag field model
                         int i = 10;
                         double[] field = new double[6];
-
-                        //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon, bring everything down to -Pi to Pi just to be safe
-                        //For reference, at time zero the sun is directly above -90.158 Deg West on Kerbin, I'm rounding that to -90, or -Pi/2
-                        double lonShift = ((lon + longShift(planetID, nDay)) + Math.PI + Math.PI * 2) % (2 * Math.PI) - Math.PI;
-
-                        //Simulate magnetosphere distortion by solar wind with stretched torus shape, determine our position on the surface of the torus
-                        double radiusx = ((3.5 + (1 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) + (3.5 + (1.3 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) * Math.Cos(lat * 2)) * Math.Cos(lonShift);
-                        double radiusy = (0.75 + 0.9 * Math.Cos(lat * 2)) * Math.Sin(lonShift);
-                        double radiusz = (1 + 0.2 * Math.Cos(lonShift)) * Math.Sin(lat * 2);
-                        double Radius = Math.Sqrt((radiusx * radiusx) + (radiusy * radiusy) + (radiusz * radiusz));
-                        if (Radius == 0) Radius += 0.001;
-
-                        //Scale our altitude by our position on the simulated torus, ignore at altitudes below 600km, ramp up quickly above high scaled altitude up to a max value
-                        if (alt > altScale(planetID))
+                        double lonShift = 1;
+                        if (planetID.flightGlobalsIndex > 0)
                         {
-                            alt *= 1 / Radius;
-                            if (alt < altScale(planetID)) alt = altScale(planetID);
-                        }
-                        if (alt > 1000) alt *= Math.Pow((alt / 1000), 3);
-                        if (alt > altMax(planetID)) alt = altMax(planetID);
+                            //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon, bring everything down to -Pi to Pi just to be safe
+                            //For reference, at time zero the sun is directly above -90.158 Deg West on Kerbin, I'm rounding that to -90, or -Pi/2
+                            lonShift = ((lon + longShift(planetID, nDay)) + Math.PI + Math.PI * 2) % (2 * Math.PI) - Math.PI;
 
+                            //Simulate magnetosphere distortion by solar wind with stretched torus shape, determine our position on the surface of the torus
+                            double radiusx = ((3.5 + (1 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) + (3.5 + (1.3 + 1 / Math.Cos(lonShift)) * Math.Cos(Math.PI + lonShift)) * Math.Cos(lat * 2)) * Math.Cos(lonShift);
+                            double radiusy = (0.75 + 0.9 * Math.Cos(lat * 2)) * Math.Sin(lonShift);
+                            double radiusz = (1 + 0.2 * Math.Cos(lonShift)) * Math.Sin(lat * 2);
+                            double Radius = Math.Sqrt((radiusx * radiusx) + (radiusy * radiusy) + (radiusz * radiusz));
+                            if (Radius == 0) Radius += 0.001;
+
+                            //Scale our altitude by our position on the simulated torus, ignore at altitudes below 600km, ramp up quickly above high scaled altitude up to a max value
+                            if (alt > altScale(planetID))
+                            {
+                                alt *= 1 / Radius;
+                                if (alt < altScale(planetID)) alt = altScale(planetID);
+                            }
+                            if (alt > 1000) alt *= Math.Pow((alt / 1000), 3);
+                            if (alt > altMax(planetID)) alt = altMax(planetID);
+                        }
                         //Send all of our modified parameters to the field model
                         double[] magComp = getMag(lat, lon, alt, date, i, field);
 
@@ -171,9 +173,9 @@ namespace DMagic
                         //double Brad = magComp[0];
                         //double BPsi = magComp[2];
                         //double BTheta = magComp[1];
-                        double Bx = magComp[3];
-                        double By = magComp[4];
-                        double Bz = magComp[5];
+                        double Bx = magComp[3] * planetScale(planetID);
+                        double By = magComp[4] * planetScale(planetID);
+                        double Bz = magComp[5] * planetScale(planetID);
 
                         //Calculate various magenetic field components based on 3-axis field strength 
                         double Bh = Math.Sqrt((Bx * Bx) + (By * By));
@@ -181,13 +183,16 @@ namespace DMagic
                         //Bhold = "Bh: " + Bh.ToString();
 
                         //Alter the magnetic field line vector when far away from Kerbin
-                        if (alt > 2000)
+                        if (planetID.flightGlobalsIndex > 0)
                         {
-                            Bh /= (alt / 2000);
-                            Bz *= (alt / 2000);
-                            if (alt > 10000)
+                            if (alt > altScale(planetID) * 3)
                             {
-                                Bz /= (alt / 10000);
+                                Bh /= (alt / (altScale(planetID) * 3));
+                                Bz *= (alt / (altScale(planetID) * 3));
+                                if (alt > altMax(planetID) / 2)
+                                {
+                                    Bz /= (alt / (altMax(planetID) / 2));
+                                }
                             }
                         }
 
@@ -214,8 +219,8 @@ namespace DMagic
 
                         //Display in right-click menu
                         Bt = Btf.ToString("F2") + " nT";
-                        inc = incf.ToString("F2") + "°";
-                        dec = decf.ToString("F2") + "°";
+                        inc = incf.ToString("F2") + "Deg";
+                        dec = decf.ToString("F2") + "Deg";
                         //Br = BRf.ToString("F2") + " nT";
                         //Bpsi = BPsif.ToString("F2") + " nT";
                         //Btheta = BThetaf.ToString("F2") + " nT";
@@ -239,8 +244,8 @@ namespace DMagic
                         //nDays = nDayf.ToString("F4");
                         //radius = Radius.ToString();
                         //float latf = (float)latDeg;
-                        lats = latDeg.ToString();
-                        lons = lonDeg.ToString();
+                        lats = lonDeg.ToString();
+                        lons = (lonShift * Mathf.Rad2Deg).ToString();
                         //float lonf = (float)lonDeg;
                         //lats = latf.ToString("F3") + " Deg";
                         //altScaled = alt.ToString();
@@ -251,15 +256,27 @@ namespace DMagic
                         //Bznew = "Scaled Bz: " + Bz.ToString();
                     }
                 }
+                else
+                {
+                    //Fields["Bt"].guiActive = false;
+                    //Fields["inc"].guiActive = false;
+                    //Fields["dec"].guiActive = false;
+                    Fields["sunX"].guiActive = false;
+                    Fields["sunZ"].guiActive = false;
+                    Fields["lats"].guiActive = false;
+                    Fields["nDays"].guiActive = false;
+                    Fields["lons"].guiActive = false;
+                    //Fields["Bhold"].guiActive = false;
+                }
             }
         }
 
         private double longShift(CelestialBody planet, double nDay)
         {
-            double shift = 1;
-            if (planet.flightGlobalsIndex == 1) shift = (Math.PI / 2) * (1 + 4 * nDay);
-            if (planet.flightGlobalsIndex == 5) shift = 1; // (-0.041 * Math.PI) * (1 + 48.780 * nDay);
-            if (planet.flightGlobalsIndex == 6) shift = 1;
+            double shift = 0;
+            if (planet.flightGlobalsIndex == 1) shift = (0.5 * Math.PI) + (2 * nDay * Math.PI);
+            if (planet.flightGlobalsIndex == 5) shift = (1.958985598 * Math.PI) + (2 * nDay * Math.PI);
+            if (planet.flightGlobalsIndex == 6) shift = (1.767319403 * Math.PI) + (2 * nDay * Math.PI);
             return shift;
         }
 
@@ -272,6 +289,7 @@ namespace DMagic
         private double altMax(CelestialBody planet)
         {
             double max = 1;
+            if (planet.flightGlobalsIndex == 0) max = 100000000;
             if (planet.flightGlobalsIndex == 1) max = 20000;
             if (planet.flightGlobalsIndex == 5) max = 10000;
             if (planet.flightGlobalsIndex == 6) max = 5000;
@@ -288,6 +306,7 @@ namespace DMagic
         private double planetScale(CelestialBody planet)
         {
             double pScale = 1;
+            if (planet.flightGlobalsIndex == 0) pScale = 1000;
             if (planet.flightGlobalsIndex == 1) pScale = 1;
             if (planet.flightGlobalsIndex == 5) pScale = 4;
             if (planet.flightGlobalsIndex == 6) pScale = 0.1;
