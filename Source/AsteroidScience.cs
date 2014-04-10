@@ -73,7 +73,7 @@ namespace DMagic
             if (mass >= 10f && mass < 50f) return "Class B";
             if (mass >= 50f && mass < 200f) return "Class C";
             if (mass >= 200f && mass < 750f) return "Class D";
-            if (mass >= 750f && mass < 3000f) return "Class E";
+            if (mass >= 750f && mass < 5000f) return "Class E";
             return "Class Unholy";
         }
 
