@@ -38,12 +38,12 @@ namespace DMagic
 {
     
     public class DMMagBoomModule : PartModule
-    {        
-        //[KSPField(guiActive = false, guiName = "Bt")]
+    {
+        [KSPField(guiActive = false, guiName = "Bt")]
         public string Bt;
-        //[KSPField(guiActive = false, guiName = "Inclination")]
+        [KSPField(guiActive = false, guiName = "Inclination")]
         public string inc;
-        //[KSPField(guiActive = false, guiName = "Declination")]
+        [KSPField(guiActive = false, guiName = "Declination")]
         public string dec;
         
 
@@ -110,10 +110,10 @@ namespace DMagic
 
                 if (runMagnetometer) // && planetID.flightGlobalsIndex == 0 || runMagnetometer && planetID.flightGlobalsIndex == 5 || runMagnetometer && planetID.flightGlobalsIndex == 6 || runMagnetometer && planetID.flightGlobalsIndex == 0)
                 {
-                    
-                    //Fields["Bt"].guiActive = primaryModule.IsDeployed;
-                    //Fields["inc"].guiActive = primaryModule.IsDeployed;
-                    //Fields["dec"].guiActive = primaryModule.IsDeployed;
+
+                    Fields["Bt"].guiActive = primaryModule.IsDeployed;
+                    Fields["inc"].guiActive = primaryModule.IsDeployed;
+                    Fields["dec"].guiActive = primaryModule.IsDeployed;
                     Fields["sunX"].guiActive = primaryModule.IsDeployed;
                     Fields["sunZ"].guiActive = primaryModule.IsDeployed;
                     Fields["lats"].guiActive = primaryModule.IsDeployed;
@@ -322,7 +322,7 @@ namespace DMagic
 
         private double planetScale(CelestialBody planet)
         {
-            double pScale = 100;
+            double pScale = 10000;
             if (planet.flightGlobalsIndex == 1) pScale = 1;
             if (planet.flightGlobalsIndex == 5) pScale = 4;
             if (planet.flightGlobalsIndex == 6) pScale = 0.1;
