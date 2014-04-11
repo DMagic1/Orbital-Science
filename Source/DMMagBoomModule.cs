@@ -39,6 +39,9 @@ namespace DMagic
     
     public class DMMagBoomModule : PartModule
     {
+
+        #region Fields and Setup
+
         [KSPField(guiActive = false, guiName = "Bt")]
         public string Bt;
         [KSPField(guiActive = false, guiName = "Inclination")]
@@ -101,6 +104,10 @@ namespace DMagic
         {
             return magValues.SGMagVar(lat, lon, alt, date, i, field);
         }
+
+        #endregion
+
+        #region Update
 
         public void Update()
         {
@@ -286,6 +293,10 @@ namespace DMagic
             }
         }
 
+        #endregion
+
+        #region Planet Scalars
+
         private double longShift(CelestialBody planet, double nDay)
         {
             double shift = 0;
@@ -329,6 +340,8 @@ namespace DMagic
             if (planet.flightGlobalsIndex == 8) pScale = 10;
             return pScale;
         }
-        
+
+        #endregion
+
     }
 }
