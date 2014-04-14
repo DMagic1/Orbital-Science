@@ -115,7 +115,7 @@ namespace DMagic
                 if (IsDeployed)                
                 {
                     inRange();
-                    part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
+                    part.RequestResource(resourceToUse, resourceCost * TimeWarp.deltaTime);
                 }
             }
         }
