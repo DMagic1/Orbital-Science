@@ -48,7 +48,10 @@ namespace DMagic
         public string inc;
         [KSPField(guiActive = false, guiName = "Declination")]
         public string dec;
-        
+        [KSPField(guiActive = false, guiName = "Bh")]
+        public string BhS;
+        [KSPField(guiActive = false, guiName = "Bz")]
+        public string BzS;
 
         //public string Br;
         //public string Btheta;
@@ -59,10 +62,10 @@ namespace DMagic
 
         //Development fields
 
-        [KSPField(guiActive = false, guiName = "X: ")]
-        public string sunX;
-        [KSPField(guiActive = false, guiName = "Z: ")]
-        public string sunZ;
+        //[KSPField(guiActive = false, guiName = "X: ")]
+        //public string sunX;
+        //[KSPField(guiActive = false, guiName = "Z: ")]
+        //public string sunZ;
         [KSPField(guiActive = false, guiName = "Long: ")]
         public string lats;
         [KSPField(guiActive = false, guiName = "nDay")]
@@ -86,7 +89,7 @@ namespace DMagic
         public override void OnStart(PartModule.StartState state)
         {
             base.OnStart(state);
-            this.part.force_activate();
+            //this.part.force_activate();
             if (part.FindModulesImplementing<DMModuleScienceAnimate>().Count > 0)
                 primaryModule = part.FindModulesImplementing<DMModuleScienceAnimate>().First();
         }
@@ -111,51 +114,86 @@ namespace DMagic
 
         public void Update()
         {
-            if ((Time.time - lastUpdate) > updateInterval)
+            float deltaTime = TimeWarp.deltaTime / Time.deltaTime;
+            if (deltaTime > 10) deltaTime = 10;
+            if (((Time.time * deltaTime) - lastUpdate) > updateInterval)
             {
                 lastUpdate = Time.time;
 
-                if (runMagnetometer) // && planetID.flightGlobalsIndex == 0 || runMagnetometer && planetID.flightGlobalsIndex == 5 || runMagnetometer && planetID.flightGlobalsIndex == 6 || runMagnetometer && planetID.flightGlobalsIndex == 0)
-                {
-
-                    Fields["Bt"].guiActive = primaryModule.IsDeployed;
-                    Fields["inc"].guiActive = primaryModule.IsDeployed;
-                    Fields["dec"].guiActive = primaryModule.IsDeployed;
-                    Fields["sunX"].guiActive = primaryModule.IsDeployed;
-                    Fields["sunZ"].guiActive = primaryModule.IsDeployed;
-                    Fields["lats"].guiActive = primaryModule.IsDeployed;
-                    Fields["nDays"].guiActive = primaryModule.IsDeployed;
-                    Fields["lons"].guiActive = primaryModule.IsDeployed;
-                    //Fields["Bhold"].guiActive = primaryModule.IsDeployed;
-
-                    if (primaryModule.IsDeployed)
+                //if (runMagnetometer) // && planetID.flightGlobalsIndex == 0 || runMagnetometer && planetID.flightGlobalsIndex == 5 || runMagnetometer && planetID.flightGlobalsIndex == 6 || runMagnetometer && planetID.flightGlobalsIndex == 0)
+                //{
+                    if (primaryModule.IsDeployed && runMagnetometer)
                     {
                         CelestialBody planetID = vessel.mainBody;
-                        part.RequestResource(resourceToUse, resourceCost * Time.deltaTime);
+                        int ID = planetID.flightGlobalsIndex;
+                        part.RequestResource(resourceToUse, resourceCost * TimeWarp.deltaTime);
 
-                        double latDeg = (vessel.latitude + 90 + 180) % 180 - 90;
-                        double lonDeg = (vessel.longitude + 180 + 360) % 360 - 180;
-                        double lat = latDeg * Mathf.Deg2Rad;
-                        double lon = lonDeg * Mathf.Deg2Rad;
-                        double alt = vessel.altitude / 1000;
+                        //double latDeg; // = (vessel.latitude + 90 + 180) % 180 - 90;
+                        //double lonDeg; // = (vessel.longitude + 180 + 360) % 360 - 180;
+                        double lat; // = latDeg * Mathf.Deg2Rad;
+                        double lon; // = lonDeg * Mathf.Deg2Rad;
+                        double alt; // = vessel.altitude / 1000;
 
                         //Get universal time in seconds and calculate our time during the normalized solar day
-                        double uTime = Planetarium.GetUniversalTime();
-                        double uDay = uTime / solarDay(planetID);
-                        double nDay = uDay % 1;
+                        double uDay;
+                        double nDay; // = (Planetarium.GetUniversalTime() / solarDay(planetID)) % 1;
+                        //double nDay = uDay % 1;
 
                         //Change the simulation day to add some variability, start with Jan 1 2010 in Julian Date format
-                        int localDay = Convert.ToInt32(uDay);
-                        long date = 2455197 + (localDay % 500) + planetID.flightGlobalsIndex * 25;
+                        int localDay; // = Convert.ToInt32(nDay);
+                        long date; // = 2455197 + (localDay % 500) + ID * 25;
 
                         //Paramaters for mag field model
                         int i = 10;
                         double[] field = new double[6];
                         double lonShift = 1;
 
-
-                        if (planetID.flightGlobalsIndex == 1 || planetID.flightGlobalsIndex == 5 || planetID.flightGlobalsIndex == 6 || planetID.flightGlobalsIndex == 8)
+                        if (ID != 0 || ID != 4 || ID != 15 || ID != 16)
                         {
+                            if (ID == 9 || ID == 10 || ID == 11 || ID == 12 || ID == 14)
+                            {
+                                //For now the Joolian moons return values relative to Jool
+                                Vector3 vesselPosition = vessel.transform.position;
+                                alt = FlightGlobals.fetch.bodies[8].GetAltitude(vesselPosition) / 10000;
+                                lat = ((FlightGlobals.fetch.bodies[8].GetLatitude(vesselPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
+                                lon = ((FlightGlobals.fetch.bodies[8].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
+                                planetID = FlightGlobals.fetch.bodies[8];
+                            }
+                            else if (ID == 2 || ID == 3)
+                            {
+                                Vector3 vesselPosition = vessel.transform.position;
+                                alt = FlightGlobals.fetch.bodies[1].GetAltitude(vesselPosition) / 1000;
+                                lat = ((FlightGlobals.fetch.bodies[1].GetLatitude(vesselPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
+                                lon = ((FlightGlobals.fetch.bodies[1].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
+                                planetID = FlightGlobals.fetch.bodies[1];
+                            }
+                            else if (ID == 7)
+                            {
+                                Vector3 vesselPosition = vessel.transform.position;
+                                alt = FlightGlobals.fetch.bodies[6].GetAltitude(vesselPosition) / 1000;
+                                lat = ((FlightGlobals.fetch.bodies[6].GetLatitude(vesselPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
+                                lon = ((FlightGlobals.fetch.bodies[6].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
+                                planetID = FlightGlobals.fetch.bodies[6];
+                            }
+                            else if (ID == 13)
+                            {
+                                Vector3 vesselPosition = vessel.transform.position;
+                                alt = FlightGlobals.fetch.bodies[5].GetAltitude(vesselPosition) / 1000;
+                                lat = ((FlightGlobals.fetch.bodies[5].GetLatitude(vesselPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
+                                lon = ((FlightGlobals.fetch.bodies[5].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
+                                planetID = FlightGlobals.fetch.bodies[5];
+                            }
+                            else
+                            {
+                                lat = ((vessel.latitude + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
+                                lon = ((vessel.longitude + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
+                                alt = vessel.altitude / 1000;
+                                if (ID == 8) alt /= 10;
+                            }
+
+                            uDay = Planetarium.GetUniversalTime() / planetID.rotationPeriod;
+                            nDay = (uDay / solarDay(planetID)) % 1;
+
                             //Shift our current longitide to account for solar day - lonShift should equal zero when crossing solar noon, bring everything down to -Pi to Pi just to be safe
                             //For reference, at time zero the sun is directly above -90.158 Deg West on Kerbin, I'm rounding that to -90, or -Pi/2
                             lonShift = ((lon + longShift(planetID, nDay)) + Math.PI + Math.PI * 2) % (2 * Math.PI) - Math.PI;
@@ -167,7 +205,7 @@ namespace DMagic
                             double Radius = Math.Sqrt((radiusx * radiusx) + (radiusy * radiusy) + (radiusz * radiusz));
                             if (Radius == 0) Radius += 0.001;
 
-                            //Scale our altitude by our position on the simulated torus, ignore at altitudes below 600km, ramp up quickly above high scaled altitude up to a max value
+                            //Scale our altitude by our position on the simulated torus, ignore at altitudes below one planetary radius, ramp up quickly above high scaled altitude up to a max value
                             if (alt > altScale(planetID))
                             {
                                 alt *= 1 / Radius;
@@ -176,17 +214,28 @@ namespace DMagic
                             if (alt > altScale(planetID) * 2) alt *= Math.Pow((alt / (altScale(planetID) * 2)), 3);
                             if (alt > altMax(planetID)) alt = altMax(planetID);
                         }
-                        else if (planetID.flightGlobalsIndex == 0)
+                        else if (ID == 0)
                         {
-                            alt /= 10;
+                            lat = ((vessel.latitude + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
+                            lon = ((vessel.longitude + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
+                            alt = vessel.altitude / 10000;
+                            uDay = Planetarium.GetUniversalTime() / planetID.rotationPeriod;
+                            nDay = (uDay / solarDay(planetID)) % 1;
                         }
                         else
                         {
-                            Vector3 planetPosition = planetID.position;
-                            alt = FlightGlobals.fetch.bodies[0].GetAltitude(planetPosition) / 10000;
-                            lat = ((FlightGlobals.fetch.bodies[0].GetLatitude(planetPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
-                            lon = ((FlightGlobals.fetch.bodies[0].GetLongitude(planetPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
+                            //For non-magnetic planets use our position relative to the sun to calculate alt, lat, and long
+                            Vector3 vesselPosition = vessel.transform.position;
+                            alt = FlightGlobals.fetch.bodies[0].GetAltitude(vesselPosition) / 10000;
+                            lat = ((FlightGlobals.fetch.bodies[0].GetLatitude(vesselPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
+                            lon = ((FlightGlobals.fetch.bodies[0].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
+                            planetID = FlightGlobals.fetch.bodies[0];
+                            uDay = Planetarium.GetUniversalTime() / planetID.rotationPeriod;
+                            nDay = (uDay / solarDay(planetID)) % 1;
                         }
+
+                        localDay = Convert.ToInt32(uDay);
+                        date = 2455197 + (localDay % 500) + ID * 25;
 
                         //Send all of our modified parameters to the field model
                         double[] magComp = getMag(lat, lon, alt, date, i, field);
@@ -204,9 +253,34 @@ namespace DMagic
                         //Bzold = "Bz: " + Bz.ToString();
                         //Bhold = "Bh: " + Bh.ToString();
 
-                        //Alter the magnetic field line vector when far away from Kerbin
-                        if (planetID.flightGlobalsIndex == 1 || planetID.flightGlobalsIndex == 5 || planetID.flightGlobalsIndex == 6 || planetID.flightGlobalsIndex == 8)
+                        //Alter the magnetic field line vector when far away from the planet
+                        if (ID > 0)
                         {
+                            //if (ID == 8) alt /= 10;
+                            //else if (ID == 9 || ID == 10 || ID == 11 || ID == 12 || ID == 14)
+                            //{
+                            //    Vector3 vesselPosition = vessel.transform.position;
+                            //    alt = FlightGlobals.fetch.bodies[8].GetAltitude(vesselPosition) / 10000;
+                            //    planetID = FlightGlobals.fetch.bodies[8];
+                            //}
+                            //else if (ID == 2 || ID == 3)
+                            //{
+                            //    Vector3 vesselPosition = vessel.transform.position;
+                            //    alt = FlightGlobals.fetch.bodies[1].GetAltitude(vesselPosition) / 1000;
+                            //    planetID = FlightGlobals.fetch.bodies[1];
+                            //}
+                            //else if (ID == 7)
+                            //{
+                            //    Vector3 vesselPosition = vessel.transform.position;
+                            //    alt = FlightGlobals.fetch.bodies[6].GetAltitude(vesselPosition) / 1000;
+                            //    planetID = FlightGlobals.fetch.bodies[6];
+                            //}
+                            //else if (ID == 13)
+                            //{
+                            //    Vector3 vesselPosition = vessel.transform.position;
+                            //    alt = FlightGlobals.fetch.bodies[5].GetAltitude(vesselPosition) / 1000;
+                            //    planetID = FlightGlobals.fetch.bodies[5];
+                            //}
                             if (alt > altScale(planetID) * 3)
                             {
                                 Bh /= (alt / (altScale(planetID) * 3));
@@ -237,12 +311,15 @@ namespace DMagic
                         //float BThetaf = (float)BTheta;
                         //float Bxf = (float)Bx;
                         //float Byf = (float)By;
-                        //float Bzf = (float)Bz;
+                        float Bzf = (float)Bz;
+                        float Bhf = (float)Bh;
 
                         //Display in right-click menu
                         Bt = Btf.ToString("F2") + " nT";
                         inc = incf.ToString("F2") + "Deg";
                         dec = decf.ToString("F2") + "Deg";
+                        BhS = Bhf.ToString("F2") + " nT";
+                        BzS = Bzf.ToString("F2") + " nT";
                         //Br = BRf.ToString("F2") + " nT";
                         //Bpsi = BPsif.ToString("F2") + " nT";
                         //Btheta = BThetaf.ToString("F2") + " nT";
@@ -255,18 +332,18 @@ namespace DMagic
                         nDays = nDay.ToString();
                         //float altf = (float)alt;
                         //float nDayf = (float)nDay;
-                        Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
-                        Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
-                        //lons = nDayf.ToString("F5");
-                        double sunXd = sunD.x;
-                        double sunZd = sunD.z;
-                        sunX = sunXd.ToString();
-                        sunZ = sunZd.ToString();
+                        //Vector3 sunP = FlightGlobals.fetch.bodies[0].position;
+                        //Vector3 sunD = transform.InverseTransformPoint(sunP) - part.transform.localPosition;
+                        ////lons = nDayf.ToString("F5");
+                        //double sunXd = sunD.x;
+                        //double sunZd = sunD.z;
+                        //sunX = sunXd.ToString();
+                        //sunZ = sunZd.ToString();
 
                         //nDays = nDayf.ToString("F4");
                         //radius = Radius.ToString();
                         //float latf = (float)latDeg;
-                        lats = lonDeg.ToString();
+                        lats = (lon * Mathf.Rad2Deg).ToString();
                         lons = (lonShift * Mathf.Rad2Deg).ToString();
                         //float lonf = (float)lonDeg;
                         //lats = latf.ToString("F3") + " Deg";
@@ -276,6 +353,18 @@ namespace DMagic
                         //lons = "Shifted long: " + (((lonShift * Mathf.Rad2Deg) + 180 + 360) % 360 - 180).ToString();
                         //lons = "Scaled Bh: " + Bh.ToString();
                         //Bznew = "Scaled Bz: " + Bz.ToString();
+
+                        Fields["Bt"].guiActive = primaryModule.IsDeployed;
+                        Fields["inc"].guiActive = alt < (altScale(planetID) / 2);
+                        Fields["dec"].guiActive = alt < (altScale(planetID) / 2);
+                        //Fields["sunX"].guiActive = primaryModule.IsDeployed;
+                        //Fields["sunZ"].guiActive = primaryModule.IsDeployed;
+                        Fields["lats"].guiActive = primaryModule.IsDeployed;
+                        Fields["nDays"].guiActive = primaryModule.IsDeployed;
+                        Fields["lons"].guiActive = primaryModule.IsDeployed;
+                        Fields["BhS"].guiActive = alt >= (altScale(planetID) / 2);
+                        Fields["BzS"].guiActive = alt >= (altScale(planetID) / 2);
+                        //Fields["Bhold"].guiActive = primaryModule.IsDeployed;
                     }
                 }
                 //else
@@ -290,7 +379,7 @@ namespace DMagic
                 //    Fields["lons"].guiActive = false;
                 //    //Fields["Bhold"].guiActive = false;
                 //}
-            }
+            //}
         }
 
         #endregion
@@ -303,13 +392,14 @@ namespace DMagic
             if (planet.flightGlobalsIndex == 1) shift = (0.5 * Math.PI) + (2 * nDay * Math.PI);
             if (planet.flightGlobalsIndex == 5) shift = (1.958985598 * Math.PI) + (2 * nDay * Math.PI);
             if (planet.flightGlobalsIndex == 6) shift = (1.767319403 * Math.PI) + (2 * nDay * Math.PI);
-            if (planet.flightGlobalsIndex == 8) shift = 1;
+            if (planet.flightGlobalsIndex == 8) shift = (0.684750775 * Math.PI) + (2 * nDay * Math.PI);
             return shift;
         }
 
         private double altScale(CelestialBody planet)
         {
             double scale = planet.Radius / 1000;
+            if (planet.flightGlobalsIndex == 8) scale = planet.Radius / 10000;
             return scale;
         }
 
