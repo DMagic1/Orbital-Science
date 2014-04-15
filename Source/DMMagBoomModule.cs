@@ -141,9 +141,9 @@ namespace DMagic
                     //Paramaters for mag field model
                     int i = 10;
                     double[] field = new double[6];
-                    double lonShift = 1;
+                    double lonShift;
 
-                    if (ID != 0 && ID != 4 && ID != 15 && ID != 16)
+                    if (ID == 1 || ID == 2 || ID == 3 || ID == 5 || ID == 6 || ID == 7 || ID == 8 || ID ==9 || ID == 10 || ID == 11 || ID == 12 || ID == 13 || ID == 14)
                     {
                         if (ID == 9 || ID == 10 || ID == 11 || ID == 12 || ID == 14)
                         {
@@ -215,7 +215,7 @@ namespace DMagic
                         lon = ((vessel.longitude + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
                         alt = vessel.altitude / 50000;
                         uDay = Planetarium.GetUniversalTime() / solarDay(planetID);
-                        nDay = uDay % 1;
+                        //nDay = uDay % 1;
                     }
                     else
                     {
@@ -226,7 +226,7 @@ namespace DMagic
                         lon = ((FlightGlobals.fetch.bodies[0].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
                         planetID = FlightGlobals.fetch.bodies[0];
                         uDay = Planetarium.GetUniversalTime() / solarDay(planetID);
-                        nDay = uDay % 1;
+                        //nDay = uDay % 1;
                     }
 
                     localDay = Convert.ToInt32(uDay);
