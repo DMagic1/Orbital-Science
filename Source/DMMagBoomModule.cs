@@ -129,12 +129,8 @@ namespace DMagic
                     double lat;
                     double lon;
                     double alt;
-
-                    //Get universal time in seconds and calculate our time during the normalized solar day
                     double uDay;
                     double nDay;
-
-                    //Change the simulation day to add some variability, start with Jan 1 2010 in Julian Date format
                     int localDay;
                     long date;
 
@@ -143,7 +139,7 @@ namespace DMagic
                     double[] field = new double[6];
                     double lonShift;
 
-                    if (ID == 1 || ID == 2 || ID == 3 || ID == 5 || ID == 6 || ID == 7 || ID == 8 || ID ==9 || ID == 10 || ID == 11 || ID == 12 || ID == 13 || ID == 14)
+                    if (ID == 1 || ID == 2 || ID == 3 || ID == 5 || ID == 6 || ID == 7 || ID == 8 || ID == 9 || ID == 10 || ID == 11 || ID == 12 || ID == 13 || ID == 14)
                     {
                         if (ID == 9 || ID == 10 || ID == 11 || ID == 12 || ID == 14)
                         {
@@ -245,8 +241,6 @@ namespace DMagic
 
                     //Calculate various magenetic field components based on 3-axis field strength 
                     double Bh = Math.Sqrt((Bx * Bx) + (By * By));
-                    //Bzold = "Bz: " + Bz.ToString();
-                    //Bhold = "Bh: " + Bh.ToString();
 
                     //Alter the magnetic field line vector when far away from the planet
                     if (ID > 0)
@@ -356,6 +350,14 @@ namespace DMagic
                     //Fields["nDays"].guiActive = primaryModule.IsDeployed;
                     //Fields["lons"].guiActive = primaryModule.IsDeployed;                    
                     //Fields["Bhold"].guiActive = primaryModule.IsDeployed;
+                }
+                else
+                {
+                    Fields["Bt"].guiActive = false;
+                    Fields["inc"].guiActive = false;
+                    Fields["dec"].guiActive = false;
+                    Fields["BhS"].guiActive = false;
+                    Fields["BzS"].guiActive = false;
                 }
             }
         }
