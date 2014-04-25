@@ -54,6 +54,7 @@
     <Compile Include="DMBioDrill.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DMEnviroSensor.cs" />
     <Compile Include="DMMagBoomModule.cs">
       <SubType>Code</SubType>
     </Compile>
