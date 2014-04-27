@@ -85,11 +85,18 @@ namespace DMagic
         public float resourceExpCost = 0;
         [KSPField]
         public bool asteroidReports = false;
+        [KSPField]
+        public bool USStock = false;
+        [KSPField]
+        public bool primary = true;
 
         protected Animation anim;
         protected ScienceExperiment scienceExp;
         private bool resourceOn = false;
         private int dataIndex = 0;
+        private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
+        private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
+        private DMModuleScienceAnimate primaryModule = null;
 
         //Record some default values for Eeloo here to prevent the asteroid science method from screwing them up
         private const string bodyDescription = "There’s been a considerable amount of controversy around the status of Eeloo as being a proper planet or a just “lump of ice going around the Sun”. The debate is still ongoing, since most academic summits held to address the issue have devolved into, on good days, petty name calling, and on worse ones, all-out brawls.";
@@ -147,13 +154,16 @@ namespace DMagic
             base.OnUpdate();
             if (resourceOn)
             {
-                float cost = resourceExpCost * Time.deltaTime;
-                if (part.RequestResource(resourceExperiment, cost) < cost)
+                if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
                 {
-                    StopCoroutine("WaitForAnimation");
-                    resourceOn = false;
-                    ScreenMessages.PostScreenMessage("Not enough power, shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
-                    if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
+                    float cost = resourceExpCost * Time.deltaTime;
+                    if (part.RequestResource(resourceExperiment, cost) < cost)
+                    {
+                        StopCoroutine("WaitForAnimation");
+                        resourceOn = false;
+                        ScreenMessages.PostScreenMessage("Not enough power, shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
+                        if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
+                    }
                 }
             }
         }
@@ -177,6 +187,15 @@ namespace DMagic
             Events["deployEvent"].guiName = startEventGUIName;
             Events["retractEvent"].guiName = endEventGUIName;
             Events["toggleEvent"].guiName = toggleEventGUIName;
+            if (!primary)
+            {
+                primaryList = this.part.FindModulesImplementing<DMModuleScienceAnimate>();
+                foreach (DMModuleScienceAnimate DMS in primaryList)
+                {
+                    if (DMS.primary) primaryModule = DMS;
+                }
+            }
+            if (USStock) enviroList = this.part.FindModulesImplementing<DMEnviroSensor>();
             if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length / animSpeed;
             if (experimentID != null) scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
         }
@@ -206,7 +225,7 @@ namespace DMagic
                 {
                     anim[animationName].wrapMode = wrap;
                     anim[animationName].normalizedTime = time;
-                    anim.Play(animationName);
+                    anim.Blend(animationName);
                 }
             }
         }
@@ -216,6 +235,16 @@ namespace DMagic
         {
             primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default);
             IsDeployed = !oneWayAnimation;
+            if (USStock)
+            {
+                foreach (DMEnviroSensor DMES in enviroList)
+                {
+                    if (!DMES.sensorActive)
+                    {
+                        if (DMES.primary) DMES.toggleSensor();
+                    }
+                }
+            }
             Events["deployEvent"].active = oneWayAnimation;
             Events["retractEvent"].active = showEndEvent;
         }
@@ -232,6 +261,16 @@ namespace DMagic
             if (oneWayAnimation) return;
             primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default);
             IsDeployed = false;
+            if (USStock)
+            {
+                foreach (DMEnviroSensor DMES in enviroList)
+                {
+                    if (DMES.sensorActive)
+                    {
+                        if (DMES.primary) DMES.toggleSensor();
+                    }
+                }
+            }
             Events["deployEvent"].active = showStartEvent;
             Events["retractEvent"].active = false;
         }
@@ -370,6 +409,11 @@ namespace DMagic
                         if (anim.IsPlaying(animationName)) return;
                         else
                         {
+                            if (!primary)
+                            {
+                                if (!primaryModule.IsDeployed) primaryModule.deployEvent();
+                                IsDeployed = true;
+                            }
                             if (!IsDeployed)
                             {
                                 deployEvent();
