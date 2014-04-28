@@ -50,6 +50,8 @@ namespace DMagic
         private Vector3 indicatorPosition = new Vector3(0, 0, 0);
         private int sensorInt = 0;
         private List<DMEnviroSensor> modList = new List<DMEnviroSensor>();
+        private float timeDelay = 0f;
+        private float lastValue = 0f;
 
         public override void OnStart(PartModule.StartState state)
         {
@@ -79,6 +81,13 @@ namespace DMagic
                     }
                 }
             }
+        }
+
+        public override string GetInfo()
+        {
+            string info = base.GetInfo();
+            if (primary) info += "Requires:\n- " + resourceName + ": " + powerConsumption.ToString() + "/s\n";
+            return info;
         }
 
         [KSPEvent(guiActiveUnfocused = true, externalToEVAOnly = true, guiActive = false, guiName = "Activate", active = false)]
@@ -124,11 +133,22 @@ namespace DMagic
                 float maxSensorValue = 0f;
                 float currentSensorValue = 0f;
                 float normSensorValue = 0f;
-
-                maxSensorValue = sensorValue(sensorInt);
-                currentSensorValue = parseSensor();
-                if (sensorInt == 3 && sensorActive) currentSensorValue += 429; //For negative temp values
-                normSensorValue = Mathf.Clamp(currentSensorValue / maxSensorValue, 0f, 1f);
+                
+                if (sensorActive)
+                {
+                    if (timeDelay <= 1f) timeDelay += TimeWarp.deltaTime;
+                    maxSensorValue = sensorValue(sensorInt);
+                    currentSensorValue = parseSensor();
+                    if (sensorInt == 3 && sensorActive) currentSensorValue += 429; //For negative temp values
+                    normSensorValue = Mathf.Clamp(currentSensorValue / maxSensorValue, 0f, 1f);
+                    normSensorValue *= timeDelay;
+                    lastValue = normSensorValue;
+                }
+                else
+                {
+                    if (timeDelay >= 0f) timeDelay -= TimeWarp.deltaTime;
+                    normSensorValue = lastValue * timeDelay;
+                }
 
                 if (sensorInt == 1 || sensorInt == 2) indicator.localRotation = Quaternion.Euler(Mathf.Lerp(min, max, normSensorValue), 0f, 0f);
                 if (sensorInt == 3) indicator.localPosition = Vector3.MoveTowards(indicator.localPosition, indicatorPosition + new Vector3(0f, 0f, 0.12f * normSensorValue), Time.deltaTime);
@@ -165,13 +185,13 @@ namespace DMagic
             switch (type)
             {
                 case 1:
-                    return 4;
+                    return 3;
                 case 2:
-                    return 40;
+                    return 30;
                 case 3:
                     return 1500;
                 case 4:
-                    return 15;
+                    return 10;
                 default:
                     return 1;
             }
