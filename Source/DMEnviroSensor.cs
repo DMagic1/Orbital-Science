@@ -1,7 +1,7 @@
 ﻿/* DMagic Orbital Science - DMEnviroSensor
  * Module to control spiffy animations for replacement stock science parts
  *
- * Copyright (c) 2014, David Grandy
+ * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -139,7 +139,7 @@ namespace DMagic
                     if (timeDelay <= 1f) timeDelay += TimeWarp.deltaTime;
                     maxSensorValue = sensorValue(sensorInt);
                     currentSensorValue = parseSensor();
-                    if (sensorInt == 3 && sensorActive) currentSensorValue += 429; //For negative temp values
+                    if (sensorInt == 3) currentSensorValue += 429; //For negative temp values
                     normSensorValue = Mathf.Clamp(currentSensorValue / maxSensorValue, 0f, 1f);
                     normSensorValue *= timeDelay;
                     lastValue = normSensorValue;
