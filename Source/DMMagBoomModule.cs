@@ -211,7 +211,6 @@ namespace DMagic
                         lon = ((vessel.longitude + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
                         alt = vessel.altitude / 50000;
                         uDay = Planetarium.GetUniversalTime() / solarDay(planetID);
-                        //nDay = uDay % 1;
                     }
                     else
                     {
@@ -222,7 +221,6 @@ namespace DMagic
                         lon = ((FlightGlobals.fetch.bodies[0].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
                         planetID = FlightGlobals.fetch.bodies[0];
                         uDay = Planetarium.GetUniversalTime() / solarDay(planetID);
-                        //nDay = uDay % 1;
                     }
 
                     localDay = Convert.ToInt32(uDay);
@@ -290,20 +288,22 @@ namespace DMagic
                     float Btf = (float)Bti;
                     float incf = (float)dip;
                     float decf = (float)decD;
+                    float Bzf = (float)Bz;
+                    float Bhf = (float)Bh;
+
                     //float BRf = (float)Brad;
                     //float BPsif = (float)BPsi;
                     //float BThetaf = (float)BTheta;
                     //float Bxf = (float)Bx;
                     //float Byf = (float)By;
-                    float Bzf = (float)Bz;
-                    float Bhf = (float)Bh;
-
+                    
                     //Display in right-click menu
                     Bt = Btf.ToString("F2") + " nT";
                     inc = incf.ToString("F2") + "Deg";
                     dec = decf.ToString("F2") + "Deg";
                     BhS = Bhf.ToString("F2") + " nT";
                     BzS = Bzf.ToString("F2") + " nT";
+
                     //Br = BRf.ToString("F2") + " nT";
                     //Bpsi = BPsif.ToString("F2") + " nT";
                     //Btheta = BThetaf.ToString("F2") + " nT";
