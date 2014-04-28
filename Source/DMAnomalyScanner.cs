@@ -1,7 +1,7 @@
 ﻿/* DMagic Orbital Science - Anomaly Scanner
  * Anomaly detection and science data setup.
  *
- * Copyright (c) 2014, David Grandy
+ * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 

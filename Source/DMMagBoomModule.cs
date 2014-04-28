@@ -1,7 +1,7 @@
 ﻿/* DMagic Orbital Science - Magnetometer
  * Magnetosphere simulation.
  *
- * Copyright (c) 2014, David Grandy
+ * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -102,7 +102,7 @@ namespace DMagic
 
         MagVar magValues = new MagVar();
 
-        public double[] getMag(double lat, double lon, double alt, long date, int i, double[] field)
+        private double[] getMag(double lat, double lon, double alt, long date, int i, double[] field)
         {
             return magValues.SGMagVar(lat, lon, alt, date, i, field);
         }
