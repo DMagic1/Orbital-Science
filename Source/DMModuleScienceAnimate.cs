@@ -1,7 +1,7 @@
 ﻿/* DMagic Orbital Science - Module Science Animate
  * Generic module for animated science experiments.
  *
- * Copyright (c) 2014, David Grandy
+ * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -179,7 +179,7 @@ namespace DMagic
             else return base.GetInfo();
         }
 
-        public void setup()
+        private void setup()
         {
             Events["deployEvent"].guiActive = showStartEvent;
             Events["retractEvent"].guiActive = showEndEvent;
@@ -200,7 +200,7 @@ namespace DMagic
             if (experimentID != null) scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
         }
 
-        public void editorSetup()
+        private void editorSetup()
         {
             Actions["deployAction"].active = showStartEvent;
             Actions["retractAction"].active = showEndEvent;
@@ -331,11 +331,11 @@ namespace DMagic
         }
 
         //This ridiculous chunk of code seems to make the EVA data collection work properly
-        public class EVAIScienceContainer : IScienceDataContainer
+        internal class EVAIScienceContainer : IScienceDataContainer
         {
             private bool rerunnable = true;
             List<ScienceData> EVADataList = new List<ScienceData>();
-            public EVAIScienceContainer(List<ScienceData> dataList, bool rerun)
+            internal EVAIScienceContainer(List<ScienceData> dataList, bool rerun)
             {
                 foreach (ScienceData data in dataList)
                 {
@@ -383,7 +383,7 @@ namespace DMagic
             ResetExperiment();
         }
 
-        public void eventsCheck()
+        private void eventsCheck()
         {
             Events["ResetExperiment"].active = scienceReportList.Count > 0;
             Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
@@ -449,14 +449,14 @@ namespace DMagic
         }
 
         //In case we need to wait for an animation to finish before running the experiment
-        public IEnumerator WaitForAnimation(float waitTime)
+        private IEnumerator WaitForAnimation(float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
             resourceOn = false;
             runExperiment();
         }
 
-        public void runExperiment()
+        private void runExperiment()
         {
             ScienceData data = makeScience();
             scienceReportList.Add(data);
@@ -466,7 +466,7 @@ namespace DMagic
         }
 
         //Create the science data
-        public ScienceData makeScience()
+        private ScienceData makeScience()
         {
             ExperimentSituations vesselSituation = getSituation();
             string biome = getBiome(vesselSituation);
@@ -501,7 +501,7 @@ namespace DMagic
             return data;
         }
         
-        public string getBiome(ExperimentSituations s)
+        private string getBiome(ExperimentSituations s)
         {
             if (scienceExp.BiomeIsRelevantWhile(s))
             {
@@ -520,13 +520,13 @@ namespace DMagic
             else return "";
         }
 
-        public bool canConduct()
+        private bool canConduct()
         {
             return scienceExp.IsAvailableWhile(getSituation(), vessel.mainBody);
         }
 
         //Get our experimental situation based on the vessel's current flight situation, fix stock bugs with aerobraking and reentry.
-        public ExperimentSituations getSituation()
+        private ExperimentSituations getSituation()
         {
             //Check for asteroids, return values that should sync with existing parts
             if (asteroidReports && AsteroidScience.asteroidGrappled()) return ExperimentSituations.SrfLanded;
@@ -554,7 +554,7 @@ namespace DMagic
         }
 
         //This is for the title bar of the experiment results page
-        public string situationCleanup(ExperimentSituations expSit, string b)
+        private string situationCleanup(ExperimentSituations expSit, string b)
         {
             //Add some asteroid specefic results
             if (asteroidReports && AsteroidScience.asteroidGrappled()) return " from the surface of a " + b + " asteroid";
@@ -599,7 +599,7 @@ namespace DMagic
         }
 
         //Custom experiment results dialog page, allows full control over the buttons on that page
-        public void newResultPage()
+        private void newResultPage()
         {
             if (scienceReportList.Count > 0)
             {
@@ -685,7 +685,7 @@ namespace DMagic
         }
 
         //This one is called after external data collection, removes all science reports.
-        public void DumpAllData(List<ScienceData> dataList)
+        internal void DumpAllData(List<ScienceData> dataList)
         {
             if (scienceReportList.Count > 0)
             {
@@ -760,7 +760,7 @@ namespace DMagic
         }
 
         //Maybe unnecessary, can be folded into a simpler method???
-        public bool checkLabOps()
+        private bool checkLabOps()
         {
             List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             for (int i = 0; i < labList.Count; i++)
