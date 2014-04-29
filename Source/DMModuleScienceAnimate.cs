@@ -1,7 +1,7 @@
 ﻿/* DMagic Orbital Science - Module Science Animate
  * Generic module for animated science experiments.
  *
- * Copyright (c) 2014, David Grandy
+ * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -27,12 +27,10 @@
  *  
  */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 
 namespace DMagic
 {
@@ -83,11 +81,27 @@ namespace DMagic
         public string resourceExperiment = "ElectricCharge";
         [KSPField]
         public float resourceExpCost = 0;
+        [KSPField]
+        public bool asteroidReports = false;
+        [KSPField]
+        public bool USStock = false;
+        [KSPField]
+        public bool primary = true;
 
         protected Animation anim;
         protected ScienceExperiment scienceExp;
         private bool resourceOn = false;
         private int dataIndex = 0;
+        private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
+        private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
+        private DMModuleScienceAnimate primaryModule = null;
+        private CelestialBody mainBody = null;
+
+        //Record some default values for Eeloo here to prevent the asteroid science method from screwing them up
+        private const string bodyDescription = "There’s been a considerable amount of controversy around the status of Eeloo as being a proper planet or a just “lump of ice going around the Sun”. The debate is still ongoing, since most academic summits held to address the issue have devolved into, on good days, petty name calling, and on worse ones, all-out brawls.";
+        private const string bodyName = "Eeloo";
+        private const float bodyLandedValue = 15;
+        private const float bodySpaceValue = 12;
         
         List<ScienceData> scienceReportList = new List<ScienceData>();
 
@@ -96,14 +110,18 @@ namespace DMagic
             base.OnStart(state);
             this.part.force_activate();
             anim = part.FindModelAnimators(animationName)[0];
-            if (state == StartState.Editor)
-            {
-                editorSetup();
-            }
+            if (state == StartState.Editor) editorSetup();
             else
-            {                
+            {
                 setup();
-                eventsCheck();
+                if (FlightGlobals.fetch.bodies[16].bodyName != "Eeloo") //Just to make sure nothing gets permanently screwed up
+                {
+                    mainBody = FlightGlobals.Bodies[16];
+                    mainBody.bodyDescription = bodyDescription;
+                    mainBody.bodyName = bodyName;
+                    mainBody.scienceValues.LandedDataValue = bodyLandedValue;
+                    mainBody.scienceValues.InSpaceLowDataValue = bodySpaceValue;
+                }
                 if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
         }
@@ -132,18 +150,27 @@ namespace DMagic
             }
         }
 
+        public override void OnInitialize()
+        {
+            base.OnInitialize();
+            eventsCheck();
+        }
+
         public override void OnUpdate()
         {
             base.OnUpdate();
             if (resourceOn)
             {
-                float cost = resourceExpCost * Time.deltaTime;
-                if (part.RequestResource(resourceExperiment, cost) < cost)
+                if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
                 {
-                    StopCoroutine("WaitForAnimation");
-                    resourceOn = false;
-                    ScreenMessages.PostScreenMessage("Not enough power, shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
-                    if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
+                    float cost = resourceExpCost * Time.deltaTime;
+                    if (part.RequestResource(resourceExperiment, cost) < cost)
+                    {
+                        StopCoroutine("WaitForAnimation");
+                        resourceOn = false;
+                        ScreenMessages.PostScreenMessage("Not enough power, shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
+                        if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
+                    }
                 }
             }
         }
@@ -159,7 +186,7 @@ namespace DMagic
             else return base.GetInfo();
         }
 
-        public void setup()
+        private void setup()
         {
             Events["deployEvent"].guiActive = showStartEvent;
             Events["retractEvent"].guiActive = showEndEvent;
@@ -167,11 +194,20 @@ namespace DMagic
             Events["deployEvent"].guiName = startEventGUIName;
             Events["retractEvent"].guiName = endEventGUIName;
             Events["toggleEvent"].guiName = toggleEventGUIName;
+            if (!primary)
+            {
+                primaryList = this.part.FindModulesImplementing<DMModuleScienceAnimate>();
+                foreach (DMModuleScienceAnimate DMS in primaryList)
+                {
+                    if (DMS.primary) primaryModule = DMS;
+                }
+            }
+            if (USStock) enviroList = this.part.FindModulesImplementing<DMEnviroSensor>();
             if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length / animSpeed;
             if (experimentID != null) scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
         }
 
-        public void editorSetup()
+        private void editorSetup()
         {
             Actions["deployAction"].active = showStartEvent;
             Actions["retractAction"].active = showEndEvent;
@@ -196,7 +232,7 @@ namespace DMagic
                 {
                     anim[animationName].wrapMode = wrap;
                     anim[animationName].normalizedTime = time;
-                    anim.Play(animationName);
+                    anim.Blend(animationName);
                 }
             }
         }
@@ -206,6 +242,16 @@ namespace DMagic
         {
             primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default);
             IsDeployed = !oneWayAnimation;
+            if (USStock)
+            {
+                foreach (DMEnviroSensor DMES in enviroList)
+                {
+                    if (!DMES.sensorActive)
+                    {
+                        if (DMES.primary) DMES.toggleSensor();
+                    }
+                }
+            }
             Events["deployEvent"].active = oneWayAnimation;
             Events["retractEvent"].active = showEndEvent;
         }
@@ -222,6 +268,16 @@ namespace DMagic
             if (oneWayAnimation) return;
             primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default);
             IsDeployed = false;
+            if (USStock)
+            {
+                foreach (DMEnviroSensor DMES in enviroList)
+                {
+                    if (DMES.sensorActive)
+                    {
+                        if (DMES.primary) DMES.toggleSensor();
+                    }
+                }
+            }
             Events["deployEvent"].active = showStartEvent;
             Events["retractEvent"].active = false;
         }
@@ -282,11 +338,11 @@ namespace DMagic
         }
 
         //This ridiculous chunk of code seems to make the EVA data collection work properly
-        public class EVAIScienceContainer : IScienceDataContainer
+        internal class EVAIScienceContainer : IScienceDataContainer
         {
             private bool rerunnable = true;
             List<ScienceData> EVADataList = new List<ScienceData>();
-            public EVAIScienceContainer(List<ScienceData> dataList, bool rerun)
+            internal EVAIScienceContainer(List<ScienceData> dataList, bool rerun)
             {
                 foreach (ScienceData data in dataList)
                 {
@@ -334,7 +390,7 @@ namespace DMagic
             ResetExperiment();
         }
 
-        public void eventsCheck()
+        private void eventsCheck()
         {
             Events["ResetExperiment"].active = scienceReportList.Count > 0;
             Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
@@ -360,10 +416,15 @@ namespace DMagic
                         if (anim.IsPlaying(animationName)) return;
                         else
                         {
+                            if (!primary)
+                            {
+                                if (!primaryModule.IsDeployed) primaryModule.deployEvent();
+                                IsDeployed = true;
+                            }
                             if (!IsDeployed)
                             {
                                 deployEvent();
-                                if (deployingMessage != null) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+                                if (!string.IsNullOrEmpty(deployingMessage)) ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                                 if (experimentWaitForAnimation)
                                 {
                                     if (resourceExpCost > 0) resourceOn = true;
@@ -383,7 +444,7 @@ namespace DMagic
                 }
                 else
                 {
-                    if (customFailMessage != null) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+                    if (!string.IsNullOrEmpty(customFailMessage)) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                 }
             }
             else ReviewData();
@@ -395,14 +456,14 @@ namespace DMagic
         }
 
         //In case we need to wait for an animation to finish before running the experiment
-        public IEnumerator WaitForAnimation(float waitTime)
+        private IEnumerator WaitForAnimation(float waitTime)
         {
             yield return new WaitForSeconds(waitTime);
             resourceOn = false;
             runExperiment();
         }
 
-        public void runExperiment()
+        private void runExperiment()
         {
             ScienceData data = makeScience();
             scienceReportList.Add(data);
@@ -412,19 +473,42 @@ namespace DMagic
         }
 
         //Create the science data
-        public ScienceData makeScience()
+        private ScienceData makeScience()
         {
             ExperimentSituations vesselSituation = getSituation();
             string biome = getBiome(vesselSituation);
+            mainBody = vessel.mainBody;
+            bool asteroid = false;            
+            
+            //Check for asteroids and alter the biome and celestialbody values as necessary
+            if (asteroidReports && AsteroidScience.asteroidGrappled() || asteroidReports && AsteroidScience.asteroidNear())
+            {
+                asteroid = true;
+                mainBody = AsteroidScience.Asteroid();
+                biome = mainBody.bodyDescription;
+            }
+
             ScienceData data = null;
             ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(experimentID);
-            ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, vessel.mainBody, biome);
+            ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, mainBody, biome);
+
+            //Replace Eeloo's CelestialBody values with defaults if necessary
+            if (asteroid)
+            {
+                mainBody.bodyDescription = bodyDescription;
+                mainBody.bodyName = bodyName;
+                mainBody.scienceValues.LandedDataValue = bodyLandedValue;
+                mainBody.scienceValues.InSpaceLowDataValue = bodySpaceValue;
+                asteroid = false;
+            }
+
             data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, xmitDataScalar / 2, experimentID, exp.experimentTitle + situationCleanup(vesselSituation, biome));
             data.subjectID = sub.id;
+            sub.title = data.title;
             return data;
         }
-
-        public string getBiome(ExperimentSituations s)
+        
+        private string getBiome(ExperimentSituations s)
         {
             if (scienceExp.BiomeIsRelevantWhile(s))
             {
@@ -443,14 +527,17 @@ namespace DMagic
             else return "";
         }
 
-        public bool canConduct()
+        private bool canConduct()
         {
             return scienceExp.IsAvailableWhile(getSituation(), vessel.mainBody);
         }
 
         //Get our experimental situation based on the vessel's current flight situation, fix stock bugs with aerobraking and reentry.
-        public ExperimentSituations getSituation()
+        private ExperimentSituations getSituation()
         {
+            //Check for asteroids, return values that should sync with existing parts
+            if (asteroidReports && AsteroidScience.asteroidGrappled()) return ExperimentSituations.SrfLanded;
+            if (asteroidReports && AsteroidScience.asteroidNear()) return ExperimentSituations.InSpaceLow;
             switch (vessel.situation)
             {
                 case Vessel.Situations.LANDED:
@@ -472,55 +559,54 @@ namespace DMagic
                         return ExperimentSituations.InSpaceHigh;
             }
         }
-        
+
         //This is for the title bar of the experiment results page
-        public string situationCleanup(ExperimentSituations expSit, string b)
+        private string situationCleanup(ExperimentSituations expSit, string b)
         {
-            if (vessel.landedAt != "")
-                return " from " + b;
+            //Add some asteroid specefic results
+            if (asteroidReports && AsteroidScience.asteroidGrappled()) return " from the surface of a " + b + " asteroid";
+            if (asteroidReports && AsteroidScience.asteroidNear()) return " while in space near a " + b + " asteroid";
+            if (vessel.landedAt != "") return " from " + b;
+            if (b == "")
+            {
+                switch (expSit)
+                {
+                    case ExperimentSituations.SrfLanded:
+                        return " from  " + vessel.mainBody.theName + "'s surface";
+                    case ExperimentSituations.SrfSplashed:
+                        return " from " + vessel.mainBody.theName + "'s oceans";
+                    case ExperimentSituations.FlyingLow:
+                        return " while flying at " + vessel.mainBody.theName;
+                    case ExperimentSituations.FlyingHigh:
+                        return " from " + vessel.mainBody.theName + "'s upper atmosphere";
+                    case ExperimentSituations.InSpaceLow:
+                        return " while in space near " + vessel.mainBody.theName;
+                    default:
+                        return " while in space high over " + vessel.mainBody.theName;
+                }
+            }
             else
             {
-                if (b == "")
+                switch (expSit)
                 {
-                    switch (expSit)
-                    {
-                        case ExperimentSituations.SrfLanded:
-                            return " from  " + vessel.mainBody.theName + "'s surface";
-                        case ExperimentSituations.SrfSplashed:
-                            return " from " + vessel.mainBody.theName + "'s oceans";
-                        case ExperimentSituations.FlyingLow:
-                            return " while flying at " + vessel.mainBody.theName;
-                        case ExperimentSituations.FlyingHigh:
-                            return " from " + vessel.mainBody.theName + "'s upper atmosphere";
-                        case ExperimentSituations.InSpaceLow:
-                            return " while in space near " + vessel.mainBody.theName;
-                        default:
-                            return " while in space high over " + vessel.mainBody.theName;
-                    }
-                }
-                else
-                {
-                    switch (expSit)
-                    {
-                        case ExperimentSituations.SrfLanded:
-                            return " from " + vessel.mainBody.theName + "'s " + b;
-                        case ExperimentSituations.SrfSplashed:
-                            return " from " + vessel.mainBody.theName + "'s " + b;
-                        case ExperimentSituations.FlyingLow:
-                            return " while flying over " + vessel.mainBody.theName + "'s " + b;
-                        case ExperimentSituations.FlyingHigh:
-                            return " from the upper atmosphere over " + vessel.mainBody.theName + "'s " + b;
-                        case ExperimentSituations.InSpaceLow:
-                            return " from space just above " + vessel.mainBody.theName + "'s " + b;
-                        default:
-                            return " while in space high over " + vessel.mainBody.theName + "'s " + b;
-                    }
+                    case ExperimentSituations.SrfLanded:
+                        return " from " + vessel.mainBody.theName + "'s " + b;
+                    case ExperimentSituations.SrfSplashed:
+                        return " from " + vessel.mainBody.theName + "'s " + b;
+                    case ExperimentSituations.FlyingLow:
+                        return " while flying over " + vessel.mainBody.theName + "'s " + b;
+                    case ExperimentSituations.FlyingHigh:
+                        return " from the upper atmosphere over " + vessel.mainBody.theName + "'s " + b;
+                    case ExperimentSituations.InSpaceLow:
+                        return " from space just above " + vessel.mainBody.theName + "'s " + b;
+                    default:
+                        return " while in space high over " + vessel.mainBody.theName + "'s " + b;
                 }
             }
         }
 
         //Custom experiment results dialog page, allows full control over the buttons on that page
-        public void newResultPage()
+        private void newResultPage()
         {
             if (scienceReportList.Count > 0)
             {
@@ -550,7 +636,7 @@ namespace DMagic
 
         #region IScienceDataContainer methods
         
-        //Implement these interface methods to make the science lab and tranmitters function properly.
+        //Implement these interface methods to make the science lab and transmitters function properly.
         ScienceData[] IScienceDataContainer.GetData()
         {
             return scienceReportList.ToArray();
@@ -606,7 +692,7 @@ namespace DMagic
         }
 
         //This one is called after external data collection, removes all science reports.
-        public void DumpAllData(List<ScienceData> dataList)
+        internal void DumpAllData(List<ScienceData> dataList)
         {
             if (scienceReportList.Count > 0)
             {
@@ -668,8 +754,7 @@ namespace DMagic
 
         private void onSendToLab(ScienceData data)
         {
-            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
-            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             if (checkLabOps() && scienceReportList.Count > 0) labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
             else ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
             //print("Send data to lab");
@@ -682,20 +767,14 @@ namespace DMagic
         }
 
         //Maybe unnecessary, can be folded into a simpler method???
-        public bool checkLabOps()
+        private bool checkLabOps()
         {
-            List<ModuleScienceLab> labList = new List<ModuleScienceLab>();
-            labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-            bool labOp = false;
+            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             for (int i = 0; i < labList.Count; i++)
             {
-                if (labList[i].IsOperational())
-                {
-                    labOp = true;
-                    break;
-                }
+                if (labList[i].IsOperational()) return true;
             }
-            return labOp;
+            return false;
         }
 
         #endregion
