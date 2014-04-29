@@ -27,12 +27,10 @@
  *  
  */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 
 namespace DMagic
 {
@@ -97,6 +95,7 @@ namespace DMagic
         private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
         private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
         private DMModuleScienceAnimate primaryModule = null;
+        private CelestialBody mainBody = null;
 
         //Record some default values for Eeloo here to prevent the asteroid science method from screwing them up
         private const string bodyDescription = "There’s been a considerable amount of controversy around the status of Eeloo as being a proper planet or a just “lump of ice going around the Sun”. The debate is still ongoing, since most academic summits held to address the issue have devolved into, on good days, petty name calling, and on worse ones, all-out brawls.";
@@ -115,6 +114,14 @@ namespace DMagic
             else
             {
                 setup();
+                if (FlightGlobals.fetch.bodies[16].bodyName != "Eeloo") //Just to make sure nothing gets permanently screwed up
+                {
+                    mainBody = FlightGlobals.Bodies[16];
+                    mainBody.bodyDescription = bodyDescription;
+                    mainBody.bodyName = bodyName;
+                    mainBody.scienceValues.LandedDataValue = bodyLandedValue;
+                    mainBody.scienceValues.InSpaceLowDataValue = bodySpaceValue;
+                }
                 if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
             }
         }
@@ -470,7 +477,7 @@ namespace DMagic
         {
             ExperimentSituations vesselSituation = getSituation();
             string biome = getBiome(vesselSituation);
-            CelestialBody mainBody = vessel.mainBody;
+            mainBody = vessel.mainBody;
             bool asteroid = false;            
             
             //Check for asteroids and alter the biome and celestialbody values as necessary
