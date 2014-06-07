@@ -173,6 +173,7 @@ namespace DMagic
                     }
                 }
             }
+            eventsCheck();
         }
 
         public override string GetInfo()
@@ -328,6 +329,7 @@ namespace DMagic
             {
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Clear();
+                //print("[DM] Reseting Experiment");
             }
             eventsCheck();
         }
@@ -337,51 +339,12 @@ namespace DMagic
             ResetExperiment();
         }
 
-        //This ridiculous chunk of code seems to make the EVA data collection work properly
-        internal class EVAIScienceContainer : IScienceDataContainer
-        {
-            private bool rerunnable = true;
-            List<ScienceData> EVADataList = new List<ScienceData>();
-            internal EVAIScienceContainer(List<ScienceData> dataList, bool rerun)
-            {
-                foreach (ScienceData data in dataList)
-                {
-                    EVADataList.Add(data);
-                }
-                rerunnable = rerun;
-            }
-            public bool IsRerunnable()
-            {
-                return rerunnable;
-            }
-            public int GetScienceCount()
-            {
-                return EVADataList.Count;
-            }
-            public void ReviewData()
-            {
-            }
-            public void ReviewDataItem(ScienceData data)
-            {
-            }
-            public void DumpData(ScienceData data)
-            {
-            }
-            public ScienceData[] GetData()
-            {
-                return EVADataList.ToArray();
-            }
-        }
-
-        EVAIScienceContainer EVAIScience;
-
         new public void CollectDataExternalEvent()
         {   
             List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-            EVAIScience = new EVAIScienceContainer(scienceReportList, rerunnable);
             if (scienceReportList.Count > 0)
             {
-                if (EVACont.First().StoreData(new List<IScienceDataContainer> { EVAIScience }, false)) DumpAllData(scienceReportList);
+                if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false)) DumpAllData(scienceReportList);
             }
         }
         
@@ -392,6 +355,7 @@ namespace DMagic
 
         private void eventsCheck()
         {
+            //print("[DM] Checking Events");
             Events["ResetExperiment"].active = scienceReportList.Count > 0;
             Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
             Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
@@ -686,7 +650,7 @@ namespace DMagic
                 base.DumpData(data);
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Clear();
-                //print("Dump Data");
+                //print("[DM] Dump Data");
             }
             eventsCheck();
         }
@@ -702,7 +666,7 @@ namespace DMagic
                 }
                 scienceReportList.Clear();
                 if (keepDeployedMode == 0) retractEvent();
-                //print("Dump All Data");
+                //print("[DM] Dump All Data");
             }
             eventsCheck();
         }
@@ -715,7 +679,7 @@ namespace DMagic
                 base.DumpData(data);
                 if (keepDeployedMode == 0) retractEvent();
                 scienceReportList.Remove(data);
-                //print("Dump Data Local");
+                //print("[DM] Dump Data Local");
             }
             eventsCheck();
         }

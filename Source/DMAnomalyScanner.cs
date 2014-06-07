@@ -117,6 +117,7 @@ namespace DMagic
                     part.RequestResource(resourceToUse, resourceCost * TimeWarp.deltaTime);
                 }
             }
+            eventsCheck();
         }
 
         public override string GetInfo()
