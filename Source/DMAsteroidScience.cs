@@ -33,7 +33,7 @@ using UnityEngine;
 
 namespace DMagic
 {
-    class AsteroidScience
+    class DMAsteroidScience
     {
         private static Vessel asteroidVessel;
 
