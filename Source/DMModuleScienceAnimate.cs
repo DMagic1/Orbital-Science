@@ -84,11 +84,19 @@ namespace DMagic
         [KSPField]
         public bool asteroidReports = false;
         [KSPField]
+        public bool USScience = false;
+        [KSPField]
         public bool USStock = false;
+        [KSPField]
+        public string bayAnimation;
+        [KSPField]
+        public string looperAnimation;
         [KSPField]
         public bool primary = true;
 
         protected Animation anim;
+        protected Animation anim2;
+        protected Animation anim3;
         protected ScienceExperiment scienceExp;
         private bool resourceOn = false;
         private int dataIndex = 0;
@@ -110,6 +118,10 @@ namespace DMagic
             base.OnStart(state);
             this.part.force_activate();
             anim = part.FindModelAnimators(animationName)[0];
+            if (!string.IsNullOrEmpty(looperAnimation))
+                anim2 = part.FindModelAnimators(looperAnimation)[0];
+            if (!string.IsNullOrEmpty(bayAnimation))
+                anim3 = part.FindModelAnimators(bayAnimation)[0];
             if (state == StartState.Editor) editorSetup();
             else
             {
@@ -122,7 +134,12 @@ namespace DMagic
                     mainBody.scienceValues.LandedDataValue = bodyLandedValue;
                     mainBody.scienceValues.InSpaceLowDataValue = bodySpaceValue;
                 }
-                if (IsDeployed) primaryAnimator(1f, 1f, WrapMode.Default);
+                if (IsDeployed)
+                {
+                    primaryAnimator(1f, 1f, WrapMode.Default, animationName, anim);
+                    if (anim3 != null) primaryAnimator(1f, 1f, WrapMode.Default, bayAnimation, anim3);
+                    if (anim2 != null) primaryAnimator(2.5f * animSpeed, 0f, WrapMode.Loop, looperAnimation, anim2);
+                }
             }
         }
 
@@ -198,9 +215,12 @@ namespace DMagic
             if (!primary)
             {
                 primaryList = this.part.FindModulesImplementing<DMModuleScienceAnimate>();
-                foreach (DMModuleScienceAnimate DMS in primaryList)
+                if (primaryList.Count > 0)
                 {
-                    if (DMS.primary) primaryModule = DMS;
+                    foreach (DMModuleScienceAnimate DMS in primaryList)
+                    {
+                        if (DMS.primary) primaryModule = DMS;
+                    }
                 }
             }
             if (USStock) enviroList = this.part.FindModulesImplementing<DMEnviroSensor>();
@@ -224,16 +244,16 @@ namespace DMagic
 
         #region Animators
 
-        public void primaryAnimator(float speed, float time, WrapMode wrap)
+        public void primaryAnimator(float speed, float time, WrapMode wrap, string name, Animation a)
         {
-            if (anim != null)
+            if (a != null)
             {
-                anim[animationName].speed = speed;
-                if (!anim.IsPlaying(animationName))
+                a[name].speed = speed;
+                if (!a.IsPlaying(name))
                 {
-                    anim[animationName].wrapMode = wrap;
-                    anim[animationName].normalizedTime = time;
-                    anim.Blend(animationName);
+                    a[name].wrapMode = wrap;
+                    a[name].normalizedTime = time;
+                    a.Blend(name, 1f);
                 }
             }
         }
@@ -241,15 +261,29 @@ namespace DMagic
         [KSPEvent(guiActive = true, guiName = "Deploy", active = true)]
         public void deployEvent()
         {
-            primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default);
+            primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default, animationName, anim);
             IsDeployed = !oneWayAnimation;
+            if (USScience)
+            {
+                if (anim3 != null)
+                {
+                    primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default, bayAnimation, anim3);
+                }
+                if (anim2 != null)
+                {
+                    primaryAnimator(animSpeed * 2.5f, 0f, WrapMode.Loop, looperAnimation, anim2);
+                }
+            }
             if (USStock)
             {
-                foreach (DMEnviroSensor DMES in enviroList)
+                if (enviroList.Count > 0)
                 {
-                    if (!DMES.sensorActive)
+                    foreach (DMEnviroSensor DMES in enviroList)
                     {
-                        if (DMES.primary) DMES.toggleSensor();
+                        if (!DMES.sensorActive)
+                        {
+                            if (DMES.primary) DMES.toggleSensor();
+                        }
                     }
                 }
             }
@@ -267,15 +301,33 @@ namespace DMagic
         public void retractEvent()
         {
             if (oneWayAnimation) return;
-            primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default);
+            primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, animationName, anim);
             IsDeployed = false;
+            if (USScience)
+            {
+                if (anim3 != null)
+                {
+                    if (anim[animationName].length > anim3[bayAnimation].length)
+                        primaryAnimator(-1f * animSpeed, (anim[animationName].length / anim3[bayAnimation].length), WrapMode.Default, bayAnimation, anim3);
+                    else 
+                        primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, bayAnimation, anim3);
+                }
+                if (anim2 != null)
+                {
+                    anim2[looperAnimation].normalizedTime = anim2[looperAnimation].normalizedTime % 1;
+                    anim2[looperAnimation].wrapMode = WrapMode.Clamp;
+                }
+            }
             if (USStock)
             {
-                foreach (DMEnviroSensor DMES in enviroList)
+                if (enviroList.Count > 0)
                 {
-                    if (DMES.sensorActive)
+                    foreach (DMEnviroSensor DMES in enviroList)
                     {
-                        if (DMES.primary) DMES.toggleSensor();
+                        if (DMES.sensorActive)
+                        {
+                            if (DMES.primary) DMES.toggleSensor();
+                        }
                     }
                 }
             }
@@ -445,10 +497,10 @@ namespace DMagic
             bool asteroid = false;            
             
             //Check for asteroids and alter the biome and celestialbody values as necessary
-            if (asteroidReports && AsteroidScience.asteroidGrappled() || asteroidReports && AsteroidScience.asteroidNear())
+            if (asteroidReports && DMAsteroidScience.asteroidGrappled() || asteroidReports && DMAsteroidScience.asteroidNear())
             {
                 asteroid = true;
-                mainBody = AsteroidScience.Asteroid();
+                mainBody = DMAsteroidScience.Asteroid();
                 biome = mainBody.bodyDescription;
             }
 
@@ -500,8 +552,8 @@ namespace DMagic
         private ExperimentSituations getSituation()
         {
             //Check for asteroids, return values that should sync with existing parts
-            if (asteroidReports && AsteroidScience.asteroidGrappled()) return ExperimentSituations.SrfLanded;
-            if (asteroidReports && AsteroidScience.asteroidNear()) return ExperimentSituations.InSpaceLow;
+            if (asteroidReports && DMAsteroidScience.asteroidGrappled()) return ExperimentSituations.SrfLanded;
+            if (asteroidReports && DMAsteroidScience.asteroidNear()) return ExperimentSituations.InSpaceLow;
             switch (vessel.situation)
             {
                 case Vessel.Situations.LANDED:
@@ -528,8 +580,8 @@ namespace DMagic
         private string situationCleanup(ExperimentSituations expSit, string b)
         {
             //Add some asteroid specefic results
-            if (asteroidReports && AsteroidScience.asteroidGrappled()) return " from the surface of a " + b + " asteroid";
-            if (asteroidReports && AsteroidScience.asteroidNear()) return " while in space near a " + b + " asteroid";
+            if (asteroidReports && DMAsteroidScience.asteroidGrappled()) return " from the surface of a " + b + " asteroid";
+            if (asteroidReports && DMAsteroidScience.asteroidNear()) return " while in space near a " + b + " asteroid";
             if (vessel.landedAt != "") return " from " + b;
             if (b == "")
             {
