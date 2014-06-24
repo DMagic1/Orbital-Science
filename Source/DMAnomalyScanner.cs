@@ -83,7 +83,7 @@ namespace DMagic
             }
             else
             {
-                cam = part.transform.FindChild("model").FindChild("anom scanner v4").FindChild("base").FindChild("camBaseArm0").FindChild("camBaseArm1").FindChild("camBaseArm2").FindChild("camBase");
+                cam = part.FindModelTransform("camBase");
                 GameEvents.onVesselSOIChanged.Add(ScanOnSOIChange);
                 pqsBuild();
                 eventsCheck();
