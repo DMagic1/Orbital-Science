@@ -27,6 +27,7 @@
  *  
  */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
@@ -35,8 +36,11 @@ using UnityEngine;
 namespace DMagic
 {
     public class DMModuleScienceAnimate : ModuleScienceExperiment, IScienceDataContainer
-    {
-        [KSPField]
+	{
+
+		#region Fields
+
+		[KSPField]
         public string customFailMessage = null;
         [KSPField]
         public string deployingMessage = null;
@@ -84,6 +88,8 @@ namespace DMagic
         [KSPField]
         public bool asteroidReports = false;
         [KSPField]
+        public bool asteroidTypeDependent = false;
+        [KSPField]
         public bool USScience = false;
         [KSPField]
         public bool USStock = false;
@@ -94,26 +100,29 @@ namespace DMagic
         [KSPField]
         public bool primary = true;
 
-        protected Animation anim;
-        protected Animation anim2;
-        protected Animation anim3;
-        protected ScienceExperiment scienceExp;
+        private Animation anim;
+        private Animation anim2;
+        private Animation anim3;
+        private ScienceExperiment scienceExp;
         private bool resourceOn = false;
         private int dataIndex = 0;
         private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
         private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
         private DMModuleScienceAnimate primaryModule = null;
-        private CelestialBody mainBody = null;
+        private DMAsteroidScience newAsteroid = null;
+		private int sitMask = 0;
+		private int bioMask = 0;
 
         //Record some default values for Eeloo here to prevent the asteroid science method from screwing them up
-        private const string bodyDescription = "There’s been a considerable amount of controversy around the status of Eeloo as being a proper planet or a just “lump of ice going around the Sun”. The debate is still ongoing, since most academic summits held to address the issue have devolved into, on good days, petty name calling, and on worse ones, all-out brawls.";
-        private const string bodyName = "Eeloo";
-        private const float bodyLandedValue = 15;
-        private const float bodySpaceValue = 12;
+        private const string bodyNameFixed = "Eeloo";
         
         List<ScienceData> scienceReportList = new List<ScienceData>();
 
-        public override void OnStart(StartState state)
+		#endregion
+
+		# region PartModule
+
+		public override void OnStart(StartState state)
         {
             base.OnStart(state);
             this.part.force_activate();
@@ -126,14 +135,6 @@ namespace DMagic
             else
             {
                 setup();
-                if (FlightGlobals.fetch.bodies[16].bodyName != "Eeloo") //Just to make sure nothing gets permanently screwed up
-                {
-                    mainBody = FlightGlobals.Bodies[16];
-                    mainBody.bodyDescription = bodyDescription;
-                    mainBody.bodyName = bodyName;
-                    mainBody.scienceValues.LandedDataValue = bodyLandedValue;
-                    mainBody.scienceValues.InSpaceLowDataValue = bodySpaceValue;
-                }
                 if (IsDeployed)
                 {
                     primaryAnimator(1f, 1f, WrapMode.Default, animationName, anim);
@@ -167,11 +168,11 @@ namespace DMagic
             }
         }
 
-        public override void OnInitialize()
-        {
-            base.OnInitialize();
-            eventsCheck();
-        }
+        //public override void OnInitialize()
+        //{
+        //    base.OnInitialize();
+        //    eventsCheck();
+        //}
 
         public override void OnUpdate()
         {
@@ -185,7 +186,7 @@ namespace DMagic
                     {
                         StopCoroutine("WaitForAnimation");
                         resourceOn = false;
-                        ScreenMessages.PostScreenMessage("Not enough power, shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage("Not enough " + resourceExperiment + ", shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
                         if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
                     }
                 }
@@ -225,7 +226,14 @@ namespace DMagic
             }
             if (USStock) enviroList = this.part.FindModulesImplementing<DMEnviroSensor>();
             if (waitForAnimationTime == -1) waitForAnimationTime = anim[animationName].length / animSpeed;
-            if (experimentID != null) scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
+            if (experimentID != null) {
+				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
+				if (scienceExp != null) {
+					sitMask = (int)scienceExp.situationMask;
+					bioMask = (int)scienceExp.biomeMask;
+				}
+			}
+            if (FlightGlobals.Bodies[16].bodyName != "Eeloo") FlightGlobals.Bodies[16].bodyName = bodyNameFixed;
         }
 
         private void editorSetup()
@@ -242,9 +250,11 @@ namespace DMagic
             Events["editorRetractEvent"].active = false;
         }
 
-        #region Animators
+		#endregion
 
-        public void primaryAnimator(float speed, float time, WrapMode wrap, string name, Animation a)
+		#region Animators
+
+		public void primaryAnimator(float speed, float time, WrapMode wrap, string name, Animation a)
         {
             if (a != null)
             {
@@ -383,7 +393,7 @@ namespace DMagic
                 scienceReportList.Clear();
                 //print("[DM] Reseting Experiment");
             }
-            eventsCheck();
+            //eventsCheck();
         }
 
         new public void ResetAction(KSPActionParam param)
@@ -463,7 +473,11 @@ namespace DMagic
                     if (!string.IsNullOrEmpty(customFailMessage)) ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
                 }
             }
-            else ReviewData();
+            else 
+            {
+                ScreenMessages.PostScreenMessage("Reviewing Current Data", 4f, ScreenMessageStyle.UPPER_CENTER);
+                ReviewData();
+            }
         }
 
         new public void DeployAction(KSPActionParam param)
@@ -493,35 +507,52 @@ namespace DMagic
         {
             ExperimentSituations vesselSituation = getSituation();
             string biome = getBiome(vesselSituation);
-            mainBody = vessel.mainBody;
+            CelestialBody mainBody = vessel.mainBody;
             bool asteroid = false;            
             
             //Check for asteroids and alter the biome and celestialbody values as necessary
             if (asteroidReports && DMAsteroidScience.asteroidGrappled() || asteroidReports && DMAsteroidScience.asteroidNear())
             {
+                newAsteroid = new DMAsteroidScience();
                 asteroid = true;
-                mainBody = DMAsteroidScience.Asteroid();
-                biome = mainBody.bodyDescription;
+                mainBody = newAsteroid.body;
+                biome = "";
+                if (asteroidTypeDependent) biome = newAsteroid.aType;
             }
 
             ScienceData data = null;
             ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(experimentID);
             ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, mainBody, biome);
+            sub.title = exp.experimentTitle + situationCleanup(vesselSituation, biome);
 
-            //Replace Eeloo's CelestialBody values with defaults if necessary
             if (asteroid)
             {
-                mainBody.bodyDescription = bodyDescription;
-                mainBody.bodyName = bodyName;
-                mainBody.scienceValues.LandedDataValue = bodyLandedValue;
-                mainBody.scienceValues.InSpaceLowDataValue = bodySpaceValue;
+                sub.subjectValue = newAsteroid.sciMult;
+                sub.scienceCap = exp.scienceCap * sub.subjectValue * 10;
+                mainBody.bodyName = bodyNameFixed;
                 asteroid = false;
             }
+            else
+            {
+                sub.subjectValue = fixSubjectValue(vesselSituation, mainBody, sub.subjectValue);
+                sub.scienceCap = exp.scienceCap * sub.subjectValue;
+            }
 
-            data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, xmitDataScalar / 2, experimentID, exp.experimentTitle + situationCleanup(vesselSituation, biome));
-            data.subjectID = sub.id;
-            sub.title = data.title;
+            if (sub != null)
+                data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, 0.5f, sub.id, sub.title);
             return data;
+        }
+
+        private float fixSubjectValue(ExperimentSituations s, CelestialBody b, float f)
+        {
+            float subV = f;
+            if (s == ExperimentSituations.SrfLanded) subV = b.scienceValues.LandedDataValue;
+            else if (s == ExperimentSituations.SrfSplashed) subV = b.scienceValues.SplashedDataValue;
+            else if (s == ExperimentSituations.FlyingLow) subV = b.scienceValues.FlyingLowDataValue;
+            else if (s == ExperimentSituations.FlyingHigh) subV = b.scienceValues.FlyingHighDataValue;
+            else if (s == ExperimentSituations.InSpaceLow) subV = b.scienceValues.InSpaceLowDataValue;
+            else if (s == ExperimentSituations.InSpaceHigh) subV = b.scienceValues.InSpaceHighDataValue;
+            return subV;
         }
         
         private string getBiome(ExperimentSituations s)
@@ -562,7 +593,7 @@ namespace DMagic
                 case Vessel.Situations.SPLASHED:
                     return ExperimentSituations.SrfSplashed;
                 default:
-                    if (vessel.altitude < vessel.mainBody.maxAtmosphereAltitude && vessel.mainBody.atmosphere)
+                    if (vessel.altitude < (vessel.mainBody.atmosphereScaleHeight * 1000 * Math.Log(1e6)) && vessel.mainBody.atmosphere)
                     {
                         if (vessel.altitude < vessel.mainBody.scienceValues.flyingAltitudeThreshold)
                             return ExperimentSituations.FlyingLow;
@@ -627,10 +658,10 @@ namespace DMagic
             if (scienceReportList.Count > 0)
             {
                 ScienceData data = scienceReportList[dataIndex];
-                ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, xmitDataScalar / 2, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+                ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
                 ExperimentsResultDialog.DisplayResult(page);
             }
-            eventsCheck();
+            //eventsCheck();
         }
 
         new public void ReviewData()
@@ -704,7 +735,7 @@ namespace DMagic
                 scienceReportList.Clear();
                 //print("[DM] Dump Data");
             }
-            eventsCheck();
+            //eventsCheck();
         }
 
         //This one is called after external data collection, removes all science reports.
@@ -720,7 +751,7 @@ namespace DMagic
                 if (keepDeployedMode == 0) retractEvent();
                 //print("[DM] Dump All Data");
             }
-            eventsCheck();
+            //eventsCheck();
         }
 
         //This one is called from the results page, removes only one report.
@@ -733,7 +764,7 @@ namespace DMagic
                 scienceReportList.Remove(data);
                 //print("[DM] Dump Data Local");
             }
-            eventsCheck();
+            //eventsCheck();
         }
 
         #endregion
@@ -747,7 +778,7 @@ namespace DMagic
                 scienceReportList.Remove(data);
                 if (keepDeployedMode == 0) retractEvent();
             }
-            eventsCheck();
+            //eventsCheck();
             //print("Discard data from page");
         }
 
