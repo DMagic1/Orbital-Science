@@ -154,8 +154,13 @@ namespace DMagic
 			if (state == StartState.Editor) editorSetup();
 			else {
 				setup();
-				if (IsDeployed)
+				if (IsDeployed) {
 					primaryAnimator(1f, 1f, WrapMode.Default, animationName, anim);
+					if (anim4!= null)
+						primaryAnimator(1f, 1f, WrapMode.Default, bayAnimation, anim4);
+					if (anim3 != null)
+						primaryAnimator(2.5f * animSpeed, 0f, WrapMode.Loop, looperAnimation, anim3);
+				}
 			}
 		}
 
