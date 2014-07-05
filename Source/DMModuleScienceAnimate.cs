@@ -1,5 +1,5 @@
 ﻿/* DMagic Orbital Science - Module Science Animate
- * Generic module for animated science experiments.
+ * Generic Part Module For Animated Science Experiments
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
@@ -24,18 +24,17 @@
  * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *  
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Collections;
 using UnityEngine;
 
 namespace DMagic
 {
-	class DMModuleScienceAnimate : ModuleScienceExperiment, IScienceDataContainer
+	class DMModuleScienceAnimate: ModuleScienceExperiment, IScienceDataContainer
 	{
 		#region Fields
 
@@ -47,7 +46,13 @@ namespace DMagic
 		public bool IsDeployed;
 		[KSPField]
 		public string animationName = null;
-		[KSPField(isPersistant = false)]
+		[KSPField]
+		public string sampleAnim = null;
+		[KSPField]
+		public string indicatorAnim = null;
+		[KSPField]
+		public string sampleEmptyAnim = null;
+		[KSPField]
 		public float animSpeed = 1f;
 		[KSPField]
 		public string endEventGUIName = "Retract";
@@ -82,6 +87,12 @@ namespace DMagic
 		public bool asteroidReports = false;
 		[KSPField]
 		public bool asteroidTypeDependent = false;
+		[KSPField(isPersistant = true)]
+		public int experimentNumber = 0;
+		[KSPField(isPersistant = true)]
+		public int experimentsReturned = 0;
+		[KSPField]
+		public string storageFullMessage = "No more samples can be collected";
 		[KSPField]
 		public bool USScience = false;
 		[KSPField]
@@ -92,53 +103,66 @@ namespace DMagic
 		public string looperAnimation = null;
 		[KSPField]
 		public bool primary = true;
+		[KSPField(isPersistant = true)]
+		public int lastAsteroid = 0;
+		[KSPField]
+		public int sitMask = 0;
+		[KSPField]
+		public int bioMask = 0;
+		[KSPField]
+		public int experimentLimit = 1;
 
 		private Animation anim;
 		private Animation anim2;
 		private Animation anim3;
-		private ScienceExperiment scienceExp;
+		private Animation anim4;
+		protected ScienceExperiment scienceExp;
 		private bool resourceOn = false;
+		private int dataIndex = 0;
+		protected List<ScienceData> scienceReports = new List<ScienceData>();
+		protected List<ScienceData> storedScienceReports = new List<ScienceData>();
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
-		private uint sitMask = 0;
-		private uint bioMask = 0;
-		private List<ScienceData> scienceReportList = new List<ScienceData>();
-
-		//Record some default values for Eeloo here to prevent the asteroid science method from screwing them up
 		private const string bodyNameFixed = "Eeloo";
+		private bool lastInOperableState = false;
+		protected float scienceBoost = 1f;
 
 		#endregion
 
-		# region PartModule
+		#region PartModule
 
 		public override void OnStart(StartState state)
 		{
-			base.OnStart(state);
 			this.part.force_activate();
-			anim = part.FindModelAnimators(animationName)[0];
+			if (!string.IsNullOrEmpty(animationName))
+				anim = part.FindModelAnimators(animationName)[0];
+			if (!string.IsNullOrEmpty(sampleAnim)) {
+				anim2 = part.FindModelAnimators(sampleAnim)[0];
+				secondaryAnimator(sampleAnim, 0f, experimentNumber * (1f / experimentLimit), 1f);
+			}
+			if (!string.IsNullOrEmpty(indicatorAnim)) {
+				anim2 = part.FindModelAnimators(indicatorAnim)[0];
+				secondaryAnimator(indicatorAnim, 0f, experimentNumber * (1f / experimentLimit), 1f);
+			}
+			if (!string.IsNullOrEmpty(sampleEmptyAnim))
+				anim2 = part.FindModelAnimators(sampleEmptyAnim)[0];
 			if (!string.IsNullOrEmpty(looperAnimation))
-				anim2 = part.FindModelAnimators(looperAnimation)[0];
+				anim3 = part.FindModelAnimators(looperAnimation)[0];
 			if (!string.IsNullOrEmpty(bayAnimation))
-				anim3 = part.FindModelAnimators(bayAnimation)[0];
+				anim4 = part.FindModelAnimators(bayAnimation)[0];
 			if (state == StartState.Editor) editorSetup();
 			else {
 				setup();
-				if (IsDeployed) {
+				if (IsDeployed)
 					primaryAnimator(1f, 1f, WrapMode.Default, animationName, anim);
-					if (anim3 != null)
-						primaryAnimator(1f, 1f, WrapMode.Default, bayAnimation, anim3);
-					if (anim2 != null)
-						primaryAnimator(2.5f * animSpeed, 0f, WrapMode.Loop, looperAnimation, anim2);
-				}
 			}
 		}
 
 		public override void OnSave(ConfigNode node)
 		{
-			base.OnSave(node);
 			node.RemoveNodes("ScienceData");
-			foreach (ScienceData storedData in scienceReportList) {
+			foreach (ScienceData storedData in storedScienceReports) {
 				ConfigNode storedDataNode = node.AddNode("ScienceData");
 				storedData.Save(storedDataNode);
 			}
@@ -146,18 +170,16 @@ namespace DMagic
 
 		public override void OnLoad(ConfigNode node)
 		{
-			base.OnLoad(node);
 			if (node.HasNode("ScienceData")) {
 				foreach (ConfigNode storedDataNode in node.GetNodes("ScienceData")) {
 					ScienceData data = new ScienceData(storedDataNode);
-					scienceReportList.Add(data);
+					storedScienceReports.Add(data);
 				}
 			}
 		}
 
 		public override void OnUpdate()
 		{
-			base.OnUpdate();
 			if (resourceOn) {
 				if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null) {
 					float cost = resourceExpCost * Time.deltaTime;
@@ -169,12 +191,25 @@ namespace DMagic
 					}
 				}
 			}
+			//Durrrr, gameEvents sure are helpful....
+			if (Inoperable)
+				lastInOperableState = true;
+			else if (lastInOperableState) {
+				lastInOperableState = false;
+				if (!string.IsNullOrEmpty(sampleEmptyAnim))
+					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+				else if (!string.IsNullOrEmpty(sampleAnim))
+					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+				if (!string.IsNullOrEmpty(indicatorAnim))
+					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+				experimentNumber = 0;
+			}
 			eventsCheck();
 		}
 
 		public override string GetInfo()
 		{
-				if (resourceExpCost > 0) {
+			if (resourceExpCost > 0) {
 				string info = base.GetInfo();
 				info += "Requires:\n-" + resourceExperiment + ": " + resourceExpCost.ToString() + "/s for " + waitForAnimationTime.ToString() + "s\n";
 				return info;
@@ -203,9 +238,9 @@ namespace DMagic
 				waitForAnimationTime = anim[animationName].length / animSpeed;
 			if (experimentID != null) {
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
-				if (scienceExp != null) {
-					sitMask = scienceExp.situationMask;
-					bioMask = scienceExp.biomeMask;
+				if (scienceExp != null && DMWhiteListMods.whiteListed) {
+					scienceExp.situationMask = (uint)sitMask;
+					scienceExp.biomeMask = (uint)bioMask;
 				}
 			}
 			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
@@ -220,17 +255,28 @@ namespace DMagic
 			Actions["deployAction"].guiName = startEventGUIName;
 			Actions["retractAction"].guiName = endEventGUIName;
 			Actions["toggleAction"].guiName = toggleEventGUIName;
+			Actions["ResetAction"].active = experimentLimit <= 1;
 			Events["editorDeployEvent"].guiName = startEventGUIName;
 			Events["editorRetractEvent"].guiName = endEventGUIName;
 			Events["editorDeployEvent"].active = showEditorEvents;
 			Events["editorRetractEvent"].active = false;
+			}
+
+		private void eventsCheck()
+		{
+			Events["ResetExperiment"].active = experimentLimit <= 1 && storedScienceReports.Count > 0;
+			Events["ResetExperimentExternal"].active = storedScienceReports.Count > 0;
+			Events["CollectDataExternalEvent"].active = storedScienceReports.Count > 0;
+			Events["DeployExperiment"].active = !Inoperable;
+			Events["ReviewDataEvent"].active = storedScienceReports.Count > 0;
+			Events["ReviewInitialData"].active = scienceReports.Count > 0;
 		}
 
 		#endregion
 
 		#region Animators
 
-		public void primaryAnimator(float speed, float time, WrapMode wrap, string name, Animation a)
+		private void primaryAnimator(float speed, float time, WrapMode wrap, string name, Animation a)
 		{
 			if (a != null) {
 				a[name].speed = speed;
@@ -242,17 +288,33 @@ namespace DMagic
 			}
 		}
 
+		private void secondaryAnimator(string whichAnim, float sampleSpeed, float sampleTime, float waitTime)
+		{
+			if (anim2 != null) {
+				anim2[whichAnim].speed = sampleSpeed;
+				anim2[whichAnim].normalizedTime = sampleTime;
+				anim2.Blend(whichAnim, 1f);
+				StartCoroutine(WaitForSampleAnimation(whichAnim, waitTime));
+			}
+		}
+
+		private IEnumerator WaitForSampleAnimation(string whichAnimCo, float waitTimeCo)
+		{
+			yield return new WaitForSeconds(waitTimeCo);
+			anim2[whichAnimCo].enabled = false;
+		}
+
 		[KSPEvent(guiActive = true, guiName = "Deploy", active = true)]
 		public void deployEvent()
 		{
 			primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default, animationName, anim);
 			IsDeployed = !oneWayAnimation;
 			if (USScience) {
-				if (anim3 != null) {
-					primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default, bayAnimation, anim3);
+				if (anim4 != null) {
+					primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default, bayAnimation, anim4);
 				}
-				if (anim2 != null) {
-					primaryAnimator(animSpeed * 2.5f, 0f, WrapMode.Loop, looperAnimation, anim2);
+				if (anim3 != null) {
+					primaryAnimator(animSpeed * 2.5f, 0f, WrapMode.Loop, looperAnimation, anim3);
 				}
 			}
 			if (USStock) {
@@ -280,15 +342,15 @@ namespace DMagic
 			primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, animationName, anim);
 			IsDeployed = false;
 			if (USScience) {
-				if (anim3 != null) {
-					if (anim[animationName].length > anim3[bayAnimation].length)
-						primaryAnimator(-1f * animSpeed, (anim[animationName].length / anim3[bayAnimation].length), WrapMode.Default, bayAnimation, anim3);
+				if (anim4 != null) {
+					if (anim[animationName].length > anim4[bayAnimation].length)
+						primaryAnimator(-1f * animSpeed, (anim[animationName].length / anim4[bayAnimation].length), WrapMode.Default, bayAnimation, anim4);
 					else
-						primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, bayAnimation, anim3);
+						primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, bayAnimation, anim4);
 				}
-				if (anim2 != null) {
-					anim2[looperAnimation].normalizedTime = anim2[looperAnimation].normalizedTime % 1;
-					anim2[looperAnimation].wrapMode = WrapMode.Clamp;
+				if (anim3 != null) {
+					anim3[looperAnimation].normalizedTime = anim3[looperAnimation].normalizedTime % 1;
+					anim3[looperAnimation].wrapMode = WrapMode.Clamp;
 				}
 			}
 			if (USStock) {
@@ -340,13 +402,13 @@ namespace DMagic
 
 		#endregion
 
-		#region Science Events and Actions
+		#region Science Events
 
 		new public void ResetExperiment()
 		{
-			if (scienceReportList.Count > 0) {
+			if (storedScienceReports.Count > 0) {
 				if (keepDeployedMode == 0) retractEvent();
-				scienceReportList.Clear();
+				storedScienceReports.Clear();
 			}
 		}
 
@@ -355,76 +417,78 @@ namespace DMagic
 			ResetExperiment();
 		}
 
-		new public void CollectDataExternalEvent()
+		new public void ResetExperimentExternal()
 		{
-			List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-			if (scienceReportList.Count > 0) {
-				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false))
-					DumpData(scienceReportList[0]);
+			if (storedScienceReports.Count > 0) {
+				if (!string.IsNullOrEmpty(sampleEmptyAnim))
+					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+				else if (!string.IsNullOrEmpty(sampleAnim))
+					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+				if (!string.IsNullOrEmpty(indicatorAnim))
+					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+				foreach (ScienceData data in storedScienceReports) {
+					storedScienceReports.Remove(data);
+					experimentNumber--;
+				}
+				if (experimentNumber < 0)
+					experimentNumber = 0;
+				if (keepDeployedMode == 0) retractEvent();
 			}
 		}
 
-		new public void ResetExperimentExternal()
+		new public void CollectDataExternalEvent()
 		{
-			ResetExperiment();
-		}
-
-		private void eventsCheck()
-		{
-			Events["ResetExperiment"].active = scienceReportList.Count > 0;
-			Events["ResetExperimentExternal"].active = scienceReportList.Count > 0;
-			Events["CollectDataExternalEvent"].active = scienceReportList.Count > 0;
-			Events["DeployExperiment"].active = !Inoperable;
-			Events["ReviewDataEvent"].active = scienceReportList.Count > 0;
+			List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
+			if (storedScienceReports.Count > 0) {
+				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false)) 
+					DumpAllData(storedScienceReports);
+			}
 		}
 
 		#endregion
 
 		#region Science Experiment Setup
 
-		//Can't use base.DeployExperiment here, we need to create our own science data and control the experiment results page
 		new public void DeployExperiment()
 		{
 			if (Inoperable)
-				ScreenMessages.PostScreenMessage("Experiment is no longer functional; must be reset at a science lab or returned to Kerbin", 6f, ScreenMessageStyle.UPPER_CENTER);
-			else if (scienceReportList.Count == 0) {
-				if (DMScienceUtils.canConduct(0, 1, sitMask, asteroidReports, vessel)) {
-					if (experimentAnimation) {
-						if (anim.IsPlaying(animationName)) return;
-						else {
-							if (!primary) {
+				ScreenMessages.PostScreenMessage("Experiment is no longer functional; must be reset at a science lab or returned to Kerbin", 5f, ScreenMessageStyle.UPPER_CENTER);
+			else if (experimentNumber >= experimentLimit) {
+				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+				ReviewData();
+			}
+			else if (DMScienceUtils.canConduct(experimentNumber, experimentLimit, (uint)sitMask, asteroidReports, vessel, 1)) {
+				if (experimentAnimation) {
+					if (anim.IsPlaying(animationName)) return;
+					else {
+						if (!primary) {
 								if (!primaryModule.IsDeployed)
 									primaryModule.deployEvent();
 								IsDeployed = true;
 							}
-							if (!IsDeployed) {
-								deployEvent();
-								if (!string.IsNullOrEmpty(deployingMessage))
-									ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-								if (experimentWaitForAnimation) {
-									if (resourceExpCost > 0) resourceOn = true;
-									StartCoroutine("WaitForAnimation", waitForAnimationTime);
-								}
-								else runExperiment();
-							}
-							else if (resourceExpCost > 0) {
-								resourceOn = true;
+						if (!IsDeployed) {
+							deployEvent();
+							if (!string.IsNullOrEmpty(deployingMessage))
+								ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+							if (experimentWaitForAnimation) {
+								if (resourceExpCost > 0)
+									resourceOn = true;
 								StartCoroutine("WaitForAnimation", waitForAnimationTime);
 							}
-							else runExperiment();
+							else
+								runExperiment();
 						}
+						else if (resourceExpCost > 0) {
+							resourceOn = true;
+							StartCoroutine("WaitForAnimation", waitForAnimationTime);
+						}
+						else runExperiment();
 					}
-					else runExperiment();
 				}
-				else {
-					if (!string.IsNullOrEmpty(customFailMessage))
-						ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-				}
+				else runExperiment();
 			}
-			else {
-				ScreenMessages.PostScreenMessage("Reviewing Current Data", 4f, ScreenMessageStyle.UPPER_CENTER);
-				ReviewData();
-			}
+			else if (!string.IsNullOrEmpty(customFailMessage))
+				ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		new public void DeployAction(KSPActionParam param)
@@ -432,7 +496,6 @@ namespace DMagic
 			DeployExperiment();
 		}
 
-		//In case we need to wait for an animation to finish before running the experiment
 		private IEnumerator WaitForAnimation(float waitTime)
 		{
 			yield return new WaitForSeconds(waitTime);
@@ -442,17 +505,29 @@ namespace DMagic
 
 		private void runExperiment()
 		{
-			ScienceData data = DMScienceUtils.makeScience(asteroidReports, asteroidTypeDependent, vessel, bioMask, experimentID, xmitDataScalar, 1f);
-			scienceReportList.Add(data);
-			ReviewData();
+			ScienceData data = DMScienceUtils.makeScience(asteroidReports, asteroidTypeDependent, vessel, (uint)bioMask, experimentID, xmitDataScalar, scienceBoost);
+			if (asteroidReports && DMAsteroidScience.asteroidGrappled() || asteroidReports && DMAsteroidScience.asteroidNear())
+				lastAsteroid = DMScienceUtils.asteroidID;
+			if (experimentLimit <= 1) {
+				dataIndex = 0;
+				storedScienceReports.Add(data);
+				ReviewData();
+			}
+			else {
+				scienceReports.Add(data);
+				initialResultsPage();
+			}
 			if (keepDeployedMode == 1) retractEvent();
 		}
 
-		//Custom experiment results dialog page, allows full control over the buttons on that page
+		#endregion
+
+		#region Results Pages
+
 		private void newResultPage()
 		{
-			if (scienceReportList.Count > 0) {
-				ScienceData data = scienceReportList[0];
+			if (storedScienceReports.Count > 0) {
+				ScienceData data = storedScienceReports[dataIndex];
 				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
@@ -460,7 +535,11 @@ namespace DMagic
 
 		new public void ReviewData()
 		{
-			newResultPage();
+			dataIndex = 0;
+			foreach (ScienceData data in storedScienceReports) {
+				newResultPage();
+				dataIndex++;
+			}
 		}
 
 		new public void ReviewDataEvent()
@@ -468,62 +547,36 @@ namespace DMagic
 			ReviewData();
 		}
 
-		#endregion
-
-		#region IScienceDataContainer methods
-
-		//Implement these interface methods to make the science lab and transmitters function properly.
-		ScienceData[] IScienceDataContainer.GetData()
+		[KSPEvent(guiActive = true, guiName = "Review Initial Data", active = false)]
+		public void ReviewInitialData()
 		{
-			return scienceReportList.ToArray();
+			if (scienceReports.Count > 0)
+				initialResultsPage();
 		}
 
-		int IScienceDataContainer.GetScienceCount()
+		private void initialResultsPage()
 		{
-			return scienceReportList.Count;
-		}
-
-		bool IScienceDataContainer.IsRerunnable()
-		{
-			return rerunnable;
-		}
-
-		void IScienceDataContainer.ReviewData()
-		{
-			ReviewData();
-		}
-
-		void IScienceDataContainer.ReviewDataItem(ScienceData data)
-		{
-			ReviewData();
-		}
-
-		//This is called after data is transmitted by right-clicking on the transmitter itself, removes all reports.
-		void IScienceDataContainer.DumpData(ScienceData data)
-		{
-			DumpData(data);
-		}
-
-		//This one is called from the results page, removes only one report.
-		new public void DumpData(ScienceData data)
-		{
-			if (scienceReportList.Count > 0) {
-				if (!rerunnable)
-					Inoperable = true;
-				if (keepDeployedMode == 0) retractEvent();
-				scienceReportList.Remove(data);
+			if (scienceReports.Count > 0) {
+				ScienceData data = scienceReports[0];
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
+				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
 
-		#endregion
-
-		#region Experiment Results Control
-
 		private void onDiscardData(ScienceData data)
 		{
-			if (scienceReportList.Count > 0) {
-				scienceReportList.Remove(data);
+			if (storedScienceReports.Count > 0) {
+				if (!string.IsNullOrEmpty(sampleEmptyAnim))
+					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), anim2[sampleEmptyAnim].length / experimentLimit);
+				else if (!string.IsNullOrEmpty(sampleAnim))
+					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
+				if (!string.IsNullOrEmpty(indicatorAnim))
+					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), anim[indicatorAnim].length / experimentLimit);
+				storedScienceReports.Remove(data);
 				if (keepDeployedMode == 0) retractEvent();
+				experimentNumber--;
+				if (experimentNumber < 0)
+					experimentNumber = 0;
 			}
 		}
 
@@ -534,8 +587,8 @@ namespace DMagic
 		private void onTransmitData(ScienceData data)
 		{
 			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
-			if (tranList.Count > 0 && scienceReportList.Count > 0) {
-				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> {data});
+			if (tranList.Count > 0 && storedScienceReports.Count > 0) {
+				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
 				DumpData(data);
 			}
 			else
@@ -545,7 +598,7 @@ namespace DMagic
 		private void onSendToLab(ScienceData data)
 		{
 			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			if (checkLabOps() && scienceReportList.Count > 0)
+			if (checkLabOps() && storedScienceReports.Count > 0)
 				labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
 			else
 				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
@@ -559,9 +612,132 @@ namespace DMagic
 		private bool checkLabOps()
 		{
 			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			for (int i = 0; i < labList.Count; i++)
-				if (labList[i].IsOperational()) return true;
+			for (int i = 0; i < labList.Count; i++) {
+				if (labList[i].IsOperational())
+					return true;
+			}
 			return false;
+		}
+
+		private void onDiscardInitialData(ScienceData data)
+		{
+			if (scienceReports.Count > 0) {
+				scienceReports.Remove(data);
+				if (keepDeployedMode == 0) retractEvent();
+			}
+		}
+
+		private void onKeepInitialData(ScienceData data)
+		{
+			if (experimentNumber >= experimentLimit) {
+				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+				initialResultsPage();
+			}
+			else if (scienceReports.Count > 0) {
+				if (!string.IsNullOrEmpty(sampleAnim))
+					secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
+				if (!string.IsNullOrEmpty(indicatorAnim))
+					secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
+				storedScienceReports.Add(data);
+				scienceReports.Remove(data);
+				experimentNumber++;
+			}
+		}
+
+		private void onTransmitInitialData(ScienceData data)
+		{
+			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
+			if (tranList.Count > 0 && scienceReports.Count > 0) {
+				if (!string.IsNullOrEmpty(sampleAnim))
+					secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
+				if (!string.IsNullOrEmpty(indicatorAnim))
+					secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
+				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
+				DumpInitialData(data);
+				experimentNumber++;
+			}
+			else
+				ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
+		}
+
+		private void onSendInitialToLab(ScienceData data)
+		{
+			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+			if (checkLabOps() && scienceReports.Count > 0)
+				labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onInitialComplete)));
+			else
+				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
+		}
+
+		private void onInitialComplete(ScienceData data)
+		{
+			initialResultsPage();
+		}
+
+		#endregion
+
+		#region IScienceDataContainer
+
+		ScienceData[] IScienceDataContainer.GetData()
+		{
+			return storedScienceReports.ToArray();
+		}
+
+		int IScienceDataContainer.GetScienceCount()
+		{
+			return storedScienceReports.Count;
+		}
+
+		bool IScienceDataContainer.IsRerunnable()
+		{
+			if (rerunnable)
+				return true;
+			else
+				return experimentsReturned < experimentLimit;
+		}
+
+		void IScienceDataContainer.ReviewData()
+		{
+			ReviewData();
+		}
+
+		void IScienceDataContainer.ReviewDataItem(ScienceData data)
+		{
+			ReviewData();
+		}
+
+		void IScienceDataContainer.DumpData(ScienceData data)
+		{
+			DumpData(data);
+		}
+
+		protected void DumpAllData(List<ScienceData> dataList)
+		{
+			if (storedScienceReports.Count > 0) {
+				foreach (ScienceData data in dataList)
+					DumpData(data);
+			}
+		}
+
+		new public void DumpData(ScienceData data)
+		{
+			if (storedScienceReports.Count > 0) {
+				experimentsReturned++;
+				Inoperable = !IsRerunnable();
+				if (keepDeployedMode == 0) retractEvent();
+				storedScienceReports.Remove(data);
+			}
+		}
+
+		protected void DumpInitialData(ScienceData data)
+		{
+			if (scienceReports.Count > 0) {
+				experimentsReturned++;
+				if (experimentsReturned >= experimentLimit)
+					Inoperable = true;
+				if (keepDeployedMode ==0) retractEvent();
+				scienceReports.Remove(data);
+			}
 		}
 
 		#endregion
