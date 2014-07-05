@@ -101,8 +101,8 @@ namespace DMagic
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
-		private int sitMask = 0;
-		private int bioMask = 0;
+		private uint sitMask = 0;
+		private uint bioMask = 0;
 		private List<ScienceData> scienceReportList = new List<ScienceData>();
 
 		//Record some default values for Eeloo here to prevent the asteroid science method from screwing them up
@@ -193,9 +193,8 @@ namespace DMagic
 			if (!primary) {
 				primaryList = this.part.FindModulesImplementing<DMModuleScienceAnimate>();
 				if (primaryList.Count > 0) {
-					foreach (DMModuleScienceAnimate DMS in primaryList) {
+					foreach (DMModuleScienceAnimate DMS in primaryList)
 						if (DMS.primary) primaryModule = DMS;
-					}
 				}
 			}
 			if (USStock)
@@ -205,8 +204,8 @@ namespace DMagic
 			if (experimentID != null) {
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
 				if (scienceExp != null) {
-					sitMask = (int)scienceExp.situationMask;
-					bioMask = (int)scienceExp.biomeMask;
+					sitMask = scienceExp.situationMask;
+					bioMask = scienceExp.biomeMask;
 				}
 			}
 			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
@@ -361,7 +360,7 @@ namespace DMagic
 			List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
 			if (scienceReportList.Count > 0) {
 				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false))
-					DumpAllData(scienceReportList);
+					DumpData(scienceReportList[0]);
 			}
 		}
 
@@ -486,7 +485,7 @@ namespace DMagic
 
 		bool IScienceDataContainer.IsRerunnable()
 		{
-			return base.IsRerunnable();
+			return rerunnable;
 		}
 
 		void IScienceDataContainer.ReviewData()
@@ -499,49 +498,18 @@ namespace DMagic
 			ReviewData();
 		}
 
-		//Still not quite sure what exactly this is doing
-		new public ScienceData[] GetData()
-		{
-			return scienceReportList.ToArray();
-		}
-
-		new public bool IsRerunnable()
-		{
-			return base.IsRerunnable();
-		}
-
-		new public int GetScienceCount()
-		{
-			return scienceReportList.Count;
-		}
-
 		//This is called after data is transmitted by right-clicking on the transmitter itself, removes all reports.
 		void IScienceDataContainer.DumpData(ScienceData data)
 		{
-			if (scienceReportList.Count > 0) {
-				base.DumpData(data);
-				if (keepDeployedMode == 0) retractEvent();
-				scienceReportList.Clear();
-			}
-		}
-
-		//This one is called after external data collection, removes all science reports.
-		internal void DumpAllData(List<ScienceData> dataList)
-		{
-			if (scienceReportList.Count > 0) {
-				foreach (ScienceData data in dataList) {
-					base.DumpData(data);
-				}
-				scienceReportList.Clear();
-				if (keepDeployedMode == 0) retractEvent();
-			}
+			DumpData(data);
 		}
 
 		//This one is called from the results page, removes only one report.
 		new public void DumpData(ScienceData data)
 		{
 			if (scienceReportList.Count > 0) {
-				base.DumpData(data);
+				if (!rerunnable)
+					Inoperable = true;
 				if (keepDeployedMode == 0) retractEvent();
 				scienceReportList.Remove(data);
 			}
@@ -577,7 +545,7 @@ namespace DMagic
 		private void onSendToLab(ScienceData data)
 		{
 			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			if (checkLabOps() && scienceReportList.Count > 0)	
+			if (checkLabOps() && scienceReportList.Count > 0)
 				labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
 			else
 				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
@@ -588,13 +556,11 @@ namespace DMagic
 			ReviewData();
 		}
 
-		//Maybe unnecessary, can be folded into a simpler method???
 		private bool checkLabOps()
 		{
 			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			for (int i = 0; i < labList.Count; i++) {
+			for (int i = 0; i < labList.Count; i++)
 				if (labList[i].IsOperational()) return true;
-			}
 			return false;
 		}
 
