@@ -27,6 +27,7 @@
  *  
  */
 
+using System;
 using UnityEngine;
 
 namespace DMagic
@@ -34,7 +35,17 @@ namespace DMagic
 	class DMBioDrill: DMModuleScienceAnimate
 	{
 
-		new public void DeployExperiment()
+		[KSPField]
+		public string verticalDrill = null;
+
+		public override void OnStart(PartModule.StartState state)
+		{
+			base.OnStart(state);
+			if (!string.IsNullOrEmpty(verticalDrill))
+				anim = part.FindModelAnimators(verticalDrill)[0];
+		}
+
+		public override void DeployExperiment()
 		{
 			if (vessel.mainBody.name == "Eve" || vessel.mainBody.name == "Kerbin" || vessel.mainBody.name == "Duna" || vessel.mainBody.name == "Laythe" || vessel.mainBody.name == "Bop" || vessel.mainBody.name == "Vall" || vessel.mainBody.atmosphere) {
 				if (vessel.mainBody.name == "Eve")
@@ -45,6 +56,30 @@ namespace DMagic
 			}
 			else
 				ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+		}
+
+		public override void deployEvent()
+		{
+			startDrill();
+		}
+
+		//Determine drill orientation relative to parent part, set angle to -90 to 90.
+		private void startDrill()
+		{
+			double cosineAngle = 0;
+			double processedRot = 0;
+			cosineAngle = Mathf.Rad2Deg * Math.Acos(Vector3d.Dot(part.transform.up, part.parent.transform.up));
+			if (cosineAngle > 180)
+				cosineAngle = 360 - cosineAngle;
+			if (cosineAngle > 90)
+				cosineAngle -= 180;
+			processedRot = Math.Abs(cosineAngle);
+			if (processedRot < 90 && processedRot >= 50)
+				base.primaryAnimator(animSpeed, 0f, WrapMode.Default, verticalDrill, anim);
+			else
+				base.primaryAnimator(animSpeed, 0f, WrapMode.Default, animationName, anim);
+			if (HighLogic.LoadedSceneIsEditor)
+				print("Current rot is: " + Math.Round(processedRot, 2).ToString() + ". Values between 0 and 50 play the horizontal drill animation, values between 50 and 90 play the vertical animation.");
 		}
 
 	}
