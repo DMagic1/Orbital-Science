@@ -112,7 +112,7 @@ namespace DMagic
 		[KSPField]
 		public int experimentLimit = 1;
 
-		private Animation anim;
+		protected Animation anim;
 		private Animation anim2;
 		private Animation anim3;
 		private Animation anim4;
@@ -208,6 +208,8 @@ namespace DMagic
 				if (!string.IsNullOrEmpty(indicatorAnim))
 					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
 				experimentNumber = 0;
+				experimentsReturned = 0;
+				if (keepDeployedMode == 0) retractEvent();
 			}
 			eventsCheck();
 		}
@@ -215,6 +217,9 @@ namespace DMagic
 		public override string GetInfo()
 		{
 			if (resourceExpCost > 0) {
+				float time = waitForAnimationTime;
+				if (time == -1 && anim != null && !string.IsNullOrEmpty(animationName))
+					time = anim[animationName].length;
 				string info = base.GetInfo();
 				info += "Requires:\n-" + resourceExperiment + ": " + resourceExpCost.ToString() + "/s for " + waitForAnimationTime.ToString() + "s\n";
 				return info;
@@ -281,7 +286,7 @@ namespace DMagic
 
 		#region Animators
 
-		private void primaryAnimator(float speed, float time, WrapMode wrap, string name, Animation a)
+		protected void primaryAnimator(float speed, float time, WrapMode wrap, string name, Animation a)
 		{
 			if (a != null) {
 				a[name].speed = speed;
@@ -310,7 +315,7 @@ namespace DMagic
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Deploy", active = true)]
-		public void deployEvent()
+		public virtual void deployEvent()
 		{
 			primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default, animationName, anim);
 			IsDeployed = !oneWayAnimation;
@@ -445,8 +450,9 @@ namespace DMagic
 		{
 			List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
 			if (storedScienceReports.Count > 0) {
-				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false)) 
-					DumpAllData(storedScienceReports);
+				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false))
+					foreach (ScienceData data in storedScienceReports)
+						DumpData(data);
 			}
 		}
 
@@ -454,7 +460,7 @@ namespace DMagic
 
 		#region Science Experiment Setup
 
-		new public void DeployExperiment()
+		new public virtual void DeployExperiment()
 		{
 			if (Inoperable)
 				ScreenMessages.PostScreenMessage("Experiment is no longer functional; must be reset at a science lab or returned to Kerbin", 5f, ScreenMessageStyle.UPPER_CENTER);
@@ -533,7 +539,7 @@ namespace DMagic
 		{
 			if (storedScienceReports.Count > 0) {
 				ScienceData data = storedScienceReports[dataIndex];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, (experimentsReturned >= experimentLimit - 1) && !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
@@ -563,7 +569,7 @@ namespace DMagic
 		{
 			if (scienceReports.Count > 0) {
 				ScienceData data = scienceReports[0];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, experimentsReturned >= (experimentLimit - 1) && !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
@@ -695,10 +701,7 @@ namespace DMagic
 
 		bool IScienceDataContainer.IsRerunnable()
 		{
-			if (rerunnable)
-				return true;
-			else
-				return experimentsReturned < experimentLimit;
+			return IsRerunnable();
 		}
 
 		void IScienceDataContainer.ReviewData()
@@ -716,33 +719,30 @@ namespace DMagic
 			DumpData(data);
 		}
 
-		protected void DumpAllData(List<ScienceData> dataList)
-		{
-			if (storedScienceReports.Count > 0) {
-				foreach (ScienceData data in dataList)
-					DumpData(data);
-			}
-		}
-
-		new public void DumpData(ScienceData data)
+		new private void DumpData(ScienceData data)
 		{
 			if (storedScienceReports.Count > 0) {
 				experimentsReturned++;
 				Inoperable = !IsRerunnable();
-				if (keepDeployedMode == 0) retractEvent();
 				storedScienceReports.Remove(data);
 			}
 		}
 
-		protected void DumpInitialData(ScienceData data)
+		private void DumpInitialData(ScienceData data)
 		{
 			if (scienceReports.Count > 0) {
 				experimentsReturned++;
-				if (experimentsReturned >= experimentLimit)
-					Inoperable = true;
-				if (keepDeployedMode ==0) retractEvent();
+				Inoperable = !IsRerunnable();
 				scienceReports.Remove(data);
 			}
+		}
+
+		new private bool IsRerunnable()
+		{
+			if (rerunnable)
+				return true;
+			else
+				return experimentsReturned < experimentLimit;
 		}
 
 		#endregion
