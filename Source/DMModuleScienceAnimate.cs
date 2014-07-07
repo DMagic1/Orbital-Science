@@ -417,8 +417,12 @@ namespace DMagic
 		new public void ResetExperiment()
 		{
 			if (storedScienceReports.Count > 0) {
-				if (keepDeployedMode == 0) retractEvent();
-				storedScienceReports.Clear();
+				if (experimentLimit > 1)
+					ResetExperimentExternal();
+				else {
+					if (keepDeployedMode == 0) retractEvent();
+					storedScienceReports.Clear();
+				}
 			}
 		}
 
@@ -468,7 +472,7 @@ namespace DMagic
 				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 				ReviewData();
 			}
-			else if (DMScienceUtils.canConduct(experimentNumber, experimentLimit, (uint)sitMask, asteroidReports, vessel, 1)) {
+			else if (DMScienceUtils.canConduct(experimentNumber, experimentLimit, (uint)sitMask, asteroidReports, vessel, lastAsteroid)) {
 				if (experimentAnimation) {
 					if (anim.IsPlaying(animationName)) return;
 					else {

@@ -139,8 +139,6 @@ namespace DMagic
 				newAsteroid.body.bodyName = bodyNameFixed;
 				if (newAsteroid.ID == lastAsteroid)
 					return false;
-				else
-					return true;
 			}
 			if (experimentCount < experimentLimit)
 				if ((situationMask & (uint)getSituation(asteroidReports, v)) == 0)
