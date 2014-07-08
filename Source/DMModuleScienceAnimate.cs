@@ -118,11 +118,11 @@ namespace DMagic
 		private Animation anim2;
 		private Animation anim3;
 		private Animation anim4;
-		protected ScienceExperiment scienceExp;
+		private ScienceExperiment scienceExp;
 		private bool resourceOn = false;
 		private int dataIndex = 0;
-		protected List<ScienceData> scienceReports = new List<ScienceData>();
-		protected List<ScienceData> storedScienceReports = new List<ScienceData>();
+		private List<ScienceData> scienceReports = new List<ScienceData>();
+		private List<ScienceData> storedScienceReports = new List<ScienceData>();
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
@@ -482,7 +482,7 @@ namespace DMagic
 				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 				ReviewData();
 			}
-			else if (DMScienceUtils.canConduct(experimentNumber, experimentLimit, (uint)sitMask, asteroidReports, vessel, lastAsteroid)) {
+			else if (DMScienceUtils.canConduct(experimentNumber, experimentLimit, sitMask, asteroidReports, vessel, lastAsteroid)) {
 				if (experimentAnimation) {
 					if (anim.IsPlaying(animationName)) return;
 					else {
@@ -530,8 +530,8 @@ namespace DMagic
 
 		private void runExperiment()
 		{
-			ScienceData data = DMScienceUtils.makeScience(asteroidReports, asteroidTypeDependent, vessel, (uint)bioMask, experimentID, xmitDataScalar, scienceBoost);
-			if (asteroidReports && DMAsteroidScience.asteroidGrappled() || asteroidReports && DMAsteroidScience.asteroidNear())
+			ScienceData data = DMScienceUtils.makeScience(asteroidReports, asteroidTypeDependent, vessel, bioMask, experimentID, xmitDataScalar, scienceBoost);
+			if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear()))
 				lastAsteroid = DMScienceUtils.asteroidID;
 			if (experimentLimit <= 1) {
 				dataIndex = 0;
@@ -553,7 +553,7 @@ namespace DMagic
 		{
 			if (storedScienceReports.Count > 0) {
 				ScienceData data = storedScienceReports[dataIndex];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, (experimentsReturned >= experimentLimit - 1) && !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
@@ -583,7 +583,7 @@ namespace DMagic
 		{
 			if (scienceReports.Count > 0) {
 				ScienceData data = scienceReports[0];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, experimentsReturned >= (experimentLimit - 1) && !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, data.labBoost, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}

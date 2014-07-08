@@ -51,9 +51,9 @@ namespace DMagic
 			return subV * boost;
 		}
 
-		private static string getBiome(ExperimentSituations s, uint biomeMask, Vessel v)
+		private static string getBiome(ExperimentSituations s, int biomeMask, Vessel v)
 		{
-			if ((biomeMask & (uint)s) == 0)
+			if ((biomeMask & (int)s) == 0)
 				return "";
 			else {
 				switch (v.landedAt) {
@@ -132,16 +132,16 @@ namespace DMagic
 			}
 		}
 
-		internal static bool canConduct(int experimentCount, int experimentLimit, uint situationMask, bool asteroidReports, Vessel v, int lastAsteroid)
+		internal static bool canConduct(int experimentCount, int experimentLimit, int situationMask, bool asteroidReports, Vessel v, int lastAsteroid)
 		{
-			if (asteroidReports && DMAsteroidScience.asteroidGrappled() || asteroidReports && DMAsteroidScience.asteroidNear()) {
+			if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear())) {
 				newAsteroid = new DMAsteroidScience();
 				newAsteroid.body.bodyName = bodyNameFixed;
 				if (newAsteroid.ID == lastAsteroid)
 					return false;
 			}
 			if (experimentCount < experimentLimit)
-				if ((situationMask & (uint)getSituation(asteroidReports, v)) == 0)
+				if ((situationMask & (int)getSituation(asteroidReports, v)) == 0)
 					return false;
 				else
 					return true;
@@ -149,7 +149,7 @@ namespace DMagic
 				return false;
 		}
 
-		internal static ScienceData makeScience(bool asteroid, bool asteroidType, Vessel v, uint biomeMask, string experimentID, float xmitDataScalar, float boost)
+		internal static ScienceData makeScience(bool asteroid, bool asteroidType, Vessel v, int biomeMask, string experimentID, float xmitDataScalar, float boost)
 		{
 			ExperimentSituations vesselSituation = getSituation(asteroid, v);
 			string biome = getBiome(vesselSituation, biomeMask, v);
@@ -157,7 +157,7 @@ namespace DMagic
 			asteroids = false;
 
 			//Check for asteroids and alter the biome and celestialbody values as necessary
-			if (asteroid && DMAsteroidScience.asteroidGrappled() || asteroid && DMAsteroidScience.asteroidNear()) {
+			if (asteroid && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear())) {
 				newAsteroid = new DMAsteroidScience();
 				asteroids = true;
 				mainBody = newAsteroid.body;
