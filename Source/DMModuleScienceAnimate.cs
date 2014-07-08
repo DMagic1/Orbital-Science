@@ -111,6 +111,8 @@ namespace DMagic
 		public int bioMask = 0;
 		[KSPField]
 		public int experimentLimit = 1;
+		[KSPField]
+		public bool externalDeploy = false;
 
 		protected Animation anim;
 		private Animation anim2;
@@ -235,6 +237,10 @@ namespace DMagic
 			Events["deployEvent"].guiName = startEventGUIName;
 			Events["retractEvent"].guiName = endEventGUIName;
 			Events["toggleEvent"].guiName = toggleEventGUIName;
+			Events["DeployExperiment"].guiName = experimentActionName;
+			Events["DeployExperiment"].guiActiveUnfocused = externalDeploy;
+			Events["DeployExperiment"].externalToEVAOnly = externalDeploy;
+			Events["DeployExperiment"].unfocusedRange = interactionRange;
 			if (!primary) {
 				primaryList = this.part.FindModulesImplementing<DMModuleScienceAnimate>();
 				if (primaryList.Count > 0) {
@@ -266,11 +272,12 @@ namespace DMagic
 			Actions["retractAction"].guiName = endEventGUIName;
 			Actions["toggleAction"].guiName = toggleEventGUIName;
 			Actions["ResetAction"].active = experimentLimit <= 1;
+			Actions["DeployAction"].guiName = experimentActionName;
 			Events["editorDeployEvent"].guiName = startEventGUIName;
 			Events["editorRetractEvent"].guiName = endEventGUIName;
 			Events["editorDeployEvent"].active = showEditorEvents;
 			Events["editorRetractEvent"].active = false;
-			}
+		}
 
 		private void eventsCheck()
 		{
@@ -278,6 +285,7 @@ namespace DMagic
 			Events["ResetExperimentExternal"].active = storedScienceReports.Count > 0;
 			Events["CollectDataExternalEvent"].active = storedScienceReports.Count > 0;
 			Events["DeployExperiment"].active = !Inoperable;
+			Events["DeployExperiment"].guiActiveUnfocused = !Inoperable;
 			Events["ReviewDataEvent"].active = storedScienceReports.Count > 0;
 			Events["ReviewInitialData"].active = scienceReports.Count > 0;
 		}
@@ -423,6 +431,7 @@ namespace DMagic
 					if (keepDeployedMode == 0) retractEvent();
 					storedScienceReports.Clear();
 				}
+				lastAsteroid = 0;
 			}
 		}
 
@@ -447,6 +456,7 @@ namespace DMagic
 				if (experimentNumber < 0)
 					experimentNumber = 0;
 				if (keepDeployedMode == 0) retractEvent();
+				lastAsteroid = 0;
 			}
 		}
 
@@ -468,7 +478,7 @@ namespace DMagic
 		{
 			if (Inoperable)
 				ScreenMessages.PostScreenMessage("Experiment is no longer functional; must be reset at a science lab or returned to Kerbin", 5f, ScreenMessageStyle.UPPER_CENTER);
-			else if (experimentNumber >= experimentLimit) {
+			else if (storedScienceReports.Count >= experimentLimit) {
 				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 				ReviewData();
 			}
@@ -592,6 +602,7 @@ namespace DMagic
 				experimentNumber--;
 				if (experimentNumber < 0)
 					experimentNumber = 0;
+				lastAsteroid = 0;
 			}
 		}
 
