@@ -478,11 +478,15 @@ namespace DMagic
 		{
 			if (Inoperable)
 				ScreenMessages.PostScreenMessage("Experiment is no longer functional; must be reset at a science lab or returned to Kerbin", 5f, ScreenMessageStyle.UPPER_CENTER);
-			else if (storedScienceReports.Count >= experimentLimit) {
+			else if ((experimentNumber >= experimentLimit) && experimentLimit > 1) {
 				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 				ReviewData();
 			}
-			else if (DMScienceUtils.canConduct(experimentNumber, experimentLimit, sitMask, asteroidReports, vessel, lastAsteroid)) {
+			else if (storedScienceReports.Count > 0 && experimentLimit <= 1) {
+				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+				ReviewData();
+			}
+			else if (DMScienceUtils.canConduct(storedScienceReports.Count, experimentLimit, sitMask, asteroidReports, vessel, lastAsteroid)) {
 				if (experimentAnimation) {
 					if (anim.IsPlaying(animationName)) return;
 					else {
