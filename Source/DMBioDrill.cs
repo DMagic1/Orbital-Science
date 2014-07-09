@@ -1,4 +1,5 @@
-﻿/* DMagic Orbital Science - Bio Drill
+﻿#region license
+/* DMagic Orbital Science - Bio Drill
  * Some Drill-Specific Code On Top Of DMScienceMultiple
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
@@ -26,6 +27,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *  
  */
+#endregion
 
 using System;
 using UnityEngine;

@@ -1,4 +1,5 @@
-﻿/* DMagic Orbital Science - Magnetometer
+﻿#region license
+/* DMagic Orbital Science - Magnetometer
  * Magnetosphere simulation.
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
@@ -26,7 +27,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *  
  */
-
+#endregion
 
 using UnityEngine;
 using System.Linq;

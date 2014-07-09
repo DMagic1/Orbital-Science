@@ -1,4 +1,5 @@
-﻿/* DMagic Orbital Science - DMEnviroSensor
+﻿#region license
+/* DMagic Orbital Science - DMEnviroSensor
  * Module to control spiffy animations for replacement stock science parts
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
@@ -26,6 +27,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *  
  */
+#endregion
 
 using System;
 using System.Collections.Generic;

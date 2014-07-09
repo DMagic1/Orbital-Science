@@ -1,4 +1,5 @@
-﻿/* DMagic Orbital Science - Asteroid Science
+﻿#region license
+/* DMagic Orbital Science - Asteroid Science
  * Class to setup asteroid science data
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
@@ -25,6 +26,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#endregion
 
 using System.Collections.Generic;
 using System.Linq;
