@@ -1,4 +1,5 @@
-﻿/* DMagic Orbital Science - Module Science Animate
+﻿#region license
+/* DMagic Orbital Science - Module Science Animate
  * Generic Part Module For Animated Science Experiments
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
@@ -25,6 +26,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#endregion
 
 using System;
 using System.Collections;
@@ -126,9 +128,18 @@ namespace DMagic
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
+		private DMAsteroidScience newAsteroid;
 		private const string bodyNameFixed = "Eeloo";
 		private bool lastInOperableState = false;
 		protected float scienceBoost = 1f;
+		private int asteroidID = 0;
+		private string failMessage = "";
+
+		//You never know...
+		public bool conduct()
+		{
+			return canConduct();
+		}
 
 		#endregion
 
@@ -476,17 +487,7 @@ namespace DMagic
 
 		new public virtual void DeployExperiment()
 		{
-			if (Inoperable)
-				ScreenMessages.PostScreenMessage("Experiment is no longer functional; must be reset at a science lab or returned to Kerbin", 5f, ScreenMessageStyle.UPPER_CENTER);
-			else if ((experimentNumber >= experimentLimit) && experimentLimit > 1) {
-				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-				ReviewData();
-			}
-			else if (storedScienceReports.Count > 0 && experimentLimit <= 1) {
-				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-				ReviewData();
-			}
-			else if (DMScienceUtils.canConduct(storedScienceReports.Count, experimentLimit, sitMask, asteroidReports, vessel, lastAsteroid)) {
+			if (canConduct()) {
 				if (experimentAnimation) {
 					if (anim.IsPlaying(animationName)) return;
 					else {
@@ -516,8 +517,8 @@ namespace DMagic
 				}
 				else runExperiment();
 			}
-			else if (!string.IsNullOrEmpty(customFailMessage))
-				ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+			else
+				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		new public void DeployAction(KSPActionParam param)
@@ -534,9 +535,9 @@ namespace DMagic
 
 		private void runExperiment()
 		{
-			ScienceData data = DMScienceUtils.makeScience(asteroidReports, asteroidTypeDependent, vessel, bioMask, experimentID, xmitDataScalar, scienceBoost);
+			ScienceData data = makeScience(scienceBoost);
 			if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear()))
-				lastAsteroid = DMScienceUtils.asteroidID;
+				lastAsteroid = asteroidID;
 			if (experimentLimit <= 1) {
 				dataIndex = 0;
 				storedScienceReports.Add(data);
@@ -547,6 +548,172 @@ namespace DMagic
 				initialResultsPage();
 			}
 			if (keepDeployedMode == 1) retractEvent();
+		}
+
+		private float fixSubjectValue(ExperimentSituations s, float f, float boost)
+		{
+			float subV = f;
+			if (s == ExperimentSituations.SrfLanded) subV = vessel.mainBody.scienceValues.LandedDataValue;
+			else if (s == ExperimentSituations.SrfSplashed) subV = vessel.mainBody.scienceValues.SplashedDataValue;
+			else if (s == ExperimentSituations.FlyingLow) subV = vessel.mainBody.scienceValues.FlyingLowDataValue;
+			else if (s == ExperimentSituations.FlyingHigh) subV = vessel.mainBody.scienceValues.FlyingHighDataValue;
+			else if (s == ExperimentSituations.InSpaceLow) subV = vessel.mainBody.scienceValues.InSpaceLowDataValue;
+			else if (s == ExperimentSituations.InSpaceHigh) subV = vessel.mainBody.scienceValues.InSpaceHighDataValue;
+			return subV * boost;
+		}
+
+		private string getBiome(ExperimentSituations s)
+		{
+			if ((bioMask & (int)s) == 0)
+				return "";
+			else {
+				switch (vessel.landedAt) {
+					case "LaunchPad":
+						return vessel.landedAt;
+					case "Runway":
+						return vessel.landedAt;
+					case "KSC":
+						return vessel.landedAt;
+					default:
+						return FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name;
+				}
+			}
+		}
+
+		private ExperimentSituations getSituation()
+		{
+			if (asteroidReports && DMAsteroidScience.asteroidGrappled())
+				return ExperimentSituations.SrfLanded;
+			if (asteroidReports && DMAsteroidScience.asteroidNear())
+				return ExperimentSituations.InSpaceLow;
+			switch (vessel.situation) {
+				case Vessel.Situations.LANDED:
+				case Vessel.Situations.PRELAUNCH:
+					return ExperimentSituations.SrfLanded;
+				case Vessel.Situations.SPLASHED:
+					return ExperimentSituations.SrfSplashed;
+				default:
+					if (vessel.altitude < (vessel.mainBody.atmosphereScaleHeight * 1000 * Math.Log(1e6)) && vessel.mainBody.atmosphere) {
+						if (vessel.altitude < vessel.mainBody.scienceValues.flyingAltitudeThreshold)
+							return ExperimentSituations.FlyingLow;
+						else
+							return ExperimentSituations.FlyingHigh;
+					}
+					if (vessel.altitude < vessel.mainBody.scienceValues.spaceAltitudeThreshold)
+						return ExperimentSituations.InSpaceLow;
+					else
+						return ExperimentSituations.InSpaceHigh;
+			}
+		}
+
+		private string situationCleanup(ExperimentSituations expSit, string b)
+		{
+			if (asteroidReports && DMAsteroidScience.asteroidGrappled())
+				return " from the surface of a " + b + " asteroid";
+			if (asteroidReports && DMAsteroidScience.asteroidNear())
+				return " while in space near a " + b + " asteroid";
+			if (vessel.landedAt != "")
+				return " from " + b;
+			if (b == "") {
+				switch (expSit) {
+					case ExperimentSituations.SrfLanded:
+						return " from  " + vessel.mainBody.theName + "'s surface";
+					case ExperimentSituations.SrfSplashed:
+						return " from " + vessel.mainBody.theName + "'s oceans";
+					case ExperimentSituations.FlyingLow:
+						return " while flying at " + vessel.mainBody.theName;
+					case ExperimentSituations.FlyingHigh:
+						return " from " + vessel.mainBody.theName + "'s upper atmosphere";
+					case ExperimentSituations.InSpaceLow:
+						return " while in space near " + vessel.mainBody.theName;
+					default:
+						return " while in space high over " + vessel.mainBody.theName;
+				}
+			}
+			else {
+				switch (expSit) {
+					case ExperimentSituations.SrfLanded:
+						return " from " + vessel.mainBody.theName + "'s " + b;
+					case ExperimentSituations.SrfSplashed:
+						return " from " + vessel.mainBody.theName + "'s " + b;
+					case ExperimentSituations.FlyingLow:
+						return " while flying over " + vessel.mainBody.theName + "'s " + b;
+					case ExperimentSituations.FlyingHigh:
+						return " from the upper atmosphere over " + vessel.mainBody.theName + "'s " + b;
+					case ExperimentSituations.InSpaceLow:
+						return " from space just above " + vessel.mainBody.theName + "'s " + b;
+					default:
+						return " while in space high over " + vessel.mainBody.theName + "'s " + b;
+				}
+			}
+		}
+
+		private bool canConduct()
+		{
+			failMessage = "";
+			if (Inoperable) {
+				failMessage = "Experiment is no longer functional; must be reset at a science lab or returned to Kerbin";
+				return false;
+			}
+			else if ((experimentNumber >= experimentLimit) && experimentLimit > 1) {
+				failMessage = storageFullMessage;
+				return false;
+			}
+			else if (storedScienceReports.Count > 0 && experimentLimit <= 1) {
+				failMessage = storageFullMessage;
+				return false;
+			}
+			else if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear())) {
+				newAsteroid = new DMAsteroidScience();
+				newAsteroid.body.bodyName = bodyNameFixed;
+				if (newAsteroid.ID == lastAsteroid) {
+					failMessage = "This asteroid has already been scanned";
+					return false;
+				}
+			}
+			if ((sitMask & (int)getSituation()) == 0) {
+				failMessage = customFailMessage;
+				return false;
+			}
+			else
+				return true;
+		}
+
+		private ScienceData makeScience(float boost)
+		{
+			ExperimentSituations vesselSituation = getSituation();
+			string biome = getBiome(vesselSituation);
+			CelestialBody mainBody = vessel.mainBody;
+			bool asteroids = false;
+
+			//Check for asteroids and alter the biome and celestialbody values as necessary
+			if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear())) {
+				newAsteroid = new DMAsteroidScience();
+				asteroids = true;
+				mainBody = newAsteroid.body;
+				biome = "";
+				if (asteroidTypeDependent) biome = newAsteroid.aClass;
+			}
+
+			ScienceData data = null;
+			ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(experimentID);
+			ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, mainBody, biome);
+			sub.title = exp.experimentTitle + situationCleanup(vesselSituation, biome);
+
+			if (asteroids) {
+				asteroidID = newAsteroid.ID;
+				sub.subjectValue = newAsteroid.sciMult;
+				sub.scienceCap = exp.scienceCap * sub.subjectValue * 5;
+				mainBody.bodyName = bodyNameFixed;
+			}
+			else {
+				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost);
+				sub.scienceCap = exp.scienceCap * sub.subjectValue;
+			}
+
+			if (sub != null)
+				data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, 0.5f, sub.id, sub.title);
+			return data;
 		}
 
 		#endregion
