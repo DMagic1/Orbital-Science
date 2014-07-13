@@ -57,6 +57,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DMModuleScienceAnimate.cs" />
+    <Compile Include="DMSolarCollector.cs" />
     <Compile Include="DMWhiteListMods.cs" />
     <Compile Include="MagVar.cs">
       <SubType>Code</SubType>
