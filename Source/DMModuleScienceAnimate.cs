@@ -136,9 +136,12 @@ namespace DMagic
 		private string failMessage = "";
 
 		//You never know...
-		public bool conduct()
+		public bool conduct
 		{
+			get {
 			return canConduct();
+			}
+			private set {}
 		}
 
 		#endregion
@@ -365,7 +368,7 @@ namespace DMagic
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Retract", active = false)]
-		public void retractEvent()
+		public virtual void retractEvent()
 		{
 			if (oneWayAnimation) return;
 			primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, animationName, anim);
