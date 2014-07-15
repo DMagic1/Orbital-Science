@@ -804,7 +804,7 @@ namespace DMagic
 				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		private void onComplete(ScienceData data)
+		protected virtual void onComplete(ScienceData data)
 		{
 			ReviewData();
 		}
@@ -869,7 +869,7 @@ namespace DMagic
 				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		private void onInitialComplete(ScienceData data)
+		protected virtual void onInitialComplete(ScienceData data)
 		{
 			initialResultsPage();
 		}
