@@ -36,5 +36,19 @@ namespace DMagic
 			base.retractEvent();
 		}
 
+		protected override void onComplete(ScienceData data)
+		{
+			data.transmitValue = 0.7f;
+			data.labBoost = 2.5f;
+			base.onComplete(data);
+		}
+
+		protected override void onInitialComplete(ScienceData data)
+		{
+			data.transmitValue = 0.7f;
+			data.labBoost = 2.5f;
+			base.onInitialComplete(data);
+		}
+
 	}
 }
