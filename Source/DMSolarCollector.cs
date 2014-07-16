@@ -19,6 +19,7 @@ namespace DMagic
 				anim = part.FindModelAnimators(loopingAnim)[0];
 			if (IsDeployed)
 				primaryAnimator(1f, 0f, WrapMode.Loop, loopingAnim, anim);
+			base.labDataBoost = 0.5f;
 		}
 
 		public override void deployEvent()
