@@ -301,7 +301,7 @@ namespace DMagic
 			Events["ResetExperimentExternal"].active = storedScienceReports.Count > 0;
 			Events["CollectDataExternalEvent"].active = storedScienceReports.Count > 0;
 			Events["DeployExperiment"].active = !Inoperable;
-			Events["DeployExperiment"].guiActiveUnfocused = !Inoperable;
+			Events["DeployExperiment"].guiActiveUnfocused = !Inoperable && externalDeploy;
 			Events["ReviewDataEvent"].active = storedScienceReports.Count > 0;
 			Events["ReviewInitialData"].active = scienceReports.Count > 0;
 		}
