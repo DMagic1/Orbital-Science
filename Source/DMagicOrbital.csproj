@@ -47,18 +47,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AsteroidScience.cs" />
+    <Compile Include="DMAsteroidScience.cs" />
     <Compile Include="DMAnomalyScanner.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DMBioDrill.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="DMBioDrill.cs" />
     <Compile Include="DMEnviroSensor.cs" />
     <Compile Include="DMMagBoomModule.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DMModuleScienceAnimate.cs" />
+    <Compile Include="DMSolarCollector.cs" />
+    <Compile Include="DMWhiteListMods.cs" />
     <Compile Include="MagVar.cs">
       <SubType>Code</SubType>
     </Compile>

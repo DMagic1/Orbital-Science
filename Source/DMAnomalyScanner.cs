@@ -1,4 +1,5 @@
-﻿/* DMagic Orbital Science - Anomaly Scanner
+﻿#region license
+/* DMagic Orbital Science - Anomaly Scanner
  * Anomaly detection and science data setup.
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
@@ -26,6 +27,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *  
  */
+#endregion
 
 using System;
 using System.Collections.Generic;
@@ -83,7 +85,7 @@ namespace DMagic
             }
             else
             {
-                cam = part.transform.FindChild("model").FindChild("anom scanner v4").FindChild("base").FindChild("camBaseArm0").FindChild("camBaseArm1").FindChild("camBaseArm2").FindChild("camBase");
+                cam = part.FindModelTransform("camBase");
                 GameEvents.onVesselSOIChanged.Add(ScanOnSOIChange);
                 pqsBuild();
                 eventsCheck();
