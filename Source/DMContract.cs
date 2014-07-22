@@ -80,10 +80,9 @@ namespace DMagic
 			{
 				Debug.Log("[DM] Acceptable Science Subject Found");
 				sub.subjectValue = DMModuleScienceAnimate.fixSubjectValue(targetSituation, sub.subjectValue, 1f, body);
+				if (sub.scientificValue < 0.4f)
+					return false;
 			}
-
-			if (sub.scientificValue < 0.4f)
-				return false;
 
 			if (DMscience.agent != "Any")
 				this.agent = Contracts.Agents.AgentList.Instance.GetAgent(DMscience.agent);
