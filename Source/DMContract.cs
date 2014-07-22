@@ -29,20 +29,25 @@ namespace DMagic
 		{
 			System.Random rand = new System.Random();
 			DMscience = DMConfigLoader.availableScience.ElementAt(rand.Next(0, DMConfigLoader.availableScience.Count - 1)).Value;
+			Debug.Log("[DM] Generating Contract Now");
 			if (DMscience.sciPart != "None")
 			{
+				Debug.Log("[DM] Standard Experiment Generating");
 				pTechNode = ResearchAndDevelopment.Instance.GetTechState(DMscience.sciNode);
 				if (pTechNode == null)
 					return false;
 				else
 				{
+					Debug.Log("[DM] Tech Node Found");
 					if (pTechNode.state != RDTech.State.Available)
 						return false;
 					else
 					{
+						Debug.Log("[DM] Tech Node Researched");
 						aPart = pTechNode.partsPurchased.FirstOrDefault(p => p.name == DMscience.sciPart);
 						if (aPart == null)
 							return false;
+						Debug.Log("[DM] Part Purchased");
 					}
 				}
 			}
@@ -58,15 +63,22 @@ namespace DMagic
 				return false;
 			else
 			{
+				Debug.Log("[DM] Acceptable Situations Found");
 				System.Random randSit = new System.Random();
 				targetSituation = situations[randSit.Next(0, situations.Count - 1)];
+				scienceLocation = setBodyLocation(targetSituation);
 			}
 
+			sub = ResearchAndDevelopment.GetExperimentSubject(exp, targetSituation, body, biome);
+
 			if (sub == null)
+			{
+				Debug.Log("[DM] No Acceptable Science Subject Found");
 				return false;
+			}
 			else
 			{
-				sub = ResearchAndDevelopment.GetExperimentSubject(exp, targetSituation, body, biome);
+				Debug.Log("[DM] Acceptable Science Subject Found");
 				sub.subjectValue = DMModuleScienceAnimate.fixSubjectValue(targetSituation, sub.subjectValue, 1f, body);
 			}
 
@@ -77,7 +89,7 @@ namespace DMagic
 				this.agent = Contracts.Agents.AgentList.Instance.GetAgent(DMscience.agent);
 
 			this.AddParameter(new DMCollectScience(body, scienceLocation, sub, exp), null);
-
+			Debug.Log("[DM] Parameter Added");
 			base.SetExpiry();
 			base.SetScience(Math.Max(exp.baseValue, (exp.baseValue * sub.subjectValue) / 2), body);
 			base.SetDeadlineDays(20f * sub.subjectValue, body);
@@ -124,29 +136,19 @@ namespace DMagic
 		protected override void OnLoad(ConfigNode node)
 		{
 			Debug.Log("[DM] Loading Contract");
-			int targetBodyID = int.Parse(node.GetValue("ScienceTarget"));
-			foreach (CelestialBody cBody in FlightGlobals.Bodies)
-			{
-				if (cBody.flightGlobalsIndex == targetBodyID)
-					body = cBody;
-			}
-			ScienceExperiment sciExp = ResearchAndDevelopment.GetExperiment(node.GetValue("ScienceExperiment"));
-			if (sciExp != null)
-				exp = sciExp;
-			string location = node.GetValue("TargetLocation");
-			if (location != null)
-				if (location == "Space")
-					scienceLocation = BodyLocation.Space;
-				else
-					scienceLocation = BodyLocation.Surface;
+			int targetBodyID;
+			if (int.TryParse(node.GetValue("ScienceTarget"), out targetBodyID))
+				body = FlightGlobals.Bodies[targetBodyID];
+			ScienceSubject trySub = ResearchAndDevelopment.GetSubjectByID(node.GetValue("ScienceSubject"));
+			if (trySub != null)
+				sub = trySub;
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
 			Debug.Log("[DM] Saving Contract");
 			node.AddValue("ScienceTarget", body.flightGlobalsIndex);
-			node.AddValue("ScienceExperiment", exp.id);
-			node.AddValue("TargetLocation", scienceLocation);
+			node.AddValue("ScienceSubject", sub.id);
 		}
 
 		public override bool MeetRequirements()
@@ -158,12 +160,14 @@ namespace DMagic
 
 		private CelestialBody nextBody()
 		{
+			Debug.Log("[DM] Searching For Acceptable Body");
 			GetBodies(true, true);
-			return null;
+			return FlightGlobals.Bodies[1];
 		}
 
 		private List<ExperimentSituations> availableSituations(int i)
 		{
+			Debug.Log("[DM] Finding Situations");
 			List<ExperimentSituations> expSitList = new List<ExperimentSituations>();
 			ExperimentSituations expMask = (ExperimentSituations)i;
 			if ((expMask & ExperimentSituations.FlyingHigh) == ExperimentSituations.FlyingHigh)
@@ -179,6 +183,14 @@ namespace DMagic
 			if ((expMask & ExperimentSituations.SrfSplashed) == ExperimentSituations.SrfSplashed)
 				expSitList.Add(ExperimentSituations.SrfSplashed);
 			return expSitList;
+		}
+
+		private BodyLocation setBodyLocation(ExperimentSituations sit)
+		{
+			if (sit == ExperimentSituations.InSpaceHigh || sit == ExperimentSituations.InSpaceLow)
+				return BodyLocation.Space;
+			else
+				return BodyLocation.Surface;
 		}
 
 	}
@@ -231,28 +243,18 @@ namespace DMagic
 		{
 			Debug.Log("[DM] Saving Contract Parameter");
 			node.AddValue("ScienceTarget", scienceTargetBody.flightGlobalsIndex);
-			node.AddValue("ScienceExperiment", scienceTargetSubject.id);
-			node.AddValue("TargetLocation", scienceLocation);
+			node.AddValue("ScienceSubject", scienceTargetSubject.id);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
 			Debug.Log("[DM] Loading Contract Parameter");
-			int targetBodyID = int.Parse(node.GetValue("ScienceTarget"));
-			foreach (CelestialBody body in FlightGlobals.Bodies)
-			{
-				if (body.flightGlobalsIndex == targetBodyID)
-					scienceTargetBody = body;
-			}
-			ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(node.GetValue("ScienceExperiment"));
-			if (exp != null)
-				scienceTargetExperiment = exp;
-			string location = node.GetValue("TargetLocation");
-			if (location != null)
-				if (location == "Space")
-					scienceLocation = BodyLocation.Space;
-				else
-					scienceLocation = BodyLocation.Surface;
+			int targetBodyID;
+			if (int.TryParse(node.GetValue("ScienceTarget"), out targetBodyID))
+				scienceTargetBody = FlightGlobals.Bodies[targetBodyID];
+			ScienceSubject trySub = ResearchAndDevelopment.GetSubjectByID(node.GetValue("ScienceSubject"));
+			if (trySub != null)
+				scienceTargetSubject = trySub;
 		}
 
 		private void scienceRecieve(float sci, ScienceSubject sub)
