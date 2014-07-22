@@ -22,12 +22,13 @@ namespace DMagic
 		private ProtoTechNode pTechNode = null;
 		private List<ExperimentSituations> situations;
 		private string biome = "";
+		private System.Random rand = new System.Random();
+		private bool biomeIsRelevant;
 
 		#region overrides
 
 		protected override bool Generate()
 		{
-			System.Random rand = new System.Random();
 			DMscience = DMConfigLoader.availableScience.ElementAt(rand.Next(0, DMConfigLoader.availableScience.Count - 1)).Value;
 			Debug.Log("[DM] Generating Contract Now");
 			if (DMscience.sciPart != "None")
@@ -53,9 +54,17 @@ namespace DMagic
 			}
 
 			if (body == null)
-				body = nextBody();
+			{
+				body = nextTargetBody();
+				if (body == null)
+					return false;
+			}
 			if (exp == null)
+			{
 				exp = DMscience.exp;
+				if (exp == null)
+					return false;
+			}
 
 			situations = availableSituations(DMscience.sitMask);
 
@@ -64,9 +73,17 @@ namespace DMagic
 			else
 			{
 				Debug.Log("[DM] Acceptable Situations Found");
-				System.Random randSit = new System.Random();
-				targetSituation = situations[randSit.Next(0, situations.Count - 1)];
+				targetSituation = situations[rand.Next(0, situations.Count - 1)];
 				scienceLocation = setBodyLocation(targetSituation);
+			}
+
+			biomeIsRelevant = biomeRelevant(targetSituation, DMscience.bioMask);
+
+			if (biomeIsRelevant)
+			{
+				int i = rand.Next(0, 3);
+				if (i == 0)
+					biome = fetchBiome(body);
 			}
 
 			sub = ResearchAndDevelopment.GetExperimentSubject(exp, targetSituation, body, biome);
@@ -157,11 +174,26 @@ namespace DMagic
 
 		#endregion
 
-		private CelestialBody nextBody()
+		private CelestialBody nextTargetBody()
 		{
 			Debug.Log("[DM] Searching For Acceptable Body");
-			GetBodies(true, true);
-			return FlightGlobals.Bodies[1];
+			List<CelestialBody> bList;
+			if (this.prestige == ContractPrestige.Trivial)
+				return FlightGlobals.Bodies[rand.Next(1, 3)];
+			else if (this.prestige == ContractPrestige.Significant)
+			{
+				bList = GetBodies_Reached(false, true);
+				return bList[rand.Next(0, bList.Count - 1)];
+			}
+			else if (this.prestige == ContractPrestige.Exceptional)
+			{
+				bList = GetBodies_NextUnreached(3, null);
+				bList.Remove(FlightGlobals.Bodies[1]);
+				bList.Remove(FlightGlobals.Bodies[2]);
+				bList.Remove(FlightGlobals.Bodies[3]);
+				return bList[rand.Next(0, bList.Count - 1)];
+			}
+			return null;
 		}
 
 		private List<ExperimentSituations> availableSituations(int i)
@@ -184,12 +216,30 @@ namespace DMagic
 			return expSitList;
 		}
 
+		private bool biomeRelevant(ExperimentSituations s, int i)
+		{
+			if ((i & (int)s) == 0)
+				return false;
+			else
+				return true;
+		}
+
 		private BodyLocation setBodyLocation(ExperimentSituations sit)
 		{
 			if (sit == ExperimentSituations.InSpaceHigh || sit == ExperimentSituations.InSpaceLow)
 				return BodyLocation.Space;
 			else
 				return BodyLocation.Surface;
+		}
+
+		private string fetchBiome(CelestialBody b)
+		{
+			string s = "";
+			if (b.BiomeMap == null || b.BiomeMap.Map == null)
+				return s;
+			else
+				s = b.BiomeMap.Attributes[rand.Next(0, b.BiomeMap.Attributes.Length - 1)].name;
+			return s;
 		}
 
 	}
