@@ -48,7 +48,7 @@ namespace DMagic
 						aPart = pTechNode.partsPurchased.FirstOrDefault(p => p.name == DMscience.sciPart);
 						if (aPart == null)
 							return false;
-						Debug.Log("[DM] Part Purchased");
+						Debug.Log(string.Format("[DM] Part: [{0}] Purchased", aPart.name));
 					}
 				}
 			}
@@ -174,6 +174,8 @@ namespace DMagic
 
 		#endregion
 
+		#region Utilities
+
 		private CelestialBody nextTargetBody()
 		{
 			Debug.Log("[DM] Searching For Acceptable Body");
@@ -241,6 +243,8 @@ namespace DMagic
 				s = b.BiomeMap.Attributes[rand.Next(0, b.BiomeMap.Attributes.Length - 1)].name;
 			return s;
 		}
+
+		#endregion
 
 	}
 
