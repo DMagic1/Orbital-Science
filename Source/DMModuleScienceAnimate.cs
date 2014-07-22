@@ -555,15 +555,15 @@ namespace DMagic
 			if (keepDeployedMode == 1) retractEvent();
 		}
 
-		private float fixSubjectValue(ExperimentSituations s, float f, float boost)
+		internal static float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
 		{
 			float subV = f;
-			if (s == ExperimentSituations.SrfLanded) subV = vessel.mainBody.scienceValues.LandedDataValue;
-			else if (s == ExperimentSituations.SrfSplashed) subV = vessel.mainBody.scienceValues.SplashedDataValue;
-			else if (s == ExperimentSituations.FlyingLow) subV = vessel.mainBody.scienceValues.FlyingLowDataValue;
-			else if (s == ExperimentSituations.FlyingHigh) subV = vessel.mainBody.scienceValues.FlyingHighDataValue;
-			else if (s == ExperimentSituations.InSpaceLow) subV = vessel.mainBody.scienceValues.InSpaceLowDataValue;
-			else if (s == ExperimentSituations.InSpaceHigh) subV = vessel.mainBody.scienceValues.InSpaceHighDataValue;
+			if (s == ExperimentSituations.SrfLanded) subV = body.scienceValues.LandedDataValue;
+			else if (s == ExperimentSituations.SrfSplashed) subV = body.scienceValues.SplashedDataValue;
+			else if (s == ExperimentSituations.FlyingLow) subV = body.scienceValues.FlyingLowDataValue;
+			else if (s == ExperimentSituations.FlyingHigh) subV = body.scienceValues.FlyingHighDataValue;
+			else if (s == ExperimentSituations.InSpaceLow) subV = body.scienceValues.InSpaceLowDataValue;
+			else if (s == ExperimentSituations.InSpaceHigh) subV = body.scienceValues.InSpaceHighDataValue;
 			return subV * boost;
 		}
 
@@ -712,7 +712,7 @@ namespace DMagic
 				mainBody.bodyName = bodyNameFixed;
 			}
 			else {
-				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost);
+				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost, mainBody);
 				sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			}
 
