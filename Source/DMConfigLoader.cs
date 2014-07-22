@@ -8,6 +8,7 @@ namespace DMagic
 	internal class DMConfigLoader: MonoBehaviour
 	{
 		internal static Dictionary<string, DMcontractScience> availableScience = new Dictionary<string, DMcontractScience>();
+		internal static float science, reward, forward, penalty;
 
 		private void Start()
 		{
@@ -16,7 +17,17 @@ namespace DMagic
 
 		private void configLoad()
 		{
-			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("CONTRACT_EXPERIMENT"))
+			ConfigNode setNode = GameDatabase.Instance.GetConfigNode("DM_CONTRACT_SETTINGS");
+			if (setNode != null)
+			{
+				science = float.Parse(setNode.GetValue("Global_Science_Return"));
+				reward = float.Parse(setNode.GetValue("Global_Fund_Reward"));
+				forward = float.Parse(setNode.GetValue("Global_Fund_Forward"));
+				penalty = float.Parse(setNode.GetValue("Global_Fund_Penalty"));
+				Debug.Log(string.Format("[DM] Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3}", science.ToString(), reward.ToString(), forward.ToString(), penalty.ToString())
+					);
+			}
+			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_EXPERIMENT"))
 			{
 				string name, part, techNode, agent, expID = "";
 				int sitMask, bioMask = 0;
