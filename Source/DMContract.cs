@@ -13,7 +13,6 @@ namespace DMagic
 	{
 
 		private CelestialBody body = null;
-		private BodyLocation scienceLocation;
 		private ScienceExperiment exp = null;
 		private ScienceSubject sub = null;
 		private ExperimentSituations targetSituation;
@@ -22,33 +21,32 @@ namespace DMagic
 		private ProtoTechNode pTechNode = null;
 		private List<ExperimentSituations> situations;
 		private string biome = "";
-		private System.Random rand = new System.Random();
-		private bool biomeIsRelevant;
+		private System.Random rand = DMUtils.rand;
 
 		#region overrides
 
 		protected override bool Generate()
 		{
-			DMscience = DMConfigLoader.availableScience.ElementAt(rand.Next(0, DMConfigLoader.availableScience.Count - 1)).Value;
-			Debug.Log("[DM] Generating Contract Now");
+			DMscience = DMUtils.availableScience.ElementAt(rand.Next(0, DMUtils.availableScience.Count)).Value;
+			DMUtils.DebugLog("Generating Contract Now");
 			if (DMscience.sciPart != "None")
 			{
-				Debug.Log("[DM] Standard Experiment Generating");
+				DMUtils.DebugLog("Standard Experiment Generating");
 				pTechNode = ResearchAndDevelopment.Instance.GetTechState(DMscience.sciNode);
 				if (pTechNode == null)
 					return false;
 				else
 				{
-					Debug.Log("[DM] Tech Node Found");
+					DMUtils.DebugLog("Tech Node Found");
 					if (pTechNode.state != RDTech.State.Available)
 						return false;
 					else
 					{
-						Debug.Log("[DM] Tech Node Researched");
+						DMUtils.DebugLog("Tech Node Researched");
 						aPart = pTechNode.partsPurchased.FirstOrDefault(p => p.name == DMscience.sciPart);
 						if (aPart == null)
 							return false;
-						Debug.Log(string.Format("[DM] Part: [{0}] Purchased", aPart.name));
+						DMUtils.DebugLog("Part: [{0}] Purchased", aPart.name);
 					}
 				}
 			}
@@ -66,48 +64,45 @@ namespace DMagic
 					return false;
 			}
 
-			situations = availableSituations(DMscience.sitMask);
+			situations = availableSituations(DMscience.sitMask, body);
 
 			if (situations.Count == 0)
 				return false;
 			else
 			{
-				Debug.Log("[DM] Acceptable Situations Found");
-				targetSituation = situations[rand.Next(0, situations.Count - 1)];
-				Debug.Log(string.Format("[DM] Experimental Situation: {0}", targetSituation.ToString()));
-				scienceLocation = setBodyLocation(targetSituation);
+				DMUtils.DebugLog("Acceptable Situations Found");
+				targetSituation = situations[rand.Next(0, situations.Count)];
+				DMUtils.DebugLog("Experimental Situation: {0}", targetSituation);
+			}
+
+			if (biomeRelevant(targetSituation, DMscience.bioMask))
+			{
+				DMUtils.DebugLog("Checking For Biome Usage");
+				int i = rand.Next(0, 2);
+				if (i == 0)
+					biome = fetchBiome(body);
 			}
 
 			sub = ResearchAndDevelopment.GetExperimentSubject(exp, targetSituation, body, biome);
 
 			if (sub == null)
 			{
-				Debug.Log("[DM] No Acceptable Science Subject Found");
+				DMUtils.DebugLog("No Acceptable Science Subject Found");
 				return false;
 			}
 			else
 			{
-				Debug.Log("[DM] Acceptable Science Subject Found");
+				DMUtils.DebugLog("Acceptable Science Subject Found");
 				sub.subjectValue = DMModuleScienceAnimate.fixSubjectValue(targetSituation, sub.subjectValue, 1f, body);
 				if (sub.scientificValue < 0.4f)
 					return false;
 			}
 
-			biomeIsRelevant = biomeRelevant(targetSituation, DMscience.bioMask);
-
-			if (biomeIsRelevant)
-			{
-				Debug.Log("[DM] Checking For Biome Usage");
-				int i = rand.Next(0, 1);
-				if (i == 0)
-					biome = fetchBiome(body);
-			}
-
 			if (DMscience.agent != "Any")
 				this.agent = Contracts.Agents.AgentList.Instance.GetAgent(DMscience.agent);
 
-			this.AddParameter(new DMCollectScience(body, scienceLocation, sub, exp, biomeIsRelevant), null);
-			Debug.Log("[DM] Parameter Added");
+			this.AddParameter(new DMCollectScience(body, targetSituation, sub, exp, biome), null);
+			DMUtils.DebugLog("Parameter Added");
 			base.SetExpiry();
 			base.SetScience(Math.Max(exp.baseValue, (exp.baseValue * sub.subjectValue) / 2), body);
 			base.SetDeadlineDays(20f * sub.subjectValue, body);
@@ -133,7 +128,15 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Collect {0} data at {1}", exp.experimentTitle, body.theName);
+			if (targetSituation == ExperimentSituations.InSpaceLow || targetSituation == ExperimentSituations.InSpaceHigh)
+				return string.Format("Collect {0} data from orbit around {1}", exp.experimentTitle, body.theName);
+			else if (targetSituation == ExperimentSituations.SrfLanded)
+				return string.Format("Collect {0} data from the surface of {1}", exp.experimentTitle, body.theName);
+			else if (targetSituation == ExperimentSituations.SrfSplashed)
+				return string.Format("Collect {0} data from the oceans of {1}", exp.experimentTitle, body.theName);
+			else if (targetSituation == ExperimentSituations.FlyingLow || targetSituation == ExperimentSituations.FlyingHigh)
+				return string.Format("Collect {0} data during atmospheric flight over {1}", exp.experimentTitle, body.theName);
+			return "Stupid Code Is Stupid";
 		}
 
 		protected override string GetDescription()
@@ -143,29 +146,38 @@ namespace DMagic
 
 		protected override string GetSynopsys()
 		{
-			if (biomeIsRelevant)
+			DMUtils.DebugLog("Generating Synopsis From {0} Experimental Situation", targetSituation);
+			if (!string.IsNullOrEmpty(biome))
 			{
-				if (targetSituation == ExperimentSituations.InSpaceLow || targetSituation == ExperimentSituations.InSpaceHigh)
-					return string.Format("We need you to record some {0} observations from in orbit above the {2} around {1}", exp.experimentTitle, body.theName, biome);
+				if (targetSituation == ExperimentSituations.InSpaceHigh)
+					return string.Format("We need you to record some {0} observations from high orbit above the {2} around {1}", exp.experimentTitle, body.theName, biome);
+				else if (targetSituation == ExperimentSituations.InSpaceLow)
+					return string.Format("We need you to record some {0} observations from low orbit above the {2} around {1}", exp.experimentTitle, body.theName, biome);
 				else if (targetSituation == ExperimentSituations.SrfLanded)
 					return string.Format("We need you to record some {0} observations from the {2} while on the surface of {1}", exp.experimentTitle, body.theName, biome);
 				else if (targetSituation == ExperimentSituations.SrfSplashed)
 					return string.Format("We need you to record some {0} observations from the {2} while on the oceans of {1}", exp.experimentTitle, body.theName, biome);
-				else if (targetSituation == ExperimentSituations.FlyingLow || targetSituation == ExperimentSituations.FlyingHigh)
-					return string.Format("We need you to record some {0} observations during atmospheric flight over the {2} at {1}", exp.experimentTitle, body.theName, biome);
+				else if (targetSituation == ExperimentSituations.FlyingLow)
+					return string.Format("We need you to record some {0} observations during low altitude atmospheric flight over the {2} at {1}", exp.experimentTitle, body.theName, biome);
+				else if (targetSituation == ExperimentSituations.FlyingHigh)
+					return string.Format("We need you to record some {0} observations during high altitude atmospheric flight over the {2} at {1}", exp.experimentTitle, body.theName, biome);
 			}
 			else
 			{
-				if (targetSituation == ExperimentSituations.InSpaceLow || targetSituation == ExperimentSituations.InSpaceHigh)
-					return string.Format("We need you to record some {0} observations from orbit around {1}", exp.experimentTitle, body.theName);
+				if (targetSituation == ExperimentSituations.InSpaceHigh)
+					return string.Format("We need you to record some {0} observations from high orbit around {1}", exp.experimentTitle, body.theName);
+				else if (targetSituation == ExperimentSituations.InSpaceLow)
+					return string.Format("We need you to record some {0} observations from low orbit around {1}", exp.experimentTitle, body.theName);
 				else if (targetSituation == ExperimentSituations.SrfLanded)
 					return string.Format("We need you to record some {0} observations from the surface of {1}", exp.experimentTitle, body.theName);
 				else if (targetSituation == ExperimentSituations.SrfSplashed)
 					return string.Format("We need you to record some {0} observations from the oceans of {1}", exp.experimentTitle, body.theName);
-				else if (targetSituation == ExperimentSituations.FlyingLow || targetSituation == ExperimentSituations.FlyingHigh)
-					return string.Format("We need you to record some {0} observations during atmospheric flight at {1}", exp.experimentTitle, body.theName);
+				else if (targetSituation == ExperimentSituations.FlyingLow)
+					return string.Format("We need you to record some {0} observations during low altitude atmospheric flight at {1}", exp.experimentTitle, body.theName);
+				else if (targetSituation == ExperimentSituations.FlyingHigh)
+					return string.Format("We need you to record some {0} observations during high altitude atmospheric flight at {1}", exp.experimentTitle, body.theName);
 			}
-			return string.Format("We need you to record some {0} observations from {1}", exp.experimentTitle, body.theName);
+			return "Fix Your Stupid Code Idiot...";
 		}
 
 		protected override string MessageCompleted()
@@ -175,7 +187,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			Debug.Log("[DM] Loading Contract");
+			DMUtils.DebugLog("Loading Contract");
 			int targetBodyID, targetLocation;
 			if (int.TryParse(node.GetValue("ScienceTarget"), out targetBodyID))
 				body = FlightGlobals.Bodies[targetBodyID];
@@ -186,16 +198,20 @@ namespace DMagic
 			if (tryExp != null)
 				exp = tryExp;
 			if (int.TryParse(node.GetValue("ScienceLocation"), out targetLocation))
-				scienceLocation = (BodyLocation)targetLocation;
+			{
+				targetSituation = (ExperimentSituations)targetLocation;
+			}
+			biome = node.GetValue("Biome");
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			Debug.Log("[DM] Saving Contract");
+			DMUtils.DebugLog("Saving Contract");
 			node.AddValue("ScienceTarget", body.flightGlobalsIndex);
 			node.AddValue("ScienceSubject", sub.id);
 			node.AddValue("ScienceExperiment", exp.id);
-			node.AddValue("ScienceLocation", (int)scienceLocation);
+			node.AddValue("ScienceLocation", (int)targetSituation);
+			node.AddValue("Biome", biome);
 		}
 
 		public override bool MeetRequirements()
@@ -209,44 +225,48 @@ namespace DMagic
 
 		private CelestialBody nextTargetBody()
 		{
-			Debug.Log("[DM] Searching For Acceptable Body");
+			DMUtils.DebugLog("Searching For Acceptable Body");
 			List<CelestialBody> bList;
 			if (this.prestige == ContractPrestige.Trivial)
-				return FlightGlobals.Bodies[rand.Next(1, 3)];
+				return FlightGlobals.Bodies[rand.Next(1, 4)];
 			else if (this.prestige == ContractPrestige.Significant)
 			{
 				bList = GetBodies_Reached(false, true);
-				return bList[rand.Next(0, bList.Count - 1)];
+				if (bList.Count == 0)
+					return null;
+				return bList[rand.Next(0, bList.Count)];
 			}
 			else if (this.prestige == ContractPrestige.Exceptional)
 			{
 				bList = GetBodies_NextUnreached(4, null);
-				bList.Remove(FlightGlobals.Bodies[1]);
+				if (bList.Contains(FlightGlobals.Bodies[1]))
+					bList.Remove(FlightGlobals.Bodies[1]);
+				if (bList.Contains(FlightGlobals.Bodies[2]))
 				bList.Remove(FlightGlobals.Bodies[2]);
+				if (bList.Contains(FlightGlobals.Bodies[3]))
 				bList.Remove(FlightGlobals.Bodies[3]);
-				return bList[rand.Next(0, bList.Count - 1)];
+				return bList[rand.Next(0, bList.Count)];
 			}
 			return null;
 		}
 
-		private List<ExperimentSituations> availableSituations(int i)
+		private List<ExperimentSituations> availableSituations(int i, CelestialBody b)
 		{
-			Debug.Log("[DM] Finding Situations");
+			DMUtils.DebugLog("Finding Situations");
 			List<ExperimentSituations> expSitList = new List<ExperimentSituations>();
-			//ExperimentSituations expMask = (ExperimentSituations)i;
-			if (((ExperimentSituations)i & ExperimentSituations.FlyingHigh) == ExperimentSituations.FlyingHigh)
+			if (((ExperimentSituations)i & ExperimentSituations.FlyingHigh) == ExperimentSituations.FlyingHigh && b.atmosphere)
 				expSitList.Add(ExperimentSituations.FlyingHigh);
-			if (((ExperimentSituations)i & ExperimentSituations.FlyingLow) == ExperimentSituations.FlyingLow)
+			if (((ExperimentSituations)i & ExperimentSituations.FlyingLow) == ExperimentSituations.FlyingLow && b.atmosphere)
 				expSitList.Add(ExperimentSituations.FlyingLow);
 			if (((ExperimentSituations)i & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
 				expSitList.Add(ExperimentSituations.InSpaceHigh);
 			if (((ExperimentSituations)i & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
 				expSitList.Add(ExperimentSituations.InSpaceLow);
-			if (((ExperimentSituations)i & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
+			if (((ExperimentSituations)i & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded && b.pqsController != null)
 				expSitList.Add(ExperimentSituations.SrfLanded);
-			if (((ExperimentSituations)i & ExperimentSituations.SrfSplashed) == ExperimentSituations.SrfSplashed)
+			if (((ExperimentSituations)i & ExperimentSituations.SrfSplashed) == ExperimentSituations.SrfSplashed && b.ocean && b.pqsController != null)
 				expSitList.Add(ExperimentSituations.SrfSplashed);
-			Debug.Log(string.Format("[DM] Found {0} Valid Experimental Situations", expSitList.Count));
+			DMUtils.DebugLog("Found {0} Valid Experimental Situations", expSitList.Count);
 			return expSitList;
 		}
 
@@ -258,23 +278,15 @@ namespace DMagic
 				return true;
 		}
 
-		private BodyLocation setBodyLocation(ExperimentSituations sit)
-		{
-			if (sit == ExperimentSituations.InSpaceHigh || sit == ExperimentSituations.InSpaceLow)
-				return BodyLocation.Space;
-			else
-				return BodyLocation.Surface;
-		}
-
 		private string fetchBiome(CelestialBody b)
 		{
-			Debug.Log("[DM] Searching For Biomes");
+			DMUtils.DebugLog("Searching For Biomes");
 			string s = "";
 			if (b.BiomeMap == null || b.BiomeMap.Map == null)
 				return s;
 			else
-				s = b.BiomeMap.Attributes[rand.Next(0, b.BiomeMap.Attributes.Length - 1)].name;
-			Debug.Log(string.Format("[DM] Found Biome: {0}", s));
+				s = b.BiomeMap.Attributes[rand.Next(0, b.BiomeMap.Attributes.Length)].name;
+			DMUtils.DebugLog("Found Biome: {0}", s);
 			return s;
 		}
 
@@ -286,36 +298,63 @@ namespace DMagic
 
 	public class DMCollectScience: CollectScience
 	{
-		public CelestialBody scienceTargetBody;
-		public BodyLocation scienceLocation;
-		public ScienceSubject scienceTargetSubject;
-		public ScienceExperiment scienceTargetExperiment;
-		public bool biome;
+		public CelestialBody body;
+		public ExperimentSituations scienceLocation;
+		public ScienceSubject subject;
+		public ScienceExperiment exp;
+		public string biomeName;
 
 		public DMCollectScience()
 		{
 		}
 
-		public DMCollectScience(CelestialBody target, BodyLocation location, ScienceSubject subject, ScienceExperiment exp, bool Biome)
+		public DMCollectScience(CelestialBody target, ExperimentSituations location, ScienceSubject Subject, ScienceExperiment Exp, string BiomeName)
 		{
-			scienceTargetBody = target;
+			body = target;
 			scienceLocation = location;
-			scienceTargetSubject = subject;
-			scienceTargetExperiment = exp;
-			biome = Biome;
+			subject = Subject;
+			exp = Exp;
+			biomeName = BiomeName;
 		}
 
 		protected override string GetHashString()
 		{
-			return scienceTargetSubject.id;
+			return subject.id;
 		}
 
 		protected override string GetTitle()
 		{
-			if (scienceLocation == BodyLocation.Space)
-				return string.Format("Collect {0} data from in orbit around {1}.", scienceTargetExperiment.experimentTitle, scienceTargetBody.theName);
+			if (!string.IsNullOrEmpty(biomeName))
+			{
+				if (scienceLocation == ExperimentSituations.InSpaceHigh)
+					return string.Format("Collect {0} data from high orbit around {1}'s {2}", exp.experimentTitle, body.theName, biomeName);
+				else if (scienceLocation == ExperimentSituations.InSpaceLow)
+					return string.Format("Collect {0} data from low orbit around {1}'s {2}", exp.experimentTitle, body.theName, biomeName);
+				else if (scienceLocation == ExperimentSituations.SrfLanded)
+					return string.Format("Collect {0} data from the surface at {1}'s {2}", exp.experimentTitle, body.theName, biomeName);
+				else if (scienceLocation == ExperimentSituations.SrfSplashed)
+					return string.Format("Collect {0} data from the oceans at {1}'s {2}", exp.experimentTitle, body.theName, biomeName);
+				else if (scienceLocation == ExperimentSituations.FlyingHigh)
+					return string.Format("Collect {0} data during high altitude flight over {1}'s {2}", exp.experimentTitle, body.theName, biomeName);
+				else if (scienceLocation == ExperimentSituations.FlyingLow)
+					return string.Format("Collect {0} data during low altitude flight over {1}'s {2}", exp.experimentTitle, body.theName, biomeName);
+			}
 			else
-				return string.Format("Collect {0} data from the surface of {1}.", scienceTargetExperiment.experimentTitle, scienceTargetBody.theName);
+			{
+				if (scienceLocation == ExperimentSituations.InSpaceHigh)
+					return string.Format("Collect {0} data from high orbit around {1}", exp.experimentTitle, body.theName);
+				else if (scienceLocation == ExperimentSituations.InSpaceLow)
+					return string.Format("Collect {0} data from low orbit around {1}", exp.experimentTitle, body.theName);
+				else if (scienceLocation == ExperimentSituations.SrfLanded)
+					return string.Format("Collect {0} data from the surface of {1}", exp.experimentTitle, body.theName);
+				else if (scienceLocation == ExperimentSituations.SrfSplashed)
+					return string.Format("Collect {0} data from the oceans of {1}", exp.experimentTitle, body.theName);
+				else if (scienceLocation == ExperimentSituations.FlyingHigh)
+					return string.Format("Collect {0} data during high altitude flight at {1}", exp.experimentTitle, body.theName);
+				else if (scienceLocation == ExperimentSituations.FlyingLow)
+					return string.Format("Collect {0} data during low altitude flight at {1}", exp.experimentTitle, body.theName);
+			}
+			return "Stupid Code Is Stupid";
 		}
 
 		protected override void OnRegister()
@@ -330,47 +369,52 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			Debug.Log("[DM] Saving Contract Parameter");
-			node.AddValue("ScienceTarget", scienceTargetBody.flightGlobalsIndex);
-			node.AddValue("ScienceSubject", scienceTargetSubject.id);
-			node.AddValue("ScienceExperiment", scienceTargetExperiment.id);
+			DMUtils.DebugLog("Saving Contract Parameter");
+			node.AddValue("ScienceTarget", body.flightGlobalsIndex);
+			node.AddValue("ScienceSubject", subject.id);
+			node.AddValue("ScienceExperiment", exp.id);
 			node.AddValue("ScienceLocation", (int)scienceLocation);
-			node.AddValue("BiomeRelevant", biome);
+			node.AddValue("Biome", biomeName);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			Debug.Log("[DM] Loading Contract Parameter");
+			DMUtils.DebugLog("Loading Contract Parameter");
 			int targetBodyID, targetLocation;
 			if (int.TryParse(node.GetValue("ScienceTarget"), out targetBodyID))
-				scienceTargetBody = FlightGlobals.Bodies[targetBodyID];
+				body = FlightGlobals.Bodies[targetBodyID];
 			ScienceSubject trySub = ResearchAndDevelopment.GetSubjectByID(node.GetValue("ScienceSubject"));
 			if (trySub != null)
-				scienceTargetSubject = trySub;
+				subject = trySub;
 			ScienceExperiment tryExp = ResearchAndDevelopment.GetExperiment(node.GetValue("ScienceExperiment"));
 			if (tryExp != null)
-				scienceTargetExperiment = tryExp;
+				exp = tryExp;
 			if (int.TryParse(node.GetValue("ScienceLocation"), out targetLocation))
-				scienceLocation = (BodyLocation)targetLocation;
-			biome = bool.Parse(node.GetValue("BiomeRelevant"));
+				scienceLocation = (ExperimentSituations)targetLocation;
+			biomeName = node.GetValue("Biome");
 		}
 
 		private void scienceRecieve(float sci, ScienceSubject sub)
 		{
-			if (biome)
+			DMUtils.DebugLog("New Science Results Collected With ID: {0}", sub.id);
+			DMUtils.DebugLog("Comparing To Target Science With ID: {0}", subject.id);
+			if (!string.IsNullOrEmpty(biomeName))
 			{
-				if (sub.id == scienceTargetSubject.id)
+				if (sub.id == subject.id)
 				{
-					Debug.Log("[DM] Contract Complete");
+					DMUtils.DebugLog("Contract Complete");
 					base.SetComplete();
 				}
 			}
 			else
 			{
-				Debug.Log("[DM] Figure Something Out Dummy!!!");
-				if (sub.id.StartsWith(scienceTargetSubject.id))
+				DMUtils.DebugLog("Figure Something Out Dummy!!!");
+				string clippedSub = sub.id.Replace("@", "");
+				string clippedTargetSub = subject.id.Replace("@", "");
+				DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
+				if (clippedSub.StartsWith(clippedTargetSub))
 				{
-					Debug.Log("[DM] Contract Complete");
+					DMUtils.DebugLog("Contract Complete");
 					base.SetComplete();
 				}
 			}
@@ -385,26 +429,26 @@ namespace DMagic
 	{
 		public void Start()
 		{
-			Debug.Log("Adding Science Events");
+			DMUtils.DebugLog("Adding Science Events");
 			GameEvents.OnScienceChanged.Add(scienceChange);
 			GameEvents.OnScienceRecieved.Add(scienceReceive);
 		}
 
 		public void OnDestroy()
 		{
-			Debug.Log("Removing Science Events");
+			DMUtils.DebugLog("Removing Science Events");
 			GameEvents.OnScienceChanged.Remove(scienceChange);
 			GameEvents.OnScienceRecieved.Remove(scienceReceive);
 		}
 
 		public void scienceChange(float sci)
 		{
-			Debug.Log(string.Format("[Science Events] Science Changed by this much: {0}", sci.ToString()));
+			DMUtils.DebugLog("[Science Events] Science Changed by this much: {0}", sci);
 		}
 
 		public void scienceReceive(float sci, ScienceSubject sub)
 		{
-			Debug.Log(string.Format("[Science Events] Subject {0} recieved for {1} science", sub.title, sci.ToString()));
+			DMUtils.DebugLog("[Science Events] Subject {0} recieved for {1} science", sub.title, sci);
 		}
 
 	}
