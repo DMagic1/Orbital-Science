@@ -466,8 +466,13 @@ namespace DMagic
 				DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
 				if (clippedSub.StartsWith(clippedTargetSub))
 				{
-					DMUtils.DebugLog("Contract Complete");
-					base.SetComplete();
+					if (sci < ((exp.baseValue * subject.subjectValue) * 0.4f))
+						ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
+					else
+					{
+						DMUtils.DebugLog("Contract Complete");
+						base.SetComplete();
+					}
 				}
 			}
 		}
