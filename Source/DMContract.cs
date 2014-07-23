@@ -1,4 +1,35 @@
-﻿using System;
+﻿#region license
+/* DMagic Orbital Science - DMContract
+ * Classes for generating generic science experiment contracts
+ *
+ * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, 
+ * are permitted provided that the following conditions are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright notice, 
+ * this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright notice, 
+ * this list of conditions and the following disclaimer in the documentation and/or other materials 
+ * provided with the distribution.
+ * 
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used 
+ * to endorse or promote products derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  
+ */
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +40,10 @@ using KSPAchievements;
 
 namespace DMagic
 {
-	public class DMContract: Contract
+
+	#region Contract Generator
+
+	public class DMContract : Contract
 	{
 
 		private CelestialBody body = null;
@@ -21,6 +55,7 @@ namespace DMagic
 		private ProtoTechNode pTechNode = null;
 		private List<ExperimentSituations> situations;
 		private string biome = "";
+		private string name;
 		private System.Random rand = DMUtils.rand;
 
 		#region overrides
@@ -28,6 +63,7 @@ namespace DMagic
 		protected override bool Generate()
 		{
 			DMscience = DMUtils.availableScience.ElementAt(rand.Next(0, DMUtils.availableScience.Count)).Value;
+			name = DMUtils.availableScience.FirstOrDefault(n => n.Value == DMscience).Key;
 			DMUtils.DebugLog("Generating Contract Now");
 			if (DMscience.sciPart != "None")
 			{
@@ -103,11 +139,11 @@ namespace DMagic
 
 			this.AddParameter(new DMCollectScience(body, targetSituation, sub, exp, biome), null);
 			DMUtils.DebugLog("Parameter Added");
-			base.SetExpiry();
-			base.SetScience(Math.Max(exp.baseValue, (exp.baseValue * sub.subjectValue) / 2), body);
-			base.SetDeadlineDays(20f * sub.subjectValue, body);
-			base.SetReputation(5f, 10f, body);
-			base.SetFunds(100f * sub.subjectValue, 1000f * sub.subjectValue, 500f * sub.subjectValue, body);
+			base.SetExpiry(10 * sub.subjectValue, Math.Max(15, 15 * sub.subjectValue) * (float)(this.prestige + 1));
+			base.SetScience(Math.Max(exp.baseValue, (exp.baseValue * sub.subjectValue) / 2) * DMUtils.science, body);
+			base.SetDeadlineDays(20f * sub.subjectValue * (float)(this.prestige + 1), body);
+			base.SetReputation(5f * (float)(this.prestige + 1), 10f * (float)(this.prestige + 1), body);
+			base.SetFunds(100f * sub.subjectValue * DMUtils.forward, 1000f * sub.subjectValue * DMUtils.reward, 500f * sub.subjectValue * DMUtils.penalty, body);
 			return true;
 		}
 
@@ -141,7 +177,8 @@ namespace DMagic
 
 		protected override string GetDescription()
 		{
-			return "Do something!";
+			string story = DMUtils.storyList[rand.Next(0, DMUtils.storyList.Count)];
+			return string.Format(story, this.agent.Name, DMUtils.availableScience.FirstOrDefault(v => v.Value == DMscience).Key, body.theName, aPart.title, targetSituation); ;
 		}
 
 		protected override string GetSynopsys()
@@ -194,13 +231,16 @@ namespace DMagic
 			ScienceSubject trySub = ResearchAndDevelopment.GetSubjectByID(node.GetValue("ScienceSubject"));
 			if (trySub != null)
 				sub = trySub;
-			ScienceExperiment tryExp = ResearchAndDevelopment.GetExperiment(node.GetValue("ScienceExperiment"));
-			if (tryExp != null)
-				exp = tryExp;
-			if (int.TryParse(node.GetValue("ScienceLocation"), out targetLocation))
+			name = node.GetValue("ScienceExperiment");
+			if (DMUtils.availableScience.TryGetValue(name, out DMscience))
 			{
-				targetSituation = (ExperimentSituations)targetLocation;
+				aPart = ResearchAndDevelopment.Instance.GetTechState(DMscience.sciNode).partsPurchased.FirstOrDefault(p => p.name == DMscience.sciPart);
+				ScienceExperiment tryExp = DMscience.exp;
+				if (tryExp != null)
+					exp = tryExp;
 			}
+			if (int.TryParse(node.GetValue("ScienceLocation"), out targetLocation))
+				targetSituation = (ExperimentSituations)targetLocation;
 			biome = node.GetValue("Biome");
 		}
 
@@ -209,7 +249,7 @@ namespace DMagic
 			DMUtils.DebugLog("Saving Contract");
 			node.AddValue("ScienceTarget", body.flightGlobalsIndex);
 			node.AddValue("ScienceSubject", sub.id);
-			node.AddValue("ScienceExperiment", exp.id);
+			node.AddValue("ScienceExperiment", name);
 			node.AddValue("ScienceLocation", (int)targetSituation);
 			node.AddValue("Biome", biome);
 		}
@@ -242,9 +282,9 @@ namespace DMagic
 				if (bList.Contains(FlightGlobals.Bodies[1]))
 					bList.Remove(FlightGlobals.Bodies[1]);
 				if (bList.Contains(FlightGlobals.Bodies[2]))
-				bList.Remove(FlightGlobals.Bodies[2]);
+					bList.Remove(FlightGlobals.Bodies[2]);
 				if (bList.Contains(FlightGlobals.Bodies[3]))
-				bList.Remove(FlightGlobals.Bodies[3]);
+					bList.Remove(FlightGlobals.Bodies[3]);
 				return bList[rand.Next(0, bList.Count)];
 			}
 			return null;
@@ -258,14 +298,24 @@ namespace DMagic
 				expSitList.Add(ExperimentSituations.FlyingHigh);
 			if (((ExperimentSituations)i & ExperimentSituations.FlyingLow) == ExperimentSituations.FlyingLow && b.atmosphere)
 				expSitList.Add(ExperimentSituations.FlyingLow);
-			if (((ExperimentSituations)i & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+			if (((ExperimentSituations)i & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh && !exp.requireAtmosphere)
 				expSitList.Add(ExperimentSituations.InSpaceHigh);
-			if (((ExperimentSituations)i & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
+			if (((ExperimentSituations)i & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow && !exp.requireAtmosphere)
 				expSitList.Add(ExperimentSituations.InSpaceLow);
 			if (((ExperimentSituations)i & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded && b.pqsController != null)
-				expSitList.Add(ExperimentSituations.SrfLanded);
+			{
+				if (!exp.requireAtmosphere)
+					expSitList.Add(ExperimentSituations.SrfLanded);
+				else if (b.atmosphere)
+					expSitList.Add(ExperimentSituations.SrfLanded);
+			}
 			if (((ExperimentSituations)i & ExperimentSituations.SrfSplashed) == ExperimentSituations.SrfSplashed && b.ocean && b.pqsController != null)
-				expSitList.Add(ExperimentSituations.SrfSplashed);
+			{
+				if (!exp.requireAtmosphere)
+					expSitList.Add(ExperimentSituations.SrfSplashed);
+				else if (b.atmosphere)
+					expSitList.Add(ExperimentSituations.SrfSplashed);
+			}
 			DMUtils.DebugLog("Found {0} Valid Experimental Situations", expSitList.Count);
 			return expSitList;
 		}
@@ -294,9 +344,11 @@ namespace DMagic
 
 	}
 
+	#endregion
+
 	#region Contract Parameter
 
-	public class DMCollectScience: CollectScience
+	public class DMCollectScience : CollectScience
 	{
 		public CelestialBody body;
 		public ExperimentSituations scienceLocation;
@@ -424,32 +476,4 @@ namespace DMagic
 
 	#endregion
 
-	[KSPAddon(KSPAddon.Startup.Flight, false)]
-	class DMEvents: MonoBehaviour
-	{
-		public void Start()
-		{
-			DMUtils.DebugLog("Adding Science Events");
-			GameEvents.OnScienceChanged.Add(scienceChange);
-			GameEvents.OnScienceRecieved.Add(scienceReceive);
-		}
-
-		public void OnDestroy()
-		{
-			DMUtils.DebugLog("Removing Science Events");
-			GameEvents.OnScienceChanged.Remove(scienceChange);
-			GameEvents.OnScienceRecieved.Remove(scienceReceive);
-		}
-
-		public void scienceChange(float sci)
-		{
-			DMUtils.DebugLog("[Science Events] Science Changed by this much: {0}", sci);
-		}
-
-		public void scienceReceive(float sci, ScienceSubject sub)
-		{
-			DMUtils.DebugLog("[Science Events] Subject {0} recieved for {1} science", sub.title, sci);
-		}
-
-	}
 }
