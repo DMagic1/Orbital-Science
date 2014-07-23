@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,26 +8,27 @@ namespace DMagic
 	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
 	internal class DMConfigLoader: MonoBehaviour
 	{
-		internal static Dictionary<string, DMcontractScience> availableScience = new Dictionary<string, DMcontractScience>();
-		internal static float science, reward, forward, penalty;
 
 		private void Start()
 		{
+			DMUtils.rand = new System.Random();
+			DMUtils.DebugLog("Generating Global Random Number Generator");
 			configLoad();
 		}
 
 		private void configLoad()
 		{
-			ConfigNode setNode = GameDatabase.Instance.GetConfigNode("DM_CONTRACT_SETTINGS");
-			if (setNode != null)
-			{
-				science = float.Parse(setNode.GetValue("Global_Science_Return"));
-				reward = float.Parse(setNode.GetValue("Global_Fund_Reward"));
-				forward = float.Parse(setNode.GetValue("Global_Fund_Forward"));
-				penalty = float.Parse(setNode.GetValue("Global_Fund_Penalty"));
-				Debug.Log(string.Format("[DM] Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3}", science.ToString(), reward.ToString(), forward.ToString(), penalty.ToString())
-					);
-			}
+			foreach (ConfigNode setNode in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_SETTINGS"))
+				if (setNode.GetValue("name") == "Contract Settings")
+				{
+					DMUtils.science = float.Parse(setNode.GetValue("Global_Science_Return"));
+					DMUtils.reward = float.Parse(setNode.GetValue("Global_Fund_Reward"));
+					DMUtils.forward = float.Parse(setNode.GetValue("Global_Fund_Forward"));
+					DMUtils.penalty = float.Parse(setNode.GetValue("Global_Fund_Penalty"));
+					DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3}",
+						DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty);
+					break;
+				}
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_EXPERIMENT"))
 			{
 				string name, part, techNode, agent, expID = "";
@@ -47,11 +49,11 @@ namespace DMagic
 						agent = node.GetValue("agent");
 					else
 						agent = "Any";
-					availableScience.Add(name, new DMcontractScience(expID, exp, sitMask, bioMask, part, techNode, agent));
-					Debug.Log(string.Format("[DM] New Experiment: [{0}] Available For Contracts", exp.experimentTitle));
+					DMUtils.availableScience.Add(name, new DMcontractScience(expID, exp, sitMask, bioMask, part, techNode, agent));
+					DMUtils.Logging("New Experiment: [{0}] Available For Contracts", exp.experimentTitle);
 				}
 			}
-			Debug.Log(string.Format("[DM] Successfully Added {0} New Experiments To Contract List", availableScience.Count));
+			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience.Count);
 		}
 
 		private void OnDestroy()
