@@ -82,17 +82,28 @@ namespace DMagic
 				}
 			}
 			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience.Count);
-			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_SCIENCE_STORY_DEF"))
-			{
-				foreach (ConfigNode storyNode in node.GetNodes("DM_SCIENCE_BACKSTORY"))
-				{
-					foreach (string story in storyNode.GetValues("generic"))
-					{
-						if (!string.IsNullOrEmpty(story))
-							DMUtils.storyList.Add(story);
-					}
-				}
-			}
+			//foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_SCIENCE_STORY_DEF"))
+			//{
+			//    foreach (ConfigNode storyNode in node.GetNodes("DM_SCIENCE_BACKSTORY"))
+			//    {
+			//        foreach (string story in storyNode.GetValues("generic"))
+			//        {
+			//            if (!string.IsNullOrEmpty(story))
+			//            {
+			//                string storyFixed = DMUtils.rgx.Replace(story, "{{\\d+}}");
+			//                DMUtils.DebugLog(storyFixed);
+			//                DMUtils.storyList.Add(story);
+			//            }
+			//        }
+			//    }
+			//}
+			string[] story = new string[4] {
+				@"The scientists at {0} have recently come to the realization that we know very little about {2}. To remedy this they have tasked you with studying this celestial body using a {3} to collect {1} data.",
+				@"Recent advances made by {0} scientists have called into question several commonly held beliefs about {2}. By collecting {1} data directly from {2} using a {3} they could further advance our understanding of this celestial body.",
+				@"Using a {3}, the scientists at {0} would like you to take a spacecraft to {2} and collect {1} data there. They are willing to reward you handsomely for such a task and to provide some initial Funds for your use.",
+				@"A lucrative offer is being made by {0} for the further scientific study of {2}. Using a {3} they want you to collect {1} data and send it back to Kerbin for further study. Generous rewards and initial funding are being offered."};
+			foreach (string s in story)
+				DMUtils.storyList.Add(s);
 			DMUtils.Logging("Successfully Added {0} New Backstories to Story List", DMUtils.storyList.Count);
 		}
 
