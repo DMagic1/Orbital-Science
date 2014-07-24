@@ -32,7 +32,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace DMagic
@@ -52,16 +51,18 @@ namespace DMagic
 		}
 
 		#region Debug Logging
-#if DEBUG
+
 
 		internal static void DebugLog(string s, params object[] stringObjects)
 		{
+#if DEBUG
 			s = string.Format(s, stringObjects);
 			string finalLog = string.Format("[DM] {0}", s);
 			Debug.Log(finalLog);
+#endif
 		}
 
-#endif
+
 		#endregion
 
 
