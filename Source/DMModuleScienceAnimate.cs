@@ -680,8 +680,10 @@ namespace DMagic
 				failMessage = customFailMessage;
 				return false;
 			}
-			else if (scienceExp.requireAtmosphere && vessel.mainBody.atmosphere)
+			else if (scienceExp.requireAtmosphere && !vessel.mainBody.atmosphere) {
+				failMessage = customFailMessage;
 				return false;
+			}
 			else
 				return true;
 		}
