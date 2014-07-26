@@ -256,6 +256,10 @@ namespace DMagic
 			Events["DeployExperiment"].guiActiveUnfocused = externalDeploy;
 			Events["DeployExperiment"].externalToEVAOnly = externalDeploy;
 			Events["DeployExperiment"].unfocusedRange = interactionRange;
+			Actions["deployAction"].guiName = startEventGUIName;
+			Actions["retractAction"].guiName = endEventGUIName;
+			Actions["toggleAction"].guiName = toggleEventGUIName;
+			Actions["DeployAction"].guiName = experimentActionName;
 			if (!primary) {
 				primaryList = this.part.FindModulesImplementing<DMModuleScienceAnimate>();
 				if (primaryList.Count > 0) {
