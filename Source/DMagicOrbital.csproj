@@ -16,19 +16,21 @@
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>Output\Plugin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>Output\Plugin\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -52,13 +54,18 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DMBioDrill.cs" />
-    <Compile Include="DMContract.cs" />
+    <Compile Include="DMConfigLoader.cs" />
+    <Compile Include="DMCollectContract.cs" />
+    <Compile Include="DMCollectScience.cs" />
     <Compile Include="DMEnviroSensor.cs" />
     <Compile Include="DMMagBoomModule.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DMModuleScienceAnimate.cs" />
+    <Compile Include="DMOrbitalSurveyContract.cs" />
+    <Compile Include="DMScienceContainer.cs" />
     <Compile Include="DMSolarCollector.cs" />
+    <Compile Include="DMUtils.cs" />
     <Compile Include="DMWhiteListMods.cs" />
     <Compile Include="MagVar.cs">
       <SubType>Code</SubType>
