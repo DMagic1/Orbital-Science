@@ -41,11 +41,13 @@ namespace DMagic
 		private void Start()
 		{
 			DMUtils.rand = new System.Random();
-			DMUtils.availableScience = new Dictionary<string,DMScienceContainer>();
-			DMUtils.surfaceScience = new Dictionary<string,DMScienceContainer>();
-			DMUtils.atmosphericScience = new Dictionary<string,DMScienceContainer>();
-			DMUtils.orbitalScience = new Dictionary<string,DMScienceContainer>();
+			DMUtils.availableScience = new Dictionary<string, DMScienceContainer>();
+			DMUtils.surfaceScience = new Dictionary<string, DMScienceContainer>();
+			DMUtils.atmosphericScience = new Dictionary<string, DMScienceContainer>();
+			DMUtils.orbitalScience = new Dictionary<string, DMScienceContainer>();
+			DMUtils.bioScience = new Dictionary<string, DMScienceContainer>();
 			DMUtils.storyList = new List<string>();
+			DMUtils.surveyStoryList = new List<string>();
 			DMUtils.DebugLog("Generating Global Random Number Generator");
 			configLoad();
 		}
@@ -93,6 +95,8 @@ namespace DMagic
 						DMUtils.atmosphericScience.Add(name, DMscience);
 					if (((DMScienceType)type & DMScienceType.Space) == DMScienceType.Space)
 						DMUtils.orbitalScience.Add(name, DMscience);
+					if (((DMScienceType)type & DMScienceType.Biological) == DMScienceType.Biological)
+						DMUtils.bioScience.Add(name, DMscience);
 					DMUtils.availableScience.Add(name, DMscience);
 					DMUtils.Logging("New Experiment: [{0}] Available For Contracts", name);
 				}
@@ -111,9 +115,18 @@ namespace DMagic
 							DMUtils.storyList.Add(story);
 						}
 					}
+					foreach (string so in storyNode.GetValues("survey"))
+					{
+						if (!string.IsNullOrEmpty(so))
+						{
+							string story_o = so.Replace("[", "{");
+							story_o = story_o.Replace("]", "}");
+							DMUtils.surveyStoryList.Add(story_o);
+						}
+					}
 				}
 			}
-			DMUtils.Logging("Successfully Added {0} New Backstories to Story List", DMUtils.storyList.Count);
+			DMUtils.Logging("Successfully Added {0} New Generic Backstories And {1} New Survey Backstories To The List", DMUtils.storyList.Count, DMUtils.surveyStoryList.Count);
 		}
 
 		private void OnDestroy()
