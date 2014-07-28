@@ -44,8 +44,10 @@ namespace DMagic
 		internal static Dictionary<string, DMScienceContainer> surfaceScience;
 		internal static Dictionary<string, DMScienceContainer> atmosphericScience;
 		internal static Dictionary<string, DMScienceContainer> orbitalScience;
+		internal static Dictionary<string, DMScienceContainer> bioScience;
 		internal static float science, reward, forward, penalty;
 		internal static List<string> storyList;
+		internal static List<string> surveyStoryList;
 
 		internal static void Logging(string s, params object[] stringObjects)
 		{
@@ -120,7 +122,7 @@ namespace DMagic
 			}
 			if (((ExperimentSituations)i & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded && b.pqsController != null)
 			{
-				if (!exp.requireAtmosphere)
+				if (!exp.requireAtmosphere && exp.id != "dmbiodrillscan")
 					expSitList.Add(ExperimentSituations.SrfLanded);
 				else if (b.atmosphere)
 					expSitList.Add(ExperimentSituations.SrfLanded);
@@ -468,17 +470,17 @@ namespace DMagic
 					return null;
 			}
 
-			return new DMCollectScience(body, targetSituation, biome, name, 0);
+			return new DMCollectScience(body, targetSituation, biome, name, 1);
 		}
 
 
 	}
 
-	static class DMOrbitalSurveyGenerator
+	static class DMSurveyGenerator
 	{
 		private static System.Random rand = DMUtils.rand;
 
-		internal static DMCollectScience fetchOrbitalScience(Contract.ContractPrestige c, List<CelestialBody> cR, List<CelestialBody> cUR)
+		internal static DMCollectScience fetchSurveyScience(Contract.ContractPrestige c, List<CelestialBody> cR, List<CelestialBody> cUR, int sT)
 		{
 			DMScienceContainer scienceContainer;
 			CelestialBody body;
@@ -487,9 +489,28 @@ namespace DMagic
 			AvailablePart aPart;
 			string name;
 			string biome = "";
+			int surveyType = sT;
 
-			scienceContainer = DMUtils.orbitalScience.ElementAt(rand.Next(0, DMUtils.orbitalScience.Count)).Value;
-			name = DMUtils.orbitalScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			if (c == Contract.ContractPrestige.Trivial)
+				return null;
+
+			if (surveyType == 0)
+			{
+				scienceContainer = DMUtils.orbitalScience.ElementAt(rand.Next(0, DMUtils.orbitalScience.Count)).Value;
+				name = DMUtils.orbitalScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			}
+			else if (surveyType == 1)
+			{
+				scienceContainer = DMUtils.surfaceScience.ElementAt(rand.Next(0, DMUtils.surfaceScience.Count)).Value;
+				name = DMUtils.surfaceScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			}
+			else if (surveyType == 2)
+			{
+				scienceContainer = DMUtils.atmosphericScience.ElementAt(rand.Next(0, DMUtils.atmosphericScience.Count)).Value;
+				name = DMUtils.atmosphericScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			}
+			else
+				return null;
 
 			//Determine if the science part is available if applicable
 			if (scienceContainer.sciPart != "None")
@@ -512,15 +533,51 @@ namespace DMagic
 			if (exp == null)
 				return null;
 
-			if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+			if (surveyType == 0)
 			{
-				if (rand.Next(0, 2) == 0)
-					targetSituation = ExperimentSituations.InSpaceHigh;
+				if (!body.atmosphere && scienceContainer.exp.requireAtmosphere)
+					return null;
+				if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+				{
+					if (rand.Next(0, 2) == 0)
+						targetSituation = ExperimentSituations.InSpaceHigh;
+					else
+						targetSituation = ExperimentSituations.InSpaceLow;
+				}
 				else
 					targetSituation = ExperimentSituations.InSpaceLow;
 			}
+			else if (surveyType == 1)
+			{
+				if (body.pqsController == null)
+					return null;
+				if (!body.atmosphere && scienceContainer.exp.requireAtmosphere)
+					return null;
+				if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.SrfSplashed) == ExperimentSituations.SrfSplashed)
+				{
+					if (rand.Next(0, 2) == 0 && body.ocean)
+						targetSituation = ExperimentSituations.SrfSplashed;
+					else
+						targetSituation = ExperimentSituations.SrfLanded;
+				}
+				else if (scienceContainer.exp.id != "dmbiodrillscan")
+					targetSituation = ExperimentSituations.SrfLanded;
+				else if (body.atmosphere)
+					targetSituation = ExperimentSituations.SrfLanded;
+				else
+					return null;
+			}
+			else if (surveyType == 2)
+			{
+				if (!body.atmosphere)
+					return null;
+				if (rand.Next(0, 2) == 0)
+					targetSituation = ExperimentSituations.FlyingHigh;
+				else
+					targetSituation = ExperimentSituations.FlyingLow;
+			}
 			else
-				targetSituation = ExperimentSituations.InSpaceLow;
+				return null;
 
 			if (DMUtils.biomeRelevant(targetSituation, scienceContainer.bioMask))
 			{
@@ -538,7 +595,7 @@ namespace DMagic
 			return new DMCollectScience(body, targetSituation, biome, name, 1);
 		}
 
-		internal static DMCollectScience fetchOrbitalScience(CelestialBody b)
+		internal static DMCollectScience fetchSurveyScience(CelestialBody b, int sT)
 		{
 			DMScienceContainer scienceContainer;
 			CelestialBody body = b;
@@ -547,9 +604,25 @@ namespace DMagic
 			AvailablePart aPart;
 			string name;
 			string biome = "";
+			int surveyType = sT;
 
-			scienceContainer = DMUtils.orbitalScience.ElementAt(rand.Next(0, DMUtils.orbitalScience.Count)).Value;
-			name = DMUtils.orbitalScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			if (surveyType == 0)
+			{
+				scienceContainer = DMUtils.orbitalScience.ElementAt(rand.Next(0, DMUtils.orbitalScience.Count)).Value;
+				name = DMUtils.orbitalScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			}
+			else if (surveyType == 1)
+			{
+				scienceContainer = DMUtils.surfaceScience.ElementAt(rand.Next(0, DMUtils.surfaceScience.Count)).Value;
+				name = DMUtils.surfaceScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			}
+			else if (surveyType == 2)
+			{
+				scienceContainer = DMUtils.atmosphericScience.ElementAt(rand.Next(0, DMUtils.atmosphericScience.Count)).Value;
+				name = DMUtils.atmosphericScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			}
+			else
+				return null;
 
 			//Determine if the science part is available if applicable
 			if (scienceContainer.sciPart != "None")
@@ -568,15 +641,51 @@ namespace DMagic
 			if (exp == null)
 				return null;
 
-			if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+			if (surveyType == 0)
 			{
-				if (rand.Next(0, 2) == 0)
-					targetSituation = ExperimentSituations.InSpaceHigh;
+				if (!body.atmosphere && scienceContainer.exp.requireAtmosphere)
+					return null;
+				if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+				{
+					if (rand.Next(0, 2) == 0)
+						targetSituation = ExperimentSituations.InSpaceHigh;
+					else
+						targetSituation = ExperimentSituations.InSpaceLow;
+				}
 				else
 					targetSituation = ExperimentSituations.InSpaceLow;
 			}
+			else if (surveyType == 1)
+			{
+				if (body.pqsController == null)
+					return null;
+				if (!body.atmosphere && scienceContainer.exp.requireAtmosphere)
+					return null;
+				if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.SrfSplashed) == ExperimentSituations.SrfSplashed)
+				{
+					if (rand.Next(0, 2) == 0 && body.ocean)
+						targetSituation = ExperimentSituations.SrfSplashed;
+					else
+						targetSituation = ExperimentSituations.SrfLanded;
+				}
+				else if (scienceContainer.exp.id != "dmbiodrillscan")
+					targetSituation = ExperimentSituations.SrfLanded;
+				else if (body.atmosphere)
+					targetSituation = ExperimentSituations.SrfLanded;
+				else
+					return null;
+			}
+			else if (surveyType == 2)
+			{
+				if (!body.atmosphere)
+					return null;
+				if (rand.Next(0, 2) == 0)
+					targetSituation = ExperimentSituations.FlyingHigh;
+				else
+					targetSituation = ExperimentSituations.FlyingLow;
+			}
 			else
-				targetSituation = ExperimentSituations.InSpaceLow;
+				return null;
 
 			if (DMUtils.biomeRelevant(targetSituation, scienceContainer.bioMask))
 			{
