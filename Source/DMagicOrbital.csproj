@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <IntermediateOutputPath>C:\Users\david_000\Documents\Visual Studio 2010\Projects\Bin and Obj Backup\DMagic</IntermediateOutputPath>
+    <IntermediateOutputPath>C:\Users\David\Documents\Visual Studio 2010\Backup Files\Obj and Bin Folders\DMagic</IntermediateOutputPath>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
@@ -36,15 +36,13 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\KSP Science\KSP DEV\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\..\KSP Science\KSP DEV\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -54,10 +52,12 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DMBioDrill.cs" />
-    <Compile Include="DMConfigLoader.cs" />
     <Compile Include="DMCollectContract.cs" />
     <Compile Include="DMCollectScience.cs" />
+    <Compile Include="DMConfigLoader.cs" />
     <Compile Include="DMEnviroSensor.cs" />
+    <Compile Include="DMGroundSurveyContract.cs" />
+    <Compile Include="DMBioSurveyContract.cs" />
     <Compile Include="DMMagBoomModule.cs">
       <SubType>Code</SubType>
     </Compile>
