@@ -94,7 +94,7 @@ namespace DMagic
 					if (((DMScienceType)type & DMScienceType.Space) == DMScienceType.Space)
 						DMUtils.orbitalScience.Add(name, DMscience);
 					DMUtils.availableScience.Add(name, DMscience);
-					DMUtils.Logging("New Experiment: [{0}] Available For Contracts", exp.experimentTitle);
+					DMUtils.Logging("New Experiment: [{0}] Available For Contracts", name);
 				}
 			}
 			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience.Count);
