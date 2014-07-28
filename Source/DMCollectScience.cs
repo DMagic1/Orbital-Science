@@ -160,6 +160,7 @@ namespace DMagic
 			DMUtils.DebugLog("Loading Contract Parameter");
 			int targetBodyID, targetLocation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
+			name = scienceString[0];
 			DMUtils.availableScience.TryGetValue(scienceString[0], out scienceContainer);
 			if (int.TryParse(scienceString[1], out targetBodyID))
 				body = FlightGlobals.Bodies[targetBodyID];
