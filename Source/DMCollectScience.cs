@@ -44,7 +44,7 @@ namespace DMagic
 		private string subject;
 		private string name;
 		private string biomeName;
-		private int type;
+		private int type; //type 0: standard experiment; type 1: orbital survey; type 2: ground survey
 
 		public DMCollectScience()
 		{
@@ -59,6 +59,13 @@ namespace DMagic
 			type = Type;
 			DMUtils.availableScience.TryGetValue(name, out scienceContainer);
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
+			if (type == 1)
+			{
+				float subjectValue = DMModuleScienceAnimate.fixSubjectValue(location, 1f, 1f, body);
+				base.SetScience(scienceContainer.exp.baseValue * subjectValue, body);
+				base.SetFunds(1000f * subjectValue, 700f * subjectValue, body);
+				base.SetReputation(6f * subjectValue, 8f * subjectValue, body);
+			}
 		}
 
 		//Properties to be accessed by parent contract
