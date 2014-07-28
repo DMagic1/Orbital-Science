@@ -29,6 +29,7 @@
  */
 #endregion
 
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DMagic
@@ -40,6 +41,11 @@ namespace DMagic
 		private void Start()
 		{
 			DMUtils.rand = new System.Random();
+			DMUtils.availableScience = new Dictionary<string,DMScienceContainer>();
+			DMUtils.surfaceScience = new Dictionary<string,DMScienceContainer>();
+			DMUtils.atmosphericScience = new Dictionary<string,DMScienceContainer>();
+			DMUtils.orbitalScience = new Dictionary<string,DMScienceContainer>();
+			DMUtils.storyList = new List<string>();
 			DMUtils.DebugLog("Generating Global Random Number Generator");
 			configLoad();
 		}
@@ -59,8 +65,9 @@ namespace DMagic
 				}
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_EXPERIMENT"))
 			{
-				string name, part, techNode, agent, expID = "";
-				int sitMask, bioMask = 0;
+				string name, part, agent, expID = "";
+				int sitMask, bioMask, type = 0;
+				DMScienceContainer DMscience = null;
 				expID = node.GetValue("experimentID");
 				ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(expID);
 				if (exp != null)
@@ -68,16 +75,20 @@ namespace DMagic
 					name = node.GetValue("name");
 					sitMask = int.Parse(node.GetValue("sitMask"));
 					bioMask = int.Parse(node.GetValue("bioMask"));
+					type = int.Parse(node.GetValue("type"));
 					part = node.GetValue("part");
-					if (node.HasValue("techNode"))
-						techNode = node.GetValue("techNode");
-					else
-						techNode = "None";
 					if (node.HasValue("agent"))
 						agent = node.GetValue("agent");
 					else
 						agent = "Any";
-					DMUtils.availableScience.Add(name, new DMcontractScience(expID, exp, sitMask, bioMask, part, techNode, agent));
+					DMscience = new DMScienceContainer(expID, exp, sitMask, bioMask, (DMScienceType)type, part, agent);
+					if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface)
+						DMUtils.surfaceScience.Add(name, DMscience);
+					if (((DMScienceType)type & DMScienceType.Aerial) == DMScienceType.Aerial)
+						DMUtils.atmosphericScience.Add(name, DMscience);
+					if (((DMScienceType)type & DMScienceType.Space) == DMScienceType.Space)
+						DMUtils.orbitalScience.Add(name, DMscience);
+					DMUtils.availableScience.Add(name, DMscience);
 					DMUtils.Logging("New Experiment: [{0}] Available For Contracts", exp.experimentTitle);
 				}
 			}
@@ -106,25 +117,6 @@ namespace DMagic
 
 	}
 
-	internal class DMcontractScience
-	{
-		internal string name;
-		internal int sitMask, bioMask;
-		internal ScienceExperiment exp;
-		internal string sciPart;
-		internal string sciNode;
-		internal string agent;
 
-		internal DMcontractScience(string expName, ScienceExperiment sciExp, int sciSitMask, int sciBioMask, string sciPartID, string sciTechNode, string agentName)
-		{
-			name = expName;
-			sitMask = sciSitMask;
-			bioMask = sciBioMask;
-			exp = sciExp;
-			sciPart = sciPartID;
-			sciNode = sciTechNode;
-			agent = agentName;
-		}
-	}
 
 }
