@@ -36,11 +36,10 @@ namespace DMagic
 		internal int sitMask, bioMask;
 		internal DMScienceType type;
 		internal ScienceExperiment exp;
-		internal string sciPart, agent, name;
+		internal string sciPart, agent;
 
-		internal DMScienceContainer(string expName, ScienceExperiment sciExp, int sciSitMask, int sciBioMask, DMScienceType Type,  string sciPartID, string agentName)
+		internal DMScienceContainer(ScienceExperiment sciExp, int sciSitMask, int sciBioMask, DMScienceType Type,  string sciPartID, string agentName)
 		{
-			name = expName;
 			sitMask = sciSitMask;
 			bioMask = sciBioMask;
 			exp = sciExp;
