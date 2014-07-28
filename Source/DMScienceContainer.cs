@@ -53,6 +53,7 @@ namespace DMagic
 	{
 		Surface = 1,
 		Aerial = 2,
-		Space = 4
+		Space = 4,
+		Biological = 8,
 	}
 }
