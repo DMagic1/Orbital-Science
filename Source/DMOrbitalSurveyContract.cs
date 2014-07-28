@@ -1,7 +1,38 @@
-﻿using System;
+﻿#region license
+/* DMagic Orbital Science - DMOrbitalSurveyContract
+ * Class for generating orbital science experiment contracts
+ *
+ * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, 
+ * are permitted provided that the following conditions are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright notice, 
+ * this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright notice, 
+ * this list of conditions and the following disclaimer in the documentation and/or other materials 
+ * provided with the distribution.
+ * 
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used 
+ * to endorse or promote products derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  
+ */
+#endregion
+
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
@@ -12,6 +43,7 @@ namespace DMagic
 	class DMOrbitalSurveyContract: Contract
 	{
 		internal DMCollectScience[] newParams = new DMCollectScience[5];
+		private EnterOrbit orbitParam;
 		private CelestialBody body;
 		private int i = 0;
 		private System.Random rand = DMUtils.rand;
@@ -20,24 +52,26 @@ namespace DMagic
 		{
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
-			if (ContractSystem.Instance.GetCurrentContracts<DMOrbitalSurveyContract>().Count() > 1)
+			if (ContractSystem.Instance.GetCurrentContracts<DMOrbitalSurveyContract>().Count() > 0)
 				return false;
-			//No trivial contracts here
-			this.prestige = (ContractPrestige)rand.Next(1, 3);
 
 			//Generates the science experiment, returns null if experiment fails any check
-			if ((newParams[0] = DMOrbitalSurveyGenerator.fetchOrbitalScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null))) == null)
+			if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null), 0)) == null)
 				return false;
 
 			body = newParams[0].Body;
 
-			//Generate several more experiments using the target body returned from the first
-			if ((newParams[1] = DMOrbitalSurveyGenerator.fetchOrbitalScience(body)) == null)
+			//Generate several more experiments using the target body returned from the first; needs at least 3
+			if ((newParams[1] = DMSurveyGenerator.fetchSurveyScience(body, 0)) == null)
 				return false;
-			if ((newParams[2] = DMOrbitalSurveyGenerator.fetchOrbitalScience(body)) == null)
+			if ((newParams[2] = DMSurveyGenerator.fetchSurveyScience(body, 0)) == null)
 				return false;
-			newParams[3] = DMOrbitalSurveyGenerator.fetchOrbitalScience(body);
-			newParams[4] = DMOrbitalSurveyGenerator.fetchOrbitalScience(body);
+			newParams[3] = DMSurveyGenerator.fetchSurveyScience(body, 0);
+			newParams[4] = DMSurveyGenerator.fetchSurveyScience(body, 0);
+
+			//Add an orbital parameter
+			orbitParam = new EnterOrbit(body);
+			this.AddParameter(orbitParam, null);
 
 			//Add in all acceptable paramaters to the contract
 			foreach(DMCollectScience DMC in newParams)
@@ -45,14 +79,20 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(newParams[i], null);
-					DMUtils.DebugLog("Parameter Added");
+					DMUtils.DebugLog("Orbital Survey Parameter Added");
 				}
 				i++;
 			}
 
-			this.agent = Contracts.Agents.AgentList.Instance.GetAgent("DMagic");
+			int a = rand.Next(0, 5);
+			if (a == 0)
+				this.agent = Contracts.Agents.AgentList.Instance.GetAgent("DMagic");
+			else if (a == 1)
+				this.agent = Contracts.Agents.AgentList.Instance.GetAgent(newParams[0].Container.agent);
+			else
+				this.agent = Contracts.Agents.AgentList.Instance.GetAgentRandom();
+
 			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
-			base.SetScience(newParams.Length * body.scienceValues.InSpaceLowDataValue * 2, body);
 			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
 			base.SetReputation(newParams.Length * body.scienceValues.InSpaceLowDataValue * 0.5f, body);
 			base.SetFunds(3000 * newParams.Length * body.scienceValues.InSpaceLowDataValue, 3000 * newParams.Length, 1000 * newParams.Length * body.scienceValues.InSpaceLowDataValue, body);
@@ -76,18 +116,19 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return "Stupid Code Is Stupid";
+			return string.Format("Conduct an orbital survey of {0} by collecting multiple scienctific observations", body.theName);
 		}
 
 		protected override string GetDescription()
 		{
-			string story = DMUtils.storyList[rand.Next(0, DMUtils.storyList.Count)];
-			return "Do Something!";
+			//Return a random survey backstory; use the same format as generic backstory
+			string story = DMUtils.surveyStoryList[rand.Next(0, DMUtils.surveyStoryList.Count)];
+			return string.Format(story, this.agent.Name, "orbital", body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
-			DMUtils.DebugLog("Generating Synopsis From Target Body: [{0}]", body.theName);
+			DMUtils.DebugLog("Generating Orbital Synopsis From Target Body: [{0}]", body.theName);
 			return string.Format("Conduct an orbital survey of {0} by collecting multiple science observations.", body.theName);
 		}
 
@@ -98,7 +139,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Contract");
+			DMUtils.DebugLog("Loading Orbital Contract");
 			int target;
 			target = int.Parse(node.GetValue("Orbital_Survey_Target"));
 			body = FlightGlobals.Bodies[target];
@@ -106,7 +147,7 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Contract");
+			DMUtils.DebugLog("Saving Orbital Contract");
 			node.AddValue("Orbital_Survey_Target", body.flightGlobalsIndex);
 		}
 
