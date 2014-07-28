@@ -65,23 +65,28 @@ namespace DMagic
 				}
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_EXPERIMENT"))
 			{
-				string name, part, agent, expID = "";
+				string name, part, agent = "";
 				int sitMask, bioMask, type = 0;
 				DMScienceContainer DMscience = null;
-				expID = node.GetValue("experimentID");
-				ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(expID);
+				ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(node.GetValue("experimentID"));
 				if (exp != null)
 				{
 					name = node.GetValue("name");
-					sitMask = int.Parse(node.GetValue("sitMask"));
-					bioMask = int.Parse(node.GetValue("bioMask"));
-					type = int.Parse(node.GetValue("type"));
-					part = node.GetValue("part");
+					if (!int.TryParse(node.GetValue("sitMask"), out sitMask))
+						continue;
+					if (!int.TryParse(node.GetValue("bioMask"), out bioMask))
+						continue;
+					if (!int.TryParse(node.GetValue("type"), out type))
+						continue;
+					if (node.HasValue("part"))
+						part = node.GetValue("part");
+					else
+						part = "None";
 					if (node.HasValue("agent"))
 						agent = node.GetValue("agent");
 					else
 						agent = "Any";
-					DMscience = new DMScienceContainer(expID, exp, sitMask, bioMask, (DMScienceType)type, part, agent);
+					DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent);
 					if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface)
 						DMUtils.surfaceScience.Add(name, DMscience);
 					if (((DMScienceType)type & DMScienceType.Aerial) == DMScienceType.Aerial)
