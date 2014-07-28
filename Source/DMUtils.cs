@@ -488,8 +488,8 @@ namespace DMagic
 			string name;
 			string biome = "";
 
-			scienceContainer = DMUtils.orbitalScience.ElementAt(rand.Next(0, DMUtils.availableScience.Count)).Value;
-			name = DMUtils.availableScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			scienceContainer = DMUtils.orbitalScience.ElementAt(rand.Next(0, DMUtils.orbitalScience.Count)).Value;
+			name = DMUtils.orbitalScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
 
 			//Determine if the science part is available if applicable
 			if (scienceContainer.sciPart != "None")
@@ -548,8 +548,8 @@ namespace DMagic
 			string name;
 			string biome = "";
 
-			scienceContainer = DMUtils.orbitalScience.ElementAt(rand.Next(0, DMUtils.availableScience.Count)).Value;
-			name = DMUtils.availableScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
+			scienceContainer = DMUtils.orbitalScience.ElementAt(rand.Next(0, DMUtils.orbitalScience.Count)).Value;
+			name = DMUtils.orbitalScience.FirstOrDefault(n => n.Value == scienceContainer).Key;
 
 			//Determine if the science part is available if applicable
 			if (scienceContainer.sciPart != "None")
