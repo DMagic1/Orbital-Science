@@ -559,7 +559,7 @@ namespace DMagic
 			if (keepDeployedMode == 1) retractEvent();
 		}
 
-		internal static float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
+		internal float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
 		{
 			float subV = f;
 			if (s == ExperimentSituations.SrfLanded) subV = body.scienceValues.LandedDataValue;
