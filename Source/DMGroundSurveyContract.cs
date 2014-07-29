@@ -43,7 +43,6 @@ namespace DMagic
 	class DMGroundSurveyContract: Contract
 	{
 		internal DMCollectScience[] newParams = new DMCollectScience[5];
-		private LandOnBody landParam;
 		private CelestialBody body;
 		private int i = 0;
 		private System.Random rand = DMUtils.rand;
@@ -53,6 +52,15 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			if (ContractSystem.Instance.GetCurrentContracts<DMGroundSurveyContract>().Count() > 0)
+				return false;
+			if (this.Prestige == ContractPrestige.Trivial)
+				return false;
+
+			//Make sure that the laser is at least available
+			AvailablePart aPart = PartLoader.getPartInfoByName("dmsurfacelaser");
+			if (aPart == null)
+				return false;
+			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 				return false;
 
 			//Generates the science experiment, returns null if experiment fails any check
@@ -64,13 +72,11 @@ namespace DMagic
 			//Generate several more experiments using the target body returned from the first; needs at least 3
 			if ((newParams[1] = DMSurveyGenerator.fetchSurveyScience(body, 1)) == null)
 				return false;
-			if ((newParams[2] = DMSurveyGenerator.fetchSurveyScience(body, 1)) == null)
-				return false;
+			newParams[2] = DMSurveyGenerator.fetchSurveyScience(body, 1);
 			newParams[3] = DMSurveyGenerator.fetchSurveyScience(body, 1);
-			newParams[4] = DMSurveyGenerator.fetchSurveyScience(body, 1);
 
 			//Add a landing parameter
-			landParam = new LandOnBody(body);
+			LandOnBody landParam = new LandOnBody(body);
 			this.AddParameter(landParam, null);
 
 			//Add in all acceptable paramaters to the contract
@@ -79,6 +85,9 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(newParams[i], null);
+					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f, body);
+					DMC.SetFunds(600f, body);
+					DMC.SetReputation(6f, body);
 					DMUtils.DebugLog("Ground Survey Parameter Added");
 				}
 				i++;
@@ -94,8 +103,8 @@ namespace DMagic
 
 			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
 			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
-			base.SetReputation(newParams.Length * body.scienceValues.InSpaceLowDataValue * 0.5f, body);
-			base.SetFunds(3000 * newParams.Length * body.scienceValues.InSpaceLowDataValue, 3000 * newParams.Length, 1000 * newParams.Length * body.scienceValues.InSpaceLowDataValue, body);
+			base.SetReputation(newParams.Length * 0.5f, body);
+			base.SetFunds(3000 * newParams.Length, 3000 * newParams.Length, 1000 * newParams.Length, body);
 			return true;
 		}
 
@@ -122,14 +131,14 @@ namespace DMagic
 		protected override string GetDescription()
 		{
 			//Return a random orbital survey backstory; use the same format as generic backstory
-			string story = DMUtils.surveyStoryList[rand.Next(0, DMUtils.surveyStoryList.Count)];
+			string story = DMUtils.backStory["survey"][rand.Next(0, DMUtils.backStory["survey"].Count)];
 			return string.Format(story, this.agent.Name, "surface", body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
 			DMUtils.DebugLog("Generating Ground Synopsis From Target Body: [{0}]", body.theName);
-			return string.Format("Conduct an surface survey of {0} by collecting multiple science observations.", body.theName);
+			return string.Format("Study the surface of {0} by collecting multiple scientific observations.", body.theName);
 		}
 
 		protected override string MessageCompleted()

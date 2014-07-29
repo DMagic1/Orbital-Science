@@ -43,7 +43,6 @@ namespace DMagic
 	class DMOrbitalSurveyContract: Contract
 	{
 		internal DMCollectScience[] newParams = new DMCollectScience[5];
-		private EnterOrbit orbitParam;
 		private CelestialBody body;
 		private int i = 0;
 		private System.Random rand = DMUtils.rand;
@@ -53,6 +52,15 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			if (ContractSystem.Instance.GetCurrentContracts<DMOrbitalSurveyContract>().Count() > 0)
+				return false;
+			if (this.Prestige == ContractPrestige.Trivial)
+				return false;
+
+			//Make sure that the magnetometer is at least available
+			AvailablePart aPart = PartLoader.getPartInfoByName("dmmagBoom");
+			if (aPart == null)
+				return false;
+			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 				return false;
 
 			//Generates the science experiment, returns null if experiment fails any check
@@ -64,13 +72,11 @@ namespace DMagic
 			//Generate several more experiments using the target body returned from the first; needs at least 3
 			if ((newParams[1] = DMSurveyGenerator.fetchSurveyScience(body, 0)) == null)
 				return false;
-			if ((newParams[2] = DMSurveyGenerator.fetchSurveyScience(body, 0)) == null)
-				return false;
+			newParams[2] = DMSurveyGenerator.fetchSurveyScience(body, 0);
 			newParams[3] = DMSurveyGenerator.fetchSurveyScience(body, 0);
-			newParams[4] = DMSurveyGenerator.fetchSurveyScience(body, 0);
 
 			//Add an orbital parameter
-			orbitParam = new EnterOrbit(body);
+			EnterOrbit orbitParam = new EnterOrbit(body);
 			this.AddParameter(orbitParam, null);
 
 			//Add in all acceptable paramaters to the contract
@@ -79,6 +85,9 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(newParams[i], null);
+					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f, body);
+					DMC.SetFunds(600f, body);
+					DMC.SetReputation(6f, body);
 					DMUtils.DebugLog("Orbital Survey Parameter Added");
 				}
 				i++;
@@ -94,8 +103,8 @@ namespace DMagic
 
 			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
 			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
-			base.SetReputation(newParams.Length * body.scienceValues.InSpaceLowDataValue * 0.5f, body);
-			base.SetFunds(3000 * newParams.Length * body.scienceValues.InSpaceLowDataValue, 3000 * newParams.Length, 1000 * newParams.Length * body.scienceValues.InSpaceLowDataValue, body);
+			base.SetReputation(newParams.Length * 0.5f, body);
+			base.SetFunds(3000 * newParams.Length, 3000 * newParams.Length, 1000 * newParams.Length, body);
 			return true;
 		}
 
@@ -122,7 +131,7 @@ namespace DMagic
 		protected override string GetDescription()
 		{
 			//Return a random survey backstory; use the same format as generic backstory
-			string story = DMUtils.surveyStoryList[rand.Next(0, DMUtils.surveyStoryList.Count)];
+			string story = DMUtils.backStory["survey"][rand.Next(0, DMUtils.backStory["survey"].Count)];
 			return string.Format(story, this.agent.Name, "orbital", body.theName);
 		}
 
