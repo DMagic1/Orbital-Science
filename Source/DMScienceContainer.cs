@@ -51,6 +51,7 @@ namespace DMagic
 
 	internal enum DMScienceType
 	{
+		None = 0,
 		Surface = 1,
 		Aerial = 2,
 		Space = 4,
