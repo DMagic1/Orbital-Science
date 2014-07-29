@@ -70,12 +70,12 @@ namespace DMagic
 
 			//Set various parameters to be used for the title, rewards, descriptions, etc...
 			body = newParam.Body;
-			targetSituation = newParam.Sit;
+			targetSituation = newParam.Situation;
 			DMscience = newParam.Container;
 			biome = newParam.Biome;
 			subject = newParam.Subject;
 			name = newParam.Name;
-			subjectValue = DMModuleScienceAnimate.fixSubjectValue(targetSituation, 1, 1, body);
+			subjectValue = DMUtils.fixSubjectVal(targetSituation, 1f, body);
 			try
 			{
 				aPart = PartLoader.getPartInfoByName(DMscience.sciPart);
@@ -93,10 +93,10 @@ namespace DMagic
 			this.AddParameter(newParam, null);
 			DMUtils.DebugLog("Parameter Added");
 			base.SetExpiry(10 * subjectValue, Math.Max(15, 15 * subjectValue) * (float)(this.prestige + 1));
-			base.SetScience(Math.Max(DMscience.exp.baseValue, (DMscience.exp.baseValue * subjectValue) / 2) * DMUtils.science, body);
-			base.SetDeadlineDays(20f * subjectValue * (float)(this.prestige + 1), body);
+			base.SetScience(DMscience.exp.baseValue * 0.8f * DMUtils.science, body);
+			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
 			base.SetReputation(5f * (float)(this.prestige + 1), 10f * (float)(this.prestige + 1), body);
-			base.SetFunds(100f * subjectValue * DMUtils.forward, 1000f * subjectValue * DMUtils.reward, 500f * subjectValue * DMUtils.penalty, body);
+			base.SetFunds(600f * DMUtils.forward, 500f * DMUtils.reward, 500f * DMUtils.penalty, body);
 			return true;
 		}
 
@@ -130,7 +130,7 @@ namespace DMagic
 
 		protected override string GetDescription()
 		{
-			string story = DMUtils.storyList[rand.Next(0, DMUtils.storyList.Count)];
+			string story = DMUtils.backStory["generic"][rand.Next(0, DMUtils.backStory["generic"].Count)];
 			if (aPart != null)
 				return string.Format(story, this.agent.Name, name, body.theName, aPart.title, targetSituation);
 			else
@@ -184,7 +184,7 @@ namespace DMagic
 			int targetBodyID, targetLocation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			name = scienceString[0];
-			if (DMUtils.availableScience.TryGetValue(name, out DMscience))
+			if (DMUtils.availableScience["All"].TryGetValue(name, out DMscience))
 			{
 				try
 				{
