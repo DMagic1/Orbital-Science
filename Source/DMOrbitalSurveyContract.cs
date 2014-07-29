@@ -42,7 +42,7 @@ namespace DMagic
 {
 	class DMOrbitalSurveyContract: Contract
 	{
-		internal DMCollectScience[] newParams = new DMCollectScience[5];
+		internal DMCollectScience[] newParams = new DMCollectScience[4];
 		private CelestialBody body;
 		private int i = 0;
 		private System.Random rand = DMUtils.rand;
@@ -85,9 +85,9 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(newParams[i], null);
-					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f, body);
-					DMC.SetFunds(600f, body);
-					DMC.SetReputation(6f, body);
+					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f * DMUtils.science, body);
+					DMC.SetFunds(600f * DMUtils.reward, body);
+					DMC.SetReputation(6f * DMUtils.reward, body);
 					DMUtils.DebugLog("Orbital Survey Parameter Added");
 				}
 				i++;
@@ -103,8 +103,8 @@ namespace DMagic
 
 			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
 			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
-			base.SetReputation(newParams.Length * 0.5f, body);
-			base.SetFunds(3000 * newParams.Length, 3000 * newParams.Length, 1000 * newParams.Length, body);
+			base.SetReputation(newParams.Length * 0.5f * DMUtils.reward, body);
+			base.SetFunds(3000 * newParams.Length * DMUtils.forward, 3000 * newParams.Length * DMUtils.reward, 1000 * newParams.Length * DMUtils.penalty, body);
 			return true;
 		}
 

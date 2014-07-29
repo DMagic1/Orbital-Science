@@ -87,7 +87,6 @@ namespace DMagic
 			else
 				return false;
 
-			//Check for the availability of 
 			for (i = 0; i < 5; i++)
 			{
 				DMScienceContainer DMScience = DMUtils.availableScience[DMScienceType.Biological.ToString()].ElementAt(i).Value;
@@ -106,9 +105,9 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(newParams[j], null);
-					DMC.SetScience(DMC.Container.exp.baseValue * 0.75f, body);
-					DMC.SetFunds(800f, body);
-					DMC.SetReputation(6f, body);
+					DMC.SetScience(DMC.Container.exp.baseValue * 0.75f * DMUtils.science, body);
+					DMC.SetFunds(800f * DMUtils.reward, body);
+					DMC.SetReputation(6f * DMUtils.reward, body);
 					DMUtils.DebugLog("Bio Parameter Added");
 				}
 				j++;
@@ -124,8 +123,8 @@ namespace DMagic
 
 			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
 			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
-			base.SetReputation(newParams.Length * 0.5f, body);
-			base.SetFunds(3000 * newParams.Length, 3000 * newParams.Length, 1000 * newParams.Length, body);
+			base.SetReputation(newParams.Length * 0.5f * DMUtils.reward, body);
+			base.SetFunds(3000 * newParams.Length * DMUtils.forward, 3000 * newParams.Length * DMUtils.reward, 1000 * newParams.Length * DMUtils.penalty, body);
 			return true;
 		}
 
