@@ -40,20 +40,13 @@ namespace DMagic
 
 		private void Start()
 		{
-			DMUtils.rand = new System.Random();
-			DMUtils.availableScience = new Dictionary<string, DMScienceContainer>();
-			DMUtils.surfaceScience = new Dictionary<string, DMScienceContainer>();
-			DMUtils.atmosphericScience = new Dictionary<string, DMScienceContainer>();
-			DMUtils.orbitalScience = new Dictionary<string, DMScienceContainer>();
-			DMUtils.bioScience = new Dictionary<string, DMScienceContainer>();
-			DMUtils.storyList = new List<string>();
-			DMUtils.surveyStoryList = new List<string>();
-			DMUtils.DebugLog("Generating Global Random Number Generator");
+			initializeUtils();
 			configLoad();
 		}
 
 		private void configLoad()
 		{
+			//Load in global multipliers
 			foreach (ConfigNode setNode in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_SETTINGS"))
 				if (setNode.GetValue("name") == "Contract Settings")
 				{
@@ -65,6 +58,7 @@ namespace DMagic
 						DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty);
 					break;
 				}
+			//Load in experiment definitions
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_EXPERIMENT"))
 			{
 				string name, part, agent = "";
@@ -90,18 +84,19 @@ namespace DMagic
 						agent = "Any";
 					DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent);
 					if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface)
-						DMUtils.surfaceScience.Add(name, DMscience);
+						DMUtils.availableScience[DMScienceType.Surface.ToString()].Add(name, DMscience);
 					if (((DMScienceType)type & DMScienceType.Aerial) == DMScienceType.Aerial)
-						DMUtils.atmosphericScience.Add(name, DMscience);
+						DMUtils.availableScience[DMScienceType.Aerial.ToString()].Add(name, DMscience);
 					if (((DMScienceType)type & DMScienceType.Space) == DMScienceType.Space)
-						DMUtils.orbitalScience.Add(name, DMscience);
+						DMUtils.availableScience[DMScienceType.Space.ToString()].Add(name, DMscience);
 					if (((DMScienceType)type & DMScienceType.Biological) == DMScienceType.Biological)
-						DMUtils.bioScience.Add(name, DMscience);
-					DMUtils.availableScience.Add(name, DMscience);
+						DMUtils.availableScience[DMScienceType.Biological.ToString()].Add(name, DMscience);
+					DMUtils.availableScience["All"].Add(name, DMscience);
 					DMUtils.Logging("New Experiment: [{0}] Available For Contracts", name);
 				}
 			}
-			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience.Count);
+			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience["All"].Count);
+			//Load in custom contract descriptions
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_SCIENCE_STORY_DEF"))
 			{
 				foreach (ConfigNode storyNode in node.GetNodes("DM_SCIENCE_BACKSTORY"))
@@ -112,7 +107,7 @@ namespace DMagic
 						{
 							string story = st.Replace("[", "{");
 							story = story.Replace("]", "}");
-							DMUtils.storyList.Add(story);
+							DMUtils.backStory["generic"].Add(story);
 						}
 					}
 					foreach (string so in storyNode.GetValues("survey"))
@@ -121,12 +116,37 @@ namespace DMagic
 						{
 							string story_o = so.Replace("[", "{");
 							story_o = story_o.Replace("]", "}");
-							DMUtils.surveyStoryList.Add(story_o);
+							DMUtils.backStory["survey"].Add(story_o);
+						}
+					}
+					foreach (string sb in storyNode.GetValues("biological"))
+					{
+						if (!string.IsNullOrEmpty(sb))
+						{
+							string story_b = sb.Replace("[", "{");
+							story_b = story_b.Replace("]", "}");
+							DMUtils.backStory["biological"].Add(story_b);
 						}
 					}
 				}
 			}
-			DMUtils.Logging("Successfully Added {0} New Generic Backstories And {1} New Survey Backstories To The List", DMUtils.storyList.Count, DMUtils.surveyStoryList.Count);
+			DMUtils.Logging("Added {0} New Generic Backstories; {1} New Survey Backstories; {2} New Biological Backstories To The List", DMUtils.backStory["generic"].Count, DMUtils.backStory["survey"].Count, DMUtils.backStory["biological"].Count);
+		}
+
+		private void initializeUtils()
+		{
+			DMUtils.rand = new System.Random();
+			DMUtils.availableScience = new Dictionary<string, Dictionary<string, DMScienceContainer>>();
+			DMUtils.availableScience["All"] = new Dictionary<string, DMScienceContainer>();
+			DMUtils.availableScience[DMScienceType.Surface.ToString()] = new Dictionary<string, DMScienceContainer>();
+			DMUtils.availableScience[DMScienceType.Aerial.ToString()] = new Dictionary<string, DMScienceContainer>();
+			DMUtils.availableScience[DMScienceType.Space.ToString()] = new Dictionary<string, DMScienceContainer>();
+			DMUtils.availableScience[DMScienceType.Biological.ToString()] = new Dictionary<string, DMScienceContainer>();
+
+			DMUtils.backStory = new Dictionary<string, List<string>>();
+			DMUtils.backStory["generic"] = new List<string>();
+			DMUtils.backStory["survey"] = new List<string>();
+			DMUtils.backStory["biological"] = new List<string>();
 		}
 
 		private void OnDestroy()
