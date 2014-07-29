@@ -57,15 +57,8 @@ namespace DMagic
 			name = Name;
 			biomeName = BiomeName;
 			type = Type;
-			DMUtils.availableScience.TryGetValue(name, out scienceContainer);
+			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
-			if (type == 1)
-			{
-				float subjectValue = DMModuleScienceAnimate.fixSubjectValue(location, 1f, 1f, body);
-				base.SetScience(scienceContainer.exp.baseValue * subjectValue, body);
-				base.SetFunds(1000f * subjectValue, 700f * subjectValue, body);
-				base.SetReputation(6f * subjectValue, 8f * subjectValue, body);
-			}
 		}
 
 		//Properties to be accessed by parent contract
@@ -75,7 +68,7 @@ namespace DMagic
 			private set { }
 		}
 
-		internal ExperimentSituations Sit
+		internal ExperimentSituations Situation
 		{
 			get { return scienceLocation; }
 			private set { }
@@ -104,7 +97,6 @@ namespace DMagic
 			get { return name; }
 			private set { }
 		}
-
 
 		protected override string GetHashString()
 		{
@@ -168,7 +160,7 @@ namespace DMagic
 			int targetBodyID, targetLocation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			name = scienceString[0];
-			DMUtils.availableScience.TryGetValue(scienceString[0], out scienceContainer);
+			DMUtils.availableScience["All"].TryGetValue(scienceString[0], out scienceContainer);
 			if (int.TryParse(scienceString[1], out targetBodyID))
 				body = FlightGlobals.Bodies[targetBodyID];
 			if (int.TryParse(scienceString[2], out targetLocation))
