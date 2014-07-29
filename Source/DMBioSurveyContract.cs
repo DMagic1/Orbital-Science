@@ -43,22 +43,28 @@ namespace DMagic
 	class DMBioSurveyContract: Contract
 	{
 		internal DMCollectScience[] newParams = new DMCollectScience[5];
-		private ScienceExperiment[] bioExp = new ScienceExperiment[6];
-		private LandOnBody landParam;
-		private EnterOrbit orbitParam;
 		private CelestialBody body;
 		private int i, j = 0;
 		private System.Random rand = DMUtils.rand;
-
+		
 		protected override bool Generate()
 		{
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
-			if (ContractSystem.Instance.GetCurrentContracts<DMGroundSurveyContract>().Count() > 0)
+			if (ContractSystem.Instance.GetCurrentContracts<DMBioSurveyContract>().Count() > 0)
 				return false;
 
+			//Make sure that drill is at least available
+			AvailablePart aPart = PartLoader.getPartInfoByName("dmbioDrill");
+			if (aPart == null)
+				return false;
+			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+				return false;
+
+			//No need to study Kerbin this way
 			if (this.Prestige == ContractPrestige.Trivial)
-				body = FlightGlobals.Bodies[1];
+				return false;
+			//Duna and Eve are the easy targets
 			else if (this.Prestige == ContractPrestige.Significant)
 			{
 				if (rand.Next(0, 2) == 0)
@@ -66,18 +72,31 @@ namespace DMagic
 				else
 					body = FlightGlobals.Bodies[6];
 			}
-			else
-				body = FlightGlobals.Bodies[9];
-
-			foreach (DMScienceContainer DMScience in DMUtils.bioScience.Values)
+			else if (this.Prestige == ContractPrestige.Exceptional)
 			{
-				newParams[i] = DMCollectContractGenerator.fetchScienceContract(body, DMScience.exp);
-				i++;
+				//Account for mod planets and Laythe
+				List<CelestialBody> bList = new List<CelestialBody>();
+				foreach (CelestialBody b in FlightGlobals.Bodies)
+				{
+					if (b.flightGlobalsIndex != 1 && b.flightGlobalsIndex != 5 && b.flightGlobalsIndex != 6 && b.flightGlobalsIndex != 8)
+						if (b.atmosphere)
+							bList.Add(b);
+				}
+				body = bList[rand.Next(0, bList.Count)];
+			}
+			else
+				return false;
+
+			//Check for the availability of 
+			for (i = 0; i < 5; i++)
+			{
+				DMScienceContainer DMScience = DMUtils.availableScience[DMScienceType.Biological.ToString()].ElementAt(i).Value;
+				newParams[i] = DMSurveyGenerator.fetchSurveyScience(body, DMScience.exp);
 			}
 
 			//Add orbital and landing parameters
-			landParam = new LandOnBody(body);
-			orbitParam = new EnterOrbit(body);
+			LandOnBody landParam = new LandOnBody(body);
+			EnterOrbit orbitParam = new EnterOrbit(body);
 			this.AddParameter(landParam, null);
 			this.AddParameter(orbitParam, null);
 
@@ -87,6 +106,9 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(newParams[j], null);
+					DMC.SetScience(DMC.Container.exp.baseValue * 0.75f, body);
+					DMC.SetFunds(800f, body);
+					DMC.SetReputation(6f, body);
 					DMUtils.DebugLog("Bio Parameter Added");
 				}
 				j++;
@@ -102,8 +124,8 @@ namespace DMagic
 
 			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
 			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
-			base.SetReputation(newParams.Length * body.scienceValues.InSpaceLowDataValue * 0.5f, body);
-			base.SetFunds(3000 * newParams.Length * body.scienceValues.InSpaceLowDataValue, 3000 * newParams.Length, 1000 * newParams.Length * body.scienceValues.InSpaceLowDataValue, body);
+			base.SetReputation(newParams.Length * 0.5f, body);
+			base.SetFunds(3000 * newParams.Length, 3000 * newParams.Length, 1000 * newParams.Length, body);
 			return true;
 		}
 
@@ -124,20 +146,20 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Conduct ground surface survey of {0} by collecting multiple scienctific observations", body.theName);
+			return string.Format("Conduct biological survey of {0} by collecting multiple scienctific observations", body.theName);
 		}
 
 		protected override string GetDescription()
 		{
-			//Return a random orbital survey backstory; use the same format as generic backstory
-			string story = DMUtils.surveyStoryList[rand.Next(0, DMUtils.surveyStoryList.Count)];
-			return string.Format(story, this.agent.Name, "surface", body.theName);
+			//Return a random biological survey backstory; use the same format as generic backstory
+			string story = DMUtils.backStory["biological"][rand.Next(0, DMUtils.backStory["biological"].Count)];
+			return string.Format(story, this.agent.Name, body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
 			DMUtils.DebugLog("Generating Bio Synopsis From Target Body: [{0}]", body.theName);
-			return string.Format("Conduct an surface survey of {0} by collecting multiple science observations.", body.theName);
+			return string.Format("Study {0} for signs of on-going or past biological activity by conducting several science experiments.", body.theName);
 		}
 
 		protected override string MessageCompleted()
