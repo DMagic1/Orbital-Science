@@ -41,10 +41,11 @@ namespace DMagic
 		private CelestialBody body;
 		private ExperimentSituations scienceLocation;
 		private DMScienceContainer scienceContainer;
+		private Vessel vessel;
 		private string subject;
 		private string name;
 		private string biomeName;
-		private int type; //type 0: standard experiment; type 1: orbital survey; type 2: ground survey
+		private int type; //type 0: standard experiment; type 1: standard survey; type 2: asteroid survey
 
 		public DMCollectScience()
 		{
@@ -53,6 +54,7 @@ namespace DMagic
 		internal DMCollectScience(CelestialBody target, ExperimentSituations location, string BiomeName, string Name, int Type)
 		{
 			body = target;
+			vessel = null;
 			scienceLocation = location;
 			name = Name;
 			biomeName = BiomeName;
@@ -61,10 +63,28 @@ namespace DMagic
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 		}
 
+		internal DMCollectScience(Vessel target, ExperimentSituations Location, string Name, int Type)
+		{
+			body = null;
+			vessel = target;
+			scienceLocation = Location;
+			name = Name;
+			type = Type;
+			biomeName = "";
+			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+			subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, biomeName); 
+		}
+
 		//Properties to be accessed by parent contract
 		internal CelestialBody Body
 		{
 			get { return body; }
+			private set { }
+		}
+
+		internal Vessel Vessel
+		{
+			get { return vessel; }
 			private set { }
 		}
 
@@ -105,37 +125,49 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			if (!string.IsNullOrEmpty(biomeName))
+			if (type == 2)
 			{
-				if (scienceLocation == ExperimentSituations.InSpaceHigh)
-					return string.Format("Collect {0} data from high orbit around {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
-				else if (scienceLocation == ExperimentSituations.InSpaceLow)
-					return string.Format("Collect {0} data from low orbit around {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+				if (scienceLocation == ExperimentSituations.InSpaceLow)
+					return string.Format("Collect {0} data from in space near the asteroid {1}", scienceContainer.exp.experimentTitle, vessel.name);
 				else if (scienceLocation == ExperimentSituations.SrfLanded)
-					return string.Format("Collect {0} data from the surface at {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
-				else if (scienceLocation == ExperimentSituations.SrfSplashed)
-					return string.Format("Collect {0} data from the oceans at {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
-				else if (scienceLocation == ExperimentSituations.FlyingHigh)
-					return string.Format("Collect {0} data during high altitude flight over {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
-				else if (scienceLocation == ExperimentSituations.FlyingLow)
-					return string.Format("Collect {0} data during low altitude flight over {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+					return string.Format("Collect {0} data while grappled to asteroid {1}", scienceContainer.exp.experimentTitle, vessel.name);
+				else
+					return "Stupid Code Is Stupid";
 			}
 			else
 			{
-				if (scienceLocation == ExperimentSituations.InSpaceHigh)
-					return string.Format("Collect {0} data from high orbit around {1}", scienceContainer.exp.experimentTitle, body.theName);
-				else if (scienceLocation == ExperimentSituations.InSpaceLow)
-					return string.Format("Collect {0} data from low orbit around {1}", scienceContainer.exp.experimentTitle, body.theName);
-				else if (scienceLocation == ExperimentSituations.SrfLanded)
-					return string.Format("Collect {0} data from the surface of {1}", scienceContainer.exp.experimentTitle, body.theName);
-				else if (scienceLocation == ExperimentSituations.SrfSplashed)
-					return string.Format("Collect {0} data from the oceans of {1}", scienceContainer.exp.experimentTitle, body.theName);
-				else if (scienceLocation == ExperimentSituations.FlyingHigh)
-					return string.Format("Collect {0} data during high altitude flight at {1}", scienceContainer.exp.experimentTitle, body.theName);
-				else if (scienceLocation == ExperimentSituations.FlyingLow)
-					return string.Format("Collect {0} data during low altitude flight at {1}", scienceContainer.exp.experimentTitle, body.theName);
+				if (!string.IsNullOrEmpty(biomeName))
+				{
+					if (scienceLocation == ExperimentSituations.InSpaceHigh)
+						return string.Format("Collect {0} data from high orbit around {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+					else if (scienceLocation == ExperimentSituations.InSpaceLow)
+						return string.Format("Collect {0} data from low orbit around {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+					else if (scienceLocation == ExperimentSituations.SrfLanded)
+						return string.Format("Collect {0} data from the surface at {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+					else if (scienceLocation == ExperimentSituations.SrfSplashed)
+						return string.Format("Collect {0} data from the oceans at {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+					else if (scienceLocation == ExperimentSituations.FlyingHigh)
+						return string.Format("Collect {0} data during high altitude flight over {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+					else if (scienceLocation == ExperimentSituations.FlyingLow)
+						return string.Format("Collect {0} data during low altitude flight over {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+				}
+				else
+				{
+					if (scienceLocation == ExperimentSituations.InSpaceHigh)
+						return string.Format("Collect {0} data from high orbit around {1}", scienceContainer.exp.experimentTitle, body.theName);
+					else if (scienceLocation == ExperimentSituations.InSpaceLow)
+						return string.Format("Collect {0} data from low orbit around {1}", scienceContainer.exp.experimentTitle, body.theName);
+					else if (scienceLocation == ExperimentSituations.SrfLanded)
+						return string.Format("Collect {0} data from the surface of {1}", scienceContainer.exp.experimentTitle, body.theName);
+					else if (scienceLocation == ExperimentSituations.SrfSplashed)
+						return string.Format("Collect {0} data from the oceans of {1}", scienceContainer.exp.experimentTitle, body.theName);
+					else if (scienceLocation == ExperimentSituations.FlyingHigh)
+						return string.Format("Collect {0} data during high altitude flight at {1}", scienceContainer.exp.experimentTitle, body.theName);
+					else if (scienceLocation == ExperimentSituations.FlyingLow)
+						return string.Format("Collect {0} data during low altitude flight at {1}", scienceContainer.exp.experimentTitle, body.theName);
+				}
+				return "Stupid Code Is Stupid";
 			}
-			return "Stupid Code Is Stupid";
 		}
 
 		protected override void OnRegister()
@@ -151,7 +183,10 @@ namespace DMagic
 		protected override void OnSave(ConfigNode node)
 		{
 			DMUtils.DebugLog("Saving Contract Parameter");
-			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}", name, body.flightGlobalsIndex, (int)scienceLocation, biomeName));
+			if (type == 2)
+				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}", type, name, vessel.name, (int)scienceLocation, ""));
+			else
+				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}", type, name, body.flightGlobalsIndex, (int)scienceLocation, biomeName));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -159,14 +194,35 @@ namespace DMagic
 			DMUtils.DebugLog("Loading Contract Parameter");
 			int targetBodyID, targetLocation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
-			name = scienceString[0];
-			DMUtils.availableScience["All"].TryGetValue(scienceString[0], out scienceContainer);
-			if (int.TryParse(scienceString[1], out targetBodyID))
-				body = FlightGlobals.Bodies[targetBodyID];
-			if (int.TryParse(scienceString[2], out targetLocation))
+			if (!int.TryParse(scienceString[0], out type))
+			{
+				DMUtils.Logging("Failed To Load Contract Parameter; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
+			name = scienceString[1];
+			DMUtils.availableScience["All"].TryGetValue(scienceString[1], out scienceContainer);
+			if (int.TryParse(scienceString[3], out targetLocation))
 				scienceLocation = (ExperimentSituations)targetLocation;
-			biomeName = scienceString[3];
-			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
+			biomeName = scienceString[4];
+			if (type == 2)
+			{
+				try
+				{
+					vessel = FlightGlobals.Vessels.FirstOrDefault(v => v.name == scienceString[2]);
+				}
+				catch
+				{
+					DMUtils.Logging("Failed To Load Asteroid Target Vessel; Parameter Removed");
+					this.Root.RemoveParameter(this);
+				}
+				subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, "Asteroid", scienceLocation, biomeName);
+			}
+			else
+			{
+				if (int.TryParse(scienceString[2], out targetBodyID))
+					body = FlightGlobals.Bodies[targetBodyID];
+				subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
+			}
 		}
 
 		private void scienceRecieve(float sci, ScienceSubject sub)
@@ -201,7 +257,7 @@ namespace DMagic
 					}
 				}
 			}
-			else if (type == 1)
+			else if (type == 1 || type == 2)
 			{
 				DMUtils.DebugLog("Checking Science Results For Type [{0}] Contract", type);
 				if (!string.IsNullOrEmpty(biomeName))
