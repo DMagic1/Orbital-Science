@@ -91,6 +91,8 @@ namespace DMagic
 						DMUtils.availableScience[DMScienceType.Space.ToString()].Add(name, DMscience);
 					if (((DMScienceType)type & DMScienceType.Biological) == DMScienceType.Biological)
 						DMUtils.availableScience[DMScienceType.Biological.ToString()].Add(name, DMscience);
+					if (((DMScienceType)type & DMScienceType.Asteroid) == DMScienceType.Asteroid)
+						DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Add(name, DMscience);
 					DMUtils.availableScience["All"].Add(name, DMscience);
 					DMUtils.Logging("New Experiment: [{0}] Available For Contracts", name);
 				}
@@ -142,6 +144,7 @@ namespace DMagic
 			DMUtils.availableScience[DMScienceType.Aerial.ToString()] = new Dictionary<string, DMScienceContainer>();
 			DMUtils.availableScience[DMScienceType.Space.ToString()] = new Dictionary<string, DMScienceContainer>();
 			DMUtils.availableScience[DMScienceType.Biological.ToString()] = new Dictionary<string, DMScienceContainer>();
+			DMUtils.availableScience[DMScienceType.Asteroid.ToString()] = new Dictionary<string, DMScienceContainer>();
 
 			DMUtils.backStory = new Dictionary<string, List<string>>();
 			DMUtils.backStory["generic"] = new List<string>();

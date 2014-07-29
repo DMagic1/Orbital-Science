@@ -56,5 +56,6 @@ namespace DMagic
 		Aerial = 2,
 		Space = 4,
 		Biological = 8,
+		Asteroid = 16,
 	}
 }
