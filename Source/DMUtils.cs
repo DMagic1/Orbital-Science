@@ -211,6 +211,22 @@ namespace DMagic
 			return s;
 		}
 
+		internal static Vessel randomAsteroid()
+		{
+			List<Vessel> vL = new List<Vessel>();
+			foreach (Vessel v in FlightGlobals.Vessels)
+			{
+				if (v.vesselType != VesselType.Unknown)
+					continue;
+				else
+					vL.Add(v);
+			}
+			if (vL.Count == 0)
+				return null;
+			else
+				return vL[rand.Next(0, vL.Count)];
+		}
+
 #endregion
 
 	}
@@ -796,6 +812,100 @@ namespace DMagic
 			return new DMCollectScience(body, targetSituation, biome, name, 1);
 		}
 
+
+	}
+
+	static class DMAsteroidGenerator
+	{
+		private static System.Random rand = DMUtils.rand;
+
+		internal static DMCollectScience fetchAsteroidParameter(ScienceExperiment Exp, int sT)
+		{
+			DMScienceContainer scienceContainer;
+			ExperimentSituations targetSituation;
+			AvailablePart aPart;
+			Vessel targetAsteroid;
+			string name;
+			int surveyType = sT;
+
+			scienceContainer = DMUtils.availableScience[DMScienceType.Asteroid.ToString()].FirstOrDefault(s => s.Value.exp == Exp).Value;
+			name = DMUtils.availableScience[DMScienceType.Asteroid.ToString()].FirstOrDefault(n => n.Value == scienceContainer).Key;
+
+			//Determine if the science part is available if applicable
+			if (scienceContainer.sciPart != "None")
+			{
+				DMUtils.DebugLog("Checking For Part {0} Now", scienceContainer.sciPart);
+				aPart = PartLoader.getPartInfoByName(scienceContainer.sciPart);
+				if (aPart == null)
+					return null;
+				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+					return null;
+				DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
+			}
+
+			targetAsteroid = DMUtils.randomAsteroid();
+			if (targetAsteroid == null)
+				return null;
+
+			if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
+				if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
+					if (rand.Next(0, 2) == 0)
+						targetSituation = ExperimentSituations.SrfLanded;
+					else
+						targetSituation = ExperimentSituations.InSpaceLow;
+				else
+					targetSituation = ExperimentSituations.InSpaceLow;
+			else if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
+				targetSituation = ExperimentSituations.SrfLanded;
+			else
+				return null;
+
+			return new DMCollectScience(targetAsteroid, targetSituation, name, surveyType);
+		}
+
+		internal static DMCollectScience fetchAsteroidParameter(Vessel v, ScienceExperiment Exp, int sT)
+		{
+			DMScienceContainer scienceContainer;
+			ExperimentSituations targetSituation;
+			AvailablePart aPart;
+			Vessel targetAsteroid;
+			string name;
+			int surveyType = sT;
+
+			scienceContainer = DMUtils.availableScience[DMScienceType.Asteroid.ToString()].FirstOrDefault(s => s.Value.exp == Exp).Value;
+			name = DMUtils.availableScience[DMScienceType.Asteroid.ToString()].FirstOrDefault(n => n.Value == scienceContainer).Key;
+
+			//Determine if the science part is available if applicable
+			if (scienceContainer.sciPart != "None")
+			{
+				DMUtils.DebugLog("Checking For Part {0} Now", scienceContainer.sciPart);
+				aPart = PartLoader.getPartInfoByName(scienceContainer.sciPart);
+				if (aPart == null)
+					return null;
+				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+					return null;
+				DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
+			}
+
+			targetAsteroid = v;
+			if (targetAsteroid == null)
+				return null;
+
+			if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
+				if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
+					if (rand.Next(0, 2) == 0)
+						targetSituation = ExperimentSituations.SrfLanded;
+					else
+						targetSituation = ExperimentSituations.InSpaceLow;
+				else
+					targetSituation = ExperimentSituations.InSpaceLow;
+			else if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
+				targetSituation = ExperimentSituations.SrfLanded;
+			else
+				return null;
+
+			return new DMCollectScience(targetAsteroid, targetSituation, name, surveyType);
+		}
 
 	}
 
