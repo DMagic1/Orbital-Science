@@ -42,6 +42,7 @@ namespace DMagic
 	class DMAnomalyContract: Contract
 	{
 		private DMCollectScience newParam;
+		private List<DMAnomalyParameter> anomParams = new List<DMAnomalyParameter>();
 		private CelestialBody body;
 		private ExperimentSituations targetSituation;
 		private DMScienceContainer DMscience;
@@ -118,10 +119,25 @@ namespace DMagic
 			if ((newParam = DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly)) == null)
 				return false;
 
+			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("magScan")));
+			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("scopeScan")));
+			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("dmImagingPlatform")));
+			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("dmlaserblastscan")));
+
 			if (DMscience.agent != "Any")
 				this.agent = Contracts.Agents.AgentList.Instance.GetAgent(DMscience.agent);
 
 			this.AddParameter(newParam, null);
+			DMUtils.DebugLog("Added Primary Anomaly Parameter");
+
+			foreach (DMAnomalyParameter aP in anomParams)
+			{
+				if (aP != null)
+				{
+					this.AddParameter(aP);
+					DMUtils.DebugLog("Added Secondary Anomaly Parameter");
+				}
+			}
 
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
 			base.SetScience(DMscience.exp.baseValue * 0.8f * DMUtils.science, body);
