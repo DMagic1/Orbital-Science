@@ -213,14 +213,16 @@ namespace DMagic
 
 		internal static Vessel randomAsteroid()
 		{
+			DebugLog("Searching For Suitable Asteroid");
 			List<Vessel> vL = new List<Vessel>();
 			foreach (Vessel v in FlightGlobals.Vessels)
 			{
-				if (v.vesselType != VesselType.Unknown)
+				if (v.DiscoveryInfo.Level != DiscoveryLevels.Presence)
 					continue;
 				else
 					vL.Add(v);
 			}
+			DebugLog("{0} Asteroids Discovered", vL.Count);
 			if (vL.Count == 0)
 				return null;
 			else
@@ -251,7 +253,7 @@ namespace DMagic
 			string biome = "";
 
 			//Choose a random science experiment from our list generated at startup
-			scienceContainer = DMUtils.availableScience["All"].ElementAt(rand.Next(0, DMUtils.availableScience.Count)).Value;
+			scienceContainer = DMUtils.availableScience["All"].ElementAt(rand.Next(0, DMUtils.availableScience["All"].Count)).Value;
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == scienceContainer).Key;
 			DMUtils.DebugLog("Checking Contract Requirements");
 
@@ -845,7 +847,10 @@ namespace DMagic
 
 			targetAsteroid = DMUtils.randomAsteroid();
 			if (targetAsteroid == null)
+			{
+				DMUtils.DebugLog("No Suitable Asteroid Discovered");
 				return null;
+			}
 
 			if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
 				if (((ExperimentSituations)scienceContainer.sitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
@@ -860,6 +865,7 @@ namespace DMagic
 			else
 				return null;
 
+			DMUtils.DebugLog("Successfully Generated Asteroid Survey Parameter");
 			return new DMCollectScience(targetAsteroid, targetSituation, name, surveyType);
 		}
 
@@ -904,9 +910,49 @@ namespace DMagic
 			else
 				return null;
 
+			DMUtils.DebugLog("Successfully Generated Secondary Asteroid Survey Parameter");
 			return new DMCollectScience(targetAsteroid, targetSituation, name, surveyType);
 		}
 
+	}
+
+	static class DMAnomalyGenerator
+	{
+		private static System.Random rand = DMUtils.rand;
+
+		internal static DMCollectScience fetchAnomalyParameter(CelestialBody Body, PQSCity City)
+		{
+			CelestialBody body;
+			ExperimentSituations targetSituation;
+			PQSCity city;
+			ScienceSubject sub;
+			string subject;
+
+			body = Body;
+			if (body == null)
+				return null;
+
+			city = City;
+			if (city == null)
+				return null;
+
+			if (rand.Next(0, 2) == 0)
+				targetSituation = ExperimentSituations.SrfLanded;
+			else
+				targetSituation = ExperimentSituations.FlyingLow;
+
+			subject = string.Format("AnomalyScan@{0}{1}{2}", body.name, targetSituation, city.name);
+
+			//Make sure that our chosen science subject has science remaining to be gathered
+			if ((sub = ResearchAndDevelopment.GetSubjectByID(subject)) != null)
+			{
+				if (sub.scientificValue < 0.4f)
+					return null;
+			}
+
+			DMUtils.DebugLog("Primary Anomaly Parameter Assigned");
+			return new DMCollectScience(body, targetSituation, city.name, "Anomaly Scan", 3);
+		}
 	}
 
 	#endregion
