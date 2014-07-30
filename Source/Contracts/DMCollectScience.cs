@@ -216,7 +216,7 @@ namespace DMagic
 				this.Root.RemoveParameter(this);
 			}
 			name = scienceString[1];
-			DMUtils.availableScience["All"].TryGetValue(scienceString[1], out scienceContainer);
+			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (int.TryParse(scienceString[3], out targetLocation))
 				scienceLocation = (ExperimentSituations)targetLocation;
 			biomeName = scienceString[4];
