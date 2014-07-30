@@ -98,6 +98,11 @@ namespace DMagic
 				}
 			}
 			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience["All"].Count);
+			DMUtils.DebugLog("Successfully Added {0} New Surface Experiments To Contract List", DMUtils.availableScience[DMScienceType.Surface.ToString()].Count);
+			DMUtils.DebugLog("Successfully Added {0} New Aerial Experiments To Contract List", DMUtils.availableScience[DMScienceType.Aerial.ToString()].Count);
+			DMUtils.DebugLog("Successfully Added {0} New Orbital Experiments To Contract List", DMUtils.availableScience[DMScienceType.Space.ToString()].Count);
+			DMUtils.DebugLog("Successfully Added {0} New Biological Experiments To Contract List", DMUtils.availableScience[DMScienceType.Biological.ToString()].Count);
+			DMUtils.DebugLog("Successfully Added {0} New Asteroid Experiments To Contract List", DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Count);
 			//Load in custom contract descriptions
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_SCIENCE_STORY_DEF"))
 			{
