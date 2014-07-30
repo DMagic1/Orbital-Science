@@ -60,7 +60,9 @@ namespace DMagic
 		{
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
-			if (ContractSystem.Instance.GetCurrentContracts<DMCollectContract>().Count() > 2)
+			int total = ContractSystem.Instance.GetCurrentContracts<DMCollectContract>().Count();
+			int finished = ContractSystem.Instance.GetCompletedContracts<DMCollectContract>().Count();
+			if ((total - finished) > 2)
 				return false;
 
 			//Generates the science experiment, returns null if experiment fails any check

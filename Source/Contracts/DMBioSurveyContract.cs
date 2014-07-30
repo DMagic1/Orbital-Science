@@ -51,7 +51,9 @@ namespace DMagic
 		{
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
-			if (ContractSystem.Instance.GetCurrentContracts<DMBioSurveyContract>().Count() > 0)
+			int total = ContractSystem.Instance.GetCurrentContracts<DMBioSurveyContract>().Count();
+			int finished = ContractSystem.Instance.GetCompletedContracts<DMBioSurveyContract>().Count();
+			if ((total - finished) > 0)
 				return false;
 
 			//Make sure that drill is at least available

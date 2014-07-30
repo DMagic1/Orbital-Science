@@ -51,7 +51,9 @@ namespace DMagic
 		{
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
-			if (ContractSystem.Instance.GetCurrentContracts<DMOrbitalSurveyContract>().Count() > 0)
+			int total = ContractSystem.Instance.GetCurrentContracts<DMOrbitalSurveyContract>().Count();
+			int finished = ContractSystem.Instance.GetCompletedContracts<DMOrbitalSurveyContract>().Count();
+			if ((total - finished) > 0)
 				return false;
 			if (this.Prestige == ContractPrestige.Trivial)
 				return false;
