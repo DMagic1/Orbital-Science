@@ -32,6 +32,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 
@@ -43,9 +44,13 @@ namespace DMagic
 		private PQSCity city;
 		private ExperimentSituations situation;
 		private DMScienceContainer scienceContainer;
+		private Vessel v;
 		private Vector3d anomPosition;
+		private Vector3d recoveryPosition;
 		private string name;
 		private string subject;
+		private string hash;
+		private bool collected = false;
 
 		public DMAnomalyParameter()
 		{
@@ -59,12 +64,13 @@ namespace DMagic
 			city = City;
 			anomPosition = city.transform.position;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, city.name.Replace(" ", ""));
+			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
+			hash = city.name;
 		}
 
 		protected override string GetHashString()
 		{
-			return "";
+			return hash;
 		}
 
 		protected override string GetTitle()
@@ -85,16 +91,121 @@ namespace DMagic
 		protected override void OnSave(ConfigNode node)
 		{
 			DMUtils.DebugLog("Saving Anomaly Parameter");
-			
+			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2}|{3}|{4}", hash, body.flightGlobalsIndex, name, (int)situation, collected));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
 			DMUtils.DebugLog("Loading Anomaly Parameter");
+			DMUtils.newExp = "";
+			int bodyID, sitID;
+			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
+			hash = anomalyString[0];
+			if (int.TryParse(anomalyString[1], out bodyID))
+				body = FlightGlobals.Bodies[bodyID];
+			else
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
+			name = anomalyString[2];
+			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+			if (int.TryParse(anomalyString[3], out sitID))
+				situation = (ExperimentSituations)sitID;
+			else
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
+			if (!bool.TryParse(anomalyString[4], out collected))
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
+			if (HighLogic.LoadedScene == GameScenes.FLIGHT)
+			{
+				city = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
+				v = FlightGlobals.ActiveVessel;
+				anomPosition = city.transform.position;
+			}
+			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
+		}
+
+		protected override void OnUpdate()
+		{
+			if (setExp(DMUtils.newExp))
+			{
+				//Calculate distance to the anomaly on science collection
+				if (v.mainBody == body)
+				{
+					recoveryPosition = v.transform.position;
+					double valt = v.mainBody.GetAltitude(recoveryPosition);
+					double anomAlt = v.mainBody.GetAltitude(anomPosition);
+					double verticalD = anomAlt - valt;
+					double totalD = (anomPosition - recoveryPosition).magnitude;
+					double horizantalD = Math.Sqrt((totalD * totalD) - (verticalD * verticalD));
+
+					//Draw a cone above the anomaly position up to 100km with a diametere of 15km at its widest
+					if (Math.Abs(verticalD) > 1000 && verticalD < 100000)
+					{
+						if (horizantalD < (15000 * (verticalD / 100000)))
+						{
+							ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+							collected = true;
+						}
+						else
+							ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
+					}
+					else if (Math.Abs(verticalD) < 1000 && situation != ExperimentSituations.SrfLanded)
+					{
+						if (horizantalD < 150)
+						{
+							ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+							collected = true;
+						}
+						else
+							ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
+					}
+					else if (situation == ExperimentSituations.SrfLanded)
+						if (horizantalD < 50)
+						{
+							ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+							collected = true;
+						}
+						else
+							ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
+				}
+				DMUtils.newExp = "";
+			}
+		}
+
+		//Event triggered by an experiment activating
+		private bool setExp(string s)
+		{
+			if (string.IsNullOrEmpty(s))
+				return false;
+			else
+			{
+				if (s == scienceContainer.exp.id)
+					return true;
+				else
+					return false;
+			}
 		}
 
 		private void anomalyScience(float sci, ScienceSubject sub)
 		{
+			if (collected)
+			{
+				string clippedSub = sub.id.Replace("@", "");
+				string clippedTargetSub = subject.Replace("@", "");
+				DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
+				if (clippedSub.StartsWith(clippedTargetSub))
+				{
+					DMUtils.DebugLog("Anomaly Contract Complete");
+					base.SetComplete();
+				}
+			}
 		}
 	}
 }
