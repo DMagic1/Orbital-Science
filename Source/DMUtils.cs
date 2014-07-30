@@ -43,6 +43,7 @@ namespace DMagic
 		internal static Dictionary<string, Dictionary<string, DMScienceContainer>> availableScience;
 		internal static Dictionary<string, List<string>> backStory;
 		internal static float science, reward, forward, penalty;
+		internal static string newExp;
 
 		internal static void Logging(string s, params object[] stringObjects)
 		{
@@ -952,6 +953,41 @@ namespace DMagic
 
 			DMUtils.DebugLog("Primary Anomaly Parameter Assigned");
 			return new DMCollectScience(body, targetSituation, city.name, "Anomaly Scan", 3);
+		}
+
+		internal static DMAnomalyParameter fetchAnomalyParameter(CelestialBody Body, PQSCity City, ScienceExperiment Exp)
+		{
+			DMScienceContainer scienceContainer;
+			AvailablePart aPart;
+			ExperimentSituations targetSituation;
+			List<ExperimentSituations> situations;
+			string name;
+
+			scienceContainer = DMUtils.availableScience["All"].FirstOrDefault(s => s.Value.exp == Exp).Value;
+			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == scienceContainer).Key;
+
+			//Determine if the science part is available if applicable
+			if (scienceContainer.sciPart != "None")
+			{
+				DMUtils.DebugLog("Checking For Part {0} Now", scienceContainer.sciPart);
+				aPart = PartLoader.getPartInfoByName(scienceContainer.sciPart);
+				if (aPart == null)
+					return null;
+				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+					return null;
+				DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
+			}
+
+			if ((situations = DMUtils.availableSituations(Exp, scienceContainer.sitMask, Body)).Count == 0)
+				return null;
+			else
+			{
+				DMUtils.DebugLog("Acceptable Situations Found");
+				targetSituation = situations[rand.Next(0, situations.Count)];
+				DMUtils.DebugLog("Experimental Situation: {0}", targetSituation);
+			}
+
+			return new DMAnomalyParameter(Body, City, targetSituation, name);
 		}
 	}
 
