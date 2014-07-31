@@ -132,8 +132,8 @@ namespace DMagic
 		protected override string GetDescription()
 		{
 			//Return a random asteroid survey backstory; use the same format as generic backstory
-			string story = DMUtils.backStory["survey"][rand.Next(0, DMUtils.backStory["survey"].Count)];
-			return string.Format(story, this.agent.Name, hash, "");
+			string story = DMUtils.backStory["asteroid"][rand.Next(0, DMUtils.backStory["asteroid"].Count)];
+			return string.Format(story, this.agent.Name, hash);
 		}
 
 		protected override string GetSynopsys()
