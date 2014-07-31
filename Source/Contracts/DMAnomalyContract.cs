@@ -44,24 +44,21 @@ namespace DMagic
 		private DMCollectScience newParam;
 		private List<DMAnomalyParameter> anomParams = new List<DMAnomalyParameter>();
 		private CelestialBody body;
-		private ExperimentSituations targetSituation;
-		private DMScienceContainer DMscience;
-		private AvailablePart aPart = null;
 		private PQSCity targetAnomaly;
-		private string biome = "";
-		private string name;
-		private string subject;
+		private double lat, lon;
+		private double fudgedLat, fudgedLon;
+		private string cardNS, cardEW;
+		private string hash;
 		private List<PQSCity> aList = new List<PQSCity>();
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
 		{
-			//return false;
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>().Count();
 			int finished = ContractSystem.Instance.GetCompletedContracts<DMAnomalyContract>().Count();
-			if ((total - finished) > 1)
+			if ((total - finished) > 0)
 				return false;
 
 			//Make sure that the anomaly scanner is available
@@ -113,7 +110,14 @@ namespace DMagic
 
 			//Select random anomaly
 			targetAnomaly = aList[rand.Next(0, aList.Count)];
-			DMUtils.DebugLog("Anomaly [{0}] Selected", targetAnomaly.name);
+			hash = targetAnomaly.name;
+			lat = clampLat(body.GetLatitude(targetAnomaly.transform.position));
+			lon = clampLon(body.GetLongitude(targetAnomaly.transform.position));
+			fudgedLat = fudgeLat(lat);
+			fudgedLon = fudgeLon(lon);
+			cardNS = NSDirection(lat);
+			cardEW = EWDirection(lon);
+			DMUtils.DebugLog("Anomaly [{0}] Selected On {1} at Latitude: {2:N1} and Longitude: {3:N1}", targetAnomaly.name, body.theName, lat, lon);
 
 			//Assign primary anomaly contract parameter
 			if ((newParam = DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly)) == null)
@@ -123,9 +127,6 @@ namespace DMagic
 			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("scopeScan")));
 			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("dmImagingPlatform")));
 			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("dmlaserblastscan")));
-
-			if (DMscience.agent != "Any")
-				this.agent = Contracts.Agents.AgentList.Instance.GetAgent(DMscience.agent);
 
 			this.AddParameter(newParam, null);
 			DMUtils.DebugLog("Added Primary Anomaly Parameter");
@@ -140,11 +141,51 @@ namespace DMagic
 			}
 
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
-			base.SetScience(DMscience.exp.baseValue * 0.8f * DMUtils.science, body);
+			base.SetScience(0.8f * DMUtils.science, body);
 			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
 			base.SetReputation(5f * (float)(this.prestige + 1) * DMUtils.reward, 10f * (float)(this.prestige + 1) * DMUtils.penalty, body);
 			base.SetFunds(600f * DMUtils.forward, 500f * DMUtils.reward, 500f * DMUtils.penalty, body);
 			return true;
+		}
+
+		private double clampLat(double lat)
+		{
+			return (lat + 180 +90) % 180 - 90;
+		}
+
+		private double clampLon(double lon)
+		{
+			return (lon + 360 + 180) % 360 -180;
+		}
+
+		private double fudgeLat(double lat)
+		{
+			double f = (double)rand.Next(-10, 10) + lat;
+			return f;
+		}
+
+		private double fudgeLon(double lon)
+		{
+			double f = (double)rand.Next(-10, 10) + lon;
+			return f;
+		}
+
+		private string NSDirection(double lat)
+		{
+			if (lat >= -90 && lat < 0)
+				return "South";
+			if (lat >= 0 && lat <= 90)
+				return "North";
+			return "";
+		}
+
+		private string EWDirection(double lon)
+		{
+			if (lon >= -180 && lon < 0)
+				return "West";
+			if (lon >= 0 && lon < 180)
+				return "East";
+			return "";
 		}
 
 		public override bool CanBeCancelled()
@@ -159,66 +200,66 @@ namespace DMagic
 
 		protected override string GetHashString()
 		{
-			return subject;
+			return hash;
 		}
 
 		protected override string GetTitle()
 		{
-			
-			return "Stupid Code Is Stupid";
+			return string.Format("Locate and study the source of the anomalous readings coming from {0}'s surface at around {1} degrees {2} and {3} degrees {4}", body.theName, fudgedLat, cardNS, fudgedLon, cardEW);
 		}
 
 		protected override string GetDescription()
 		{
-			string story = DMUtils.backStory["generic"][rand.Next(0, DMUtils.backStory["generic"].Count)];
-			if (aPart != null)
-				return string.Format(story, this.agent.Name, name, body.theName, aPart.title, targetSituation);
-			else
-				return string.Format(story, this.agent.Name, name, body.theName, "Kerbal", targetSituation);
+			string story = DMUtils.backStory["anomaly"][rand.Next(0, DMUtils.backStory["anomaly"].Count)];
+			return string.Format(story, this.agent.Name, hash, body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
-			DMUtils.DebugLog("Generating Synopsis From {0} Experimental Situation", targetSituation);
-			
-			return "Fix Your Stupid Code Idiot...";
+			DMUtils.DebugLog("Generating Synopsis From Anomaly [{0}]", hash);
+			return string.Format("Study the mysterious readings coming from {0}", body.theName);
 		}
 
 		protected override string MessageCompleted()
 		{
-			return string.Format("You recovered {0} from {1}, well done.", DMscience.exp.experimentTitle, body.theName);
+			return string.Format("You successfully returned data from {0} on {1}, well done.", hash, body.theName);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
 			DMUtils.DebugLog("Loading Anomaly Contract");
-			int targetBodyID, targetLocation;
-			string[] scienceString = node.GetValue("Science_Subject").Split('|');
-			name = scienceString[0];
-			if (DMUtils.availableScience["All"].TryGetValue(name, out DMscience))
-			{
-				try
-				{
-					aPart = PartLoader.getPartInfoByName(DMscience.sciPart);
-				}
-				catch
-				{
-					DMUtils.DebugLog("No Valid Part Associated With This Experiment");
-					aPart = null;
-				}
-			}
-			if (int.TryParse(scienceString[1], out targetBodyID))
+			int targetBodyID;
+			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
+			hash = anomalyString[0];
+			if (int.TryParse(anomalyString[1], out targetBodyID))
 				body = FlightGlobals.Bodies[targetBodyID];
-			if (int.TryParse(scienceString[2], out targetLocation))
-				targetSituation = (ExperimentSituations)targetLocation;
-			biome = scienceString[3];
-			subject = string.Format("{0}@{1}{2}{3}", DMscience.exp.id, body.name, targetSituation, biome.Replace(" ", ""));
+			else
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract");
+				this.Cancel();
+			}
+			if (!double.TryParse(anomalyString[2], out lat))
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract");
+				this.Cancel();
+			}
+			if (!double.TryParse(anomalyString[3], out lon))
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract");
+				this.Cancel();
+			}
+			fudgedLat = fudgeLat(lat);
+			fudgedLon = fudgeLon(lon);
+			cardNS = NSDirection(lat);
+			cardEW = EWDirection(lon);
+			if (HighLogic.LoadedScene == GameScenes.FLIGHT)
+				targetAnomaly = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
 			DMUtils.DebugLog("Saving Anomaly Contract");
-			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}", name, body.flightGlobalsIndex, (int)targetSituation, biome));
+			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2:N2}|{3:N2}", hash, body.flightGlobalsIndex, lat, lon));
 		}
 
 		public override bool MeetRequirements()
