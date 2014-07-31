@@ -151,7 +151,6 @@ namespace DMagic
 
 		public override void OnStart(StartState state)
 		{
-			this.part.force_activate();
 			if (!string.IsNullOrEmpty(animationName))
 				anim = part.FindModelAnimators(animationName)[0];
 			if (!string.IsNullOrEmpty(sampleAnim)) {
@@ -200,7 +199,7 @@ namespace DMagic
 			}
 		}
 
-		public override void OnUpdate()
+		private void Update()
 		{
 			if (resourceOn) {
 				if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null) {
@@ -557,6 +556,7 @@ namespace DMagic
 				initialResultsPage();
 			}
 			if (keepDeployedMode == 1) retractEvent();
+			DMUtils.newExp = experimentID;
 		}
 
 		internal float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
