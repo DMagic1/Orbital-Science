@@ -46,6 +46,7 @@ namespace DMagic
 		private string name;
 		private string biomeName;
 		private string vName;
+		private bool collected;
 		private int type; //type 0: standard experiment; type 1: standard survey; type 2: asteroid survey; type 3: anomaly
 
 		public DMCollectScience()
@@ -60,6 +61,7 @@ namespace DMagic
 			name = Name;
 			biomeName = BiomeName;
 			type = Type;
+			collected = true;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 		}
@@ -73,6 +75,7 @@ namespace DMagic
 			name = Name;
 			type = Type;
 			biomeName = "";
+			collected = false;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, biomeName); 
 		}
@@ -200,9 +203,9 @@ namespace DMagic
 		{
 			DMUtils.DebugLog("Saving Contract Parameter");
 			if (type == 2)
-				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}", type, name, vName, (int)scienceLocation, ""));
+				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, vName, (int)scienceLocation, "", collected));
 			else
-				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}", type, name, body.flightGlobalsIndex, (int)scienceLocation, biomeName));
+				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, body.flightGlobalsIndex, (int)scienceLocation, biomeName, collected));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -219,19 +222,30 @@ namespace DMagic
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (int.TryParse(scienceString[3], out targetLocation))
 				scienceLocation = (ExperimentSituations)targetLocation;
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
 			biomeName = scienceString[4];
+			if (!bool.TryParse(scienceString[5], out collected))
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
 			if (type == 2)
 			{
 				vName = scienceString[2];
-				try
+				if (HighLogic.LoadedScene != GameScenes.EDITOR)
 				{
-					if (HighLogic.LoadedScene != GameScenes.EDITOR)
+					try
+					{
 						vessel = FlightGlobals.Vessels.FirstOrDefault(v => v.vesselName == scienceString[2]);
-				}
-				catch
-				{
-					DMUtils.Logging("Failed To Load Asteroid Target Vessel; Parameter Removed");
-					this.Root.RemoveParameter(this);
+					}
+					catch
+					{
+						DMUtils.Logging("Failed To Load Asteroid Target Vessel; Parameter Removed");
+						this.Root.RemoveParameter(this);
+					}
 				}
 				subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, "Asteroid", scienceLocation, biomeName);
 			}
@@ -239,7 +253,44 @@ namespace DMagic
 			{
 				if (int.TryParse(scienceString[2], out targetBodyID))
 					body = FlightGlobals.Bodies[targetBodyID];
+				else
+				{
+					DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+					this.Root.RemoveParameter(this);
+				}
 				subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
+			}
+		}
+
+		protected override void OnUpdate()
+		{
+			if (type == 2)
+			{
+				if (!collected)
+				{
+					if (setAstVessel(DMUtils.astName, DMUtils.newExp))
+					{
+						collected = true;
+					}
+					DMUtils.newExp = "";
+					DMUtils.astName = "";
+				}
+			}
+		}
+
+		private bool setAstVessel(string s, string e)
+		{
+			if (string.IsNullOrEmpty(s))
+				return false;
+			else
+			{
+				if (e == scienceContainer.exp.id)
+					if (s == vName)
+						return true;
+					else
+						return false;
+				else
+					return false;
 			}
 		}
 
@@ -277,24 +328,27 @@ namespace DMagic
 			}
 			else if (type == 1 || type == 2)
 			{
-				DMUtils.DebugLog("Checking Science Results For Type [{0}] Contract", type);
-				if (!string.IsNullOrEmpty(biomeName))
+				if (collected)
 				{
-					if (sub.id == subject)
+					DMUtils.DebugLog("Checking Science Results For Type [{0}] Contract", type);
+					if (!string.IsNullOrEmpty(biomeName))
 					{
-						DMUtils.DebugLog("Contract Complete");
-						base.SetComplete();
+						if (sub.id == subject)
+						{
+							DMUtils.DebugLog("Contract Complete");
+							base.SetComplete();
+						}
 					}
-				}
-				else
-				{
-					string clippedSub = sub.id.Replace("@", "");
-					string clippedTargetSub = subject.Replace("@", "");
-					DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
-					if (clippedSub.StartsWith(clippedTargetSub))
+					else
 					{
-						DMUtils.DebugLog("Contract Complete");
-						base.SetComplete();
+						string clippedSub = sub.id.Replace("@", "");
+						string clippedTargetSub = subject.Replace("@", "");
+						DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
+						if (clippedSub.StartsWith(clippedTargetSub))
+						{
+							DMUtils.DebugLog("Contract Complete");
+							base.SetComplete();
+						}
 					}
 				}
 			}
