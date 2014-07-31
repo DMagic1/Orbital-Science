@@ -148,42 +148,42 @@ namespace DMagic
 			return true;
 		}
 
-		private double clampLat(double lat)
+		private double clampLat(double Lat)
 		{
-			return (lat + 180 +90) % 180 - 90;
+			return (Lat + 180 +90) % 180 - 90;
 		}
 
-		private double clampLon(double lon)
+		private double clampLon(double Lon)
 		{
-			return (lon + 360 + 180) % 360 -180;
+			return (Lon + 360 + 180) % 360 -180;
 		}
 
-		private double fudgeLat(double lat)
+		private double fudgeLat(double Lat)
 		{
-			double f = (double)rand.Next(-10, 10) + lat;
+			double f = Math.Round(((double)rand.Next(-5, 5) + Lat) / 10) * 10;
 			return f;
 		}
 
-		private double fudgeLon(double lon)
+		private double fudgeLon(double Lon)
 		{
-			double f = (double)rand.Next(-10, 10) + lon;
+			double f = Math.Round(((double)rand.Next(-5, 5) + Lon) / 10) * 10;
 			return f;
 		}
 
-		private string NSDirection(double lat)
+		private string NSDirection(double Lat)
 		{
-			if (lat >= -90 && lat < 0)
+			if (Lat >= -90 && Lat < 0)
 				return "South";
-			if (lat >= 0 && lat <= 90)
+			if (Lat >= 0 && Lat <= 90)
 				return "North";
 			return "";
 		}
 
-		private string EWDirection(double lon)
+		private string EWDirection(double Lon)
 		{
-			if (lon >= -180 && lon < 0)
+			if (Lon >= -180 && Lon < 0)
 				return "West";
-			if (lon >= 0 && lon < 180)
+			if (Lon >= 0 && Lon < 180)
 				return "East";
 			return "";
 		}
@@ -205,7 +205,7 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Locate and study the source of the anomalous readings coming from {0}'s surface at around {1} degrees {2} and {3} degrees {4}", body.theName, fudgedLat, cardNS, fudgedLon, cardEW);
+			return string.Format("Locate and study the source of the anomalous readings coming from {0}'s surface at around {1:N0} degrees {2} and {3:N0} degrees {4}", body.theName, fudgedLat, cardNS, fudgedLon, cardEW);
 		}
 
 		protected override string GetDescription()
@@ -222,7 +222,7 @@ namespace DMagic
 
 		protected override string MessageCompleted()
 		{
-			return string.Format("You successfully returned data from {0} on {1}, well done.", hash, body.theName);
+			return string.Format("You successfully returned data from the {0} on {1}, well done.", hash, body.theName);
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -253,7 +253,15 @@ namespace DMagic
 			cardNS = NSDirection(lat);
 			cardEW = EWDirection(lon);
 			if (HighLogic.LoadedScene == GameScenes.FLIGHT)
-				targetAnomaly = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
+				try
+				{
+					targetAnomaly = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
+				}
+				catch
+				{
+					DMUtils.Logging("Failed To Load Anomaly Contract");
+					this.Cancel();
+				}
 		}
 
 		protected override void OnSave(ConfigNode node)
