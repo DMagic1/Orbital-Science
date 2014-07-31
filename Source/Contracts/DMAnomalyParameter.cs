@@ -75,7 +75,7 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return "Stupid Code Is Stupid";
+			return string.Format("Gather {0} data on the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
 		}
 
 		protected override void OnRegister()
@@ -146,25 +146,28 @@ namespace DMagic
 					double horizantalD = Math.Sqrt((totalD * totalD) - (verticalD * verticalD));
 
 					//Draw a cone above the anomaly position up to 100km with a diametere of 15km at its widest
-					if (Math.Abs(verticalD) > 1000 && verticalD < 100000)
+					if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow)
 					{
-						if (horizantalD < (15000 * (verticalD / 100000)))
+						if (Math.Abs(verticalD) > 1000 && verticalD < 100000)
 						{
-							ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
-							collected = true;
+							if (horizantalD < (15000 * (verticalD / 100000)))
+							{
+								ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+								collected = true;
+							}
+							else
+								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
 						}
-						else
-							ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
-					}
-					else if (Math.Abs(verticalD) < 1000 && situation != ExperimentSituations.SrfLanded)
-					{
-						if (horizantalD < 150)
+						else if (Math.Abs(verticalD) < 1000)
 						{
-							ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
-							collected = true;
+							if (horizantalD < 150)
+							{
+								ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+								collected = true;
+							}
+							else
+								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
 						}
-						else
-							ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
 					}
 					else if (situation == ExperimentSituations.SrfLanded)
 						if (horizantalD < 50)
