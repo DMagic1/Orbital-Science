@@ -135,6 +135,24 @@ namespace DMagic
 							DMUtils.backStory["biological"].Add(story_b);
 						}
 					}
+					foreach (string sb in storyNode.GetValues("asteroid"))
+					{
+						if (!string.IsNullOrEmpty(sb))
+						{
+							string story_b = sb.Replace("[", "{");
+							story_b = story_b.Replace("]", "}");
+							DMUtils.backStory["asteroid"].Add(story_b);
+						}
+					}
+					foreach (string sb in storyNode.GetValues("anomaly"))
+					{
+						if (!string.IsNullOrEmpty(sb))
+						{
+							string story_b = sb.Replace("[", "{");
+							story_b = story_b.Replace("]", "}");
+							DMUtils.backStory["anomaly"].Add(story_b);
+						}
+					}
 				}
 			}
 			DMUtils.Logging("Added {0} New Generic Backstories; {1} New Survey Backstories; {2} New Biological Backstories To The List", DMUtils.backStory["generic"].Count, DMUtils.backStory["survey"].Count, DMUtils.backStory["biological"].Count);
