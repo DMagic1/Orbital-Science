@@ -43,7 +43,7 @@ namespace DMagic
 		internal static Dictionary<string, Dictionary<string, DMScienceContainer>> availableScience;
 		internal static Dictionary<string, List<string>> backStory;
 		internal static float science, reward, forward, penalty;
-		internal static string newExp;
+		internal static string newExp, astName;
 
 		internal static void Logging(string s, params object[] stringObjects)
 		{

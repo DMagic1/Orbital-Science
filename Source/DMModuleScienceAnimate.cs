@@ -718,6 +718,7 @@ namespace DMagic
 				sub.subjectValue = newAsteroid.sciMult;
 				sub.scienceCap = exp.scienceCap * sub.subjectValue * 5;
 				mainBody.bodyName = bodyNameFixed;
+				DMUtils.astName = newAsteroid.aName;
 			}
 			else {
 				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost, mainBody);
