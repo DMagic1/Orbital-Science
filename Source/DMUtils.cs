@@ -525,7 +525,31 @@ namespace DMagic
 			return new DMCollectScience(body, targetSituation, biome, name, 0);
 		}
 
+		internal static DMCollectScience fetchScienceContract(CelestialBody Body, ExperimentSituations Situation, ScienceExperiment Exp)
+		{
+			DMScienceContainer scienceContainer;
+			AvailablePart aPart;
+			string name;
 
+			//Choose science container based on a given science experiment
+			scienceContainer = DMUtils.availableScience["All"].FirstOrDefault(e => e.Value.exp == Exp).Value;
+			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == scienceContainer).Key;
+			DMUtils.DebugLog("Checking Contract Requirements");
+
+			//Determine if the science part is available if applicable
+			if (scienceContainer.sciPart != "None")
+			{
+				DMUtils.DebugLog("Checking For Part {0} Now", scienceContainer.sciPart);
+				aPart = PartLoader.getPartInfoByName(scienceContainer.sciPart);
+				if (aPart == null)
+					return null;
+				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+					return null;
+				DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
+			}
+
+			return new DMCollectScience(Body, Situation, "", name, 1);
+		}
 	}
 
 	static class DMSurveyGenerator
@@ -989,6 +1013,23 @@ namespace DMagic
 
 			return new DMAnomalyParameter(Body, City, targetSituation, name);
 		}
+	}
+
+	static class DMLongOrbitGenerator
+	{
+		private static System.Random rand = DMUtils.rand;
+
+		internal static DMLongOrbitParameter fetchLongOrbit(CelestialBody Body, Contract.ContractPrestige P)
+		{
+			double time = 100d;
+			double eccen = 0.1d;
+
+			time *= (double)(P + 1) * (rand.Next(5, 16) / 10);
+			eccen *= (double)(P + 1) * (rand.Next(10, 21) / 10);
+
+			return new DMLongOrbitParameter(Body, time, eccen);
+		}
+
 	}
 
 	#endregion
