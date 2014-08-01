@@ -99,11 +99,11 @@ namespace DMagic
 
 			int a = rand.Next(0, 5);
 			if (a == 0)
-				this.agent = Contracts.Agents.AgentList.Instance.GetAgent("DMagic");
+				this.agent = AgentList.Instance.GetAgent("DMagic");
 			else if (a == 1)
-				this.agent = Contracts.Agents.AgentList.Instance.GetAgent(newParams[0].Container.agent);
+				this.agent = AgentList.Instance.GetAgent(newParams[0].Container.agent);
 			else
-				this.agent = Contracts.Agents.AgentList.Instance.GetAgentRandom();
+				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
 			base.SetDeadlineDays(40f * (float)(this.prestige + 1), null);

@@ -36,6 +36,7 @@ using System.Text;
 using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
+using Contracts.Agents;
 using KSPAchievements;
 
 namespace DMagic
@@ -66,7 +67,7 @@ namespace DMagic
 				return false;
 
 			//Generates the science experiment, returns null if experiment fails any check
-			if ((newParam = DMCollectContractGenerator.fetchScienceContract(this.prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null))) == null)
+			if ((newParam = DMCollectContractGenerator.fetchScienceContract(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null))) == null)
 				return false;
 
 			//Set various parameters to be used for the title, rewards, descriptions, etc...
@@ -89,7 +90,7 @@ namespace DMagic
 			}
 
 			if (DMscience.agent != "Any")
-				this.agent = Contracts.Agents.AgentList.Instance.GetAgent(DMscience.agent);
+				this.agent = AgentList.Instance.GetAgent(DMscience.agent);
 
 			this.AddParameter(newParam, null);
 			if (this.ParameterCount == 0)
