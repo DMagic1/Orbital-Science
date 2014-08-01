@@ -175,6 +175,7 @@ namespace DMagic
 			DMUtils.backStory["biological"] = new List<string>();
 			DMUtils.backStory["asteroid"] = new List<string>();
 			DMUtils.backStory["anomaly"] = new List<string>();
+			DMUtils.backStory["magnetic"] = new List<string>();
 		}
 
 		private void OnDestroy()
