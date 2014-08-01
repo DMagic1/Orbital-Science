@@ -92,6 +92,8 @@ namespace DMagic
 				this.agent = Contracts.Agents.AgentList.Instance.GetAgent(DMscience.agent);
 
 			this.AddParameter(newParam, null);
+			if (this.ParameterCount == 0)
+				return false;
 			DMUtils.DebugLog("Parameter Added");
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
 			base.SetScience(DMscience.exp.baseValue * 0.8f * DMUtils.science, body);
@@ -203,6 +205,8 @@ namespace DMagic
 				targetSituation = (ExperimentSituations)targetLocation;
 			biome = scienceString[3];
 			subject = string.Format("{0}@{1}{2}{3}", DMscience.exp.id, body.name, targetSituation, biome.Replace(" ", ""));
+			if (this.ParameterCount == 0)
+				this.Cancel();
 		}
 
 		protected override void OnSave(ConfigNode node)

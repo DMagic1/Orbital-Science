@@ -94,6 +94,9 @@ namespace DMagic
 				i++;
 			}
 
+			if (this.ParameterCount == 0)
+				return false;
+
 			int a = rand.Next(0, 5);
 			if (a == 0)
 				this.agent = Contracts.Agents.AgentList.Instance.GetAgent("DMagic");
@@ -153,6 +156,8 @@ namespace DMagic
 			int target;
 			target = int.Parse(node.GetValue("Surface_Survey_Target"));
 			body = FlightGlobals.Bodies[target];
+			if (this.ParameterCount == 0)
+				this.Cancel();
 		}
 
 		protected override void OnSave(ConfigNode node)

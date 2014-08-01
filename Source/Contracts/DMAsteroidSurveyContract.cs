@@ -94,6 +94,9 @@ namespace DMagic
 				j++;
 			}
 
+			if (this.ParameterCount == 0)
+				return false;
+
 			int a = rand.Next(0, 5);
 			if (a == 0)
 				this.agent = Contracts.Agents.AgentList.Instance.GetAgent("DMagic");
@@ -156,6 +159,8 @@ namespace DMagic
 				v = FlightGlobals.Vessels.FirstOrDefault(V => V.vesselName == hash);
 			if (int.TryParse(node.GetValue("Asteroid_Size_Class"), out aSize))
 				size = aSize;
+			if (this.ParameterCount == 0)
+				this.Cancel();
 		}
 
 		protected override void OnSave(ConfigNode node)
