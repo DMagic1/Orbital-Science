@@ -147,9 +147,10 @@ namespace DMagic
 			else if (type == 3)
 			{
 				if (scienceLocation == ExperimentSituations.SrfLanded)
-					return string.Format("");
+					
+					return string.Format("Gather {0} data from the surface near the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
 				else if (scienceLocation == ExperimentSituations.FlyingLow)
-					return string.Format("");
+					return string.Format("Gather {0} data while flying above the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
 				else
 					return "Stupid Code Is Stupid";
 			}
@@ -222,6 +223,7 @@ namespace DMagic
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (int.TryParse(scienceString[3], out targetLocation))
 				scienceLocation = (ExperimentSituations)targetLocation;
+			else
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Root.RemoveParameter(this);
