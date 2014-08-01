@@ -75,7 +75,12 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Gather {0} data on the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
+			if (situation == ExperimentSituations.SrfLanded)
+				return string.Format("Gather {0} data from the surface on the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
+			else if (situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingLow)
+				return string.Format("Gather {0} data from above on the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
+			else
+				return "Fix Your Stupid Code Idiot";
 		}
 
 		protected override void OnRegister()
