@@ -155,7 +155,7 @@ namespace DMagic
 					}
 				}
 			}
-			DMUtils.Logging("Added {0} New Generic Backstories; {1} New Survey Backstories; {2} New Biological Backstories To The List", DMUtils.backStory["generic"].Count, DMUtils.backStory["survey"].Count, DMUtils.backStory["biological"].Count);
+			DMUtils.Logging("Added {0} New Generic Backstories; {1} New Survey Backstories; {2} New Biological Backstories; {3} New Asteroid Backstories; {4} New Anomaly Backstories To The List", DMUtils.backStory["generic"].Count, DMUtils.backStory["survey"].Count, DMUtils.backStory["biological"].Count, DMUtils.backStory["asteroid"].Count, DMUtils.backStory["anomaly"].Count);
 		}
 
 		private void initializeUtils()
@@ -173,6 +173,8 @@ namespace DMagic
 			DMUtils.backStory["generic"] = new List<string>();
 			DMUtils.backStory["survey"] = new List<string>();
 			DMUtils.backStory["biological"] = new List<string>();
+			DMUtils.backStory["asteroid"] = new List<string>();
+			DMUtils.backStory["anomaly"] = new List<string>();
 		}
 
 		private void OnDestroy()
