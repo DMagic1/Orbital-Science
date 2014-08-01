@@ -140,11 +140,13 @@ namespace DMagic
 				}
 			}
 
+			if (this.ParameterCount == 0)
+				return false;
+
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
-			base.SetScience(0.8f * DMUtils.science, body);
-			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
+			base.SetDeadlineDays(30f * (float)(this.prestige + 1), body);
 			base.SetReputation(5f * (float)(this.prestige + 1) * DMUtils.reward, 10f * (float)(this.prestige + 1) * DMUtils.penalty, body);
-			base.SetFunds(600f * DMUtils.forward, 500f * DMUtils.reward, 500f * DMUtils.penalty, body);
+			base.SetFunds(3000f * DMUtils.forward, 2000f * DMUtils.reward, 2500f * DMUtils.penalty, body);
 			return true;
 		}
 
@@ -262,6 +264,8 @@ namespace DMagic
 					DMUtils.Logging("Failed To Load Anomaly Contract");
 					this.Cancel();
 				}
+			if (this.ParameterCount == 0)
+				this.Cancel();
 		}
 
 		protected override void OnSave(ConfigNode node)
