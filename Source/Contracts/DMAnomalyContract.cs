@@ -207,19 +207,20 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Locate and study the source of the anomalous readings coming from {0}'s surface at around {1:N0} degrees {2} and {3:N0} degrees {4}", body.theName, fudgedLat, cardNS, fudgedLon, cardEW);
+			return string.Format("Study the anomalous readings coming from {0}", body.theName);
+			
 		}
 
 		protected override string GetDescription()
 		{
 			string story = DMUtils.backStory["anomaly"][rand.Next(0, DMUtils.backStory["anomaly"].Count)];
-			return string.Format(story, this.agent.Name, hash, body.theName);
+			return string.Format(story, this.agent.Name, body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
 			DMUtils.DebugLog("Generating Synopsis From Anomaly [{0}]", hash);
-			return string.Format("Study the mysterious readings coming from {0}", body.theName);
+			return string.Format("Locate and study the source of the anomalous readings coming from {0}'s surface at around {1:N0} degrees {2} and {3:N0} degrees {4}", body.theName, fudgedLat, cardNS, fudgedLon, cardEW);
 		}
 
 		protected override string MessageCompleted()
