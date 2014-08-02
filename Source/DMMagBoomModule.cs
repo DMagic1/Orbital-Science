@@ -110,11 +110,14 @@ namespace DMagic
 
 		private void pqsBuild()
 		{
-			anomList.Clear();
-			PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
-			foreach (PQSCity anomalyObject in Cities)
-				if (anomalyObject.transform.parent.name == vessel.mainBody.name)
-					anomList.Add(anomalyObject);
+			if (HighLogic.LoadedScene != GameScenes.EDITOR)
+			{
+				anomList.Clear();
+				PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
+				foreach (PQSCity anomalyObject in Cities)
+					if (anomalyObject.transform.parent.name == vessel.mainBody.name)
+						anomList.Add(anomalyObject);
+			}
 		}
 
 		public override string GetInfo()
