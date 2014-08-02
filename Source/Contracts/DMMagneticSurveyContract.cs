@@ -85,16 +85,16 @@ namespace DMagic.Contracts
 			if (this.ParameterCount == 0)
 				return false;
 
-			int a = rand.Next(0, 2);
+			int a = rand.Next(0, 3);
 			if (a == 0)
 				this.agent = AgentList.Instance.GetAgent("DMagic");
 			else
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
-			base.SetDeadlineDays(300f * (float)(this.prestige + 1), body);
+			base.SetDeadlineDays(150f, body);
 			base.SetReputation(0.5f * DMUtils.reward, body);
-			base.SetFunds(3000 * DMUtils.forward, 3000 * DMUtils.reward, 1000 * DMUtils.penalty, body);
+			base.SetFunds(10000 * DMUtils.forward, 6000 * DMUtils.reward, 8000 * DMUtils.penalty, body);
 			return true;
 		}
 
@@ -115,7 +115,7 @@ namespace DMagic.Contracts
 
 		protected override string GetTitle()
 		{
-			return string.Format("Conduct mag survey of {0}", body.theName);
+			return string.Format("Conduct a survey of the magnetic field environment around {0}", body.theName);
 		}
 
 		protected override string GetDescription()
@@ -127,7 +127,7 @@ namespace DMagic.Contracts
 		protected override string GetSynopsys()
 		{
 			DMUtils.DebugLog("Generating Mag Synopsis From Target Body: [{0}]", body.theName);
-			return string.Format("Study {0} for signs of on-going or past biological activity by conducting several science experiments.", body.theName);
+			return string.Format("Study the magnetic field environment around {0} by inserting a long-term research vessel into orbit.", body.theName);
 		}
 
 		protected override string MessageCompleted()
