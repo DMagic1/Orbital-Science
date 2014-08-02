@@ -153,9 +153,18 @@ namespace DMagic
 							DMUtils.backStory["anomaly"].Add(story_b);
 						}
 					}
+					foreach (string sb in storyNode.GetValues("magnetic"))
+					{
+						if (!string.IsNullOrEmpty(sb))
+						{
+							string story_b = sb.Replace("[", "{");
+							story_b = story_b.Replace("]", "}");
+							DMUtils.backStory["magnetic"].Add(story_b);
+						}
+					}
 				}
 			}
-			DMUtils.Logging("Added {0} New Generic Backstories; {1} New Survey Backstories; {2} New Biological Backstories; {3} New Asteroid Backstories; {4} New Anomaly Backstories To The List", DMUtils.backStory["generic"].Count, DMUtils.backStory["survey"].Count, DMUtils.backStory["biological"].Count, DMUtils.backStory["asteroid"].Count, DMUtils.backStory["anomaly"].Count);
+			DMUtils.Logging("Added {0} New Generic Backstories; {1} New Survey Backstories; {2} New Biological Backstories; {3} New Asteroid Backstories; {4} New Anomaly Backstories; {5} New Magnetic Backstories To The List", DMUtils.backStory["generic"].Count, DMUtils.backStory["survey"].Count, DMUtils.backStory["biological"].Count, DMUtils.backStory["asteroid"].Count, DMUtils.backStory["anomaly"].Count, DMUtils.backStory["magnetic"].Count);
 		}
 
 		private void initializeUtils()
