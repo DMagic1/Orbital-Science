@@ -1021,13 +1021,15 @@ namespace DMagic
 
 		internal static DMLongOrbitParameter fetchLongOrbit(CelestialBody Body, Contract.ContractPrestige P)
 		{
-			double time = 100d;
+			double time = 2160000d;
 			double eccen = 0.1d;
+			double inclination = 15d;
 
-			time *= (double)(P + 1) * (rand.Next(5, 16) / 10);
-			eccen *= (double)(P + 1) * (rand.Next(10, 21) / 10);
+			time = time * (double)(P + 1) * ((double)rand.Next(5, 16) / 10d);
+			eccen = eccen * (double)(P + 1) * ((double)rand.Next(10, 21) / 10d);
+			inclination = inclination * (double)(P + 1) * ((double)rand.Next(8, 15) / 10d);
 
-			return new DMLongOrbitParameter(Body, time, eccen);
+			return new DMLongOrbitParameter(Body, time, eccen, inclination);
 		}
 
 	}
