@@ -93,6 +93,8 @@ namespace DMagic
 						DMUtils.availableScience[DMScienceType.Biological.ToString()].Add(name, DMscience);
 					if (((DMScienceType)type & DMScienceType.Asteroid) == DMScienceType.Asteroid)
 						DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Add(name, DMscience);
+					if (((DMScienceType)type & DMScienceType.Anomaly) == DMScienceType.Anomaly)
+						DMUtils.availableScience[DMScienceType.Anomaly.ToString()].Add(name, DMscience);
 					DMUtils.availableScience["All"].Add(name, DMscience);
 					DMUtils.Logging("New Experiment: [{0}] Available For Contracts", name);
 				}
@@ -103,6 +105,7 @@ namespace DMagic
 			DMUtils.DebugLog("Successfully Added {0} New Orbital Experiments To Contract List", DMUtils.availableScience[DMScienceType.Space.ToString()].Count);
 			DMUtils.DebugLog("Successfully Added {0} New Biological Experiments To Contract List", DMUtils.availableScience[DMScienceType.Biological.ToString()].Count);
 			DMUtils.DebugLog("Successfully Added {0} New Asteroid Experiments To Contract List", DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Count);
+			DMUtils.DebugLog("Successfully Added {0} New Anomaly Experiments To Contract List", DMUtils.availableScience[DMScienceType.Anomaly.ToString()].Count);
 			//Load in custom contract descriptions
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_SCIENCE_STORY_DEF"))
 			{
@@ -177,6 +180,7 @@ namespace DMagic
 			DMUtils.availableScience[DMScienceType.Space.ToString()] = new Dictionary<string, DMScienceContainer>();
 			DMUtils.availableScience[DMScienceType.Biological.ToString()] = new Dictionary<string, DMScienceContainer>();
 			DMUtils.availableScience[DMScienceType.Asteroid.ToString()] = new Dictionary<string, DMScienceContainer>();
+			DMUtils.availableScience[DMScienceType.Anomaly.ToString()] = new Dictionary<string, DMScienceContainer>();
 
 			DMUtils.backStory = new Dictionary<string, List<string>>();
 			DMUtils.backStory["generic"] = new List<string>();
