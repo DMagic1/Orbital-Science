@@ -37,13 +37,14 @@ using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
 
-namespace DMagic.Contracts
+namespace DMagic
 {
 	class DMMagneticSurveyContract: Contract
 	{
 		private CelestialBody body;
 		private DMCollectScience[] magParams = new DMCollectScience[4];
-		private DMLongOrbitParameter longOrbit;
+		private DMOrbitalParameters inclinedParam, eccentricParam;
+		private bool eccentric, inclined;
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
@@ -52,6 +53,13 @@ namespace DMagic.Contracts
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>().Count();
 			if (total > 1)
+				return false;
+
+			//Make sure that the RPWS is available
+			AvailablePart aPart = PartLoader.getPartInfoByName("rpwsAnt");
+			if (aPart == null)
+				return false;
+			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 				return false;
 
 			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null));
@@ -63,20 +71,19 @@ namespace DMagic.Contracts
 			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, ResearchAndDevelopment.GetExperiment("rpwsScan"));
 			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, ResearchAndDevelopment.GetExperiment("rpwsScan"));
 
-			longOrbit = DMLongOrbitGenerator.fetchLongOrbit(body, this.Prestige);
-			this.AddParameter(longOrbit);
-			DMUtils.DebugLog("Added Long Orbit Param");
+			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(5, 16) / 10d);
+			double eccen = 0.1d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
+			double inclination = 15d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 
-			double time = 2160000d;
-			double eccen = 0.1d;
-			double inclination = 15d;
-
-			time = time * (double)(this.Prestige + 1) * ((double)rand.Next(5, 16) / 10d);
-			eccen = eccen * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
-			inclination = inclination * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
-
+			this.AddParameter(new DMLongOrbitParameter(body, time));
 			this.AddParameter(new DMOrbitalParameters(body, eccen, 0));
 			this.AddParameter(new DMOrbitalParameters(body, inclination, 1));
+
+			eccentricParam = (DMOrbitalParameters)this.GetParameter(1);
+			inclinedParam = (DMOrbitalParameters)this.GetParameter(2);
+
+			if (eccentricParam == null || inclinedParam == null)
+				return false;
 
 			foreach (DMCollectScience DMCS in magParams)
 			{
@@ -86,9 +93,9 @@ namespace DMagic.Contracts
 				{
 					this.AddParameter(DMCS, null);
 					DMUtils.DebugLog("Added Mag Survey Param");
-					DMCS.SetFunds(1f, body);
-					DMCS.SetReputation(1f, body);
-					DMCS.SetScience(1f, body);
+					DMCS.SetFunds(1000f * DMUtils.reward, body);
+					DMCS.SetReputation(15f * DMUtils.reward, body);
+					DMCS.SetScience(10f * DMUtils.science, body);
 				}
 			}
 
@@ -102,8 +109,8 @@ namespace DMagic.Contracts
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
-			base.SetDeadlineDays(150f, body);
-			base.SetReputation(0.5f * DMUtils.reward, body);
+			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 2f, body);
+			base.SetReputation(5f * DMUtils.reward, body);
 			base.SetFunds(10000 * DMUtils.forward, 6000 * DMUtils.reward, 8000 * DMUtils.penalty, body);
 			return true;
 		}
@@ -158,6 +165,10 @@ namespace DMagic.Contracts
 			}
 			if (this.ParameterCount == 0)
 				this.Cancel();
+			eccentricParam = (DMOrbitalParameters)this.GetParameter(1);
+			inclinedParam = (DMOrbitalParameters)this.GetParameter(2);
+			if (eccentricParam == null || inclinedParam == null)
+				this.Cancel();
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -169,6 +180,27 @@ namespace DMagic.Contracts
 		public override bool MeetRequirements()
 		{
 			return true;
+		}
+
+		protected override void OnUpdate()
+		{
+			if (!HighLogic.LoadedSceneIsEditor)
+			{
+				eccentric = eccentricParam.State == ParameterState.Complete;
+				inclined = inclinedParam.State == ParameterState.Complete;
+			}
+		}
+
+		internal bool Eccentric
+		{
+			get { return eccentric; }
+			private set { }
+		}
+
+		internal bool Inclined
+		{
+			get { return inclined; }
+			private set { }
 		}
 
 	}
