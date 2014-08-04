@@ -305,8 +305,8 @@ namespace DMagic
 						double hDist = Math.Sqrt((closestAnom.Value * closestAnom.Value) - (vheight * vheight));
 
 						double anomMult = 1 + ((100000 - closestAnom.Value) / 10000);
-						double anomMultZ = anomMult * ((closestAnom.Value - hDist) / closestAnom.Value);
-						double anomMultH = anomMult * ((closestAnom.Value - vheight) / closestAnom.Value);
+						double anomMultZ = 1 + (anomMult * ((closestAnom.Value - hDist) / closestAnom.Value));
+						double anomMultH = 1 + ( anomMult * ((closestAnom.Value - vheight) / closestAnom.Value));
 
 						Bz *= anomMultZ;
 						Bh *= anomMultH;
