@@ -288,13 +288,6 @@ namespace DMagic
 					else
 						DMUtils.DebugLog("Vessel Mainbody {0} Does Not Match: {1}", v.mainBody.name, body.name);
 				}
-				//else
-				//{
-				//    DMUtils.DebugLog("Vessel Escaping Orbit");
-				//    inOrbit = false;
-				//    goodOrbit = false;
-				//    orbitTime = Planetarium.GetUniversalTime();
-				//}
 			}
 		}
 

@@ -43,7 +43,8 @@ namespace DMagic
 	{
 		internal DMCollectScience[] newParams = new DMCollectScience[5];
 		private CelestialBody body;
-		private int i, j = 0;
+		private int i = 0;
+		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
 		private System.Random rand = DMUtils.rand;
 		
 		protected override bool Generate()
@@ -51,8 +52,7 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMBioSurveyContract>().Count();
-			int finished = ContractSystem.Instance.GetCompletedContracts<DMBioSurveyContract>().Count();
-			if ((total - finished) > 0)
+			if (total > 0)
 				return false;
 
 			//Make sure that drill is at least available
@@ -88,10 +88,18 @@ namespace DMagic
 			else
 				return false;
 
-			for (i = 0; i < 5; i++)
+			sciList.AddRange(DMUtils.availableScience[DMScienceType.Biological.ToString()].Values);
+
+			for (i = 0; i < 4; i++)
 			{
-				DMScienceContainer DMScience = DMUtils.availableScience[DMScienceType.Biological.ToString()].ElementAt(i).Value;
-				newParams[i] = DMSurveyGenerator.fetchSurveyScience(body, DMScience.exp);
+				if (sciList.Count > 0)
+				{
+					DMScienceContainer DMScience = sciList[rand.Next(0, sciList.Count)];
+					sciList.Remove(DMScience);
+					newParams[i] = DMSurveyGenerator.fetchSurveyScience(body, DMScience);
+				}
+				else
+					newParams[i] = null;
 			}
 
 			//Add orbital and landing parameters
@@ -105,13 +113,12 @@ namespace DMagic
 			{
 				if (DMC != null)
 				{
-					this.AddParameter(newParams[j], null);
+					this.AddParameter(DMC, null);
 					DMC.SetScience(DMC.Container.exp.baseValue * 0.75f * DMUtils.science, body);
 					DMC.SetFunds(800f * DMUtils.reward, body);
 					DMC.SetReputation(6f * DMUtils.reward, body);
 					DMUtils.DebugLog("Bio Parameter Added");
 				}
-				j++;
 			}
 
 			if (this.ParameterCount == 0)

@@ -42,13 +42,16 @@ namespace DMagic
 	class DMAnomalyContract: Contract
 	{
 		private DMCollectScience newParam;
-		private List<DMAnomalyParameter> anomParams = new List<DMAnomalyParameter>();
+		private DMScienceContainer DMScience;
+		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
+		private DMAnomalyParameter[] anomParams = new DMAnomalyParameter[4];
 		private CelestialBody body;
 		private PQSCity targetAnomaly;
 		private double lat, lon;
 		private double fudgedLat, fudgedLon;
 		private string cardNS, cardEW;
 		private string hash;
+		private int i = 0;
 		private List<PQSCity> aList = new List<PQSCity>();
 		private System.Random rand = DMUtils.rand;
 
@@ -57,8 +60,7 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>().Count();
-			int finished = ContractSystem.Instance.GetCompletedContracts<DMAnomalyContract>().Count();
-			if ((total - finished) > 0)
+			if (total > 0)
 				return false;
 
 			//Make sure that the anomaly scanner is available
@@ -123,10 +125,19 @@ namespace DMagic
 			if ((newParam = DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly)) == null)
 				return false;
 
-			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("magScan")));
-			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("scopeScan")));
-			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("dmImagingPlatform")));
-			anomParams.Add(DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, ResearchAndDevelopment.GetExperiment("dmlaserblastscan")));
+			sciList.AddRange(DMUtils.availableScience[DMScienceType.Anomaly.ToString()].Values);
+
+			for (i = 0; i < 3; i++)
+			{
+				if (sciList.Count > 0)
+				{
+					DMScience = sciList[rand.Next(0, sciList.Count)];
+					anomParams[i] = (DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, DMScience));
+					sciList.Remove(DMScience);
+				}
+				else
+					anomParams[i] = null;
+			}
 
 			this.AddParameter(newParam, null);
 			DMUtils.DebugLog("Added Primary Anomaly Parameter");

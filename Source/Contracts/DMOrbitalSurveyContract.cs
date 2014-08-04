@@ -44,7 +44,9 @@ namespace DMagic
 	{
 		internal DMCollectScience[] newParams = new DMCollectScience[4];
 		private CelestialBody body;
-		private int i = 0;
+		private DMScienceContainer DMScience;
+		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
+		private int j = 0;
 		private System.Random rand = DMUtils.rand;
 		
 		protected override bool Generate()
@@ -52,8 +54,7 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMOrbitalSurveyContract>().Count();
-			int finished = ContractSystem.Instance.GetCompletedContracts<DMOrbitalSurveyContract>().Count();
-			if ((total - finished) > 0)
+			if (total> 0)
 				return false;
 			if (this.Prestige == ContractPrestige.Trivial)
 				return false;
@@ -65,17 +66,33 @@ namespace DMagic
 			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 				return false;
 
+			sciList.AddRange(DMUtils.availableScience[DMScienceType.Space.ToString()].Values);
+
+			if (sciList.Count > 0)
+			{
+				DMScience = sciList[rand.Next(0, sciList.Count)];
+				sciList.Remove(DMScience);
+			}
+			else
+				return false;
+
 			//Generates the science experiment, returns null if experiment fails any check
-			if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null), 0)) == null)
+			if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null), DMScience, 0)) == null)
 				return false;
 
 			body = newParams[0].Body;
-
-			//Generate several more experiments using the target body returned from the first; needs at least 3
-			if ((newParams[1] = DMSurveyGenerator.fetchSurveyScience(body, 0)) == null)
-				return false;
-			newParams[2] = DMSurveyGenerator.fetchSurveyScience(body, 0);
-			newParams[3] = DMSurveyGenerator.fetchSurveyScience(body, 0);
+			
+			for (j = 1; j < 3; j++)
+			{
+				if (sciList.Count > 0)
+				{
+					DMScience = sciList[rand.Next(0, sciList.Count)];
+					newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, 0);
+					sciList.Remove(DMScience);
+				}
+				else
+					newParams[j] = null;
+			}
 
 			//Add an orbital parameter
 			EnterOrbit orbitParam = new EnterOrbit(body);
@@ -86,13 +103,12 @@ namespace DMagic
 			{
 				if (DMC != null)
 				{
-					this.AddParameter(newParams[i], null);
+					this.AddParameter(DMC, null);
 					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f * DMUtils.science, body);
 					DMC.SetFunds(600f * DMUtils.reward, body);
 					DMC.SetReputation(6f * DMUtils.reward, body);
 					DMUtils.DebugLog("Orbital Survey Parameter Added");
 				}
-				i++;
 			}
 
 			if (this.ParameterCount == 0)
