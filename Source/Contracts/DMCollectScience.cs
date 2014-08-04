@@ -41,12 +41,9 @@ namespace DMagic
 		private CelestialBody body;
 		private ExperimentSituations scienceLocation;
 		private DMScienceContainer scienceContainer;
-		private Vessel vessel;
-		private string subject;
-		private string name;
-		private string biomeName;
-		private string vName;
+		private string subject, name, biomeName, aSize;
 		private bool collected;
+		private int size;
 		private int type; //type 0: standard experiment; type 1: standard survey; type 2: asteroid survey; type 3: anomaly
 
 		public DMCollectScience()
@@ -56,7 +53,6 @@ namespace DMagic
 		internal DMCollectScience(CelestialBody target, ExperimentSituations location, string BiomeName, string Name, int Type)
 		{
 			body = target;
-			vessel = null;
 			scienceLocation = location;
 			name = Name;
 			biomeName = BiomeName;
@@ -66,14 +62,14 @@ namespace DMagic
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 		}
 
-		internal DMCollectScience(Vessel target, ExperimentSituations Location, string Name, int Type)
+		internal DMCollectScience(int Size, ExperimentSituations Location, string Name, int Type)
 		{
 			body = null;
-			vessel = target;
-			vName = vessel.vesselName;
 			scienceLocation = Location;
 			name = Name;
 			type = Type;
+			size = Size;
+			aSize = DMUtils.sizeHash(size);
 			biomeName = "";
 			collected = false;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
@@ -84,17 +80,6 @@ namespace DMagic
 		internal CelestialBody Body
 		{
 			get { return body; }
-			private set { }
-		}
-
-		internal Vessel Vessel
-		{
-			get {
-				if (HighLogic.LoadedScene != GameScenes.EDITOR)
-					return vessel;
-				else
-					return null;
-			}
 			private set { }
 		}
 
@@ -138,9 +123,9 @@ namespace DMagic
 			if (type == 2)
 			{
 				if (scienceLocation == ExperimentSituations.InSpaceLow)
-					return string.Format("Collect {0} data from in space near the asteroid {1}", scienceContainer.exp.experimentTitle, vName);
+					return string.Format("Collect {0} data from in space near a {1} asteroid", scienceContainer.exp.experimentTitle, aSize);
 				else if (scienceLocation == ExperimentSituations.SrfLanded)
-					return string.Format("Collect {0} data while grappled to asteroid {1}", scienceContainer.exp.experimentTitle, vName);
+					return string.Format("Collect {0} data while grappled to a {1} asteroid", scienceContainer.exp.experimentTitle, aSize);
 				else
 					return "Stupid Code Is Stupid";
 			}
@@ -204,7 +189,7 @@ namespace DMagic
 		{
 			DMUtils.DebugLog("Saving Contract Parameter");
 			if (type == 2)
-				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, vName, (int)scienceLocation, "", collected));
+				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, size, (int)scienceLocation, "", collected));
 			else
 				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, body.flightGlobalsIndex, (int)scienceLocation, biomeName, collected));
 		}
@@ -236,20 +221,13 @@ namespace DMagic
 			}
 			if (type == 2)
 			{
-				vName = scienceString[2];
-				if (HighLogic.LoadedScene != GameScenes.EDITOR)
+				if (int.TryParse(scienceString[2], out size))
+					aSize = DMUtils.sizeHash(size);
+				else
 				{
-					try
-					{
-						vessel = FlightGlobals.Vessels.FirstOrDefault(v => v.vesselName == scienceString[2]);
-					}
-					catch
-					{
-						DMUtils.Logging("Failed To Load Asteroid Target Vessel; Parameter Removed");
-						this.Root.RemoveParameter(this);
-					}
+					DMUtils.Logging("Failed To Load Contract Parameter; Parameter Removed");
+					this.Root.RemoveParameter(this);
 				}
-				subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, "Asteroid", scienceLocation, biomeName);
 			}
 			else
 			{
@@ -270,12 +248,12 @@ namespace DMagic
 			{
 				if (!collected)
 				{
-					if (setAstVessel(DMUtils.astName, DMUtils.newExp))
+					if (setAstVessel(DMUtils.astSize, DMUtils.newExp))
 					{
 						collected = true;
 					}
 					DMUtils.newExp = "";
-					DMUtils.astName = "";
+					DMUtils.astSize = "";
 				}
 			}
 		}
@@ -287,7 +265,7 @@ namespace DMagic
 			else
 			{
 				if (e == scienceContainer.exp.id)
-					if (s == vName)
+					if (s == aSize)
 						return true;
 					else
 						return false;
@@ -318,7 +296,7 @@ namespace DMagic
 					DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
 					if (clippedSub.StartsWith(clippedTargetSub))
 					{
-						if (sci < ((scienceContainer.exp.baseValue * sub.subjectValue) * 0.4f))
+						if (sci < ((scienceContainer.exp.baseValue * sub.subjectValue) * 0.2f))
 							ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
 						else
 						{
