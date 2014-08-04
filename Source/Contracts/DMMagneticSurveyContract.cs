@@ -51,8 +51,7 @@ namespace DMagic.Contracts
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>().Count();
-			int finished = ContractSystem.Instance.GetCompletedContracts<DMMagneticSurveyContract>().Count();
-			if ((total - finished) > 1)
+			if (total > 1)
 				return false;
 
 			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null));
@@ -67,6 +66,17 @@ namespace DMagic.Contracts
 			longOrbit = DMLongOrbitGenerator.fetchLongOrbit(body, this.Prestige);
 			this.AddParameter(longOrbit);
 			DMUtils.DebugLog("Added Long Orbit Param");
+
+			double time = 2160000d;
+			double eccen = 0.1d;
+			double inclination = 15d;
+
+			time = time * (double)(this.Prestige + 1) * ((double)rand.Next(5, 16) / 10d);
+			eccen = eccen * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
+			inclination = inclination * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
+
+			this.AddParameter(new DMOrbitalParameters(body, eccen, 0));
+			this.AddParameter(new DMOrbitalParameters(body, inclination, 1));
 
 			foreach (DMCollectScience DMCS in magParams)
 			{
