@@ -57,5 +57,6 @@ namespace DMagic
 		Space = 4,
 		Biological = 8,
 		Asteroid = 16,
+		Anomaly = 32,
 	}
 }
