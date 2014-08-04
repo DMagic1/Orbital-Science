@@ -127,11 +127,19 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
 				this.Root.RemoveParameter(this);
 			}
-			if (HighLogic.LoadedScene == GameScenes.FLIGHT)
+			if (HighLogic.LoadedSceneIsFlight)
 			{
-				city = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
+				try
+				{
+					city = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
+					anomPosition = city.transform.position;
+				}
+				catch
+				{
+					DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+					this.Root.RemoveParameter(this);
+				}
 				v = FlightGlobals.ActiveVessel;
-				anomPosition = city.transform.position;
 			}
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
 		}
@@ -161,7 +169,7 @@ namespace DMagic
 								collected = true;
 							}
 							else
-								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
+								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 						}
 						else if (Math.Abs(verticalD) < 1000)
 						{
@@ -171,7 +179,7 @@ namespace DMagic
 								collected = true;
 							}
 							else
-								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
+								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 						}
 					}
 					else if (situation == ExperimentSituations.SrfLanded)
@@ -181,7 +189,7 @@ namespace DMagic
 							collected = true;
 						}
 						else
-							ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again somewhere else", 6f, ScreenMessageStyle.UPPER_CENTER);
+							ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 				}
 				DMUtils.newExp = "";
 			}
