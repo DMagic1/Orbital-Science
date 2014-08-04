@@ -352,8 +352,8 @@ namespace DMagic
 					Fields["Bt"].guiActive = primaryModule.IsDeployed;
 					Fields["inc"].guiActive = alt < (altScale(planetID) / 2);
 					Fields["dec"].guiActive = alt < (altScale(planetID) / 2);
-					Fields["BhS"].guiActive = alt < (altScale(planetID) / 2);
-					Fields["BzS"].guiActive = alt < (altScale(planetID) / 2);
+					Fields["BhS"].guiActive = alt >= (altScale(planetID) / 2);
+					Fields["BzS"].guiActive = alt >= (altScale(planetID) / 2);
 
 					//Extra variables - used in development
 
