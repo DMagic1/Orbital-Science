@@ -83,6 +83,15 @@ namespace DMagic
 			}
 		}
 
+		internal static double timeInDays(double D)
+		{
+			if (GameSettings.KERBIN_TIME)
+				D /= (3600 * 6);
+			else
+				D /= (3600 * 24);
+			return D;
+		}
+
 		#region Debug Logging
 
 		[System.Diagnostics.Conditional("DEBUG")]
@@ -235,7 +244,7 @@ namespace DMagic
 
 	}
 
-	#region Paramater Generator
+	#region Parameter Generator
 
 	static class DMCollectContractGenerator
 	{
@@ -918,25 +927,6 @@ namespace DMagic
 
 			return new DMAnomalyParameter(Body, City, targetSituation, name);
 		}
-	}
-
-	static class DMLongOrbitGenerator
-	{
-		private static System.Random rand = DMUtils.rand;
-
-		internal static DMLongOrbitParameter fetchLongOrbit(CelestialBody Body, Contract.ContractPrestige P)
-		{
-			double time = 2160000d;
-			double eccen = 0.1d;
-			double inclination = 15d;
-
-			time = time * (double)(P + 1) * ((double)rand.Next(5, 16) / 10d);
-			eccen = eccen * (double)(P + 1) * ((double)rand.Next(10, 21) / 10d);
-			inclination = inclination * (double)(P + 1) * ((double)rand.Next(8, 15) / 10d);
-
-			return new DMLongOrbitParameter(Body, time, eccen, inclination);
-		}
-
 	}
 
 	#endregion
