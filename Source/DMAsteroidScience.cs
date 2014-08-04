@@ -39,7 +39,6 @@ namespace DMagic
 		private static Vessel asteroidVessel;
 		internal string aClass = null;
 		internal string aType = null;
-		internal string aName;
 		internal float sciMult = 1f;
 		internal CelestialBody body = null;
 		internal int ID = 0;
@@ -59,14 +58,12 @@ namespace DMagic
 				aClass = asteroidClass(asteroidM.prefabBaseURL);
 				ID = asteroidM.seed;
 				sciMult = asteroidValue(aClass);
-				aName = asteroidM.AsteroidName;
 			}
 			else if (asteroidGrappled()) {
 				ModuleAsteroid asteroidM = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleAsteroid>().First();
 				aClass = asteroidClass(asteroidM.prefabBaseURL);
 				ID = asteroidM.seed;
 				sciMult = asteroidValue(aClass) * 1.5f;
-				aName = asteroidM.AsteroidName;
 			}
 		}
 
