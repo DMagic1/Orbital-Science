@@ -42,10 +42,10 @@ namespace DMagic
 	class DMAsteroidSurveyContract: Contract
 	{
 		internal DMCollectScience[] newParams = new DMCollectScience[4];
-		private Vessel v;
+		private DMScienceContainer DMScience;
+		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
 		private string hash;
-		private int size = 2;
-		private int i, j = 0;
+		private int size, i, j = 0;
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
@@ -53,11 +53,17 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMAsteroidSurveyContract>().Count();
-			int finished = ContractSystem.Instance.GetCompletedContracts<DMAsteroidSurveyContract>().Count();
-			if ((total - finished) > 0)
+			if (total > 0)
 				return false;
 			if (this.Prestige == ContractPrestige.Trivial)
 				return false;
+			else if (this.Prestige == ContractPrestige.Significant)
+				size = rand.Next(0, 3);
+			else if (this.Prestige == ContractPrestige.Exceptional)
+				size = rand.Next(2, 4);
+			else
+				return false;
+			hash = DMUtils.sizeHash(size);
 
 			//Make sure that the grappling device is available
 			AvailablePart aPart = PartLoader.getPartInfoByName("GrapplingDevice");
@@ -66,18 +72,19 @@ namespace DMagic
 			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 				return false;
 
-			if ((newParams[0] = DMAsteroidGenerator.fetchAsteroidParameter(ResearchAndDevelopment.GetExperiment("dmImagingPlatform"), 2)) == null)
-				return false;
-
-			v = newParams[0].Vessel;
-			size = (int)v.DiscoveryInfo.objectSize;
-			hash = v.vesselName;
+			sciList.AddRange(DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Values);
 
 			//Generates new asteroid science experiments
-			for (i = 1; i < 4; i++)
+			for (i = 0; i < 4; i++)
 			{
-				DMScienceContainer DMScience = DMUtils.availableScience[DMScienceType.Asteroid.ToString()].ElementAt(rand.Next(0, DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Count)).Value;
-				newParams[i] = DMAsteroidGenerator.fetchAsteroidParameter(v, DMScience.exp, 2);
+				if (sciList.Count > 0)
+				{
+					DMScience = sciList[rand.Next(0, sciList.Count)];
+					newParams[i] = DMAsteroidGenerator.fetchAsteroidParameter(size, DMScience, 2);
+					sciList.Remove(DMScience);
+				}
+				else
+					newParams[i] = null;
 			}
 
 			//Add in all acceptable paramaters to the contract
@@ -106,7 +113,7 @@ namespace DMagic
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
-			base.SetDeadlineDays(40f * (float)(this.prestige + 1), null);
+			base.SetDeadlineDays(450f * (float)(this.prestige + 1), null);
 			base.SetReputation(newParams.Length * 5f * DMUtils.reward * (size + 1), newParams.Length * 3f * DMUtils.penalty, null);
 			base.SetFunds(3000 * newParams.Length * DMUtils.forward * (size + 1), 3000 * newParams.Length * DMUtils.reward * (size + 1), 1000 * newParams.Length * DMUtils.penalty * (size + 1), null);
 			return true;
@@ -129,7 +136,7 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Conduct a survey of the asteroid {0} by collecting multiple scienctific observations", hash);
+			return string.Format("Conduct a survey of a {0} asteroid by collecting multiple scienctific observations", hash);
 		}
 
 		protected override string GetDescription()
@@ -142,23 +149,18 @@ namespace DMagic
 		protected override string GetSynopsys()
 		{
 			DMUtils.DebugLog("Generating Asteroid Synopsis From Target Body: [{0}]", hash);
-			return string.Format("Study the asteroid {0} by collecting multiple scientific observations.", hash);
+			return string.Format("Study the a {0} asteroid by collecting multiple scientific observations.", hash);
 		}
 
 		protected override string MessageCompleted()
 		{
-			return string.Format("You completed a survey of {0}, well done.", hash);
+			return string.Format("You completed a survey of a {0} asteroid, well done.", hash);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
 			DMUtils.DebugLog("Loading Asteroid Survey Contract");
-			int aSize;
-			hash = node.GetValue("Asteroid_Survey_Target");
-			if (HighLogic.LoadedScene != GameScenes.EDITOR)
-				v = FlightGlobals.Vessels.FirstOrDefault(V => V.vesselName == hash);
-			if (int.TryParse(node.GetValue("Asteroid_Size_Class"), out aSize))
-				size = aSize;
+			hash = node.GetValue("Asteroid_Size_Class");
 			if (this.ParameterCount == 0)
 				this.Cancel();
 		}
@@ -166,8 +168,7 @@ namespace DMagic
 		protected override void OnSave(ConfigNode node)
 		{
 			DMUtils.DebugLog("Saving Asteroid Survey Contract");
-			node.AddValue("Asteroid_Survey_Target", hash);
-			node.AddValue("Asteroid_Size_Class", size);
+			node.AddValue("Asteroid_Size_Class", hash);
 		}
 
 		public override bool MeetRequirements()
