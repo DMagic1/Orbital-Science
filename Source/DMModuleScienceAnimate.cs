@@ -718,7 +718,7 @@ namespace DMagic
 				sub.subjectValue = newAsteroid.sciMult;
 				sub.scienceCap = exp.scienceCap * sub.subjectValue * 5;
 				mainBody.bodyName = bodyNameFixed;
-				DMUtils.astName = newAsteroid.aName;
+				DMUtils.astSize = newAsteroid.aClass;
 			}
 			else {
 				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost, mainBody);
@@ -919,7 +919,7 @@ namespace DMagic
 			DumpData(data);
 		}
 
-		new private void DumpData(ScienceData data)
+		new protected void DumpData(ScienceData data)
 		{
 			if (storedScienceReports.Count > 0) {
 				experimentsReturned++;
@@ -937,7 +937,7 @@ namespace DMagic
 			}
 		}
 
-		new private bool IsRerunnable()
+		new protected bool IsRerunnable()
 		{
 			if (rerunnable)
 				return true;
