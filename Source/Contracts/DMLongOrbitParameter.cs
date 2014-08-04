@@ -44,13 +44,14 @@ namespace DMagic
 		private Vessel vessel;
 		private string vName;
 		private bool inOrbit, goodOrbit, loaded;
-		private double orbitTime, timeNeeded, eccentricity, inclination;
+		private double orbitTime, timeNeeded;
+		private DMMagneticSurveyContract rootContract;
 
 		public DMLongOrbitParameter()
 		{
 		}
 
-		internal DMLongOrbitParameter(CelestialBody Body, double Time, double Eccen, double inc)
+		internal DMLongOrbitParameter(CelestialBody Body, double Time)
 		{
 			body = Body;
 			vessel = null;
@@ -59,26 +60,12 @@ namespace DMagic
 			goodOrbit = false;
 			orbitTime = 0;
 			timeNeeded = Time;
-			eccentricity = Eccen;
-			inclination = inc;
 		}
 
 		//Properties to be accessed by parent contract
 		internal CelestialBody Body
 		{
 			get { return body; }
-			private set { }
-		}
-
-		internal double Eccentricity
-		{
-			get { return eccentricity; }
-			private set { }
-		}
-
-		internal double Inclination
-		{
-			get { return inclination; }
 			private set { }
 		}
 
@@ -110,7 +97,7 @@ namespace DMagic
 		{
 			get
 			{
-				if (HighLogic.LoadedScene != GameScenes.EDITOR)
+				if (!HighLogic.LoadedSceneIsEditor)
 					return vessel;
 				else
 					return null;
@@ -125,7 +112,7 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Enter orbit around {0}; maintain an orbit with at least {1:N2} eccentricity and {2:N0} degrees inclination for {3:N0} days", body.theName, eccentricity, inclination, timeInDays(timeNeeded));
+			return string.Format("Enter orbit around {0}; maintain proper orbit for {3:N0} days", body.theName, DMUtils.timeInDays(timeNeeded));
 		}
 
 		protected override void OnRegister()
@@ -143,7 +130,7 @@ namespace DMagic
 		protected override void OnSave(ConfigNode node)
 		{
 			DMUtils.DebugLog("Saving Long Orbital Parameter");
-			node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3}|{4:N1}|{5:N1}|{6:N3}|{7:N3}", body.flightGlobalsIndex, vName, inOrbit, goodOrbit, orbitTime, timeNeeded, eccentricity, inclination));
+			node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3}|{4:N1}|{5:N1}", body.flightGlobalsIndex, vName, inOrbit, goodOrbit, orbitTime, timeNeeded));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -180,18 +167,8 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Root.RemoveParameter(this);
 			}
-			if (!double.TryParse(orbitString[6], out eccentricity))
-			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Root.RemoveParameter(this);
-			}
-			if (!double.TryParse(orbitString[7], out inclination))
-			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Root.RemoveParameter(this);
-			}
 			DMUtils.DebugLog("Loaded Double Precision Variables");
-			if (HighLogic.LoadedScene != GameScenes.EDITOR)
+			if (!HighLogic.LoadedSceneIsEditor)
 			{
 				if (!string.IsNullOrEmpty(vName))
 				{
@@ -206,6 +183,7 @@ namespace DMagic
 						this.Root.RemoveParameter(this);
 					}
 				}
+				rootContract = (DMMagneticSurveyContract)this.Root;
 			}
 			loaded = true;
 		}
@@ -218,11 +196,10 @@ namespace DMagic
 				if (inOrbit)
 				{
 					//if the vessel's orbit matches our parameters start a timer
-					if (vessel.orbit.eccentricity > eccentricity && vessel.orbit.inclination > inclination && vessel.orbit.inclination < (180 - inclination) && vessel.situation == Vessel.Situations.ORBITING)
+					if (vessel.situation == Vessel.Situations.ORBITING && rootContract.Eccentric && rootContract.Inclined)
 					{
 						if (!goodOrbit)
 						{
-							DMUtils.DebugLog("Magnetic Survey Orbital Parameters Checkout; Inclination: {0} ; Eccentricity: {1}", vessel.orbit.inclination, vessel.orbit.eccentricity);
 							DMUtils.DebugLog("Setting time to {0:N2}", Planetarium.GetUniversalTime());
 							goodOrbit = true;
 							orbitTime = Planetarium.GetUniversalTime();
@@ -243,7 +220,7 @@ namespace DMagic
 						goodOrbit = false;
 						orbitTime = Planetarium.GetUniversalTime();
 					}
-					else if (vessel.situation == global::Vessel.Situations.SUB_ORBITAL || vessel.situation == global::Vessel.Situations.FLYING)
+					else if (vessel.situation == Vessel.Situations.SUB_ORBITAL || vessel.situation == Vessel.Situations.FLYING)
 					{
 						{
 							DMUtils.DebugLog("Vessel Breaking Orbit");
@@ -268,7 +245,6 @@ namespace DMagic
 		{
 			if (v == FlightGlobals.ActiveVessel)
 			{
-				DMUtils.DebugLog("Vessel Entering Orbit; Inclination: {0} ; Eccentricity: {1}", v.orbit.inclination, v.orbit.eccentricity);
 				if (!inOrbit)
 				{
 					//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
@@ -305,13 +281,5 @@ namespace DMagic
 			}
 		}
 
-		private double timeInDays(double D)
-		{
-			if (GameSettings.KERBIN_TIME)
-				D /= (3600 * 6);
-			else
-				D /= (3600 * 24);
-			return D;
-		}
 	}
 }
