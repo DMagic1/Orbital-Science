@@ -44,7 +44,8 @@ namespace DMagic
 		private Vessel vessel;
 		private string vName;
 		private double orbitalParameter;
-		private int type;
+		private int type; //type 0 is eccentricity tracker; type 1 is inclination tracker
+		private bool inOrbit;
 
 		public DMOrbitalParameters()
 		{
@@ -55,6 +56,7 @@ namespace DMagic
 			body = Body;
 			vessel = null;
 			vName = "";
+			inOrbit = false;
 			orbitalParameter = Param;
 			type = Type;
 		}
@@ -76,7 +78,7 @@ namespace DMagic
 		{
 			get
 			{
-				if (HighLogic.LoadedScene != GameScenes.EDITOR)
+				if (!HighLogic.LoadedSceneIsEditor)
 					return vessel;
 				else
 					return null;
@@ -92,19 +94,21 @@ namespace DMagic
 		protected override string GetTitle()
 		{
 			if (type == 0)
-				return string.Format("Attain an orbit with at least {0:N2} eccentricity", orbitalParameter);
+				return string.Format("Orbit with at least {0:N2} eccentricity", orbitalParameter);
 			else if (type == 1)
-				return string.Format("Attain an orbit of at least {0:N1} degrees inclination", orbitalParameter);
+				return string.Format("Orbit of at least {0:N1} degrees inclination", orbitalParameter);
 			else
 				return "Stupid things";
 		}
 
 		protected override void OnRegister()
 		{
+			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
 		}
 
 		protected override void OnUnregister()
 		{
+			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -131,7 +135,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Root.RemoveParameter(this);
 			}
-			if (HighLogic.LoadedScene != GameScenes.EDITOR)
+			if (!HighLogic.LoadedSceneIsEditor)
 			{
 				if (!string.IsNullOrEmpty(vName))
 				{
@@ -149,10 +153,71 @@ namespace DMagic
 			}
 		}
 
+		private void vesselOrbit(Vessel v, CelestialBody b)
+		{
+			if (v == FlightGlobals.ActiveVessel)
+			{
+				if (!inOrbit)
+				{
+					//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
+					if (b == body)
+					{
+						DMUtils.DebugLog("Vessel Mainbody {0} Matches {1}, Checking For Instruments", v.mainBody.name, body.name);
+						Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
+						Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
+						if (magPart != null && rpwsPart != null)
+						{
+							DMUtils.DebugLog("Successfully Entered Orbit");
+							inOrbit = true;
+							vessel = v;
+							vName = vessel.vesselName;
+						}
+					}
+					else
+						DMUtils.DebugLog("Vessel Mainbody {0} Does Not Match: {1}", v.mainBody.name, body.name);
+				}
+			}
+		}
+
 		//Track our vessel's orbit
 		protected override void OnUpdate()
 		{
-			
+			if (inOrbit)
+			{
+				if (type == 0)
+				{
+					if (vessel.orbit.eccentricity > orbitalParameter && vessel.situation == Vessel.Situations.ORBITING)
+						this.SetComplete();
+					else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
+					{
+						inOrbit = false;
+						this.SetIncomplete();
+					}
+					else
+						this.SetIncomplete();
+				}
+				else if (type == 1)
+				{
+					if (vessel.orbit.inclination > orbitalParameter && vessel.orbit.inclination < (180 - orbitalParameter) && vessel.situation == Vessel.Situations.ORBITING)
+						this.SetComplete();
+					else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
+					{
+						inOrbit = false;
+						this.SetIncomplete();
+					}
+					else
+						this.SetIncomplete();
+				}
+				if (this.State == ParameterState.Complete)
+				{
+					if (vessel.mainBody != body)
+					{
+						DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
+						inOrbit = false;
+						this.SetIncomplete();
+					}
+				}
+			}
 		}
 
 	}
