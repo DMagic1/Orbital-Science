@@ -47,10 +47,8 @@ namespace DMagic
 		private DMAnomalyParameter[] anomParams = new DMAnomalyParameter[4];
 		private CelestialBody body;
 		private PQSCity targetAnomaly;
-		private double lat, lon;
-		private double fudgedLat, fudgedLon;
-		private string cardNS, cardEW;
-		private string hash;
+		private double lat, lon, fudgedLat, fudgedLon;
+		private string cardNS, cardEW, hash;
 		private int i = 0;
 		private List<PQSCity> aList = new List<PQSCity>();
 		private System.Random rand = DMUtils.rand;
@@ -148,6 +146,9 @@ namespace DMagic
 				{
 					this.AddParameter(aP);
 					DMUtils.DebugLog("Added Secondary Anomaly Parameter");
+					aP.SetFunds(1000f * DMUtils.reward, body);
+					aP.SetReputation(15f * DMUtils.reward, body);
+					aP.SetScience(10f * DMUtils.science, body);
 				}
 			}
 
@@ -173,13 +174,13 @@ namespace DMagic
 
 		private double fudgeLat(double Lat)
 		{
-			double f = Math.Round(((double)rand.Next(-5, 5) + Lat) / 10) * 10;
+			double f = Math.Round(((double)rand.Next(-5, 5) + Lat) / 10d) * 10d;
 			return f;
 		}
 
 		private double fudgeLon(double Lon)
 		{
-			double f = Math.Round(((double)rand.Next(-5, 5) + Lon) / 10) * 10;
+			double f = Math.Round(((double)rand.Next(-5, 5) + Lon) / 10d) * 10d;
 			return f;
 		}
 
@@ -218,7 +219,7 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Study the anomalous readings coming from {0}", body.theName);
+			return string.Format("Locate and study the source of the anomalous readings coming from {0}'s surface at around {1:N0} degrees {2} and {3:N0} degrees {4}", body.theName, fudgedLat, cardNS, fudgedLon, cardEW);
 			
 		}
 
@@ -231,7 +232,7 @@ namespace DMagic
 		protected override string GetSynopsys()
 		{
 			DMUtils.DebugLog("Generating Synopsis From Anomaly [{0}]", hash);
-			return string.Format("Locate and study the source of the anomalous readings coming from {0}'s surface at around {1:N0} degrees {2} and {3:N0} degrees {4}", body.theName, fudgedLat, cardNS, fudgedLon, cardEW);
+			return string.Format("Study the anomalous readings coming from {0}", body.theName);
 		}
 
 		protected override string MessageCompleted()
@@ -266,7 +267,7 @@ namespace DMagic
 			fudgedLon = fudgeLon(lon);
 			cardNS = NSDirection(lat);
 			cardEW = EWDirection(lon);
-			if (HighLogic.LoadedScene == GameScenes.FLIGHT)
+			if (HighLogic.LoadedSceneIsFlight)
 				try
 				{
 					targetAnomaly = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
