@@ -428,7 +428,7 @@ namespace DMagic
         }
 
         //Clean up anomaly names for experiment results page.
-        public string biomeResultName(string anomName) 
+        public static string biomeResultName(string anomName) 
         {
             switch (anomName)
             {
