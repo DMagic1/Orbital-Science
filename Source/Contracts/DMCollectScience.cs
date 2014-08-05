@@ -32,6 +32,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Contracts;
 using Contracts.Parameters;
 
 namespace DMagic
@@ -244,16 +245,18 @@ namespace DMagic
 
 		protected override void OnUpdate()
 		{
-			if (type == 2)
+			if (this.Root.ContractState == Contract.State.Active && HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
 			{
-				if (!collected)
+				if (type == 2)
 				{
-					if (setAstVessel(DMUtils.astSize, DMUtils.newExp))
+					if (!collected)
 					{
-						collected = true;
+						if (setAstVessel(DMUtils.astSize, DMUtils.newExp))
+						{
+							collected = true;
+						}
+						DMUtils.astSize = "";
 					}
-					DMUtils.newExp = "";
-					DMUtils.astSize = "";
 				}
 			}
 		}
