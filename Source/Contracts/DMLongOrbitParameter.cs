@@ -43,7 +43,7 @@ namespace DMagic
 		private CelestialBody body;
 		private Vessel vessel;
 		private string vName;
-		private bool inOrbit, goodOrbit, loaded;
+		private bool inOrbit, goodOrbit;
 		private double orbitTime, timeNeeded;
 		private DMMagneticSurveyContract rootContract;
 
@@ -60,6 +60,7 @@ namespace DMagic
 			goodOrbit = false;
 			orbitTime = 0;
 			timeNeeded = Time;
+			this.disableOnStateChange = false;
 		}
 
 		//Properties to be accessed by parent contract
@@ -112,7 +113,7 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Enter orbit around {0}; maintain proper orbit for {3:N0} days", body.theName, DMUtils.timeInDays(timeNeeded));
+			return string.Format("Enter orbit around {0}; maintain proper orbit for {1:N0} days", body.theName, DMUtils.timeInDays(timeNeeded));
 		}
 
 		protected override void OnRegister()
@@ -185,13 +186,13 @@ namespace DMagic
 				}
 				rootContract = (DMMagneticSurveyContract)this.Root;
 			}
-			loaded = true;
+			this.disableOnStateChange = false;
 		}
 
 		//Track our vessel's orbit
 		protected override void OnUpdate()
 		{
-			if (loaded)
+			if (rootContract.ContractState == Contract.State.Active && !HighLogic.LoadedSceneIsEditor && rootContract.Loaded)
 			{
 				if (inOrbit)
 				{
@@ -255,7 +256,7 @@ namespace DMagic
 						Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
 						if (magPart != null && rpwsPart != null)
 						{
-							DMUtils.DebugLog("Successfully Entered Orbit");
+							DMUtils.DebugLog("Long Orbit - Successfully Entered Orbit");
 							inOrbit = true;
 							vessel = v;
 							vName = vessel.vesselName;
