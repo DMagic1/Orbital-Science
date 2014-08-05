@@ -59,6 +59,7 @@ namespace DMagic
 			inOrbit = false;
 			orbitalParameter = Param;
 			type = Type;
+			this.disableOnStateChange = false;
 		}
 
 		//Properties to be accessed by parent contract
@@ -114,23 +115,28 @@ namespace DMagic
 		protected override void OnSave(ConfigNode node)
 		{
 			DMUtils.DebugLog("Saving Long Orbital Parameter");
-			node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", body.flightGlobalsIndex, vName, orbitalParameter));
+			node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3:N3}", type, body.flightGlobalsIndex, vName, orbitalParameter));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Long Orbital Parameter");
+			DMUtils.DebugLog("Loading Orbital Parameter");
 			int target;
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
-			if (int.TryParse(orbitString[0], out target))
+			if (!int.TryParse(orbitString[0], out type))
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
+			if (int.TryParse(orbitString[1], out target))
 				body = FlightGlobals.Bodies[target];
 			else
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Root.RemoveParameter(this);
 			}
-			vName = orbitString[1];
-			if (!double.TryParse(orbitString[2], out orbitalParameter))
+			vName = orbitString[2];
+			if (!double.TryParse(orbitString[3], out orbitalParameter))
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Root.RemoveParameter(this);
@@ -151,6 +157,7 @@ namespace DMagic
 					}
 				}
 			}
+			this.disableOnStateChange = false;
 		}
 
 		private void vesselOrbit(Vessel v, CelestialBody b)
@@ -167,7 +174,7 @@ namespace DMagic
 						Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
 						if (magPart != null && rpwsPart != null)
 						{
-							DMUtils.DebugLog("Successfully Entered Orbit");
+							DMUtils.DebugLog("OP Successfully Entered Orbit");
 							inOrbit = true;
 							vessel = v;
 							vName = vessel.vesselName;
@@ -182,39 +189,42 @@ namespace DMagic
 		//Track our vessel's orbit
 		protected override void OnUpdate()
 		{
-			if (inOrbit)
+			if (this.Root.ContractState == Contract.State.Active && !HighLogic.LoadedSceneIsEditor)
 			{
-				if (type == 0)
+				if (inOrbit)
 				{
-					if (vessel.orbit.eccentricity > orbitalParameter && vessel.situation == Vessel.Situations.ORBITING)
-						this.SetComplete();
-					else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
+					if (type == 0)
 					{
-						inOrbit = false;
-						this.SetIncomplete();
+						if (vessel.orbit.eccentricity > orbitalParameter && vessel.situation == Vessel.Situations.ORBITING)
+							this.SetComplete();
+						else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
+						{
+							inOrbit = false;
+							this.SetIncomplete();
+						}
+						else
+							this.SetIncomplete();
 					}
-					else
-						this.SetIncomplete();
-				}
-				else if (type == 1)
-				{
-					if (vessel.orbit.inclination > orbitalParameter && vessel.orbit.inclination < (180 - orbitalParameter) && vessel.situation == Vessel.Situations.ORBITING)
-						this.SetComplete();
-					else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
+					else if (type == 1)
 					{
-						inOrbit = false;
-						this.SetIncomplete();
+						if (vessel.orbit.inclination > orbitalParameter && vessel.orbit.inclination < (180 - orbitalParameter) && vessel.situation == Vessel.Situations.ORBITING)
+							this.SetComplete();
+						else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
+						{
+							inOrbit = false;
+							this.SetIncomplete();
+						}
+						else
+							this.SetIncomplete();
 					}
-					else
-						this.SetIncomplete();
-				}
-				if (this.State == ParameterState.Complete)
-				{
-					if (vessel.mainBody != body)
+					if (this.State == ParameterState.Complete)
 					{
-						DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
-						inOrbit = false;
-						this.SetIncomplete();
+						if (vessel.mainBody != body)
+						{
+							DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
+							inOrbit = false;
+							this.SetIncomplete();
+						}
 					}
 				}
 			}
