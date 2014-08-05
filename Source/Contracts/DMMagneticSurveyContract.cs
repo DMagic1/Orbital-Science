@@ -44,7 +44,7 @@ namespace DMagic
 		private CelestialBody body;
 		private DMCollectScience[] magParams = new DMCollectScience[4];
 		private DMOrbitalParameters inclinedParam, eccentricParam;
-		private bool eccentric, inclined;
+		private bool eccentric, inclined, loaded;
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
@@ -109,7 +109,7 @@ namespace DMagic
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
-			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 2f, body);
+			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 3f, body);
 			base.SetReputation(5f * DMUtils.reward, body);
 			base.SetFunds(10000 * DMUtils.forward, 6000 * DMUtils.reward, 8000 * DMUtils.penalty, body);
 			return true;
@@ -169,6 +169,9 @@ namespace DMagic
 			inclinedParam = (DMOrbitalParameters)this.GetParameter(2);
 			if (eccentricParam == null || inclinedParam == null)
 				this.Cancel();
+			eccentric = eccentricParam.State == ParameterState.Complete;
+			inclined = inclinedParam.State == ParameterState.Complete;
+			loaded = true;
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -184,7 +187,7 @@ namespace DMagic
 
 		protected override void OnUpdate()
 		{
-			if (!HighLogic.LoadedSceneIsEditor)
+			if (this.ContractState == State.Active && !HighLogic.LoadedSceneIsEditor)
 			{
 				eccentric = eccentricParam.State == ParameterState.Complete;
 				inclined = inclinedParam.State == ParameterState.Complete;
@@ -200,6 +203,12 @@ namespace DMagic
 		internal bool Inclined
 		{
 			get { return inclined; }
+			private set { }
+		}
+
+		internal bool Loaded
+		{
+			get { return loaded; }
 			private set { }
 		}
 
