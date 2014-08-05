@@ -179,6 +179,32 @@ namespace DMagic
 			return expSitList;
 		}
 
+		internal static List<ExperimentSituations> availableSituationsLimited(ScienceExperiment exp, int i, CelestialBody b)
+		{
+			DMUtils.DebugLog("Finding Situations");
+			List<ExperimentSituations> expSitList = new List<ExperimentSituations>();
+			if (((ExperimentSituations)i & ExperimentSituations.FlyingHigh) == ExperimentSituations.FlyingHigh && b.atmosphere)
+				expSitList.Add(ExperimentSituations.FlyingHigh);
+			if (((ExperimentSituations)i & ExperimentSituations.FlyingLow) == ExperimentSituations.FlyingLow && b.atmosphere)
+				expSitList.Add(ExperimentSituations.FlyingLow);
+			if (((ExperimentSituations)i & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
+			{
+				if (!exp.requireAtmosphere)
+					expSitList.Add(ExperimentSituations.InSpaceLow);
+				else if (b.atmosphere)
+					expSitList.Add(ExperimentSituations.InSpaceLow);
+			}
+			if (((ExperimentSituations)i & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded && b.pqsController != null)
+			{
+				if (!exp.requireAtmosphere && exp.id != "dmbiodrillscan")
+					expSitList.Add(ExperimentSituations.SrfLanded);
+				else if (b.atmosphere)
+					expSitList.Add(ExperimentSituations.SrfLanded);
+			}
+			DMUtils.DebugLog("Found {0} Valid Experimental Situations", expSitList.Count);
+			return expSitList;
+		}
+
 		internal static bool biomeRelevant(ExperimentSituations s, int i)
 		{
 			if ((i & (int)s) == 0)
@@ -867,7 +893,7 @@ namespace DMagic
 			ExperimentSituations targetSituation;
 			PQSCity city;
 			ScienceSubject sub;
-			string subject;
+			string subject, anomName;
 
 			body = Body;
 			if (body == null)
@@ -882,7 +908,9 @@ namespace DMagic
 			else
 				targetSituation = ExperimentSituations.FlyingLow;
 
-			subject = string.Format("AnomalyScan@{0}{1}{2}", body.name, targetSituation, city.name);
+			anomName = DMAnomalyScanner.biomeResultName(city.name);
+
+			subject = string.Format("AnomalyScan@{0}{1}{2}", body.name, targetSituation, anomName);
 
 			//Make sure that our chosen science subject has science remaining to be gathered
 			if ((sub = ResearchAndDevelopment.GetSubjectByID(subject)) != null)
@@ -892,7 +920,7 @@ namespace DMagic
 			}
 
 			DMUtils.DebugLog("Primary Anomaly Parameter Assigned");
-			return new DMCollectScience(body, targetSituation, city.name, "Anomaly Scan", 3);
+			return new DMCollectScience(body, targetSituation, anomName, "Anomaly Scan", 3);
 		}
 
 		internal static DMAnomalyParameter fetchAnomalyParameter(CelestialBody Body, PQSCity City, DMScienceContainer DMScience)
@@ -916,7 +944,7 @@ namespace DMagic
 				DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
 			}
 
-			if ((situations = DMUtils.availableSituations(DMScience.exp, DMScience.sitMask, Body)).Count == 0)
+			if ((situations = DMUtils.availableSituationsLimited(DMScience.exp, DMScience.sitMask, Body)).Count == 0)
 				return null;
 			else
 			{
