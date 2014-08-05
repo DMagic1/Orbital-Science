@@ -146,52 +146,56 @@ namespace DMagic
 
 		protected override void OnUpdate()
 		{
-			if (setExp(DMUtils.newExp))
+			if (this.Root.ContractState == Contract.State.Active && HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
 			{
-				//Calculate distance to the anomaly on science collection
-				if (v.mainBody == body)
+				if (setExp(DMUtils.newExp))
 				{
-					recoveryPosition = v.transform.position;
-					double valt = v.mainBody.GetAltitude(recoveryPosition);
-					double anomAlt = v.mainBody.GetAltitude(anomPosition);
-					double verticalD = anomAlt - valt;
-					double totalD = (anomPosition - recoveryPosition).magnitude;
-					double horizantalD = Math.Sqrt((totalD * totalD) - (verticalD * verticalD));
-
-					//Draw a cone above the anomaly position up to 100km with a diametere of 15km at its widest
-					if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow)
+					DMUtils.DebugLog("Checking Distance To Anomaly");
+					//Calculate distance to the anomaly on science collection
+					if (v.mainBody == body)
 					{
-						if (Math.Abs(verticalD) > 1000 && verticalD < 100000)
+						recoveryPosition = v.transform.position;
+						double valt = v.mainBody.GetAltitude(recoveryPosition);
+						double anomAlt = v.mainBody.GetAltitude(anomPosition);
+						double verticalD = anomAlt - valt;
+						double totalD = (anomPosition - recoveryPosition).magnitude;
+						double horizantalD = Math.Sqrt((totalD * totalD) - (verticalD * verticalD));
+
+						//Draw a cone above the anomaly position up to 100km with a diametere of 15km at its widest
+						if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
 						{
-							if (horizantalD < (15000 * (verticalD / 100000)))
+							if (Math.Abs(verticalD) > 1000 && verticalD < 100000)
+							{
+								if (horizantalD < (15000 * (verticalD / 100000)))
+								{
+									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+									collected = true;
+								}
+								else
+									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+							}
+							else if (Math.Abs(verticalD) < 1000)
+							{
+								if (horizantalD < 150)
+								{
+									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+									collected = true;
+								}
+								else
+									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+							}
+						}
+						else if (situation == ExperimentSituations.SrfLanded)
+							if (horizantalD < 50)
 							{
 								ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 								collected = true;
 							}
 							else
 								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
-						}
-						else if (Math.Abs(verticalD) < 1000)
-						{
-							if (horizantalD < 150)
-							{
-								ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
-								collected = true;
-							}
-							else
-								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
-						}
 					}
-					else if (situation == ExperimentSituations.SrfLanded)
-						if (horizantalD < 50)
-						{
-							ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
-							collected = true;
-						}
-						else
-							ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+					DMUtils.newExp = "";
 				}
-				DMUtils.newExp = "";
 			}
 		}
 
@@ -202,6 +206,7 @@ namespace DMagic
 				return false;
 			else
 			{
+				DMUtils.DebugLog("Matching Experiment Names");
 				if (s == scienceContainer.exp.id)
 					return true;
 				else
