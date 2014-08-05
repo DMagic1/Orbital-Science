@@ -96,7 +96,7 @@ namespace DMagic
 					if (((DMScienceType)type & DMScienceType.Anomaly) == DMScienceType.Anomaly)
 						DMUtils.availableScience[DMScienceType.Anomaly.ToString()].Add(name, DMscience);
 					DMUtils.availableScience["All"].Add(name, DMscience);
-					DMUtils.Logging("New Experiment: [{0}] Available For Contracts", name);
+					DMUtils.DebugLog("New Experiment: [{0}] Available For Contracts", name);
 				}
 			}
 			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience["All"].Count);
