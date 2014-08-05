@@ -556,7 +556,6 @@ namespace DMagic
 				initialResultsPage();
 			}
 			if (keepDeployedMode == 1) retractEvent();
-			DMUtils.newExp = experimentID;
 		}
 
 		internal float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
@@ -719,8 +718,10 @@ namespace DMagic
 				sub.scienceCap = exp.scienceCap * sub.subjectValue * 5;
 				mainBody.bodyName = bodyNameFixed;
 				DMUtils.astSize = newAsteroid.aClass;
+				DMUtils.newAstExp = experimentID;
 			}
 			else {
+				DMUtils.newExp = experimentID;
 				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost, mainBody);
 				sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			}

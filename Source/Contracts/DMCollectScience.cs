@@ -245,17 +245,16 @@ namespace DMagic
 
 		protected override void OnUpdate()
 		{
-			if (this.Root.ContractState == Contract.State.Active && HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+			if (type == 2)
 			{
-				if (type == 2)
+				if (this.Root.ContractState == Contract.State.Active && HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
 				{
 					if (!collected)
 					{
-						if (setAstVessel(DMUtils.astSize, DMUtils.newExp))
-						{
+						if (setAstVessel(DMUtils.astSize, DMUtils.newAstExp))
 							collected = true;
-						}
 						DMUtils.astSize = "";
+						DMUtils.newAstExp = "";
 					}
 				}
 			}
@@ -268,10 +267,12 @@ namespace DMagic
 			else
 			{
 				if (e == scienceContainer.exp.id)
+				{
 					if (s == aSize)
 						return true;
 					else
 						return false;
+				}
 				else
 					return false;
 			}
