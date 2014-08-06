@@ -112,6 +112,9 @@ namespace DMagic
 			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 3f, body);
 			base.SetReputation(5f * DMUtils.reward, body);
 			base.SetFunds(10000 * DMUtils.forward, 6000 * DMUtils.reward, 8000 * DMUtils.penalty, body);
+			eccentric = true;
+			inclined = true;
+			loaded = false;
 			return true;
 		}
 
@@ -169,8 +172,10 @@ namespace DMagic
 			inclinedParam = (DMOrbitalParameters)this.GetParameter(2);
 			if (eccentricParam == null || inclinedParam == null)
 				this.Cancel();
-			eccentric = eccentricParam.State == ParameterState.Complete;
-			inclined = inclinedParam.State == ParameterState.Complete;
+			if (eccentricParam.State == ParameterState.Complete)
+				eccentric = true;
+			if (inclinedParam.State == ParameterState.Complete)
+				inclined = true;
 			loaded = true;
 		}
 
