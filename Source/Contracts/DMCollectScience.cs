@@ -74,7 +74,7 @@ namespace DMagic
 			biomeName = "";
 			collected = false;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, biomeName); 
+			subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, biomeName);
 		}
 
 		//Properties to be accessed by parent contract
@@ -229,6 +229,7 @@ namespace DMagic
 					DMUtils.Logging("Failed To Load Contract Parameter; Parameter Removed");
 					this.Root.RemoveParameter(this);
 				}
+				subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, biomeName);
 			}
 			else
 			{
@@ -241,6 +242,7 @@ namespace DMagic
 				}
 				subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 			}
+
 		}
 
 		protected override void OnUpdate()
@@ -252,9 +254,11 @@ namespace DMagic
 					if (!collected)
 					{
 						if (setAstVessel(DMUtils.astSize, DMUtils.newAstExp))
+						{
 							collected = true;
-						DMUtils.astSize = "";
-						DMUtils.newAstExp = "";
+							DMUtils.astSize = "";
+							DMUtils.newAstExp = "";
+						}
 					}
 				}
 			}
@@ -310,7 +314,30 @@ namespace DMagic
 					}
 				}
 			}
-			else if (type == 1 || type == 2)
+			else if (type == 1)
+			{
+				DMUtils.DebugLog("Checking Science Results For Type [{0}] Contract", type);
+				if (!string.IsNullOrEmpty(biomeName))
+				{
+					if (sub.id == subject)
+					{
+						DMUtils.DebugLog("Contract Complete");
+						base.SetComplete();
+					}
+				}
+				else
+				{
+					string clippedSub = sub.id.Replace("@", "");
+					string clippedTargetSub = subject.Replace("@", "");
+					DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
+					if (clippedSub.StartsWith(clippedTargetSub))
+					{
+						DMUtils.DebugLog("Contract Complete");
+						base.SetComplete();
+					}
+				}
+			}
+			else if (type == 2)
 			{
 				if (collected)
 				{
