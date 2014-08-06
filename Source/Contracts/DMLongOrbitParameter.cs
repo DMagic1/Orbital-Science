@@ -119,13 +119,13 @@ namespace DMagic
 		protected override void OnRegister()
 		{
 			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
-			GameEvents.VesselSituation.onEscape.Add(vesselEscapeOrbit);
+			//GameEvents.VesselSituation.onEscape.Add(vesselEscapeOrbit);
 		}
 
 		protected override void OnUnregister()
 		{
 			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
-			GameEvents.VesselSituation.onEscape.Remove(vesselEscapeOrbit);
+			//GameEvents.VesselSituation.onEscape.Remove(vesselEscapeOrbit);
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -268,19 +268,22 @@ namespace DMagic
 			}
 		}
 
-		private void vesselEscapeOrbit(Vessel v, CelestialBody b)
-		{
-			if (v == FlightGlobals.ActiveVessel)
-			{
-				if (inOrbit)
-				{
-					DMUtils.DebugLog("Vessel Escaping Orbit");
-					inOrbit = false;
-					goodOrbit = false;
-					orbitTime = Planetarium.GetUniversalTime();
-				}
-			}
-		}
+		//private void vesselEscapeOrbit(Vessel v, CelestialBody b)
+		//{
+		//    if (vessel != null)
+		//    {
+		//        if (v == vessel)
+		//        {
+		//            if (inOrbit)
+		//            {
+		//                DMUtils.DebugLog("Vessel Escaping Orbit");
+		//                inOrbit = false;
+		//                goodOrbit = false;
+		//                orbitTime = Planetarium.GetUniversalTime();
+		//            }
+		//        }
+		//    }
+		//}
 
 	}
 }
