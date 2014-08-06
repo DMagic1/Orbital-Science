@@ -73,7 +73,9 @@ namespace DMagic
 
 			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(5, 16) / 10d);
 			double eccen = 0.1d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
+			if (eccen > 0.7) eccen = 0.7;
 			double inclination = 15d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
+			if (inclination > 75) inclination = 75;
 
 			this.AddParameter(new DMLongOrbitParameter(body, time));
 			this.AddParameter(new DMOrbitalParameters(body, eccen, 0));
