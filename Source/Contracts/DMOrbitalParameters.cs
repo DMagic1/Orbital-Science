@@ -115,7 +115,7 @@ namespace DMagic
 		protected override void OnSave(ConfigNode node)
 		{
 			DMUtils.DebugLog("Saving Long Orbital Parameter");
-			node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3:N3}", type, body.flightGlobalsIndex, vName, orbitalParameter));
+			node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3:N3}|{4}", type, body.flightGlobalsIndex, vName, orbitalParameter, inOrbit));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -137,6 +137,11 @@ namespace DMagic
 			}
 			vName = orbitString[2];
 			if (!double.TryParse(orbitString[3], out orbitalParameter))
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
+			if (!bool.TryParse(orbitString[4], out inOrbit))
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Root.RemoveParameter(this);
@@ -207,7 +212,7 @@ namespace DMagic
 					}
 					else if (type == 1)
 					{
-						if (vessel.orbit.inclination > orbitalParameter && vessel.orbit.inclination < (180 - orbitalParameter) && vessel.situation == Vessel.Situations.ORBITING)
+						if (Math.Abs(vessel.orbit.inclination) > orbitalParameter && Math.Abs(vessel.orbit.inclination) < (180 - orbitalParameter) && vessel.situation == Vessel.Situations.ORBITING)
 							this.SetComplete();
 						else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
 						{
