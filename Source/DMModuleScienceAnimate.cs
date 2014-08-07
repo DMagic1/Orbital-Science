@@ -251,6 +251,9 @@ namespace DMagic
 			Events["deployEvent"].guiName = startEventGUIName;
 			Events["retractEvent"].guiName = endEventGUIName;
 			Events["toggleEvent"].guiName = toggleEventGUIName;
+			Events["CollectDataExternalEvent"].guiName = collectActionName;
+			Events["ResetExperimentExternal"].guiName = resetActionName;
+			Events["ResetExperiment"].guiName = resetActionName;
 			Events["DeployExperiment"].guiName = experimentActionName;
 			Events["DeployExperiment"].guiActiveUnfocused = externalDeploy;
 			Events["DeployExperiment"].externalToEVAOnly = externalDeploy;
@@ -300,9 +303,9 @@ namespace DMagic
 
 		private void eventsCheck()
 		{
-			Events["ResetExperiment"].active = experimentLimit <= 1 && storedScienceReports.Count > 0;
-			Events["ResetExperimentExternal"].active = storedScienceReports.Count > 0;
-			Events["CollectDataExternalEvent"].active = storedScienceReports.Count > 0;
+			Events["ResetExperiment"].active = experimentLimit <= 1 && storedScienceReports.Count > 0 && resettable;
+			Events["ResetExperimentExternal"].active = storedScienceReports.Count > 0 && resettableOnEVA;
+			Events["CollectDataExternalEvent"].active = storedScienceReports.Count > 0 && dataIsCollectable;
 			Events["DeployExperiment"].active = !Inoperable;
 			Events["DeployExperiment"].guiActiveUnfocused = !Inoperable && externalDeploy;
 			Events["ReviewDataEvent"].active = storedScienceReports.Count > 0;
@@ -461,21 +464,28 @@ namespace DMagic
 
 		new public void ResetExperimentExternal()
 		{
-			if (storedScienceReports.Count > 0) {
-				if (!string.IsNullOrEmpty(sampleEmptyAnim))
-					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-				else if (!string.IsNullOrEmpty(sampleAnim))
-					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-				if (!string.IsNullOrEmpty(indicatorAnim))
-					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
-				foreach (ScienceData data in storedScienceReports) {
-					storedScienceReports.Remove(data);
-					experimentNumber--;
+			if (experimentLimit > 1)
+			{
+				if (storedScienceReports.Count > 0)
+				{
+					if (!string.IsNullOrEmpty(sampleEmptyAnim))
+						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+					else if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+					foreach (ScienceData data in storedScienceReports)
+					{
+						storedScienceReports.Remove(data);
+						experimentNumber--;
+					}
+					if (experimentNumber < 0)
+						experimentNumber = 0;
+					if (keepDeployedMode == 0) retractEvent();
+					lastAsteroid = 0;
 				}
-				if (experimentNumber < 0)
-					experimentNumber = 0;
-				if (keepDeployedMode == 0) retractEvent();
-				lastAsteroid = 0;
+				else
+					ResetExperiment();
 			}
 		}
 
