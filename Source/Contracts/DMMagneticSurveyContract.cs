@@ -43,6 +43,7 @@ namespace DMagic
 	{
 		private CelestialBody body;
 		private DMCollectScience[] magParams = new DMCollectScience[4];
+		private DMLongOrbitParameter longParam;
 		private DMOrbitalParameters inclinedParam, eccentricParam;
 		private bool eccentric, inclined, loaded;
 		private System.Random rand = DMUtils.rand;
@@ -77,12 +78,17 @@ namespace DMagic
 			double inclination = 15d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 			if (inclination > 75) inclination = 75;
 
-			this.AddParameter(new DMLongOrbitParameter(body, time));
-			this.AddParameter(new DMOrbitalParameters(body, eccen, 0));
-			this.AddParameter(new DMOrbitalParameters(body, inclination, 1));
+			longParam = new DMLongOrbitParameter(body, time);
+			eccentricParam = new DMOrbitalParameters(body, eccen, 0);
+			inclinedParam = new DMOrbitalParameters(body, inclination, 1);
 
-			eccentricParam = (DMOrbitalParameters)this.GetParameter(1);
-			inclinedParam = (DMOrbitalParameters)this.GetParameter(2);
+			this.AddParameter(longParam);
+			this.AddParameter(eccentricParam);
+			this.AddParameter(inclinedParam);
+
+			longParam.SetFunds(50000f * DMUtils.reward, body);
+			longParam.SetReputation(50f * DMUtils.reward, body);
+			longParam.SetScience(50f * DMUtils.science, body);
 
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
@@ -95,9 +101,9 @@ namespace DMagic
 				{
 					this.AddParameter(DMCS, null);
 					DMUtils.DebugLog("Added Mag Survey Param");
-					DMCS.SetFunds(1000f * DMUtils.reward, body);
-					DMCS.SetReputation(15f * DMUtils.reward, body);
-					DMCS.SetScience(10f * DMUtils.science, body);
+					DMCS.SetFunds(5000f * DMUtils.reward, body);
+					DMCS.SetReputation(25f * DMUtils.reward, body);
+					DMCS.SetScience(20f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
 				}
 			}
 
@@ -110,10 +116,10 @@ namespace DMagic
 			else
 				this.agent = AgentList.Instance.GetAgentRandom();
 
-			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
+			base.SetExpiry(10, 15f * (float)(this.prestige + 1));
 			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 3f, body);
-			base.SetReputation(5f * DMUtils.reward, body);
-			base.SetFunds(10000 * DMUtils.forward, 6000 * DMUtils.reward, 8000 * DMUtils.penalty, body);
+			base.SetReputation(50f * DMUtils.reward, 10f * DMUtils.penalty, body);
+			base.SetFunds(50000 * DMUtils.forward, 55000 * DMUtils.reward, 20000 * DMUtils.penalty, body);
 			eccentric = true;
 			inclined = true;
 			loaded = false;
@@ -172,6 +178,7 @@ namespace DMagic
 				this.Cancel();
 			eccentricParam = (DMOrbitalParameters)this.GetParameter(1);
 			inclinedParam = (DMOrbitalParameters)this.GetParameter(2);
+			longParam = (DMLongOrbitParameter)this.GetParameter(0);
 			if (eccentricParam == null || inclinedParam == null)
 				this.Cancel();
 			if (eccentricParam.State == ParameterState.Complete)
@@ -198,6 +205,11 @@ namespace DMagic
 			{
 				eccentric = eccentricParam.State == ParameterState.Complete;
 				inclined = inclinedParam.State == ParameterState.Complete;
+				if (longParam.State == ParameterState.Complete)
+				{
+					eccentricParam.setStateChangeDisable();
+					inclinedParam.setStateChangeDisable();
+				}
 			}
 		}
 
