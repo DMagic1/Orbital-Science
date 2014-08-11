@@ -68,6 +68,48 @@ namespace DMagic
 			hash = city.name;
 		}
 
+		internal PQSCity City
+		{
+			get
+			{
+				if (city != null)
+					return city;
+				else
+					return null;
+			}
+			private set { }
+		}
+
+		internal CelestialBody Body
+		{
+			get { return body; }
+			private set { }
+		}
+
+		internal ExperimentSituations Situation
+		{
+			get { return situation; }
+			private set { }
+		}
+
+		internal string Name
+		{
+			get { return name; }
+			private set { }
+		}
+
+		internal string Subject
+		{
+			get { return subject; }
+			private set { }
+		}
+
+		internal DMScienceContainer Container
+		{
+			get { return scienceContainer; }
+			private set { }
+		}
+
 		protected override string GetHashString()
 		{
 			return hash;
