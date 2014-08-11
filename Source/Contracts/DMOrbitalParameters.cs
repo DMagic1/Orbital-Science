@@ -87,6 +87,18 @@ namespace DMagic
 			private set { }
 		}
 
+		internal bool VesselEquipped(Vessel v)
+		{
+			if (v == null)
+				return false;
+			Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
+			Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
+			if (magPart != null && rpwsPart != null)
+				return true;
+			else
+				return false;
+		}
+
 		protected override string GetHashString()
 		{
 			return body.name;
@@ -143,8 +155,8 @@ namespace DMagic
 			}
 			if (!bool.TryParse(orbitString[4], out inOrbit))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
+				inOrbit = false;
 			}
 			if (!HighLogic.LoadedSceneIsEditor)
 			{
@@ -157,12 +169,29 @@ namespace DMagic
 					}
 					catch
 					{
-						DMUtils.Logging("Failed To Load Vessel; Parameter Removed");
-						this.Root.RemoveParameter(this);
+						DMUtils.Logging("Failed To Load Vessel; Parameter Reset");
+						vessel = null;
+					}
+					if (!VesselEquipped(vessel))
+					{
+						DMUtils.DebugLog("Vessel {0} Improperly Equipped, Reseting Variables", vessel.vesselName);
+						vessel = null;
+						inOrbit = false;
+						vName = "";
+						this.SetIncomplete();
+						if (HighLogic.LoadedSceneIsFlight)
+							vesselOrbit(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody);
 					}
 				}
 			}
 			this.disableOnStateChange = false;
+		}
+
+		internal void setStateChangeDisable()
+		{
+			this.disableOnStateChange = true;
+			this.SetComplete();
+			this.enabled = false;
 		}
 
 		private void vesselOrbit(Vessel v, CelestialBody b)
@@ -175,9 +204,7 @@ namespace DMagic
 					if (b == body)
 					{
 						DMUtils.DebugLog("Vessel Mainbody {0} Matches {1}, Checking For Instruments", v.mainBody.name, body.name);
-						Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
-						Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
-						if (magPart != null && rpwsPart != null)
+						if (VesselEquipped(v))
 						{
 							DMUtils.DebugLog("OP Successfully Entered Orbit");
 							inOrbit = true;

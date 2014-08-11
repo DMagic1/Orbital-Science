@@ -106,6 +106,18 @@ namespace DMagic
 			private set { }
 		}
 
+		internal bool VesselEquipped(Vessel v)
+		{
+			if (v == null)
+				return false;
+			Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
+			Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
+			if (magPart != null && rpwsPart != null)
+				return true;
+			else
+				return false;
+		}
+
 		protected override string GetHashString()
 		{
 			return body.name;
@@ -150,18 +162,18 @@ namespace DMagic
 			DMUtils.DebugLog("Loaded Planet Target And Vessel Name");
 			if (!bool.TryParse(orbitString[2], out inOrbit))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
+				inOrbit = false;
 			}
 			if (!bool.TryParse(orbitString[3], out goodOrbit))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
+				goodOrbit = false;
 			}
 			if (!double.TryParse(orbitString[4], out orbitTime))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
+				orbitTime = Planetarium.GetUniversalTime();
 			}
 			if (!double.TryParse(orbitString[5], out timeNeeded))
 			{
@@ -180,8 +192,18 @@ namespace DMagic
 					}
 					catch
 					{
-						DMUtils.Logging("Failed To Load Vessel; Parameter Removed");
-						this.Root.RemoveParameter(this);
+						DMUtils.Logging("Failed To Load Vessel; Parameter Reset");
+						vessel = null;
+					}
+					if (!VesselEquipped(vessel))
+					{
+						DMUtils.DebugLog("Vessel {0} Improperly Equipped, Reseting Variables", vessel.vesselName);
+						vessel = null;
+						inOrbit = false;
+						goodOrbit = false;
+						vName = "";
+						if (HighLogic.LoadedSceneIsFlight)
+							vesselOrbit(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody);
 					}
 				}
 				rootContract = (DMMagneticSurveyContract)this.Root;
@@ -252,9 +274,7 @@ namespace DMagic
 					if (b == body)
 					{
 						DMUtils.DebugLog("Vessel Mainbody {0} Matches {1}, Checking For Instruments", v.mainBody.name, body.name);
-						Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
-						Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
-						if (magPart != null && rpwsPart != null)
+						if (VesselEquipped(v))
 						{
 							DMUtils.DebugLog("Long Orbit - Successfully Entered Orbit");
 							inOrbit = true;
