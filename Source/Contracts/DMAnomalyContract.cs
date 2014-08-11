@@ -84,9 +84,11 @@ namespace DMagic
 				else
 					body = FlightGlobals.Bodies[6];
 			}
-			//Vall, Tylo, and Bop are last
+			//Vall, Tylo, and Bop are last; only if we've been to Jool first
 			else if (this.Prestige == ContractPrestige.Exceptional)
 			{
+				if (!GetBodies_Reached(false, false).Contains(FlightGlobals.Bodies[8]))
+					return false;
 				int i = rand.Next(0, 3);
 				if (i == 0)
 					body = FlightGlobals.Bodies[10];
@@ -139,6 +141,9 @@ namespace DMagic
 
 			this.AddParameter(newParam, null);
 			DMUtils.DebugLog("Added Primary Anomaly Parameter");
+			newParam.SetFunds(10000f * DMUtils.reward, 5000f * DMUtils.penalty, body);
+			newParam.SetReputation(60f * DMUtils.reward, 10f * DMUtils.penalty, body);
+			newParam.SetScience(25f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
 
 			foreach (DMAnomalyParameter aP in anomParams)
 			{
@@ -146,9 +151,9 @@ namespace DMagic
 				{
 					this.AddParameter(aP);
 					DMUtils.DebugLog("Added Secondary Anomaly Parameter");
-					aP.SetFunds(1000f * DMUtils.reward, body);
-					aP.SetReputation(15f * DMUtils.reward, body);
-					aP.SetScience(10f * DMUtils.science, body);
+					aP.SetFunds(7000f * DMUtils.reward, 3000f * DMUtils.penalty, body);
+					aP.SetReputation(10f * DMUtils.reward, 5f * DMUtils.penalty, body);
+					aP.SetScience(aP.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
 				}
 			}
 
@@ -156,9 +161,9 @@ namespace DMagic
 				return false;
 
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
-			base.SetDeadlineDays(30f * (float)(this.prestige + 1), body);
-			base.SetReputation(5f * (float)(this.prestige + 1) * DMUtils.reward, 10f * (float)(this.prestige + 1) * DMUtils.penalty, body);
-			base.SetFunds(3000f * DMUtils.forward, 2000f * DMUtils.reward, 2500f * DMUtils.penalty, body);
+			base.SetDeadlineYears(4f, body);
+			base.SetReputation(20f * DMUtils.reward, 10f * DMUtils.penalty, body);
+			base.SetFunds(30000f * DMUtils.forward, 25000f * DMUtils.reward, 25000f * DMUtils.penalty, body);
 			return true;
 		}
 
