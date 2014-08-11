@@ -44,14 +44,14 @@ namespace DMagic
 		private Vessel vessel;
 		private string vName;
 		private bool inOrbit, goodOrbit;
-		private double orbitTime, timeNeeded;
+		private double orbitTime, timeNeeded, eccentricity, inclination;
 		private DMMagneticSurveyContract rootContract;
 
 		public DMLongOrbitParameter()
 		{
 		}
 
-		internal DMLongOrbitParameter(CelestialBody Body, double Time)
+		internal DMLongOrbitParameter(CelestialBody Body, double Time, double Eccen, double Inc)
 		{
 			body = Body;
 			vessel = null;
@@ -60,6 +60,8 @@ namespace DMagic
 			goodOrbit = false;
 			orbitTime = 0;
 			timeNeeded = Time;
+			eccentricity = Eccen;
+			inclination = Inc;
 			this.disableOnStateChange = false;
 		}
 
@@ -143,7 +145,7 @@ namespace DMagic
 		protected override void OnSave(ConfigNode node)
 		{
 			DMUtils.DebugLog("Saving Long Orbital Parameter");
-			node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3}|{4:N1}|{5:N1}", body.flightGlobalsIndex, vName, inOrbit, goodOrbit, orbitTime, timeNeeded));
+			node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3}|{4:N1}|{5:N1}|{6:N3}|{7:N3}", body.flightGlobalsIndex, vName, inOrbit, goodOrbit, orbitTime, timeNeeded, eccentricity, inclination));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -180,7 +182,18 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Root.RemoveParameter(this);
 			}
+			if (!double.TryParse(orbitString[6], out eccentricity))
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
+			if (!double.TryParse(orbitString[7], out inclination))
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
 			DMUtils.DebugLog("Loaded Double Precision Variables");
+
 			if (!HighLogic.LoadedSceneIsEditor)
 			{
 				if (!string.IsNullOrEmpty(vName))
@@ -197,13 +210,28 @@ namespace DMagic
 					}
 					if (!VesselEquipped(vessel))
 					{
-						DMUtils.DebugLog("Vessel {0} Improperly Equipped, Reseting Variables", vessel.vesselName);
+						DMUtils.Logging("Vessel {0} Improperly Equipped, Reseting Variables", vessel.vesselName);
 						vessel = null;
 						inOrbit = false;
 						goodOrbit = false;
 						vName = "";
-						if (HighLogic.LoadedSceneIsFlight)
-							vesselOrbit(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody);
+						DMUtils.DebugLog("Checking For Appropriate Vessels");
+						foreach (Vessel mV in FlightGlobals.Vessels)
+						{
+							if (mV.mainBody == body)
+								if (mV.situation == Vessel.Situations.ORBITING)
+									if (VesselEquipped(mV))
+										if (mV.orbit.eccentricity > eccentricity)
+											if (Math.Abs(mV.orbit.inclination) > inclination && Math.Abs(mV.orbit.inclination) < (180 - inclination))
+											{
+												inOrbit = true;
+												goodOrbit = true;
+												vessel = mV;
+												vName = mV.vesselName;
+												DMUtils.Logging("Identified Appropriate New Magnetic Survey Vessel; Carrying On With Survey");
+												break;
+											}
+						}
 					}
 				}
 				rootContract = (DMMagneticSurveyContract)this.Root;
@@ -287,23 +315,6 @@ namespace DMagic
 				}
 			}
 		}
-
-		//private void vesselEscapeOrbit(Vessel v, CelestialBody b)
-		//{
-		//    if (vessel != null)
-		//    {
-		//        if (v == vessel)
-		//        {
-		//            if (inOrbit)
-		//            {
-		//                DMUtils.DebugLog("Vessel Escaping Orbit");
-		//                inOrbit = false;
-		//                goodOrbit = false;
-		//                orbitTime = Planetarium.GetUniversalTime();
-		//            }
-		//        }
-		//    }
-		//}
 
 	}
 }

@@ -179,8 +179,37 @@ namespace DMagic
 						inOrbit = false;
 						vName = "";
 						this.SetIncomplete();
-						if (HighLogic.LoadedSceneIsFlight)
-							vesselOrbit(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody);
+						DMUtils.DebugLog("Checking For Appropriate Vessels");
+						foreach (Vessel mV in FlightGlobals.Vessels)
+						{
+							if (mV.mainBody == body)
+								if (mV.situation == Vessel.Situations.ORBITING)
+									if (VesselEquipped(mV))
+										if (type == 0)
+										{
+											if (mV.orbit.eccentricity > orbitalParameter)
+											{
+												inOrbit = true;
+												vessel = mV;
+												vName = mV.vesselName;
+												this.SetComplete();
+												DMUtils.Logging("Identified Appropriate New Magnetic Survey Vessel; Carrying On With Survey");
+												break;
+											}
+										}
+										else if (type == 1)
+										{
+											if (Math.Abs(mV.orbit.inclination) > orbitalParameter && Math.Abs(mV.orbit.inclination) < (180 - orbitalParameter))
+											{
+												inOrbit = true;
+												vessel = mV;
+												vName = mV.vesselName;
+												this.SetComplete();
+												DMUtils.Logging("Identified Appropriate New Magnetic Survey Vessel; Carrying On With Survey");
+												break;
+											}
+										}
+						}
 					}
 				}
 			}
