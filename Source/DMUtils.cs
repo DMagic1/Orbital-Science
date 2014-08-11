@@ -64,6 +64,25 @@ namespace DMagic
 			return subV;
 		}
 
+		internal static float asteroidSubjectVal(float f, int i)
+		{
+			switch (i)
+			{
+				case 0:
+					return 1f;
+				case 1:
+					return 2f;
+				case 2:
+					return 4f;
+				case 3:
+					return 6f;
+				case 4:
+					return 8f;
+				default:
+					return 1f;
+			}
+		}
+
 		internal static string sizeHash(int i)
 		{
 			switch (i)
