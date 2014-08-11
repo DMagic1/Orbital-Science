@@ -55,8 +55,6 @@ namespace DMagic
 			int total = ContractSystem.Instance.GetCurrentContracts<DMGroundSurveyContract>().Count();
 			if (total > 0)
 				return false;
-			if (this.Prestige == ContractPrestige.Trivial)
-				return false;
 
 			//Make sure that the laser is at least available
 			AvailablePart aPart = PartLoader.getPartInfoByName("dmsurfacelaser");
@@ -102,9 +100,9 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(DMC, null);
-					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f * DMUtils.science, body);
-					DMC.SetFunds(600f * DMUtils.reward, body);
-					DMC.SetReputation(6f * DMUtils.reward, body);
+					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
+					DMC.SetFunds(6000f * DMUtils.reward, 1800f * DMUtils.penalty, body);
+					DMC.SetReputation(20f * DMUtils.reward, 15f * DMUtils.penalty, body);
 					DMUtils.DebugLog("Ground Survey Parameter Added");
 				}
 			}
@@ -120,10 +118,10 @@ namespace DMagic
 			else
 				this.agent = AgentList.Instance.GetAgentRandom();
 
-			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
-			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
-			base.SetReputation(newParams.Length * 0.5f * DMUtils.reward, body);
-			base.SetFunds(3000 * newParams.Length * DMUtils.forward, 3000 * newParams.Length * DMUtils.reward, 1000 * newParams.Length * DMUtils.penalty, body);
+			base.expiryType = DeadlineType.None;
+			base.SetDeadlineYears(3.5f, body);
+			base.SetReputation(newParams.Length * 12f * DMUtils.reward, newParams.Length * 8f * DMUtils.penalty, body);
+			base.SetFunds(8000 * newParams.Length * DMUtils.forward, 5000 * newParams.Length * DMUtils.reward, 2000 * newParams.Length * DMUtils.penalty, body);
 			return true;
 		}
 

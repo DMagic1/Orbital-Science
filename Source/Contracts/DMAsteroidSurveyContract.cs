@@ -93,9 +93,9 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(newParams[j], null);
-					DMC.SetScience(DMC.Container.exp.baseValue * 2f * DMUtils.science * (size + 1), null);
-					DMC.SetFunds(2000f * DMUtils.reward * (size + 1), null);
-					DMC.SetReputation(5f * DMUtils.reward * (size + 1), null);
+					DMC.SetScience(DMC.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
+					DMC.SetFunds(15000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size), 10000f * DMUtils.penalty * (size + 1), null);
+					DMC.SetReputation(15f * DMUtils.reward * (size + 1), 10f * DMUtils.penalty * (size + 1), null);
 					DMUtils.DebugLog("Asteroid Survey Parameter Added");
 				}
 				j++;
@@ -113,9 +113,9 @@ namespace DMagic
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
-			base.SetDeadlineDays(450f * (float)(this.prestige + 1), null);
+			base.SetDeadlineYears(3f * (float)(this.prestige + 1), null);
 			base.SetReputation(newParams.Length * 5f * DMUtils.reward * (size + 1), newParams.Length * 3f * DMUtils.penalty, null);
-			base.SetFunds(3000 * newParams.Length * DMUtils.forward * (size + 1), 3000 * newParams.Length * DMUtils.reward * (size + 1), 1000 * newParams.Length * DMUtils.penalty * (size + 1), null);
+			base.SetFunds(20000 * newParams.Length * DMUtils.forward * (size + 1), 15000 * newParams.Length * DMUtils.reward * (size + 1), 15000 * newParams.Length * DMUtils.penalty * (size + 1), null);
 			return true;
 		}
 

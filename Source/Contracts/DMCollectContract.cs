@@ -95,11 +95,11 @@ namespace DMagic
 			if (this.ParameterCount == 0)
 				return false;
 			DMUtils.DebugLog("Parameter Added");
-			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
-			base.SetScience(DMscience.exp.baseValue * 0.8f * DMUtils.science, body);
-			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
-			base.SetReputation(5f * (float)(this.prestige + 1) * DMUtils.reward, 10f * (float)(this.prestige + 1) * DMUtils.penalty, body);
-			base.SetFunds(600f * DMUtils.forward, 500f * DMUtils.reward, 500f * DMUtils.penalty, body);
+			base.SetExpiry();
+			base.SetScience(DMscience.exp.baseValue * 1.2f * DMUtils.science * DMUtils.fixSubjectVal(targetSituation, 1f, body), null);
+			base.SetDeadlineYears(0.8f, body);
+			base.SetReputation(20f * DMUtils.reward, 10f * DMUtils.penalty, body);
+			base.SetFunds(9000f * DMUtils.forward, 10000f * DMUtils.reward, 1000f * DMUtils.penalty, body);
 			return true;
 		}
 

@@ -64,7 +64,7 @@ namespace DMagic
 
 			//No need to study Kerbin this way
 			if (this.Prestige == ContractPrestige.Trivial)
-				return false;
+				body = FlightGlobals.Bodies[1];
 			//Duna and Eve are the easy targets
 			else if (this.Prestige == ContractPrestige.Significant)
 			{
@@ -114,9 +114,9 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(DMC, null);
-					DMC.SetScience(DMC.Container.exp.baseValue * 0.75f * DMUtils.science, body);
-					DMC.SetFunds(800f * DMUtils.reward, body);
-					DMC.SetReputation(6f * DMUtils.reward, body);
+					DMC.SetScience(DMC.Container.exp.baseValue * 1.2f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
+					DMC.SetFunds(8000f * DMUtils.reward, 5000 * DMUtils.penalty, body);
+					DMC.SetReputation(25f * DMUtils.reward, 10f * DMUtils.penalty, body);
 					DMUtils.DebugLog("Bio Parameter Added");
 				}
 			}
@@ -132,10 +132,10 @@ namespace DMagic
 			else
 				this.agent = AgentList.Instance.GetAgentRandom();
 
-			base.SetExpiry(10, Math.Max(15, 15) * (float)(this.prestige + 1));
-			base.SetDeadlineDays(20f * (float)(this.prestige + 1), body);
-			base.SetReputation(newParams.Length * 0.5f * DMUtils.reward, body);
-			base.SetFunds(3000 * newParams.Length * DMUtils.forward, 3000 * newParams.Length * DMUtils.reward, 1000 * newParams.Length * DMUtils.penalty, body);
+			base.expiryType = DeadlineType.None;
+			base.SetDeadlineYears(3f, body);
+			base.SetReputation(newParams.Length * 15f * DMUtils.reward, body);
+			base.SetFunds(10000 * newParams.Length * DMUtils.forward, 8000 * newParams.Length * DMUtils.reward, 6000 * newParams.Length * DMUtils.penalty, body);
 			return true;
 		}
 
