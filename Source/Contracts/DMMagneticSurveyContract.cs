@@ -78,7 +78,7 @@ namespace DMagic
 			double inclination = 15d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 			if (inclination > 75) inclination = 75;
 
-			longParam = new DMLongOrbitParameter(body, time);
+			longParam = new DMLongOrbitParameter(body, time, eccen, inclination);
 			eccentricParam = new DMOrbitalParameters(body, eccen, 0);
 			inclinedParam = new DMOrbitalParameters(body, inclination, 1);
 
