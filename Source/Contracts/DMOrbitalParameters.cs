@@ -91,27 +91,12 @@ namespace DMagic
 		{
 			if (v == null)
 				return false;
-			//if (HighLogic.LoadedSceneIsFlight)
-			//{
-				Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
-				Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
-				if (magPart != null && rpwsPart != null)
-					return true;
-				else
-					return false;
-			//}
-			//else
-			//{
-			//    ProtoVessel pV = new ProtoVessel(v);
-			//    DMUtils.DebugLog("ProtoVessel {0} Loaded", pV.protoPartSnapshots[0].partName);
-			//    ProtoPartSnapshot magPart = pV.protoPartSnapshots.FirstOrDefault(p => p.partRef.name == "dmmagBoom" || p.partRef.name == "dmUSMagBoom");
-			//    ProtoPartSnapshot rpwsPart = pV.protoPartSnapshots.FirstOrDefault(r => r.partRef.name == "rpwsAnt" || r.partRef.name == "USRPWS");
-			//    if (magPart != null && rpwsPart != null)
-			//        return true;
-			//    else
-			//        return false;
-			//}
-			//return false;
+			Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
+			Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
+			if (magPart != null && rpwsPart != null)
+				return true;
+			else
+				return false;
 		}
 
 		protected override string GetHashString()
@@ -132,11 +117,13 @@ namespace DMagic
 		protected override void OnRegister()
 		{
 			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
+			GameEvents.onSameVesselUndock.Add(undockCheck);
 		}
 
 		protected override void OnUnregister()
 		{
 			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
+			GameEvents.onSameVesselUndock.Remove(undockCheck);
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -182,55 +169,21 @@ namespace DMagic
 			{
 				if (!string.IsNullOrEmpty(vName))
 				{
-					try
-					{
-						vessel = FlightGlobals.Vessels.FirstOrDefault(v => v.vesselName == vName);
-						DMUtils.DebugLog("Vessel {0} Loaded", vessel.vesselName);
-					}
-					catch
+					vessel = FlightGlobals.Vessels.FirstOrDefault(v => v.vesselName == vName);
+					if (vessel = null)
 					{
 						DMUtils.Logging("Failed To Load Vessel; Parameter Reset");
-						vessel = null;
+						inOrbit = false;
+						if (HighLogic.LoadedSceneIsFlight)
+						{
+							DMUtils.Logging("Checking If Currently Loaded Vessel Is Appropriate");
+							vesselOrbit(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody);
+						}
+						else
+							this.SetIncomplete();
 					}
-					//if (!VesselEquipped(vessel))
-					//{
-					//    DMUtils.DebugLog("Vessel {0} Improperly Equipped, Reseting Variables", vessel.vesselName);
-					//    vessel = null;
-					//    inOrbit = false;
-					//    vName = "";
-					//    this.SetIncomplete();
-					//    DMUtils.DebugLog("Checking For Appropriate Vessels");
-					//    foreach (Vessel mV in FlightGlobals.Vessels)
-					//    {
-					//        if (mV.mainBody == body)
-					//            if (mV.situation == Vessel.Situations.ORBITING)
-					//                if (VesselEquipped(mV))
-					//                    if (type == 0)
-					//                    {
-					//                        if (mV.orbit.eccentricity > orbitalParameter)
-					//                        {
-					//                            inOrbit = true;
-					//                            vessel = mV;
-					//                            vName = mV.vesselName;
-					//                            this.SetComplete();
-					//                            DMUtils.Logging("Identified Appropriate New Magnetic Survey Vessel; Carrying On With Survey");
-					//                            break;
-					//                        }
-					//                    }
-					//                    else if (type == 1)
-					//                    {
-					//                        if (Math.Abs(mV.orbit.inclination) > orbitalParameter && Math.Abs(mV.orbit.inclination) < (180 - orbitalParameter))
-					//                        {
-					//                            inOrbit = true;
-					//                            vessel = mV;
-					//                            vName = mV.vesselName;
-					//                            this.SetComplete();
-					//                            DMUtils.Logging("Identified Appropriate New Magnetic Survey Vessel; Carrying On With Survey");
-					//                            break;
-					//                        }
-					//                    }
-					//    }
-					//}
+					else
+						DMUtils.DebugLog("Vessel {0} Loaded", vessel.vesselName);
 				}
 			}
 			this.disableOnStateChange = false;
@@ -260,9 +213,47 @@ namespace DMagic
 							vessel = v;
 							vName = vessel.vesselName;
 						}
+						else
+						{
+							inOrbit = false;
+							this.SetIncomplete();
+						}
 					}
 					else
 						DMUtils.DebugLog("Vessel Mainbody {0} Does Not Match: {1}", v.mainBody.name, body.name);
+				}
+			}
+		}
+
+		private void undockCheck(GameEvents.FromToAction<ModuleDockingNode, ModuleDockingNode> nodes)
+		{
+			if (inOrbit && vessel != null)
+			{
+				Vessel fromV = nodes.from.vessel;
+				if (fromV.mainBody == body)
+				{
+					if (vessel == fromV)
+					{
+						Vessel toV = nodes.to.vessel;
+						//If the original vessel retains the proper instruments
+						if (VesselEquipped(fromV))
+						{
+							vessel = fromV;
+							vName = vessel.vesselName;
+						}
+						//If the newly created vessel has the proper instruments
+						else if (VesselEquipped(toV))
+						{
+							vessel = toV;
+							vName = vessel.vesselName;
+						}
+						//If the proper instruments are spread across the two vessels
+						else
+						{
+							inOrbit = false;
+							this.SetIncomplete();
+						}
+					}
 				}
 			}
 		}
