@@ -112,12 +112,30 @@ namespace DMagic
 		{
 			if (v == null)
 				return false;
-			Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
-			Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
-			if (magPart != null && rpwsPart != null)
-				return true;
-			else
-				return false;
+			//if (HighLogic.LoadedSceneIsFlight)
+			//{
+				Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
+				Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
+				if (magPart != null && rpwsPart != null)
+				{
+					DMUtils.DebugLog("PartName: {0}; Name:{1}", magPart.partName, magPart.name);
+					return true;
+
+				}
+				else
+					return false;
+			//}
+			//else
+			//{
+			//    ProtoVessel pV = new ProtoVessel(v);
+			//    ProtoPartSnapshot magPart = pV.protoPartSnapshots.FirstOrDefault(p => p.partRef.name== "dmmagBoom" || p.partRef.name== "dmUSMagBoom");
+			//    ProtoPartSnapshot rpwsPart = pV.protoPartSnapshots.FirstOrDefault(r => r.partRef.name == "rpwsAnt" || r.partRef.name == "USRPWS");
+			//    if (magPart != null && rpwsPart != null)
+			//        return true;
+			//    else
+			//        return false;
+			//}
+			//return false;
 		}
 
 		protected override string GetHashString()
@@ -145,7 +163,12 @@ namespace DMagic
 		protected override void OnSave(ConfigNode node)
 		{
 			DMUtils.DebugLog("Saving Long Orbital Parameter");
-			node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3}|{4:N1}|{5:N1}|{6:N3}|{7:N3}", body.flightGlobalsIndex, vName, inOrbit, goodOrbit, orbitTime, timeNeeded, eccentricity, inclination));
+			if (HighLogic.LoadedSceneIsEditor)
+				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3}|{4:N1}|{5:N1}|{6:N3}|{7:N3}", body.flightGlobalsIndex, vName, inOrbit, goodOrbit, orbitTime, timeNeeded, eccentricity, inclination));
+			else if (vessel != null)
+				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3}|{4:N1}|{5:N1}|{6:N3}|{7:N3}", body.flightGlobalsIndex, vessel.vesselName, inOrbit, goodOrbit, orbitTime, timeNeeded, eccentricity, inclination));
+			else
+				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3}|{4:N1}|{5:N1}|{6:N3}|{7:N3}", body.flightGlobalsIndex, vName, inOrbit, goodOrbit, orbitTime, timeNeeded, eccentricity, inclination));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -208,31 +231,31 @@ namespace DMagic
 						DMUtils.Logging("Failed To Load Vessel; Parameter Reset");
 						vessel = null;
 					}
-					if (!VesselEquipped(vessel))
-					{
-						DMUtils.Logging("Vessel {0} Improperly Equipped, Reseting Variables", vessel.vesselName);
-						vessel = null;
-						inOrbit = false;
-						goodOrbit = false;
-						vName = "";
-						DMUtils.DebugLog("Checking For Appropriate Vessels");
-						foreach (Vessel mV in FlightGlobals.Vessels)
-						{
-							if (mV.mainBody == body)
-								if (mV.situation == Vessel.Situations.ORBITING)
-									if (VesselEquipped(mV))
-										if (mV.orbit.eccentricity > eccentricity)
-											if (Math.Abs(mV.orbit.inclination) > inclination && Math.Abs(mV.orbit.inclination) < (180 - inclination))
-											{
-												inOrbit = true;
-												goodOrbit = true;
-												vessel = mV;
-												vName = mV.vesselName;
-												DMUtils.Logging("Identified Appropriate New Magnetic Survey Vessel; Carrying On With Survey");
-												break;
-											}
-						}
-					}
+					//if (!VesselEquipped(vessel))
+					//{
+					//    DMUtils.Logging("Vessel {0} Improperly Equipped, Reseting Variables", vessel.vesselName);
+					//    vessel = null;
+					//    inOrbit = false;
+					//    goodOrbit = false;
+					//    vName = "";
+					//    DMUtils.DebugLog("Checking For Appropriate Vessels");
+					//    foreach (Vessel mV in FlightGlobals.Vessels)
+					//    {
+					//        if (mV.mainBody == body)
+					//            if (mV.situation == Vessel.Situations.ORBITING)
+					//                if (VesselEquipped(mV))
+					//                    if (mV.orbit.eccentricity > eccentricity)
+					//                        if (Math.Abs(mV.orbit.inclination) > inclination && Math.Abs(mV.orbit.inclination) < (180 - inclination))
+					//                        {
+					//                            inOrbit = true;
+					//                            goodOrbit = true;
+					//                            vessel = mV;
+					//                            vName = mV.vesselName;
+					//                            DMUtils.Logging("Identified Appropriate New Magnetic Survey Vessel; Carrying On With Survey");
+					//                            break;
+					//                        }
+					//    }
+					//}
 				}
 				rootContract = (DMMagneticSurveyContract)this.Root;
 			}
