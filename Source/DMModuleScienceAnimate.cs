@@ -151,7 +151,6 @@ namespace DMagic
 
 		public override void OnStart(StartState state)
 		{
-			this.part.force_activate();
 			if (!string.IsNullOrEmpty(animationName))
 				anim = part.FindModelAnimators(animationName)[0];
 			if (!string.IsNullOrEmpty(sampleAnim)) {
@@ -200,7 +199,7 @@ namespace DMagic
 			}
 		}
 
-		public override void OnUpdate()
+		private void Update()
 		{
 			if (resourceOn) {
 				if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null) {
@@ -252,10 +251,17 @@ namespace DMagic
 			Events["deployEvent"].guiName = startEventGUIName;
 			Events["retractEvent"].guiName = endEventGUIName;
 			Events["toggleEvent"].guiName = toggleEventGUIName;
+			Events["CollectDataExternalEvent"].guiName = collectActionName;
+			Events["ResetExperimentExternal"].guiName = resetActionName;
+			Events["ResetExperiment"].guiName = resetActionName;
 			Events["DeployExperiment"].guiName = experimentActionName;
 			Events["DeployExperiment"].guiActiveUnfocused = externalDeploy;
 			Events["DeployExperiment"].externalToEVAOnly = externalDeploy;
 			Events["DeployExperiment"].unfocusedRange = interactionRange;
+			Actions["deployAction"].guiName = startEventGUIName;
+			Actions["retractAction"].guiName = endEventGUIName;
+			Actions["toggleAction"].guiName = toggleEventGUIName;
+			Actions["DeployAction"].guiName = experimentActionName;
 			if (!primary) {
 				primaryList = this.part.FindModulesImplementing<DMModuleScienceAnimate>();
 				if (primaryList.Count > 0) {
@@ -297,9 +303,9 @@ namespace DMagic
 
 		private void eventsCheck()
 		{
-			Events["ResetExperiment"].active = experimentLimit <= 1 && storedScienceReports.Count > 0;
-			Events["ResetExperimentExternal"].active = storedScienceReports.Count > 0;
-			Events["CollectDataExternalEvent"].active = storedScienceReports.Count > 0;
+			Events["ResetExperiment"].active = experimentLimit <= 1 && storedScienceReports.Count > 0 && resettable;
+			Events["ResetExperimentExternal"].active = storedScienceReports.Count > 0 && resettableOnEVA;
+			Events["CollectDataExternalEvent"].active = storedScienceReports.Count > 0 && dataIsCollectable;
 			Events["DeployExperiment"].active = !Inoperable;
 			Events["DeployExperiment"].guiActiveUnfocused = !Inoperable && externalDeploy;
 			Events["ReviewDataEvent"].active = storedScienceReports.Count > 0;
@@ -458,21 +464,28 @@ namespace DMagic
 
 		new public void ResetExperimentExternal()
 		{
-			if (storedScienceReports.Count > 0) {
-				if (!string.IsNullOrEmpty(sampleEmptyAnim))
-					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-				else if (!string.IsNullOrEmpty(sampleAnim))
-					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-				if (!string.IsNullOrEmpty(indicatorAnim))
-					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
-				foreach (ScienceData data in storedScienceReports) {
-					storedScienceReports.Remove(data);
-					experimentNumber--;
+			if (experimentLimit > 1)
+			{
+				if (storedScienceReports.Count > 0)
+				{
+					if (!string.IsNullOrEmpty(sampleEmptyAnim))
+						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+					else if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+					foreach (ScienceData data in storedScienceReports)
+					{
+						storedScienceReports.Remove(data);
+						experimentNumber--;
+					}
+					if (experimentNumber < 0)
+						experimentNumber = 0;
+					if (keepDeployedMode == 0) retractEvent();
+					lastAsteroid = 0;
 				}
-				if (experimentNumber < 0)
-					experimentNumber = 0;
-				if (keepDeployedMode == 0) retractEvent();
-				lastAsteroid = 0;
+				else
+					ResetExperiment();
 			}
 		}
 
@@ -555,15 +568,15 @@ namespace DMagic
 			if (keepDeployedMode == 1) retractEvent();
 		}
 
-		private float fixSubjectValue(ExperimentSituations s, float f, float boost)
+		internal float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
 		{
 			float subV = f;
-			if (s == ExperimentSituations.SrfLanded) subV = vessel.mainBody.scienceValues.LandedDataValue;
-			else if (s == ExperimentSituations.SrfSplashed) subV = vessel.mainBody.scienceValues.SplashedDataValue;
-			else if (s == ExperimentSituations.FlyingLow) subV = vessel.mainBody.scienceValues.FlyingLowDataValue;
-			else if (s == ExperimentSituations.FlyingHigh) subV = vessel.mainBody.scienceValues.FlyingHighDataValue;
-			else if (s == ExperimentSituations.InSpaceLow) subV = vessel.mainBody.scienceValues.InSpaceLowDataValue;
-			else if (s == ExperimentSituations.InSpaceHigh) subV = vessel.mainBody.scienceValues.InSpaceHighDataValue;
+			if (s == ExperimentSituations.SrfLanded) subV = body.scienceValues.LandedDataValue;
+			else if (s == ExperimentSituations.SrfSplashed) subV = body.scienceValues.SplashedDataValue;
+			else if (s == ExperimentSituations.FlyingLow) subV = body.scienceValues.FlyingLowDataValue;
+			else if (s == ExperimentSituations.FlyingHigh) subV = body.scienceValues.FlyingHighDataValue;
+			else if (s == ExperimentSituations.InSpaceLow) subV = body.scienceValues.InSpaceLowDataValue;
+			else if (s == ExperimentSituations.InSpaceHigh) subV = body.scienceValues.InSpaceHighDataValue;
 			return subV * boost;
 		}
 
@@ -680,6 +693,10 @@ namespace DMagic
 				failMessage = customFailMessage;
 				return false;
 			}
+			else if (scienceExp.requireAtmosphere && !vessel.mainBody.atmosphere) {
+				failMessage = customFailMessage;
+				return false;
+			}
 			else
 				return true;
 		}
@@ -710,9 +727,12 @@ namespace DMagic
 				sub.subjectValue = newAsteroid.sciMult;
 				sub.scienceCap = exp.scienceCap * sub.subjectValue * 5;
 				mainBody.bodyName = bodyNameFixed;
+				DMUtils.astSize = newAsteroid.aClass;
+				DMUtils.newAstExp = experimentID;
 			}
 			else {
-				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost);
+				DMUtils.newExp = experimentID;
+				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost, mainBody);
 				sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			}
 
@@ -910,7 +930,7 @@ namespace DMagic
 			DumpData(data);
 		}
 
-		new private void DumpData(ScienceData data)
+		new protected void DumpData(ScienceData data)
 		{
 			if (storedScienceReports.Count > 0) {
 				experimentsReturned++;
@@ -928,7 +948,7 @@ namespace DMagic
 			}
 		}
 
-		new private bool IsRerunnable()
+		new protected bool IsRerunnable()
 		{
 			if (rerunnable)
 				return true;

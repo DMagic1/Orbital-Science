@@ -31,6 +31,7 @@
 
 using UnityEngine;
 using System.Linq;
+using System.Collections.Generic;
 using System;
 
 namespace DMagic
@@ -85,11 +86,38 @@ namespace DMagic
 		private float lastUpdate = 0f;
 		private float updateInterval = 0.2f;
 
+		private List<PQSCity> anomList = new List<PQSCity>();
+		private Dictionary<PQSCity, double> PQSpos = new Dictionary<PQSCity, double>();
+
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
 			if (part.FindModulesImplementing<DMModuleScienceAnimate>().Count > 0)
 				primaryModule = part.FindModulesImplementing<DMModuleScienceAnimate>().First();
+			GameEvents.onVesselSOIChanged.Add(rebuildAnom);
+			pqsBuild();
+		}
+		
+		private void OnDestroy()
+		{
+			GameEvents.onVesselSOIChanged.Remove(rebuildAnom);
+		}
+
+		private void rebuildAnom(GameEvents.HostedFromToAction<Vessel, CelestialBody> b)
+		{
+			pqsBuild();
+		}
+
+		private void pqsBuild()
+		{
+			if (HighLogic.LoadedScene != GameScenes.EDITOR)
+			{
+				anomList.Clear();
+				PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
+				foreach (PQSCity anomalyObject in Cities)
+					if (anomalyObject.transform.parent.name == vessel.mainBody.name)
+						anomList.Add(anomalyObject);
+			}
 		}
 
 		public override string GetInfo()
@@ -256,6 +284,32 @@ namespace DMagic
 								}
 							}
 						}
+					}
+
+					//Anomaly Detection
+					PQSpos.Clear();
+					foreach (PQSCity city in anomList)
+					{
+						double distance = (city.transform.position - vessel.transform.position).magnitude;
+						if (distance < 100000)
+							PQSpos.Add(city, distance);
+					}
+					if (PQSpos.Count > 0)
+					{
+						var sortAnom = from entry in PQSpos orderby entry.Value ascending select entry;
+						var closestAnom = sortAnom.First();
+
+						double valt = vessel.mainBody.GetAltitude(vessel.transform.position);
+						double anomAlt = vessel.mainBody.GetAltitude(closestAnom.Key.transform.position);
+						double vheight = anomAlt - valt;
+						double hDist = Math.Sqrt((closestAnom.Value * closestAnom.Value) - (vheight * vheight));
+
+						double anomMult = 1 + ((100000 - closestAnom.Value) / 10000);
+						double anomMultZ = 1 + (anomMult * ((closestAnom.Value - hDist) / closestAnom.Value));
+						double anomMultH = 1 + ( anomMult * ((closestAnom.Value - vheight) / closestAnom.Value));
+
+						Bz *= anomMultZ;
+						Bh *= anomMultH;
 					}
 
 					double Bti = Math.Sqrt((Bh * Bh) + (Bz * Bz));
