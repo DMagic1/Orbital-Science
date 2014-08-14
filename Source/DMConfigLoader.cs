@@ -63,6 +63,7 @@ namespace DMagic
 			{
 				string name, part, agent = "";
 				int sitMask, bioMask, type = 0;
+				float transmit = 0;
 				DMScienceContainer DMscience = null;
 				ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(node.GetValue("experimentID"));
 				if (exp != null)
@@ -74,6 +75,8 @@ namespace DMagic
 						continue;
 					if (!int.TryParse(node.GetValue("type"), out type))
 						continue;
+					if (!float.TryParse(node.GetValue("xmitDataScalar"), out transmit))
+						continue;
 					if (node.HasValue("part"))
 						part = node.GetValue("part");
 					else
@@ -82,7 +85,7 @@ namespace DMagic
 						agent = node.GetValue("agent");
 					else
 						agent = "Any";
-					DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent);
+					DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent, transmit);
 					if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface)
 						DMUtils.availableScience[DMScienceType.Surface.ToString()].Add(name, DMscience);
 					if (((DMScienceType)type & DMScienceType.Aerial) == DMScienceType.Aerial)
