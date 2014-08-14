@@ -304,7 +304,7 @@ namespace DMagic
 					DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
 					if (clippedSub.StartsWith(clippedTargetSub))
 					{
-						if (sci < ((scienceContainer.exp.baseValue * sub.subjectValue) * 0.2f))
+						if (sci < (scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.4f))
 							ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
 						else
 						{
