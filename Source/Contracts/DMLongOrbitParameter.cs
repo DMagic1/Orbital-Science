@@ -41,9 +41,10 @@ namespace DMagic
 	class DMLongOrbitParameter: ContractParameter
 	{
 		private CelestialBody body;
-		private Vessel vessel;
+		private Vessel vessel, newVessel;
 		private string vName;
-		private bool inOrbit, goodOrbit, modifiedByDocking;
+		private bool inOrbit, goodOrbit, modifiedByDocking, modifiedByUnDocking;
+		private int timer;
 		private double orbitTime, timeNeeded, eccentricity, inclination, lastGoodTime;
 		private DMMagneticSurveyContract rootContract;
 
@@ -135,7 +136,7 @@ namespace DMagic
 			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
 			GameEvents.onPartCouple.Add(dockCheck);
 			GameEvents.onVesselCreate.Add(newVesselCheck);
-			GameEvents.onVesselWasModified.Add(vesselModified);
+			//GameEvents.onVesselWasModified.Add(vesselModified);
 		}
 
 		protected override void OnUnregister()
@@ -143,7 +144,7 @@ namespace DMagic
 			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
 			GameEvents.onPartCouple.Remove(dockCheck);
 			GameEvents.onVesselCreate.Remove(newVesselCheck);
-			GameEvents.onVesselWasModified.Remove(vesselModified);
+			//GameEvents.onVesselWasModified.Remove(vesselModified);
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -241,50 +242,119 @@ namespace DMagic
 		{
 			if (rootContract.ContractState == Contract.State.Active && !HighLogic.LoadedSceneIsEditor && rootContract.Loaded)
 			{
-				if (inOrbit)
+				if (!modifiedByUnDocking && !modifiedByDocking)
 				{
-					//if the vessel's orbit matches our parameters start a timer
-					if (vessel.situation == Vessel.Situations.ORBITING && rootContract.Eccentric && rootContract.Inclined)
+					if (inOrbit)
 					{
-						if (!goodOrbit)
+						//if the vessel's orbit matches our parameters start a timer
+						if (vessel.situation == Vessel.Situations.ORBITING && rootContract.Eccentric && rootContract.Inclined)
 						{
-							DMUtils.DebugLog("Setting time to {0:N2}", Planetarium.GetUniversalTime());
-							goodOrbit = true;
-							orbitTime = Planetarium.GetUniversalTime();
-						}
-						else //Once the timer is started measure if enough time has passed to complete the parameter
-						{
-							if ((Planetarium.GetUniversalTime() - orbitTime) >= timeNeeded)
+							if (!goodOrbit)
 							{
-								DMUtils.DebugLog("Survey Complete Ater {0:N2} Amount of Time", Planetarium.GetUniversalTime() - orbitTime);
-								this.SetComplete();
+								DMUtils.DebugLog("Setting time to {0:N2}", Planetarium.GetUniversalTime());
+								goodOrbit = true;
+								orbitTime = Planetarium.GetUniversalTime();
+							}
+							else //Once the timer is started measure if enough time has passed to complete the parameter
+							{
+								if ((Planetarium.GetUniversalTime() - orbitTime) >= timeNeeded)
+								{
+									DMUtils.DebugLog("Survey Complete Ater {0:N2} Amount of Time", Planetarium.GetUniversalTime() - orbitTime);
+									this.SetComplete();
+								}
 							}
 						}
-					}
-					//if the vessel falls out of the specified orbit reset the timer
-					else if (goodOrbit)
-					{
-						DMUtils.DebugLog("Vessel Moved Out Of Proper Orbit; Inclination: {0} ; Eccentricity: {1}", vessel.orbit.inclination, vessel.orbit.eccentricity);
-						goodOrbit = false;
-						orbitTime = Planetarium.GetUniversalTime();
-					}
-					else if (vessel.situation == Vessel.Situations.SUB_ORBITAL || vessel.situation == Vessel.Situations.FLYING)
-					{
+						//if the vessel falls out of the specified orbit reset the timer
+						else if (goodOrbit)
 						{
-							DMUtils.DebugLog("Vessel Breaking Orbit");
+							DMUtils.DebugLog("Vessel Moved Out Of Proper Orbit; Inclination: {0} ; Eccentricity: {1}", vessel.orbit.inclination, vessel.orbit.eccentricity);
+							goodOrbit = false;
+							orbitTime = Planetarium.GetUniversalTime();
+						}
+						else if (vessel.situation == Vessel.Situations.SUB_ORBITAL || vessel.situation == Vessel.Situations.FLYING)
+						{
+							{
+								DMUtils.DebugLog("Vessel Breaking Orbit");
+								inOrbit = false;
+								goodOrbit = false;
+								orbitTime = Planetarium.GetUniversalTime();
+							}
+						}
+						//If the vessel is orbiting the wrong body reset the timer and conditions
+						if (vessel.mainBody != body)
+						{
+							DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
 							inOrbit = false;
 							goodOrbit = false;
 							orbitTime = Planetarium.GetUniversalTime();
 						}
 					}
-					//If the vessel is orbiting the wrong body reset the timer and conditions
-					if (vessel.mainBody != body)
+				}
+				else
+				{
+					if (timer < 45)
 					{
-						DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
-						inOrbit = false;
-						goodOrbit = false;
-						orbitTime = Planetarium.GetUniversalTime();
+						timer++;
 					}
+					else
+					{
+						if (modifiedByDocking)
+						{
+							if (VesselEquipped(FlightGlobals.ActiveVessel))
+							{
+								DMUtils.DebugLog("Docked Vessel Assigned: {0}", FlightGlobals.ActiveVessel.vesselName);
+								vessel = FlightGlobals.ActiveVessel;
+								inOrbit = true;
+								goodOrbit = true;
+								orbitTime = lastGoodTime;
+								vName = vessel.vesselName;
+							}
+							else
+							{
+								DMUtils.DebugLog("Vessel Not Properly Equipped");
+								vName = "";
+								inOrbit = false;
+								goodOrbit = false;
+								vessel = null;
+								orbitTime = Planetarium.GetUniversalTime();
+							}
+						}
+						if (modifiedByUnDocking)
+						{
+							//If the new vessel retains the proper instruments
+							if (VesselEquipped(newVessel))
+							{
+								DMUtils.DebugLog("New Vessel Assigned: {0}", newVessel.vesselName);
+								vessel = newVessel;
+								inOrbit = true;
+								goodOrbit = true;
+								orbitTime = lastGoodTime;
+								vName = vessel.vesselName;
+							}
+							//If the currently active, hopefully old, vessel retains the proper instruments
+							else if (VesselEquipped(FlightGlobals.ActiveVessel))
+							{
+								DMUtils.DebugLog("Old Vessel Assigned");
+								vessel = FlightGlobals.ActiveVessel;
+								inOrbit = true;
+								goodOrbit = true;
+								orbitTime = lastGoodTime;
+								vName = vessel.vesselName;
+							}
+							//If the proper instruments are spread across the two vessels
+							else
+							{
+								DMUtils.DebugLog("No Vessels Assigned");
+								inOrbit = false;
+								goodOrbit = false;
+								orbitTime = Planetarium.GetUniversalTime();
+							}
+						}
+						modifiedByDocking = false;
+						modifiedByUnDocking = false;
+						timer = 0;
+					}
+
 				}
 			}
 		}
@@ -333,85 +403,93 @@ namespace DMagic
 					if (fromV == vessel || toV == vessel)
 					{
 						modifiedByDocking = true;
+						timer = 0;
 					}
 				}
 			}
 		}
 
-		private void vesselModified(Vessel v)
-		{
-			if (inOrbit)
-			{
-				if (modifiedByDocking)
-				{
-					DMUtils.DebugLog("Vessel Modified By Docking");
-					if (VesselEquipped(v))
-					{
-						DMUtils.DebugLog("Docked Vessel Assigned: {0}", v.vesselName);
-						vessel = v;
-						inOrbit = true;
-						goodOrbit = true;
-						orbitTime = lastGoodTime;
-						vName = vessel.vesselName;
-					}
-					else
-					{
-						DMUtils.DebugLog("Vessel No Longer Properly Equipped");
-						vName = "";
-						inOrbit = false;
-						goodOrbit = false;
-						vessel = null;
-						orbitTime = Planetarium.GetUniversalTime();
-					}
-					modifiedByDocking = false;
-				}
-			}
-		}
+		//private void vesselModified(Vessel v)
+		//{
+		//    if (inOrbit)
+		//    {
+		//        if (modifiedByDocking)
+		//        {
+		//            DMUtils.DebugLog("Vessel Modified By Docking");
+		//            if (VesselEquipped(v))
+		//            {
+		//                DMUtils.DebugLog("Docked Vessel Assigned: {0}", v.vesselName);
+		//                vessel = v;
+		//                inOrbit = true;
+		//                goodOrbit = true;
+		//                orbitTime = lastGoodTime;
+		//                vName = vessel.vesselName;
+		//            }
+		//            else
+		//            {
+		//                DMUtils.DebugLog("Vessel No Longer Properly Equipped");
+		//                vName = "";
+		//                inOrbit = false;
+		//                goodOrbit = false;
+		//                vessel = null;
+		//                orbitTime = Planetarium.GetUniversalTime();
+		//            }
+		//            modifiedByDocking = false;
+		//        }
+		//    }
+		//}
 
 		private void newVesselCheck(Vessel v)
 		{
 			if (inOrbit)
 			{
 				DMUtils.DebugLog("New Vessel Created");
-				Vessel newV = v;
-				if (newV.mainBody == body)
+				newVessel = v;
+				if (newVessel.mainBody == body)
 				{
 					DMUtils.DebugLog("Mainbody Matches");
-					if (FlightGlobals.ActiveVessel == vessel || newV == vessel)
+					if (FlightGlobals.ActiveVessel == vessel || newVessel == vessel)
 					{
 						DMUtils.DebugLog("Matching Vessel Located");
-						//If the new vessel retains the proper instruments
-						if (VesselEquipped(newV))
-						{
-							DMUtils.DebugLog("New Vessel Assigned: {0}", newV.vesselName);
-							vessel = newV;
-							inOrbit = true;
-							goodOrbit = true;
-							orbitTime = lastGoodTime;
-							vName = vessel.vesselName;
-						}
-						//If the currently active, hopefully old, vessel retains the proper instruments
-						else if (VesselEquipped(FlightGlobals.ActiveVessel))
-						{
-							DMUtils.DebugLog("Old Vessel Assigned");
-							vessel = FlightGlobals.ActiveVessel;
-							inOrbit = true;
-							goodOrbit = true;
-							orbitTime = lastGoodTime;
-							vName = vessel.vesselName;
-						}
-						//If the proper instruments are spread across the two vessels
-						else
-						{
-							DMUtils.DebugLog("No Vessels Assigned");
-							inOrbit = false;
-							goodOrbit = false;
-							orbitTime = Planetarium.GetUniversalTime();
-						}
+						modifiedByUnDocking = true;
+						timer = 0;
 					}
 				}
 			}
 		}
+
+			//            //If the new vessel retains the proper instruments
+			//            if (VesselEquipped(newV))
+			//            {
+			//                DMUtils.DebugLog("New Vessel Assigned: {0}", newV.vesselName);
+			//                vessel = newV;
+			//                inOrbit = true;
+			//                goodOrbit = true;
+			//                orbitTime = lastGoodTime;
+			//                vName = vessel.vesselName;
+			//            }
+			//            //If the currently active, hopefully old, vessel retains the proper instruments
+			//            else if (VesselEquipped(FlightGlobals.ActiveVessel))
+			//            {
+			//                DMUtils.DebugLog("Old Vessel Assigned");
+			//                vessel = FlightGlobals.ActiveVessel;
+			//                inOrbit = true;
+			//                goodOrbit = true;
+			//                orbitTime = lastGoodTime;
+			//                vName = vessel.vesselName;
+			//            }
+			//            //If the proper instruments are spread across the two vessels
+			//            else
+			//            {
+			//                DMUtils.DebugLog("No Vessels Assigned");
+			//                inOrbit = false;
+			//                goodOrbit = false;
+			//                orbitTime = Planetarium.GetUniversalTime();
+			//            }
+			//        }
+			//    }
+			//}
+		//}
 
 	}
 }

@@ -41,11 +41,11 @@ namespace DMagic
 	class DMOrbitalParameters: ContractParameter
 	{
 		private CelestialBody body;
-		private Vessel vessel;
+		private Vessel vessel, newV;
 		private string vName;
 		private double orbitalParameter;
-		private int type; //type 0 is eccentricity tracker; type 1 is inclination tracker
-		private bool inOrbit, modifiedByDocking;
+		private int type, timer; //type 0 is eccentricity tracker; type 1 is inclination tracker
+		private bool inOrbit, modifiedByDocking, modifiedByUnDocking;
 
 		public DMOrbitalParameters()
 		{
@@ -119,7 +119,7 @@ namespace DMagic
 			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
 			GameEvents.onVesselCreate.Add(newVesselCheck);
 			GameEvents.onPartCouple.Add(dockCheck);
-			GameEvents.onVesselWasModified.Add(vesselModified);
+			//GameEvents.onVesselWasModified.Add(vesselModified);
 		}
 
 		protected override void OnUnregister()
@@ -127,7 +127,7 @@ namespace DMagic
 			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
 			GameEvents.onVesselCreate.Remove(newVesselCheck);
 			GameEvents.onPartCouple.Remove(dockCheck);
-			GameEvents.onVesselWasModified.Remove(vesselModified);
+			//GameEvents.onVesselWasModified.Remove(vesselModified);
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -248,120 +248,192 @@ namespace DMagic
 					if (fromV == vessel || toV == vessel)
 					{
 						modifiedByDocking = true;
+						timer = 0;
 					}
 				}
 			}
 		}
 
-		private void vesselModified(Vessel v)
-		{
-			if (inOrbit)
-			{
-				if (modifiedByDocking)
-				{
-					DMUtils.DebugLog("Vessel Modified By Docking");
-					if (VesselEquipped(v))
-					{
-						DMUtils.DebugLog("Docked Vessel Assigned: {0}", v.vesselName);
-						vessel = v;
-						inOrbit = true;
-						this.SetComplete();
-						vName = vessel.vesselName;
-					}
-					else
-					{
-						DMUtils.DebugLog("Vessel No Longer Properly Equipped");
-						vName = "";
-						vessel = null;
-						inOrbit = false;
-						this.SetIncomplete();
-					}
-					modifiedByDocking = false;
-				}
-			}
-		}
+		//private void vesselModified(Vessel v)
+		//{
+		//    if (inOrbit)
+		//    {
+		//        if (modifiedByDocking)
+		//        {
+		//            DMUtils.DebugLog("Vessel Modified By Docking");
+		//            if (VesselEquipped(v))
+		//            {
+		//                DMUtils.DebugLog("Docked Vessel Assigned: {0}", v.vesselName);
+		//                vessel = v;
+		//                inOrbit = true;
+		//                this.SetComplete();
+		//                vName = vessel.vesselName;
+		//            }
+		//            else
+		//            {
+		//                DMUtils.DebugLog("Vessel No Longer Properly Equipped");
+		//                vName = "";
+		//                vessel = null;
+		//                inOrbit = false;
+		//                this.SetIncomplete();
+		//            }
+		//            modifiedByDocking = false;
+		//        }
+		//    }
+		//}
 
 		private void newVesselCheck(Vessel v)
 		{
 			if (inOrbit)
 			{
 				DMUtils.DebugLog("New Vessel Created");
-				Vessel newV = v;
+				newV = v;
 				if (newV.mainBody == body)
 				{
 					DMUtils.DebugLog("Mainbody Matches");
 					if (FlightGlobals.ActiveVessel == vessel || newV == vessel)
 					{
 						DMUtils.DebugLog("Matching Vessel Located");
-						//If the new vessel retains the proper instruments
-						if (VesselEquipped(newV))
-						{
-							DMUtils.DebugLog("New Vessel Assigned");
-							vessel = newV;
-							inOrbit = true;
-							this.SetComplete();
-							vName = vessel.vesselName;
-						}
-						//If the currently active, hopefully old, vessel retains the proper instruments
-						else if (VesselEquipped(FlightGlobals.ActiveVessel))
-						{
-							inOrbit = true;
-							this.SetComplete();
-							DMUtils.DebugLog("Old Vessel Assigned");
-							vessel = FlightGlobals.ActiveVessel;
-							vName = vessel.vesselName;
-						}
-						//If the proper instruments are spread across the two vessels
-						else
-						{
-							DMUtils.DebugLog("No Vessels Assigned");
-							inOrbit = false;
-							this.SetIncomplete();
-						}
+						modifiedByUnDocking = true;
+						timer = 0;
 					}
 				}
 			}
 		}
+
+		//                //If the new vessel retains the proper instruments
+		//                if (VesselEquipped(newV))
+		//                {
+		//                    DMUtils.DebugLog("New Vessel Assigned");
+		//                    vessel = newV;
+		//                    inOrbit = true;
+		//                    this.SetComplete();
+		//                    vName = vessel.vesselName;
+		//                }
+		//                //If the currently active, hopefully old, vessel retains the proper instruments
+		//                else if (VesselEquipped(FlightGlobals.ActiveVessel))
+		//                {
+		//                    inOrbit = true;
+		//                    this.SetComplete();
+		//                    DMUtils.DebugLog("Old Vessel Assigned");
+		//                    vessel = FlightGlobals.ActiveVessel;
+		//                    vName = vessel.vesselName;
+		//                }
+		//                //If the proper instruments are spread across the two vessels
+		//                else
+		//                {
+		//                    DMUtils.DebugLog("No Vessels Assigned");
+		//                    inOrbit = false;
+		//                    this.SetIncomplete();
+		//                }
+		//            }
+		//        }
+		//    }
+		//}
 
 		//Track our vessel's orbit
 		protected override void OnUpdate()
 		{
 			if (this.Root.ContractState == Contract.State.Active && !HighLogic.LoadedSceneIsEditor)
 			{
-				if (inOrbit)
+				if (!modifiedByUnDocking && !modifiedByDocking)
 				{
-					if (type == 0)
+					if (inOrbit)
 					{
-						if (vessel.orbit.eccentricity > orbitalParameter && vessel.situation == Vessel.Situations.ORBITING)
-							this.SetComplete();
-						else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
+						if (type == 0)
 						{
-							inOrbit = false;
-							this.SetIncomplete();
+							if (vessel.orbit.eccentricity > orbitalParameter && vessel.situation == Vessel.Situations.ORBITING)
+								this.SetComplete();
+							else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
+							{
+								inOrbit = false;
+								this.SetIncomplete();
+							}
+							else
+								this.SetIncomplete();
 						}
-						else
-							this.SetIncomplete();
+						else if (type == 1)
+						{
+							if (Math.Abs(vessel.orbit.inclination) > orbitalParameter && Math.Abs(vessel.orbit.inclination) < (180 - orbitalParameter) && vessel.situation == Vessel.Situations.ORBITING)
+								this.SetComplete();
+							else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
+							{
+								inOrbit = false;
+								this.SetIncomplete();
+							}
+							else
+								this.SetIncomplete();
+						}
+						if (this.State == ParameterState.Complete)
+						{
+							if (vessel.mainBody != body)
+							{
+								DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
+								inOrbit = false;
+								this.SetIncomplete();
+							}
+						}
 					}
-					else if (type == 1)
+				}
+				else
+				{
+					if (timer < 30)
 					{
-						if (Math.Abs(vessel.orbit.inclination) > orbitalParameter && Math.Abs(vessel.orbit.inclination) < (180 - orbitalParameter) && vessel.situation == Vessel.Situations.ORBITING)
-							this.SetComplete();
-						else if (vessel.situation == Vessel.Situations.ESCAPING || vessel.situation == Vessel.Situations.SUB_ORBITAL)
-						{
-							inOrbit = false;
-							this.SetIncomplete();
-						}
-						else
-							this.SetIncomplete();
+						timer++;
 					}
-					if (this.State == ParameterState.Complete)
+					else
 					{
-						if (vessel.mainBody != body)
+						if (modifiedByDocking)
 						{
-							DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
-							inOrbit = false;
-							this.SetIncomplete();
+							DMUtils.DebugLog("Vessel Modified By Docking");
+							if (VesselEquipped(FlightGlobals.ActiveVessel))
+							{
+								DMUtils.DebugLog("Docked Vessel Assigned: {0}", FlightGlobals.ActiveVessel.vesselName);
+								vessel = FlightGlobals.ActiveVessel;
+								inOrbit = true;
+								this.SetComplete();
+								vName = vessel.vesselName;
+							}
+							else
+							{
+								DMUtils.DebugLog("Vessel No Longer Properly Equipped");
+								vName = "";
+								vessel = null;
+								inOrbit = false;
+								this.SetIncomplete();
+							}
 						}
+						if (modifiedByUnDocking)
+						{
+							//If the new vessel retains the proper instruments
+							if (VesselEquipped(newV))
+							{
+								DMUtils.DebugLog("New Vessel Assigned");
+								vessel = newV;
+								inOrbit = true;
+								this.SetComplete();
+								vName = vessel.vesselName;
+							}
+							//If the currently active, hopefully old, vessel retains the proper instruments
+							else if (VesselEquipped(FlightGlobals.ActiveVessel))
+							{
+								inOrbit = true;
+								this.SetComplete();
+								DMUtils.DebugLog("Old Vessel Assigned");
+								vessel = FlightGlobals.ActiveVessel;
+								vName = vessel.vesselName;
+							}
+							//If the proper instruments are spread across the two vessels
+							else
+							{
+								DMUtils.DebugLog("No Vessels Assigned");
+								inOrbit = false;
+								this.SetIncomplete();
+							}
+						}
+						modifiedByUnDocking = false;
+						modifiedByDocking = false;
+						timer = 0;
 					}
 				}
 			}
