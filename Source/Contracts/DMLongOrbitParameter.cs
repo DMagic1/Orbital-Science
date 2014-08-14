@@ -228,6 +228,7 @@ namespace DMagic
 						else
 						{
 							goodOrbit = false;
+							vName = "";
 							orbitTime = Planetarium.GetUniversalTime();
 						}
 					}
@@ -254,12 +255,14 @@ namespace DMagic
 								DMUtils.DebugLog("Setting time to {0:N2}", Planetarium.GetUniversalTime());
 								goodOrbit = true;
 								orbitTime = Planetarium.GetUniversalTime();
+								lastGoodTime = orbitTime;
 							}
 							else //Once the timer is started measure if enough time has passed to complete the parameter
 							{
 								if ((Planetarium.GetUniversalTime() - orbitTime) >= timeNeeded)
 								{
 									DMUtils.DebugLog("Survey Complete Ater {0:N2} Amount of Time", Planetarium.GetUniversalTime() - orbitTime);
+									this.DisableOnStateChange = true;
 									this.SetComplete();
 								}
 							}
@@ -366,7 +369,7 @@ namespace DMagic
 				if (!inOrbit)
 				{
 					//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
-					if (b == body)
+					if (b == body && v.situation == Vessel.Situations.ORBITING)
 					{
 						DMUtils.DebugLog("Vessel Mainbody {0} Matches {1}, Checking For Instruments", v.mainBody.name, body.name);
 						if (VesselEquipped(v))
@@ -444,13 +447,16 @@ namespace DMagic
 			if (inOrbit)
 			{
 				DMUtils.DebugLog("New Vessel Created");
-				newVessel = v;
-				if (newVessel.mainBody == body)
+				Vessel V = v;
+				if (V.Parts.Count <= 1)
+					return;
+				if (V.mainBody == body)
 				{
 					DMUtils.DebugLog("Mainbody Matches");
-					if (FlightGlobals.ActiveVessel == vessel || newVessel == vessel)
+					if (FlightGlobals.ActiveVessel == vessel || V == vessel)
 					{
 						DMUtils.DebugLog("Matching Vessel Located");
+						newVessel = V;
 						modifiedByUnDocking = true;
 						timer = 0;
 					}

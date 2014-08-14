@@ -190,6 +190,7 @@ namespace DMagic
 						}
 						else
 						{
+							vName = "";
 							this.SetIncomplete();
 						}
 					}
@@ -212,7 +213,7 @@ namespace DMagic
 				if (!inOrbit)
 				{
 					//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
-					if (b == body)
+					if (b == body && v.situation == Vessel.Situations.ORBITING)
 					{
 						DMUtils.DebugLog("Vessel Mainbody {0} Matches {1}, Checking For Instruments", v.mainBody.name, body.name);
 						if (VesselEquipped(v))
@@ -287,13 +288,16 @@ namespace DMagic
 			if (inOrbit)
 			{
 				DMUtils.DebugLog("New Vessel Created");
-				newV = v;
-				if (newV.mainBody == body)
+				Vessel V = v;
+				if (V.Parts.Count <= 1)
+					return;
+				if (V.mainBody == body)
 				{
 					DMUtils.DebugLog("Mainbody Matches");
-					if (FlightGlobals.ActiveVessel == vessel || newV == vessel)
+					if (FlightGlobals.ActiveVessel == vessel || V == vessel)
 					{
 						DMUtils.DebugLog("Matching Vessel Located");
+						newV = V;
 						modifiedByUnDocking = true;
 						timer = 0;
 					}
