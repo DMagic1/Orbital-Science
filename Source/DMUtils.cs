@@ -255,7 +255,7 @@ namespace DMagic
 					}
 					else
 					{
-						if (subB.scientificValue > 0.2f)
+						if (subB.scientificValue > 0.4f)
 							s.Add(bName);
 					}
 				}
@@ -366,7 +366,7 @@ namespace DMagic
 			//Make sure that our chosen science subject has science remaining to be gathered
 			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", exp.id, body.name, targetSituation, biome.Replace(" ", "")))) != null)
 			{
-				if (sub.scientificValue < 0.2f)
+				if (sub.scientificValue < 0.4f)
 					return null;
 			}
 
