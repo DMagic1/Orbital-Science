@@ -53,7 +53,7 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>().Count();
-			if (total > 1)
+			if (total >= DMUtils.maxMagnetic)
 				return false;
 
 			//Make sure that the RPWS is available
@@ -117,7 +117,7 @@ namespace DMagic
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(10, 15f * (float)(this.prestige + 1));
-			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 5f, body);
+			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 9f, body);
 			base.SetReputation(50f * DMUtils.reward, 10f * DMUtils.penalty, body);
 			base.SetFunds(50000 * DMUtils.forward, 55000 * DMUtils.reward, 20000 * DMUtils.penalty, body);
 			eccentric = true;

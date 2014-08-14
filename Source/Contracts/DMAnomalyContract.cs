@@ -58,7 +58,7 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>().Count();
-			if (total > 0)
+			if (total >= DMUtils.maxAnomaly)
 				return false;
 
 			//Make sure that the anomaly scanner is available

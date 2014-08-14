@@ -54,8 +54,18 @@ namespace DMagic
 					DMUtils.reward = float.Parse(setNode.GetValue("Global_Fund_Reward"));
 					DMUtils.forward = float.Parse(setNode.GetValue("Global_Fund_Forward"));
 					DMUtils.penalty = float.Parse(setNode.GetValue("Global_Fund_Penalty"));
+					DMUtils.maxCollect = int.Parse(setNode.GetValue("Max_Collect"));
+					DMUtils.maxOrbital = int.Parse(setNode.GetValue("Max_Orbital"));
+					DMUtils.maxGround = int.Parse(setNode.GetValue("Max_Ground"));
+					DMUtils.maxBiological = int.Parse(setNode.GetValue("Max_Biological"));
+					DMUtils.maxAsteroid = int.Parse(setNode.GetValue("Max_Asteroid"));
+					DMUtils.maxAnomaly = int.Parse(setNode.GetValue("Max_Anomaly"));
+					DMUtils.maxMagnetic = int.Parse(setNode.GetValue("Max_Magnetic"));
+
 					DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3}",
 						DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty);
+					DMUtils.Logging("Max Contract Variables Set: Collect: {0} ; Orbital: {1} ; Ground: {2} ; Biological: {3} ; Asteroid: {4} ; Anomaly: {5} ; Magnetic: {6}",
+						DMUtils.maxCollect, DMUtils.maxOrbital, DMUtils.maxGround, DMUtils.maxBiological, DMUtils.maxAsteroid, DMUtils.maxAnomaly, DMUtils.maxMagnetic);
 					break;
 				}
 			//Load in experiment definitions

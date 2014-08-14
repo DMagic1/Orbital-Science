@@ -53,7 +53,7 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMAsteroidSurveyContract>().Count();
-			if (total > 0)
+			if (total >= DMUtils.maxAsteroid)
 				return false;
 			if (this.Prestige == ContractPrestige.Trivial)
 				return false;

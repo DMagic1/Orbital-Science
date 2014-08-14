@@ -43,6 +43,7 @@ namespace DMagic
 		internal static Dictionary<string, Dictionary<string, DMScienceContainer>> availableScience;
 		internal static Dictionary<string, List<string>> backStory;
 		internal static float science, reward, forward, penalty;
+		internal static int maxCollect, maxOrbital, maxGround, maxBiological, maxAsteroid, maxAnomaly, maxMagnetic;
 		internal static string newExp, newAstExp, astSize;
 
 		internal static void Logging(string s, params object[] stringObjects)

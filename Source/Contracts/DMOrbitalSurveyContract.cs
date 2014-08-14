@@ -54,7 +54,7 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMOrbitalSurveyContract>().Count();
-			if (total> 0)
+			if (total >= DMUtils.maxOrbital)
 				return false;
 
 			//Make sure that the magnetometer is at least available

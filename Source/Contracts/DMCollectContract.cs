@@ -62,7 +62,7 @@ namespace DMagic
 			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
 				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMCollectContract>().Count();
-			if (total > 2)
+			if (total >= DMUtils.maxCollect)
 				return false;
 
 			//Generates the science experiment, returns null if experiment fails any check
@@ -97,7 +97,7 @@ namespace DMagic
 			DMUtils.DebugLog("Parameter Added");
 			base.SetExpiry();
 			base.SetScience(DMscience.exp.baseValue * 1.2f * DMUtils.science * DMUtils.fixSubjectVal(targetSituation, 1f, body), null);
-			base.SetDeadlineYears(0.8f, body);
+			base.SetDeadlineYears(1.5f, body);
 			base.SetReputation(20f * DMUtils.reward, 10f * DMUtils.penalty, body);
 			base.SetFunds(9000f * DMUtils.forward, 10000f * DMUtils.reward, 1000f * DMUtils.penalty, body);
 			return true;
