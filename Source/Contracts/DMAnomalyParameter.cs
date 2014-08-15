@@ -44,7 +44,6 @@ namespace DMagic
 		private PQSCity city;
 		private ExperimentSituations situation;
 		private DMScienceContainer scienceContainer;
-		private Vessel v;
 		private Vector3d anomPosition;
 		private Vector3d recoveryPosition;
 		private string name;
@@ -62,7 +61,6 @@ namespace DMagic
 			situation = Situation;
 			name = Name;
 			city = City;
-			anomPosition = city.transform.position;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
 			hash = city.name;
@@ -166,22 +164,20 @@ namespace DMagic
 			}
 			if (!bool.TryParse(anomalyString[4], out collected))
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Reset Parameter");
+				collected = false;
 			}
 			if (HighLogic.LoadedSceneIsFlight)
 			{
 				try
 				{
 					city = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
-					anomPosition = city.transform.position;
 				}
 				catch
 				{
 					DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
 					this.Root.RemoveParameter(this);
 				}
-				v = FlightGlobals.ActiveVessel;
 			}
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
 		}
@@ -194,19 +190,20 @@ namespace DMagic
 				{
 					DMUtils.DebugLog("Checking Distance To Anomaly");
 					//Calculate distance to the anomaly on science collection
-					if (v.mainBody == body)
+					if (FlightGlobals.currentMainBody == body)
 					{
-						recoveryPosition = v.transform.position;
-						double valt = v.mainBody.GetAltitude(recoveryPosition);
-						double anomAlt = v.mainBody.GetAltitude(anomPosition);
-						double verticalD = anomAlt - valt;
+						recoveryPosition = FlightGlobals.ActiveVessel.transform.position;
+						anomPosition = city.transform.position;
+						double valt = FlightGlobals.ActiveVessel.mainBody.GetAltitude(recoveryPosition);
+						double anomAlt = FlightGlobals.ActiveVessel.mainBody.GetAltitude(anomPosition);
+						double verticalD = Math.Abs(anomAlt - valt);
 						double totalD = (anomPosition - recoveryPosition).magnitude;
 						double horizantalD = Math.Sqrt((totalD * totalD) - (verticalD * verticalD));
-
+						DMUtils.DebugLog("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", totalD, verticalD, horizantalD);
 						//Draw a cone above the anomaly position up to 100km with a diametere of 15km at its widest
 						if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
 						{
-							if (Math.Abs(verticalD) > 1000 && verticalD < 100000)
+							if (verticalD > 1000 && verticalD < 100000)
 							{
 								if (horizantalD < (15000 * (verticalD / 100000)))
 								{
@@ -216,7 +213,7 @@ namespace DMagic
 								else
 									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
-							else if (Math.Abs(verticalD) < 1000)
+							else if (verticalD < 1000)
 							{
 								if (horizantalD < 150)
 								{
