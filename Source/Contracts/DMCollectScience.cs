@@ -37,12 +37,12 @@ using Contracts.Parameters;
 
 namespace DMagic
 {
-	class DMCollectScience : CollectScience
+	public class DMCollectScience : CollectScience
 	{
 		private CelestialBody body;
 		private ExperimentSituations scienceLocation;
 		private DMScienceContainer scienceContainer;
-		private string subject, name, biomeName, aSize;
+		private string subject, name, biomeName, aSize, partName;
 		private bool collected;
 		private int size;
 		private int type; //type 0: standard experiment; type 1: standard survey; type 2: asteroid survey; type 3: anomaly
@@ -60,6 +60,7 @@ namespace DMagic
 			type = Type;
 			collected = true;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+			partName = scienceContainer.sciPart;
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 		}
 
@@ -74,7 +75,19 @@ namespace DMagic
 			biomeName = "";
 			collected = false;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+			partName = scienceContainer.sciPart;
 			subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, biomeName);
+		}
+
+		/// <summary>
+		/// Used externally to return the name of the requested part
+		/// </summary>
+		/// <param name="cP">Instance of the requested Contract Parameter</param>
+		/// <returns>Available Part name string</returns>
+		public static string PartName(ContractParameter cP)
+		{
+			DMCollectScience Instance = (DMCollectScience)cP;
+			return Instance.partName;
 		}
 
 		//Properties to be accessed by parent contract
@@ -207,6 +220,7 @@ namespace DMagic
 			}
 			name = scienceString[1];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+			partName = scienceContainer.sciPart;
 			if (int.TryParse(scienceString[3], out targetLocation))
 				scienceLocation = (ExperimentSituations)targetLocation;
 			else

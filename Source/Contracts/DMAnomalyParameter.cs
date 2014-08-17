@@ -38,17 +38,14 @@ using Contracts.Parameters;
 
 namespace DMagic
 {
-	class DMAnomalyParameter: ContractParameter
+	public class DMAnomalyParameter: ContractParameter
 	{
 		private CelestialBody body;
 		private PQSCity city;
 		private ExperimentSituations situation;
 		private DMScienceContainer scienceContainer;
-		private Vector3d anomPosition;
-		private Vector3d recoveryPosition;
-		private string name;
-		private string subject;
-		private string hash;
+		private Vector3d anomPosition, recoveryPosition;
+		private string name, subject, hash, partName;
 		private bool collected = false;
 
 		public DMAnomalyParameter()
@@ -62,8 +59,20 @@ namespace DMagic
 			name = Name;
 			city = City;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+			partName = scienceContainer.sciPart;
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
 			hash = city.name;
+		}
+
+		/// <summary>
+		/// Used externally to return the name of the requested part
+		/// </summary>
+		/// <param name="cP">Instance of the requested Contract Parameter</param>
+		/// <returns>Available Part name string</returns>
+		public static string PartName(ContractParameter cP)
+		{
+			DMAnomalyParameter aP = (DMAnomalyParameter)cP;
+			return aP.partName;
 		}
 
 		internal PQSCity City
@@ -155,6 +164,7 @@ namespace DMagic
 			}
 			name = anomalyString[2];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+			partName = scienceContainer.sciPart;
 			if (int.TryParse(anomalyString[3], out sitID))
 				situation = (ExperimentSituations)sitID;
 			else
