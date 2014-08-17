@@ -91,7 +91,7 @@ namespace DMagic
 			if (DMscience.agent != "Any")
 				this.agent = AgentList.Instance.GetAgent(DMscience.agent);
 
-			this.AddParameter(newParam, null);
+			this.AddParameter(newParam, "collectDMScience");
 			if (this.ParameterCount == 0)
 				return false;
 			DMUtils.DebugLog("Parameter Added");

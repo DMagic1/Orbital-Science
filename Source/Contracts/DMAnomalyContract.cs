@@ -139,7 +139,7 @@ namespace DMagic
 					anomParams[i] = null;
 			}
 
-			this.AddParameter(newParam, null);
+			this.AddParameter(newParam);
 			DMUtils.DebugLog("Added Primary Anomaly Parameter");
 			newParam.SetFunds(10000f * DMUtils.reward, 5000f * DMUtils.penalty, body);
 			newParam.SetReputation(60f * DMUtils.reward, 10f * DMUtils.penalty, body);
@@ -149,7 +149,7 @@ namespace DMagic
 			{
 				if (aP != null)
 				{
-					this.AddParameter(aP);
+					this.AddParameter(aP, "collectDMAnomaly");
 					DMUtils.DebugLog("Added Secondary Anomaly Parameter");
 					aP.SetFunds(7000f * DMUtils.reward, 3000f * DMUtils.penalty, body);
 					aP.SetReputation(10f * DMUtils.reward, 5f * DMUtils.penalty, body);

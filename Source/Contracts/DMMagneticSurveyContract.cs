@@ -99,7 +99,7 @@ namespace DMagic
 					return false;
 				else
 				{
-					this.AddParameter(DMCS, null);
+					this.AddParameter(DMCS, "collectDMScience");
 					DMUtils.DebugLog("Added Mag Survey Param");
 					DMCS.SetFunds(5000f * DMUtils.reward, body);
 					DMCS.SetReputation(25f * DMUtils.reward, body);

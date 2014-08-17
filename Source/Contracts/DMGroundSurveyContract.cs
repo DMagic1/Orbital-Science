@@ -99,7 +99,7 @@ namespace DMagic
 			{
 				if (DMC != null)
 				{
-					this.AddParameter(DMC, null);
+					this.AddParameter(DMC, "collectDMScience");
 					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
 					DMC.SetFunds(6000f * DMUtils.reward, 1800f * DMUtils.penalty, body);
 					DMC.SetReputation(20f * DMUtils.reward, 15f * DMUtils.penalty, body);

@@ -45,7 +45,7 @@ namespace DMagic
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
 		private string hash;
-		private int size, i, j = 0;
+		private int size, i = 0;
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
@@ -92,13 +92,12 @@ namespace DMagic
 			{
 				if (DMC != null)
 				{
-					this.AddParameter(newParams[j], null);
+					this.AddParameter(DMC, "collectDMScience");
 					DMC.SetScience(DMC.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
 					DMC.SetFunds(15000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size), 10000f * DMUtils.penalty * (size + 1), null);
 					DMC.SetReputation(15f * DMUtils.reward * (size + 1), 10f * DMUtils.penalty * (size + 1), null);
 					DMUtils.DebugLog("Asteroid Survey Parameter Added");
 				}
-				j++;
 			}
 
 			if (this.ParameterCount == 0)
