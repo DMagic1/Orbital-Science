@@ -144,7 +144,9 @@ namespace DMagic
 			if (deltaTime > 10) deltaTime = 10;
 			if (((Time.time * deltaTime) - lastUpdate) > updateInterval) {
 				lastUpdate = Time.time;
-				if (primaryModule.IsDeployed && runMagnetometer) {
+				if (primaryModule.IsDeployed && runMagnetometer)
+				{
+					DMAnomalyList.MagUpdating = true;
 					CelestialBody planetID = vessel.mainBody;
 					int ID = planetID.flightGlobalsIndex;
 					part.RequestResource(resourceToUse, resourceCost * TimeWarp.deltaTime);
@@ -164,8 +166,10 @@ namespace DMagic
 					double[] field = new double[6];
 					double lonShift;
 
-					if (ID == 1 || ID == 2 || ID == 3 || ID == 5 || ID == 6 || ID == 7 || ID == 8 || ID == 9 || ID == 10 || ID == 11 || ID == 12 || ID == 13 || ID == 14) {
-						if (ID == 9 || ID == 10 || ID == 11 || ID == 12 || ID == 14) {
+					if (ID == 1 || ID == 2 || ID == 3 || ID == 5 || ID == 6 || ID == 7 || ID == 8 || ID == 9 || ID == 10 || ID == 11 || ID == 12 || ID == 13 || ID == 14)
+					{
+						if (ID == 9 || ID == 10 || ID == 11 || ID == 12 || ID == 14)
+						{
 							//For now the Joolian moons return values relative to Jool
 							Vector3 vesselPosition = vessel.transform.position;
 							alt = FlightGlobals.fetch.bodies[8].GetAltitude(vesselPosition) / 5000;
@@ -173,28 +177,32 @@ namespace DMagic
 							lon = ((FlightGlobals.fetch.bodies[8].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
 							planetID = FlightGlobals.fetch.bodies[8];
 						}
-						else if (ID == 2 || ID == 3) {
+						else if (ID == 2 || ID == 3)
+						{
 							Vector3 vesselPosition = vessel.transform.position;
 							alt = FlightGlobals.fetch.bodies[1].GetAltitude(vesselPosition) / 1000;
 							lat = ((FlightGlobals.fetch.bodies[1].GetLatitude(vesselPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
 							lon = ((FlightGlobals.fetch.bodies[1].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
 							planetID = FlightGlobals.fetch.bodies[1];
 						}
-						else if (ID == 7) {
+						else if (ID == 7)
+						{
 							Vector3 vesselPosition = vessel.transform.position;
 							alt = FlightGlobals.fetch.bodies[6].GetAltitude(vesselPosition) / 1000;
 							lat = ((FlightGlobals.fetch.bodies[6].GetLatitude(vesselPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
 							lon = ((FlightGlobals.fetch.bodies[6].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
 							planetID = FlightGlobals.fetch.bodies[6];
 						}
-						else if (ID == 13) {
+						else if (ID == 13)
+						{
 							Vector3 vesselPosition = vessel.transform.position;
 							alt = FlightGlobals.fetch.bodies[5].GetAltitude(vesselPosition) / 1000;
 							lat = ((FlightGlobals.fetch.bodies[5].GetLatitude(vesselPosition) + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
 							lon = ((FlightGlobals.fetch.bodies[5].GetLongitude(vesselPosition) + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
 							planetID = FlightGlobals.fetch.bodies[5];
 						}
-						else {
+						else
+						{
 							lat = ((vessel.latitude + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
 							lon = ((vessel.longitude + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
 							alt = vessel.altitude / 1000;
@@ -217,7 +225,8 @@ namespace DMagic
 							Radius += 0.001;
 
 						//Scale our altitude by our position on the simulated torus, ignore at altitudes below one planetary radius, ramp up quickly above high scaled altitude up to a max value
-						if (alt > altScale(planetID)) {
+						if (alt > altScale(planetID))
+						{
 							alt *= radScale(planetID) / Radius;
 							if (alt < altScale(planetID))
 								alt = altScale(planetID);
@@ -227,13 +236,15 @@ namespace DMagic
 						if (alt > altMax(planetID))
 							alt = altMax(planetID);
 					}
-					else if (ID == 0) {
+					else if (ID == 0)
+					{
 						lat = ((vessel.latitude + 90 + 180) % 180 - 90) * Mathf.Deg2Rad;
 						lon = ((vessel.longitude + 180 + 360) % 360 - 180) * Mathf.Deg2Rad;
 						alt = vessel.altitude / 50000;
 						uDay = Planetarium.GetUniversalTime() / solarDay(planetID);
 					}
-					else {
+					else
+					{
 						//For non-magnetic planets use our position relative to the sun to calculate alt, lat, and long
 						Vector3 vesselPosition = vessel.transform.position;
 						alt = FlightGlobals.fetch.bodies[0].GetAltitude(vesselPosition) / 50000;
@@ -261,24 +272,32 @@ namespace DMagic
 					double Bh = Math.Sqrt((Bx * Bx) + (By * By));
 
 					//Alter the magnetic field line vector when far away from the planet
-					if (ID > 0) {
-						if (alt > altScale(planetID) * 3) {
-							if (ID == 8) {
-								if (alt < (altMax(planetID) / 7)) {
+					if (ID > 0)
+					{
+						if (alt > altScale(planetID) * 3)
+						{
+							if (ID == 8)
+							{
+								if (alt < (altMax(planetID) / 7))
+								{
 									Bh /= (alt / (altScale(planetID) * 3));
 									Bz *= (alt / (altScale(planetID) * 3));
 								}
-								else {
+								else
+								{
 									Bh /= ((altMax(planetID) / 7) / (altScale(planetID) * 3));
 									Bz *= ((altMax(planetID) / 7) / (altScale(planetID) * 3));
 								}
 							}
-							else {
-								if (alt < (altMax(planetID) / 2)) {
+							else
+							{
+								if (alt < (altMax(planetID) / 2))
+								{
 									Bh /= (alt / (altScale(planetID) * 3));
 									Bz *= (alt / (altScale(planetID) * 3));
 								}
-								else {
+								else
+								{
 									Bh /= ((altMax(planetID) / 2) / (altScale(planetID) * 3));
 									Bz *= ((altMax(planetID) / 2) / (altScale(planetID) * 3));
 								}
@@ -306,7 +325,7 @@ namespace DMagic
 
 						double anomMult = 1 + ((100000 - closestAnom.Value) / 10000);
 						double anomMultZ = 1 + (anomMult * ((closestAnom.Value - hDist) / closestAnom.Value));
-						double anomMultH = 1 + ( anomMult * ((closestAnom.Value - vheight) / closestAnom.Value));
+						double anomMultH = 1 + (anomMult * ((closestAnom.Value - vheight) / closestAnom.Value));
 
 						Bz *= anomMultZ;
 						Bh *= anomMultH;
@@ -389,7 +408,10 @@ namespace DMagic
 					//Fields["lons"].guiActive = primaryModule.IsDeployed;
 					//Fields["Bhold"].guiActive = primaryModule.IsDeployed;
 				}
-				else {
+				else if (DMAnomalyList.MagUpdating)
+					DMAnomalyList.MagUpdating = false;
+				else
+				{
 					Fields["Bt"].guiActive = false;
 					Fields["inc"].guiActive = false;
 					Fields["dec"].guiActive = false;
