@@ -179,7 +179,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Bio Contract");
+			//DMUtils.DebugLog("Loading Bio Contract");
 			int target;
 			target = int.Parse(node.GetValue("Bio_Survey_Target"));
 			body = FlightGlobals.Bodies[target];
@@ -189,7 +189,7 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Bio Contract");
+			//DMUtils.DebugLog("Saving Bio Contract");
 			node.AddValue("Bio_Survey_Target", body.flightGlobalsIndex);
 		}
 

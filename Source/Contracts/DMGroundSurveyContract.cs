@@ -165,7 +165,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Ground Survey Contract");
+			//DMUtils.DebugLog("Loading Ground Survey Contract");
 			int target;
 			target = int.Parse(node.GetValue("Surface_Survey_Target"));
 			body = FlightGlobals.Bodies[target];
@@ -175,7 +175,7 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Ground Survey Contract");
+			//DMUtils.DebugLog("Saving Ground Survey Contract");
 			node.AddValue("Surface_Survey_Target", body.flightGlobalsIndex);
 		}
 
