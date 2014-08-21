@@ -119,7 +119,6 @@ namespace DMagic
 			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
 			GameEvents.onVesselCreate.Add(newVesselCheck);
 			GameEvents.onPartCouple.Add(dockCheck);
-			//GameEvents.onVesselWasModified.Add(vesselModified);
 		}
 
 		protected override void OnUnregister()
@@ -127,12 +126,11 @@ namespace DMagic
 			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
 			GameEvents.onVesselCreate.Remove(newVesselCheck);
 			GameEvents.onPartCouple.Remove(dockCheck);
-			//GameEvents.onVesselWasModified.Remove(vesselModified);
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Long Orbital Parameter");
+			//DMUtils.DebugLog("Saving Long Orbital Parameter");
 			if (HighLogic.LoadedSceneIsEditor)
 				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3:N3}|{4}", type, body.flightGlobalsIndex, vName, orbitalParameter, inOrbit));
 			else if (vessel != null)
@@ -143,7 +141,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Orbital Parameter");
+			//DMUtils.DebugLog("Loading Orbital Parameter");
 			int target;
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
 			if (!int.TryParse(orbitString[0], out type))
@@ -176,8 +174,7 @@ namespace DMagic
 					try
 					{
 						vessel = FlightGlobals.Vessels.FirstOrDefault(v => v.vesselName == vName);
-						//if (vessel != null)
-							DMUtils.DebugLog("Vessel {0} Loaded", vessel.vesselName);
+						DMUtils.DebugLog("Vessel {0} Loaded", vessel.vesselName);
 					}
 					catch
 					{
@@ -199,18 +196,11 @@ namespace DMagic
 			this.disableOnStateChange = false;
 		}
 
-		internal void setStateChangeDisable()
-		{
-			this.disableOnStateChange = true;
-			this.SetComplete();
-			this.enabled = false;
-		}
-
 		private void vesselOrbit(Vessel v, CelestialBody b)
 		{
 			if (v == FlightGlobals.ActiveVessel)
 			{
-				if (!inOrbit)
+				if (this.State == ParameterState.Incomplete)
 				{
 					//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
 					if (b == body && v.situation == Vessel.Situations.ORBITING)
@@ -255,34 +245,6 @@ namespace DMagic
 			}
 		}
 
-		//private void vesselModified(Vessel v)
-		//{
-		//    if (inOrbit)
-		//    {
-		//        if (modifiedByDocking)
-		//        {
-		//            DMUtils.DebugLog("Vessel Modified By Docking");
-		//            if (VesselEquipped(v))
-		//            {
-		//                DMUtils.DebugLog("Docked Vessel Assigned: {0}", v.vesselName);
-		//                vessel = v;
-		//                inOrbit = true;
-		//                this.SetComplete();
-		//                vName = vessel.vesselName;
-		//            }
-		//            else
-		//            {
-		//                DMUtils.DebugLog("Vessel No Longer Properly Equipped");
-		//                vName = "";
-		//                vessel = null;
-		//                inOrbit = false;
-		//                this.SetIncomplete();
-		//            }
-		//            modifiedByDocking = false;
-		//        }
-		//    }
-		//}
-
 		private void newVesselCheck(Vessel v)
 		{
 			if (inOrbit)
@@ -304,36 +266,6 @@ namespace DMagic
 				}
 			}
 		}
-
-		//                //If the new vessel retains the proper instruments
-		//                if (VesselEquipped(newV))
-		//                {
-		//                    DMUtils.DebugLog("New Vessel Assigned");
-		//                    vessel = newV;
-		//                    inOrbit = true;
-		//                    this.SetComplete();
-		//                    vName = vessel.vesselName;
-		//                }
-		//                //If the currently active, hopefully old, vessel retains the proper instruments
-		//                else if (VesselEquipped(FlightGlobals.ActiveVessel))
-		//                {
-		//                    inOrbit = true;
-		//                    this.SetComplete();
-		//                    DMUtils.DebugLog("Old Vessel Assigned");
-		//                    vessel = FlightGlobals.ActiveVessel;
-		//                    vName = vessel.vesselName;
-		//                }
-		//                //If the proper instruments are spread across the two vessels
-		//                else
-		//                {
-		//                    DMUtils.DebugLog("No Vessels Assigned");
-		//                    inOrbit = false;
-		//                    this.SetIncomplete();
-		//                }
-		//            }
-		//        }
-		//    }
-		//}
 
 		//Track our vessel's orbit
 		protected override void OnUpdate()
@@ -368,14 +300,11 @@ namespace DMagic
 							else
 								this.SetIncomplete();
 						}
-						if (this.State == ParameterState.Complete)
+						if (vessel.mainBody != body)
 						{
-							if (vessel.mainBody != body)
-							{
-								DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
-								inOrbit = false;
-								this.SetIncomplete();
-							}
+							DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
+							inOrbit = false;
+							this.SetIncomplete();
 						}
 					}
 				}
