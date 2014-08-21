@@ -124,7 +124,7 @@ namespace DMagic
 		private bool resourceOn = false;
 		private int dataIndex = 0;
 		private List<ScienceData> scienceReports = new List<ScienceData>();
-		private List<ScienceData> storedScienceReports = new List<ScienceData>();
+		protected List<ScienceData> storedScienceReports = new List<ScienceData>();
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
@@ -551,7 +551,7 @@ namespace DMagic
 			runExperiment();
 		}
 
-		private void runExperiment()
+		protected void runExperiment()
 		{
 			ScienceData data = makeScience(scienceBoost);
 			if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear()))
@@ -580,7 +580,7 @@ namespace DMagic
 			return subV * boost;
 		}
 
-		private string getBiome(ExperimentSituations s)
+		protected virtual string getBiome(ExperimentSituations s, string S)
 		{
 			if ((bioMask & (int)s) == 0)
 				return "";
@@ -598,7 +598,7 @@ namespace DMagic
 			}
 		}
 
-		private ExperimentSituations getSituation()
+		protected virtual ExperimentSituations getSituation()
 		{
 			if (asteroidReports && DMAsteroidScience.asteroidGrappled())
 				return ExperimentSituations.SrfLanded;
@@ -624,7 +624,7 @@ namespace DMagic
 			}
 		}
 
-		private string situationCleanup(ExperimentSituations expSit, string b)
+		protected virtual string situationCleanup(ExperimentSituations expSit, string b)
 		{
 			if (asteroidReports && DMAsteroidScience.asteroidGrappled())
 				return " from the surface of a " + b + " asteroid";
@@ -666,6 +666,19 @@ namespace DMagic
 			}
 		}
 
+		private string astCleanup(ExperimentSituations s, string b)
+		{
+			switch (s)
+			{
+				case ExperimentSituations.SrfLanded:
+					return string.Format(" from the surface of a {0} asteroid", b);
+				case ExperimentSituations.InSpaceLow:
+					return string.Format(" while in space near a {0} asteroid", b);
+				default:
+					return "";
+			}
+		}
+
 		private bool canConduct()
 		{
 			failMessage = "";
@@ -704,34 +717,37 @@ namespace DMagic
 		private ScienceData makeScience(float boost)
 		{
 			ExperimentSituations vesselSituation = getSituation();
-			string biome = getBiome(vesselSituation);
+			string biome = getBiome(vesselSituation, "");
 			CelestialBody mainBody = vessel.mainBody;
 			bool asteroids = false;
 
 			//Check for asteroids and alter the biome and celestialbody values as necessary
-			if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear())) {
+			if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear()))
+			{
 				newAsteroid = new DMAsteroidScience();
 				asteroids = true;
 				mainBody = newAsteroid.body;
-				biome = "";
-				if (asteroidTypeDependent) biome = newAsteroid.aClass;
+				biome = newAsteroid.aType + newAsteroid.aClass;
 			}
 
 			ScienceData data = null;
 			ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(experimentID);
 			ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, mainBody, biome);
-			sub.title = exp.experimentTitle + situationCleanup(vesselSituation, biome);
+			
 
-			if (asteroids) {
-				asteroidID = newAsteroid.ID;
-				sub.subjectValue = newAsteroid.sciMult;
-				sub.scienceCap = exp.scienceCap * sub.subjectValue * 5;
-				mainBody.bodyName = bodyNameFixed;
+			if (asteroids)
+			{
 				DMUtils.astSize = newAsteroid.aClass;
 				DMUtils.newAstExp = experimentID;
+				sub.title = exp.experimentTitle + astCleanup(vesselSituation, newAsteroid.aType);
+				asteroidID = newAsteroid.ID;
+				registerDMScience(newAsteroid, exp, sub, vesselSituation, biome);
+				mainBody.bodyName = bodyNameFixed;
 			}
-			else {
+			else
+			{
 				DMUtils.newExp = experimentID;
+				sub.title = exp.experimentTitle + situationCleanup(vesselSituation, biome);
 				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost, mainBody);
 				sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			}
@@ -739,6 +755,37 @@ namespace DMagic
 			if (sub != null)
 				data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, 0.5f, sub.id, sub.title);
 			return data;
+		}
+
+		private void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub, ExperimentSituations expsit, string s)
+		{
+			DMScienceScenario.DMScienceData DMData = null;
+			//string astID = sub.id;
+			string astID = exp.id + "@Asteroid" + expsit.ToString() + s;
+			float astSciCap = exp.scienceCap * 43.5f;
+			float astScience = 0f;
+			float astSciVal = 1f;
+			int astExpNo = 0;
+			sub.scientificValue = 1f;
+
+			foreach (DMScienceScenario.DMScienceData DMScience in DMScienceScenario.SciScenario.recoveredScienceList)
+			{
+				DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.recoveredScienceList.Count);
+				if (DMScience.title == sub.title)
+				{
+					astScience = DMScience.science;
+					sub.scientificValue = DMScience.scival;
+					astExpNo = DMScience.expNo;
+					DMUtils.DebugLog("found matching DM Data");
+					DMData = DMScience;
+					break;
+				}
+			}
+			sub.subjectValue = newAst.sciMult;
+			sub.scienceCap = exp.scienceCap * sub.subjectValue;
+			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
+			if (DMData == null)
+				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, exp.dataScale, astSciVal, astScience, astSciCap, astExpNo);
 		}
 
 		#endregion
