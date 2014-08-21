@@ -160,6 +160,7 @@ namespace DMagic
 			if (this.ParameterCount == 0)
 				return false;
 
+			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
 			base.SetDeadlineYears(4f, body);
 			base.SetReputation(20f * DMUtils.reward, 10f * DMUtils.penalty, body);
@@ -247,7 +248,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Anomaly Contract");
+			//DMUtils.DebugLog("Loading Anomaly Contract");
 			int targetBodyID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];
@@ -288,7 +289,7 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Anomaly Contract");
+			//DMUtils.DebugLog("Saving Anomaly Contract");
 			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2:N2}|{3:N2}", hash, body.flightGlobalsIndex, lat, lon));
 		}
 

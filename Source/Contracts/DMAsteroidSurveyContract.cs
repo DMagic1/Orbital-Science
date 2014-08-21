@@ -103,14 +103,7 @@ namespace DMagic
 			if (this.ParameterCount == 0)
 				return false;
 
-			int a = rand.Next(0, 5);
-			if (a == 0)
-				this.agent = AgentList.Instance.GetAgent("DMagic");
-			else if (a == 1)
-				this.agent = AgentList.Instance.GetAgent(newParams[0].Container.agent);
-			else
-				this.agent = AgentList.Instance.GetAgentRandom();
-
+			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
 			base.SetDeadlineYears(3f * (float)(this.prestige + 1), null);
 			base.SetReputation(newParams.Length * 5f * DMUtils.reward * (size + 1), newParams.Length * 3f * DMUtils.penalty, null);
@@ -135,7 +128,7 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Conduct a survey of a {0} asteroid by collecting multiple scienctific observations", hash);
+			return string.Format("Conduct a survey of a {0} asteroid by collecting multiple scientific observations", hash);
 		}
 
 		protected override string GetDescription()
@@ -158,7 +151,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Asteroid Survey Contract");
+			//DMUtils.DebugLog("Loading Asteroid Survey Contract");
 			hash = node.GetValue("Asteroid_Size_Class");
 			if (this.ParameterCount == 0)
 				this.Cancel();
@@ -166,7 +159,7 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Asteroid Survey Contract");
+			//DMUtils.DebugLog("Saving Asteroid Survey Contract");
 			node.AddValue("Asteroid_Size_Class", hash);
 		}
 
