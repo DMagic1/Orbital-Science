@@ -45,6 +45,7 @@ namespace DMagic
 			base.OnStart(state);
 			if (!string.IsNullOrEmpty(verticalDrill))
 				anim = part.FindModelAnimators(verticalDrill)[0];
+			base.labDataBoost = 0.3f;
 		}
 
 		public override void DeployExperiment()
