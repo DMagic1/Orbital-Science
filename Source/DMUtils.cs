@@ -928,7 +928,7 @@ namespace DMagic
 			else
 				targetSituation = ExperimentSituations.FlyingLow;
 
-			anomName = DMAnomalyScanner.biomeResultName(city.name);
+			anomName = DMAnomalyScanner.anomalyCleanup(city.name);
 
 			subject = string.Format("AnomalyScan@{0}{1}{2}", body.name, targetSituation, anomName);
 
