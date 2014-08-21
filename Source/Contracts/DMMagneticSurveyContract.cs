@@ -43,9 +43,6 @@ namespace DMagic
 	{
 		private CelestialBody body;
 		private DMCollectScience[] magParams = new DMCollectScience[4];
-		private DMLongOrbitParameter longParam;
-		private DMOrbitalParameters inclinedParam, eccentricParam;
-		private bool eccentric, inclined, loaded;
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
@@ -78,13 +75,13 @@ namespace DMagic
 			double inclination = 15d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 			if (inclination > 75) inclination = 75;
 
-			longParam = new DMLongOrbitParameter(body, time, eccen, inclination);
-			eccentricParam = new DMOrbitalParameters(body, eccen, 0);
-			inclinedParam = new DMOrbitalParameters(body, inclination, 1);
+			DMLongOrbitParameter longParam = new DMLongOrbitParameter(body, time);
+			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(body, eccen, 0);
+			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(body, inclination, 1);
 
 			this.AddParameter(longParam);
-			this.AddParameter(eccentricParam);
-			this.AddParameter(inclinedParam);
+			longParam.AddParameter(eccentricParam);
+			longParam.AddParameter(inclinedParam);
 
 			longParam.SetFunds(50000f * DMUtils.reward, body);
 			longParam.SetReputation(50f * DMUtils.reward, body);
@@ -110,19 +107,11 @@ namespace DMagic
 			if (this.ParameterCount == 0)
 				return false;
 
-			int a = rand.Next(0, 3);
-			if (a == 0)
-				this.agent = AgentList.Instance.GetAgent("DMagic");
-			else
-				this.agent = AgentList.Instance.GetAgentRandom();
-
+			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10, 15f * (float)(this.prestige + 1));
 			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 13f, null);
 			base.SetReputation(50f * DMUtils.reward, 10f * DMUtils.penalty, body);
 			base.SetFunds(50000 * DMUtils.forward, 55000 * DMUtils.reward, 20000 * DMUtils.penalty, body);
-			eccentric = true;
-			inclined = true;
-			loaded = false;
 			return true;
 		}
 
@@ -165,7 +154,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Mag Contract");
+			//DMUtils.DebugLog("Loading Mag Contract");
 			int target;
 			if (int.TryParse(node.GetValue("Mag_Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];
@@ -176,21 +165,11 @@ namespace DMagic
 			}
 			if (this.ParameterCount == 0)
 				this.Cancel();
-			eccentricParam = (DMOrbitalParameters)this.GetParameter(1);
-			inclinedParam = (DMOrbitalParameters)this.GetParameter(2);
-			longParam = (DMLongOrbitParameter)this.GetParameter(0);
-			if (eccentricParam == null || inclinedParam == null)
-				this.Cancel();
-			if (eccentricParam.State == ParameterState.Complete)
-				eccentric = true;
-			if (inclinedParam.State == ParameterState.Complete)
-				inclined = true;
-			loaded = true;
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Mag Contract");
+			//DMUtils.DebugLog("Saving Mag Contract");
 			node.AddValue("Mag_Survey_Target", body.flightGlobalsIndex);
 		}
 
@@ -198,38 +177,5 @@ namespace DMagic
 		{
 			return true;
 		}
-
-		protected override void OnUpdate()
-		{
-			if (this.ContractState == State.Active && !HighLogic.LoadedSceneIsEditor)
-			{
-				eccentric = eccentricParam.State == ParameterState.Complete;
-				inclined = inclinedParam.State == ParameterState.Complete;
-				if (longParam.State == ParameterState.Complete)
-				{
-					eccentricParam.setStateChangeDisable();
-					inclinedParam.setStateChangeDisable();
-				}
-			}
-		}
-
-		internal bool Eccentric
-		{
-			get { return eccentric; }
-			private set { }
-		}
-
-		internal bool Inclined
-		{
-			get { return inclined; }
-			private set { }
-		}
-
-		internal bool Loaded
-		{
-			get { return loaded; }
-			private set { }
-		}
-
 	}
 }
