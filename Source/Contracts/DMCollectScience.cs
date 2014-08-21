@@ -201,7 +201,7 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Contract Parameter");
+			//DMUtils.DebugLog("Saving Contract Parameter");
 			if (type == 2)
 				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, size, (int)scienceLocation, "", collected));
 			else
@@ -210,7 +210,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Contract Parameter");
+			//DMUtils.DebugLog("Loading Contract Parameter");
 			int targetBodyID, targetLocation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			if (!int.TryParse(scienceString[0], out type))
@@ -269,6 +269,7 @@ namespace DMagic
 					{
 						if (setAstVessel(DMUtils.astSize, DMUtils.newAstExp))
 						{
+							ScreenMessages.PostScreenMessage("Asteroid Science Results Collected", 6f, ScreenMessageStyle.UPPER_CENTER);
 							collected = true;
 							DMUtils.astSize = "";
 							DMUtils.newAstExp = "";

@@ -144,13 +144,13 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Anomaly Parameter");
+			//DMUtils.DebugLog("Saving Anomaly Parameter");
 			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2}|{3}|{4}", hash, body.flightGlobalsIndex, name, (int)situation, collected));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Anomaly Parameter");
+			//DMUtils.DebugLog("Loading Anomaly Parameter");
 			DMUtils.newExp = "";
 			int bodyID, sitID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');

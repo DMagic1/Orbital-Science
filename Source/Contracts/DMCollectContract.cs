@@ -183,7 +183,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Contract");
+			//DMUtils.DebugLog("Loading Contract");
 			int targetBodyID, targetLocation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			name = scienceString[0];
@@ -211,7 +211,7 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Contract");
+			//DMUtils.DebugLog("Saving Contract");
 			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}", name, body.flightGlobalsIndex, (int)targetSituation, biome));
 		}
 
