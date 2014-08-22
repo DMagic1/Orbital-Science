@@ -143,7 +143,6 @@ namespace DMagic
 
 		protected override string GetSynopsys()
 		{
-			DMUtils.DebugLog("Generating Mag Synopsis From Target Body: [{0}]", body.theName);
 			return string.Format("Study the magnetic field environment around {0} by inserting a long-term research vessel into orbit.", body.theName);
 		}
 

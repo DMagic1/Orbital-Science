@@ -128,7 +128,7 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Conduct a survey of a {0} asteroid by collecting multiple scientific observations", hash);
+			return string.Format("Conduct a survey of a {0} asteroid; return or transmit multiple scienctific observations", hash);
 		}
 
 		protected override string GetDescription()
@@ -140,8 +140,7 @@ namespace DMagic
 
 		protected override string GetSynopsys()
 		{
-			DMUtils.DebugLog("Generating Asteroid Synopsis From Target Body: [{0}]", hash);
-			return string.Format("Study the a {0} asteroid by collecting multiple scientific observations.", hash);
+			return string.Format("We want you to find and study a {0} asteroid by collecting multiple scientific observations.", hash);
 		}
 
 		protected override string MessageCompleted()
