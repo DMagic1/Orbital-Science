@@ -29,7 +29,6 @@
  */
 #endregion
 
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -120,7 +119,7 @@ namespace DMagic
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 					return false;
 
-				//No need to study Kerbin this way
+				//Kerbin is the easy target
 				if (this.Prestige == ContractPrestige.Trivial)
 					body = FlightGlobals.Bodies[1];
 				//Duna and Eve are the easy targets
@@ -194,10 +193,10 @@ namespace DMagic
 				}
 			}
 
-			if (this.ParameterCount == 0)
+			if (this.ParameterCount < 4)
 				return false;
 
-			int a = rand.Next(0, 5);
+			int a = rand.Next(0, 4);
 			if (a == 0)
 				this.agent = AgentList.Instance.GetAgent("DMagic");
 			else if (a == 1)
@@ -224,7 +223,7 @@ namespace DMagic
 
 		protected override string GetHashString()
 		{
-			return body.name;
+			return string.Format("{0}{1}", body.name, surveyType, this.ParameterCount);
 		}
 
 		protected override string GetTitle()
@@ -258,11 +257,11 @@ namespace DMagic
 		protected override string GetSynopsys()
 		{
 			if (surveyType == 0)
-				return string.Format("Conduct an orbital survey of {0} by collecting multiple science observations.", body.theName);
+				return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit collecting multiple science observations.", body.theName);
 			else if (surveyType == 1)
-				return string.Format("Study the surface of {0} by collecting multiple scientific observations.", body.theName);
+				return string.Format("We would like you to study the surface of {0}. Collect and return or transmit collecting multiple science observations.", body.theName);
 			else if (surveyType == 2)
-				return string.Format("Study {0} for signs of on-going or past biological activity by conducting several science experiments.", body.theName);
+				return string.Format("We would like you to study {0} for signs of on-going or past biological activity. Collect and return or transmit collecting multiple science observations.", body.theName);
 			else
 				return "Fix me :(";
 		}
