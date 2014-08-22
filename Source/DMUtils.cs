@@ -907,11 +907,11 @@ namespace DMagic
 	{
 		private static System.Random rand = DMUtils.rand;
 
-		internal static DMCollectScience fetchAnomalyParameter(CelestialBody Body, PQSCity City)
+		internal static DMCollectScience fetchAnomalyParameter(CelestialBody Body, DMAnomalyObject City)
 		{
 			CelestialBody body;
 			ExperimentSituations targetSituation;
-			PQSCity city;
+			DMAnomalyObject city;
 			ScienceSubject sub;
 			string subject, anomName;
 
@@ -943,7 +943,7 @@ namespace DMagic
 			return new DMCollectScience(body, targetSituation, anomName, "Anomaly Scan", 3);
 		}
 
-		internal static DMAnomalyParameter fetchAnomalyParameter(CelestialBody Body, PQSCity City, DMScienceContainer DMScience)
+		internal static DMAnomalyParameter fetchAnomalyParameter(CelestialBody Body, DMAnomalyObject City, DMScienceContainer DMScience)
 		{
 			AvailablePart aPart;
 			ExperimentSituations targetSituation;

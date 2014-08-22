@@ -146,7 +146,14 @@ namespace DMagic
 				lastUpdate = Time.time;
 				if (primaryModule.IsDeployed && runMagnetometer)
 				{
-					DMAnomalyList.MagUpdating = true;
+					if (!DMAnomalyList.ScannerUpdating)
+					{
+						DMAnomalyList.MagUpdating = true;
+						foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
+							DMAnomalyList.updateAnomaly(vessel, anom);
+					}
+					else
+						DMAnomalyList.MagUpdating = false;
 					CelestialBody planetID = vessel.mainBody;
 					int ID = planetID.flightGlobalsIndex;
 					part.RequestResource(resourceToUse, resourceCost * TimeWarp.deltaTime);

@@ -41,10 +41,9 @@ namespace DMagic
 	public class DMAnomalyParameter: ContractParameter
 	{
 		private CelestialBody body;
-		private PQSCity city;
+		private DMAnomalyObject city;
 		private ExperimentSituations situation;
 		private DMScienceContainer scienceContainer;
-		private Vector3d anomPosition, recoveryPosition;
 		private string name, subject, hash, partName;
 		private bool collected = false;
 
@@ -52,7 +51,7 @@ namespace DMagic
 		{
 		}
 
-		internal DMAnomalyParameter(CelestialBody Body, PQSCity City, ExperimentSituations Situation, string Name)
+		internal DMAnomalyParameter(CelestialBody Body, DMAnomalyObject City, ExperimentSituations Situation, string Name)
 		{
 			body = Body;
 			situation = Situation;
@@ -75,7 +74,7 @@ namespace DMagic
 			return aP.partName;
 		}
 
-		internal PQSCity City
+		internal DMAnomalyObject City
 		{
 			get
 			{
@@ -181,7 +180,7 @@ namespace DMagic
 			{
 				try
 				{
-					city = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
+					city = DMAnomalyList.anomObjects.FirstOrDefault(a => a.name == hash);
 				}
 				catch
 				{
@@ -198,24 +197,17 @@ namespace DMagic
 			{
 				if (setExp(DMUtils.newExp))
 				{
-					DMUtils.DebugLog("Checking Distance To Anomaly");
-					//Calculate distance to the anomaly on science collection
 					if (FlightGlobals.currentMainBody == body)
 					{
-						recoveryPosition = FlightGlobals.ActiveVessel.transform.position;
-						anomPosition = city.transform.position;
-						double valt = FlightGlobals.ActiveVessel.mainBody.GetAltitude(recoveryPosition);
-						double anomAlt = FlightGlobals.ActiveVessel.mainBody.GetAltitude(anomPosition);
-						double verticalD = Math.Abs(anomAlt - valt);
-						double totalD = (anomPosition - recoveryPosition).magnitude;
-						double horizantalD = Math.Sqrt((totalD * totalD) - (verticalD * verticalD));
-						DMUtils.DebugLog("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", totalD, verticalD, horizantalD);
-						//Draw a cone above the anomaly position up to 100km with a diametere of 15km at its widest
+						if (!DMAnomalyList.MagUpdating && !DMAnomalyList.ScannerUpdating)
+							DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
+						DMUtils.DebugLog("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
+						//Draw a cone above the anomaly position up to 100km with a diameter of 30km at its widest
 						if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
 						{
-							if (verticalD > 1000 && verticalD < 100000)
+							if (city.Vheight > 1000 && city.Vheight < 100000)
 							{
-								if (horizantalD < (15000 * (verticalD / 100000)))
+								if (city.Vhorizontal < (30000 * (city.Vheight / 100000)))
 								{
 									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
@@ -223,9 +215,9 @@ namespace DMagic
 								else
 									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
-							else if (verticalD < 1000)
+							else if (city.Vheight < 1000)
 							{
-								if (horizantalD < 150)
+								if (city.Vhorizontal < 300)
 								{
 									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
@@ -235,7 +227,7 @@ namespace DMagic
 							}
 						}
 						else if (situation == ExperimentSituations.SrfLanded)
-							if (horizantalD < 50)
+							if (city.Vhorizontal < 150)
 							{
 								ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 								collected = true;

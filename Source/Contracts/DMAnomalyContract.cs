@@ -46,11 +46,10 @@ namespace DMagic
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
 		private DMAnomalyParameter[] anomParams = new DMAnomalyParameter[4];
 		private CelestialBody body;
-		private PQSCity targetAnomaly;
+		private DMAnomalyObject targetAnomaly;
 		private double lat, lon, fudgedLat, fudgedLon;
 		private string cardNS, cardEW, hash;
 		private int i = 0;
-		private List<PQSCity> aList = new List<PQSCity>();
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
@@ -102,19 +101,11 @@ namespace DMagic
 			else
 				return false;
 
-			//Build a list of anomalies for the target planet
-			PQSCity[] Cities = UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
-			foreach (PQSCity city in Cities)
-			{
-				if (city.transform.parent.name == body.name)
-					aList.Add(city);
-			}
-
 			//Select random anomaly
-			targetAnomaly = aList[rand.Next(0, aList.Count)];
+			targetAnomaly = DMAnomalyList.anomObjects[rand.Next(0, DMAnomalyList.anomObjects.Count)];
 			hash = targetAnomaly.name;
-			lat = clampLat(body.GetLatitude(targetAnomaly.transform.position));
-			lon = clampLon(body.GetLongitude(targetAnomaly.transform.position));
+			lon = targetAnomaly.lon;
+			lat = targetAnomaly.lat;
 			fudgedLat = fudgeLat(lat);
 			fudgedLon = fudgeLon(lon);
 			cardNS = NSDirection(lat);
@@ -168,16 +159,6 @@ namespace DMagic
 			return true;
 		}
 
-		private double clampLat(double Lat)
-		{
-			return (Lat + 180 +90) % 180 - 90;
-		}
-
-		private double clampLon(double Lon)
-		{
-			return (Lon + 360 + 180) % 360 -180;
-		}
-
 		private double fudgeLat(double Lat)
 		{
 			double f = Math.Round(((double)rand.Next(-5, 5) + Lat) / 10d) * 10d;
@@ -225,8 +206,7 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			return string.Format("Locate and study the source of the anomalous readings coming from {0}'s surface at around {1:N0} degrees {2} and {3:N0} degrees {4}", body.theName, fudgedLat, cardNS, fudgedLon, cardEW);
-			
+			return string.Format("Study the source of the anomalous readings coming from {0}'s surface", body.theName);
 		}
 
 		protected override string GetDescription()
@@ -237,8 +217,7 @@ namespace DMagic
 
 		protected override string GetSynopsys()
 		{
-			DMUtils.DebugLog("Generating Synopsis From Anomaly [{0}]", hash);
-			return string.Format("Study the anomalous readings coming from {0}", body.theName);
+			return string.Format("We would like you to travel to a specific location on {0}. Once there attempt to locate and study the source of the anomalous signal detected from that region.", body.theName);
 		}
 
 		protected override string MessageCompleted()
@@ -261,13 +240,13 @@ namespace DMagic
 			}
 			if (!double.TryParse(anomalyString[2], out lat))
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract");
-				this.Cancel();
+				DMUtils.Logging("Failed To Load Anomaly Values");
+				lat = 0.000d;
 			}
 			if (!double.TryParse(anomalyString[3], out lon))
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract");
-				this.Cancel();
+				DMUtils.Logging("Failed To Load Anomaly Values");
+				lon = 0.000d;
 			}
 			fudgedLat = fudgeLat(lat);
 			fudgedLon = fudgeLon(lon);
@@ -276,7 +255,11 @@ namespace DMagic
 			if (HighLogic.LoadedSceneIsFlight)
 				try
 				{
-					targetAnomaly = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
+					targetAnomaly = DMAnomalyList.anomObjects.FirstOrDefault(a => a.name == hash);
+					if (lat == 0.000d)
+						lat = targetAnomaly.lat;
+					if (lon == 0.000d)
+						lon = targetAnomaly.lon;
 				}
 				catch
 				{
@@ -297,6 +280,32 @@ namespace DMagic
 		{
 			return true;
 		}
+
+		internal double Lat
+		{
+			get { return fudgedLat; }
+			private set { }
+		}
+
+		internal double Lon
+		{
+			get { return fudgedLon; }
+			private set { }
+		}
+
+		internal string CardEW
+		{
+			get { return cardEW; }
+			private set { }
+		}
+
+		internal string CardNS
+		{
+			get { return cardNS; }
+			private set { }
+		}
+
+
 
 	}
 }

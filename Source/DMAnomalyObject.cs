@@ -32,10 +32,20 @@ namespace DMagic
 			if (body != null)
 			{
 				worldLocation = city.transform.position;
-				lat = body.GetLatitude(worldLocation);
-				lon = body.GetLongitude(worldLocation);
+				lat = clampLat(body.GetLatitude(worldLocation));
+				lon = clampLon(body.GetLongitude(worldLocation));
 				alt = body.GetAltitude(worldLocation);
 			}
+		}
+
+		private double clampLat(double l)
+		{
+			return (l + 180 + 90) % 180 - 90;
+		}
+
+		private double clampLon(double l)
+		{
+			return (l + 360 + 180) % 360 - 180;
 		}
 	}
 }

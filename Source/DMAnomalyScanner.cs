@@ -68,7 +68,7 @@ namespace DMagic
 		public override void OnUpdate()
 		{
 			base.OnUpdate();
-			if (fullyDeployed)
+			if (IsDeployed)
 			{
 				DMAnomalyList.ScannerUpdating = true;
 				inRange();
@@ -132,7 +132,7 @@ namespace DMagic
 
 		public override void retractEvent()
 		{
-			if (IsDeployed)
+			if (fullyDeployed)
 			{
 				animSecondary[dishAnimate].normalizedTime = animSecondary[dishAnimate].normalizedTime % 1;
 				animSecondary[dishAnimate].wrapMode = WrapMode.Default;
@@ -168,6 +168,7 @@ namespace DMagic
 		private void inRange()
 		{
 			bool anomInRange = false;
+
 			foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
 			{
 				DMAnomalyList.updateAnomaly(vessel, anom);
@@ -251,6 +252,20 @@ namespace DMagic
 			return (random * max) - min;
 		}
 
+		private string direction(double bearing)
+		{
+			if (bearing >= 0 && bearing < 22.5) return "North";
+			else if (bearing >= 22.5 && bearing < 67.5) return "NorthEast";
+			else if (bearing >= 67.5 && bearing < 112.5) return "East";
+			else if (bearing >= 112.5 && bearing < 157.5) return "SouthEast";
+			else if (bearing >= 157.5 && bearing < 202.5) return "South";
+			else if (bearing >= 202.5 && bearing < 247.5) return "SouthWest";
+			else if (bearing >= 247.5 && bearing < 292.5) return "West";
+			else if (bearing >= 292.5 && bearing < 337.5) return "NorthWest";
+			else if (bearing >= 337.5 && bearing < 360) return "North";
+			else return "???";
+		}
+
 		#endregion
 
 		#region experiment setup
@@ -264,8 +279,11 @@ namespace DMagic
 			else
 			{
 				if (!IsDeployed) deployEvent();
-				foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
-					DMAnomalyList.updateAnomaly(vessel, anom);
+				if (!DMAnomalyList.MagUpdating && !DMAnomalyList.ScannerUpdating)
+				{
+					foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
+						DMAnomalyList.updateAnomaly(vessel, anom);
+				}
 				getAnomValues();
 				if (anomInRange)
 					if (anomCloseRange)
@@ -273,20 +291,6 @@ namespace DMagic
 				else
 					ScreenMessages.PostScreenMessage("No anomalous signals detected.", 4f, ScreenMessageStyle.UPPER_CENTER);
 			}
-		}
-
-		private string direction(double bearing)
-		{
-			if (bearing >= 0 && bearing < 22.5) return "North";
-			else if (bearing >= 22.5 && bearing < 67.5) return "NorthEast";
-			else if (bearing >= 67.5 && bearing < 112.5) return "East";
-			else if (bearing >= 112.5 && bearing < 157.5) return "SouthEast";
-			else if (bearing >= 157.5 && bearing < 202.5) return "South";
-			else if (bearing >= 202.5 && bearing < 247.5) return "SouthWest";
-			else if (bearing >= 247.5 && bearing < 292.5) return "West";
-			else if (bearing >= 292.5 && bearing < 337.5) return "NorthWest";
-			else if (bearing >= 337.5 && bearing < 360) return "North";
-			else return "???";
 		}
 
 		protected override string getBiome(ExperimentSituations s, string anomName)
