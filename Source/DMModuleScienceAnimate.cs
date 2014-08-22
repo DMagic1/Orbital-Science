@@ -785,7 +785,7 @@ namespace DMagic
 			sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
 			if (DMData == null)
-				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, exp.dataScale, astSciVal, astScience, astSciCap, astExpNo);
+				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, astSciVal, astScience, astSciCap, astExpNo);
 		}
 
 		#endregion

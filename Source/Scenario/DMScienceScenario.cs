@@ -80,7 +80,7 @@ namespace DMagic
 				//scienceResults_node.AddValue("id", data.id);
 				scienceResults_node.AddValue("title", data.title);
 				scienceResults_node.AddValue("bsv", data.basevalue);
-				scienceResults_node.AddValue("dsc", data.dataScale);
+				//scienceResults_node.AddValue("dsc", data.dataScale);
 				scienceResults_node.AddValue("scv", data.scival);
 				scienceResults_node.AddValue("sci", data.science);
 				scienceResults_node.AddValue("cap", data.cap);
@@ -101,23 +101,27 @@ namespace DMagic
 				{
 					//string id = scienceResults_node.GetValue("id");
 					string title = scienceResults_node.GetValue("title");
-					float bsv = Convert.ToSingle(scienceResults_node.GetValue("bsv"));
-					float dsc = Convert.ToSingle(scienceResults_node.GetValue("dsc"));
-					float scv = Convert.ToSingle(scienceResults_node.GetValue("scv"));
-					float sci = Convert.ToSingle(scienceResults_node.GetValue("sci"));
-					float cap = Convert.ToSingle(scienceResults_node.GetValue("cap"));
-					int eNo = Convert.ToInt32(scienceResults_node.GetValue("expNo"));
-					RecordNewScience(title, bsv, dsc, scv, sci, cap, eNo);
+					float bsv = float.Parse(scienceResults_node.GetValue("bsv"));
+					//float dsc = Convert.ToSingle(scienceResults_node.GetValue("dsc"));
+					float scv = float.Parse(scienceResults_node.GetValue("scv"));
+					float sci = float.Parse(scienceResults_node.GetValue("sci"));
+					float cap = float.Parse(scienceResults_node.GetValue("cap"));
+					int eNo = int.Parse(scienceResults_node.GetValue("expNo"));
+					RecordNewScience(title, bsv, scv, sci, cap, eNo);
 				}
 			}
-			tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
 			recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
-			updateRemainingData();
+			if (HighLogic.LoadedSceneIsFlight)
+			{
+				tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
+				updateRemainingData();
+			}
 		}
 
 		private void OnDestroy()
 		{
-			Destroy(tranWatcher);
+			if (tranWatcher != null)
+				Destroy(tranWatcher);
 			Destroy(recoveryWatcher);
 		}
 
@@ -125,13 +129,12 @@ namespace DMagic
 		{
 			internal string title;
 			internal int expNo;
-			internal float dataScale, scival, science, cap, basevalue;
+			internal float scival, science, cap, basevalue;
 
-			internal DMScienceData(string Title, float BaseVal, float Dsc, float Scv, float Sci, float Cap, int ENo)
+			internal DMScienceData(string Title, float BaseVal, float Scv, float Sci, float Cap, int ENo)
 			{
 				title = Title;
 				basevalue = BaseVal;
-				dataScale = Dsc;
 				scival = Scv;
 				science = Sci;
 				cap = Cap;
@@ -139,9 +142,9 @@ namespace DMagic
 			}
 		}
 
-		internal void RecordNewScience(string title, float baseval, float dsc, float scv, float sci, float cap, int eNo)
+		internal void RecordNewScience(string title, float baseval, float scv, float sci, float cap, int eNo)
 		{
-			DMScienceData DMData = new DMScienceData(title, baseval, dsc, scv, sci, cap, eNo);
+			DMScienceData DMData = new DMScienceData(title, baseval, scv, sci, cap, eNo);
 			recoveredScienceList.Add(DMData);
 			DMUtils.DebugLog("Adding new DMData to list");
 		}
@@ -160,10 +163,10 @@ namespace DMagic
 			}
 		}
 
-		internal void submitDMScience(DMScienceData DMData, float subVal)
+		internal void submitDMScience(DMScienceData DMData, ScienceSubject sub)
 		{
 			DMData.scival = ScienceValue(DMData.expNo, DMData.scival);
-			DMData.science += DMData.basevalue * subVal * DMData.scival;
+			DMData.science += DMData.basevalue * sub.subjectValue * DMData.scival;
 			DMData.expNo++;
 			UpdateNewScience(DMData);
 		}
@@ -206,24 +209,24 @@ namespace DMagic
 			}
 		}
 
-		internal float SciSub(string s)
-		{
-			switch (s[s.Length - 1])
-			{
-				case 'A':
-					return 1.5f;
-				case 'B':
-					return 3f;
-				case 'C':
-					return 5f;
-				case 'D':
-					return 8f;
-				case 'E':
-					return 10f;
-				default:
-					return 30f;
-			}
-		}
+		//internal float SciSub(string s)
+		//{
+		//    switch (s[s.Length - 1])
+		//    {
+		//        case 'A':
+		//            return 1.5f;
+		//        case 'B':
+		//            return 3f;
+		//        case 'C':
+		//            return 5f;
+		//        case 'D':
+		//            return 8f;
+		//        case 'E':
+		//            return 10f;
+		//        default:
+		//            return 30f;
+		//    }
+		//}
 
 	}
 }

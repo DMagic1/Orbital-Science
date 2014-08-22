@@ -88,9 +88,8 @@ namespace DMagic
 							if (DMData.title == data.title)
 							{
 								ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
-								float subVal = DMScienceScenario.SciScenario.SciSub(data.subjectID);
 								sub.scientificValue = DMData.scival;
-								DMScienceScenario.SciScenario.submitDMScience(DMData, subVal);
+								DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
 							}
 						}
 					}
@@ -127,9 +126,8 @@ namespace DMagic
 										{
 											ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
 											totalRecoveredScience += (data.dataAmount / sub.dataScale);
-											float subVal = DMScienceScenario.SciScenario.SciSub(data.subjectID);
-											totalDMScience += subVal * DMData.basevalue * DMData.scival;
-											DMScienceScenario.SciScenario.submitDMScience(DMData, subVal);
+											totalDMScience += sub.subjectValue * DMData.basevalue * DMData.scival;
+											DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
 										}
 									}
 								}
