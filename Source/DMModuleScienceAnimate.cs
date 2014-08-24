@@ -105,8 +105,6 @@ namespace DMagic
 		public string looperAnimation = null;
 		[KSPField]
 		public bool primary = true;
-		[KSPField(isPersistant = true)]
-		public int lastAsteroid = 0;
 		[KSPField]
 		public int sitMask = 0;
 		[KSPField]
@@ -132,7 +130,6 @@ namespace DMagic
 		private const string bodyNameFixed = "Eeloo";
 		private bool lastInOperableState = false;
 		protected float scienceBoost = 1f;
-		private int asteroidID = 0;
 		private string failMessage = "";
 		protected float labDataBoost = 0.5f;
 
@@ -446,14 +443,15 @@ namespace DMagic
 
 		new public void ResetExperiment()
 		{
-			if (storedScienceReports.Count > 0) {
+			if (storedScienceReports.Count > 0)
+			{
 				if (experimentLimit > 1)
 					ResetExperimentExternal();
-				else {
+				else
+				{
 					if (keepDeployedMode == 0) retractEvent();
 					storedScienceReports.Clear();
 				}
-				lastAsteroid = 0;
 			}
 		}
 
@@ -482,7 +480,6 @@ namespace DMagic
 					if (experimentNumber < 0)
 						experimentNumber = 0;
 					if (keepDeployedMode == 0) retractEvent();
-					lastAsteroid = 0;
 				}
 				else
 					ResetExperiment();
@@ -554,8 +551,6 @@ namespace DMagic
 		protected void runExperiment()
 		{
 			ScienceData data = makeScience(scienceBoost);
-			if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear()))
-				lastAsteroid = asteroidID;
 			if (experimentLimit <= 1) {
 				dataIndex = 0;
 				storedScienceReports.Add(data);
@@ -580,7 +575,7 @@ namespace DMagic
 			return subV * boost;
 		}
 
-		protected virtual string getBiome(ExperimentSituations s, string S)
+		protected virtual string getBiome(ExperimentSituations s)
 		{
 			if ((bioMask & (int)s) == 0)
 				return "";
@@ -626,10 +621,6 @@ namespace DMagic
 
 		protected virtual string situationCleanup(ExperimentSituations expSit, string b)
 		{
-			if (asteroidReports && DMAsteroidScience.asteroidGrappled())
-				return " from the surface of a " + b + " asteroid";
-			if (asteroidReports && DMAsteroidScience.asteroidNear())
-				return " while in space near a " + b + " asteroid";
 			if (vessel.landedAt != "")
 				return " from " + b;
 			if (b == "") {
@@ -694,14 +685,6 @@ namespace DMagic
 				failMessage = storageFullMessage;
 				return false;
 			}
-			else if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear())) {
-				newAsteroid = new DMAsteroidScience();
-				newAsteroid.body.bodyName = bodyNameFixed;
-				if (newAsteroid.ID == lastAsteroid) {
-					failMessage = "This asteroid has already been scanned";
-					return false;
-				}
-			}
 			if ((sitMask & (int)getSituation()) == 0) {
 				failMessage = customFailMessage;
 				return false;
@@ -717,7 +700,7 @@ namespace DMagic
 		private ScienceData makeScience(float boost)
 		{
 			ExperimentSituations vesselSituation = getSituation();
-			string biome = getBiome(vesselSituation, "");
+			string biome = getBiome(vesselSituation);
 			CelestialBody mainBody = vessel.mainBody;
 			bool asteroids = false;
 
@@ -727,20 +710,18 @@ namespace DMagic
 				newAsteroid = new DMAsteroidScience();
 				asteroids = true;
 				mainBody = newAsteroid.body;
-				biome = newAsteroid.aType + newAsteroid.aClass;
+				biome = newAsteroid.aSeed.ToString();
 			}
 
 			ScienceData data = null;
 			ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(experimentID);
 			ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, mainBody, biome);
-			
 
 			if (asteroids)
 			{
 				DMUtils.astSize = newAsteroid.aClass;
 				DMUtils.newAstExp = experimentID;
 				sub.title = exp.experimentTitle + astCleanup(vesselSituation, newAsteroid.aType);
-				asteroidID = newAsteroid.ID;
 				registerDMScience(newAsteroid, exp, sub, vesselSituation, biome);
 				mainBody.bodyName = bodyNameFixed;
 			}
@@ -753,39 +734,34 @@ namespace DMagic
 			}
 
 			if (sub != null)
-				data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, 0.5f, sub.id, sub.title);
+				data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, 0f, sub.id, sub.title);
 			return data;
 		}
 
 		private void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub, ExperimentSituations expsit, string s)
 		{
 			DMScienceScenario.DMScienceData DMData = null;
-			//string astID = sub.id;
-			string astID = exp.id + "@Asteroid" + expsit.ToString() + s;
-			float astSciCap = exp.scienceCap * 43.5f;
-			float astScience = 0f;
-			float astSciVal = 1f;
-			int astExpNo = 0;
-			sub.scientificValue = 1f;
+			float astSciCap = exp.scienceCap * 40f;
 
+			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.recoveredScienceList.Count);
 			foreach (DMScienceScenario.DMScienceData DMScience in DMScienceScenario.SciScenario.recoveredScienceList)
 			{
-				DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.recoveredScienceList.Count);
 				if (DMScience.title == sub.title)
 				{
-					astScience = DMScience.science;
-					sub.scientificValue = DMScience.scival;
-					astExpNo = DMScience.expNo;
 					DMUtils.DebugLog("found matching DM Data");
+					sub.scientificValue = sub.scientificValue * DMScience.scival;
 					DMData = DMScience;
 					break;
 				}
 			}
+			if (DMData == null)
+			{
+				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, 1f, 0f, astSciCap);
+				sub.scientificValue= 1f;
+			}
 			sub.subjectValue = newAst.sciMult;
 			sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
-			if (DMData == null)
-				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, astSciVal, astScience, astSciCap, astExpNo);
 		}
 
 		#endregion
@@ -845,7 +821,6 @@ namespace DMagic
 				experimentNumber--;
 				if (experimentNumber < 0)
 					experimentNumber = 0;
-				lastAsteroid = 0;
 			}
 		}
 
@@ -979,7 +954,7 @@ namespace DMagic
 
 		new protected void DumpData(ScienceData data)
 		{
-			if (storedScienceReports.Count > 0) {
+			if (storedScienceReports.Contains(data)) {
 				experimentsReturned++;
 				Inoperable = !IsRerunnable();
 				storedScienceReports.Remove(data);
@@ -988,7 +963,7 @@ namespace DMagic
 
 		private void DumpInitialData(ScienceData data)
 		{
-			if (scienceReports.Count > 0) {
+			if (scienceReports.Contains(data)) {
 				experimentsReturned++;
 				Inoperable = !IsRerunnable();
 				scienceReports.Remove(data);
