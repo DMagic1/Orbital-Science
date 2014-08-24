@@ -85,39 +85,13 @@ namespace DMagic
 		private DMModuleScienceAnimate primaryModule;
 		private float lastUpdate = 0f;
 		private float updateInterval = 0.2f;
-
-		private List<PQSCity> anomList = new List<PQSCity>();
-		private Dictionary<PQSCity, double> PQSpos = new Dictionary<PQSCity, double>();
+		private List<DMAnomalyObject> Cities = new List<DMAnomalyObject>();
 
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
 			if (part.FindModulesImplementing<DMModuleScienceAnimate>().Count > 0)
 				primaryModule = part.FindModulesImplementing<DMModuleScienceAnimate>().First();
-			GameEvents.onVesselSOIChanged.Add(rebuildAnom);
-			pqsBuild();
-		}
-		
-		private void OnDestroy()
-		{
-			GameEvents.onVesselSOIChanged.Remove(rebuildAnom);
-		}
-
-		private void rebuildAnom(GameEvents.HostedFromToAction<Vessel, CelestialBody> b)
-		{
-			pqsBuild();
-		}
-
-		private void pqsBuild()
-		{
-			if (HighLogic.LoadedScene != GameScenes.EDITOR)
-			{
-				anomList.Clear();
-				PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
-				foreach (PQSCity anomalyObject in Cities)
-					if (anomalyObject.transform.parent.name == vessel.mainBody.name)
-						anomList.Add(anomalyObject);
-			}
 		}
 
 		public override string GetInfo()
@@ -146,14 +120,6 @@ namespace DMagic
 				lastUpdate = Time.time;
 				if (primaryModule.IsDeployed && runMagnetometer)
 				{
-					if (!DMAnomalyList.ScannerUpdating)
-					{
-						DMAnomalyList.MagUpdating = true;
-						foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
-							DMAnomalyList.updateAnomaly(vessel, anom);
-					}
-					else
-						DMAnomalyList.MagUpdating = false;
 					CelestialBody planetID = vessel.mainBody;
 					int ID = planetID.flightGlobalsIndex;
 					part.RequestResource(resourceToUse, resourceCost * TimeWarp.deltaTime);
@@ -312,27 +278,37 @@ namespace DMagic
 						}
 					}
 
+
+
 					//Anomaly Detection
-					PQSpos.Clear();
-					foreach (PQSCity city in anomList)
+					if (!DMAnomalyList.ScannerUpdating)
 					{
-						double distance = (city.transform.position - vessel.transform.position).magnitude;
-						if (distance < 100000)
-							PQSpos.Add(city, distance);
+						DMAnomalyList.MagUpdating = true;
+						foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
+						{
+							DMAnomalyList.updateAnomaly(vessel, anom);
+							if (anom.Vdistance < 100000)
+								Cities.Add(anom);
+						}
 					}
-					if (PQSpos.Count > 0)
+					else
 					{
-						var sortAnom = from entry in PQSpos orderby entry.Value ascending select entry;
+						DMAnomalyList.MagUpdating = false;
+						foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
+						{
+							if (anom.Vdistance < 100000)
+								Cities.Add(anom);
+						}
+					}
+
+					if (Cities.Count > 0)
+					{
+						var sortAnom = from entry in Cities orderby entry.Vdistance ascending select entry;
 						var closestAnom = sortAnom.First();
 
-						double valt = vessel.mainBody.GetAltitude(vessel.transform.position);
-						double anomAlt = vessel.mainBody.GetAltitude(closestAnom.Key.transform.position);
-						double vheight = anomAlt - valt;
-						double hDist = Math.Sqrt((closestAnom.Value * closestAnom.Value) - (vheight * vheight));
-
-						double anomMult = 1 + ((100000 - closestAnom.Value) / 10000);
-						double anomMultZ = 1 + (anomMult * ((closestAnom.Value - hDist) / closestAnom.Value));
-						double anomMultH = 1 + (anomMult * ((closestAnom.Value - vheight) / closestAnom.Value));
+						double anomMult = 1 + ((100000 - closestAnom.Vdistance) / 10000);
+						double anomMultZ = 1 + (anomMult * ((closestAnom.Vdistance - closestAnom.Vhorizontal) / closestAnom.Vdistance));
+						double anomMultH = 1 + (anomMult * ((closestAnom.Vdistance - closestAnom.Vheight) / closestAnom.Vdistance));
 
 						Bz *= anomMultZ;
 						Bh *= anomMultH;

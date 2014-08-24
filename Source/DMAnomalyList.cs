@@ -5,7 +5,6 @@ using UnityEngine;
 
 namespace DMagic
 {
-	[KSPAddonImproved(KSPAddonImproved.Startup.TimeElapses, false)]
 	internal class DMAnomalyList : MonoBehaviour
 	{
 		internal static List<DMAnomalyObject> anomObjects = new List<DMAnomalyObject>();
