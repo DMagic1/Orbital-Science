@@ -215,7 +215,6 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Saving Contract Parameter");
 			if (type == 2)
 				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, size, (int)scienceLocation, "", collected));
 			else
@@ -224,7 +223,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Loading Contract Parameter");
 			int targetBodyID, targetLocation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			if (!int.TryParse(scienceString[0], out type))
@@ -259,6 +257,8 @@ namespace DMagic
 				}
 				subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, biomeName);
 			}
+			else if (type == 3)
+				anomContract = (DMAnomalyContract)this.Root;
 			else
 			{
 				if (int.TryParse(scienceString[2], out targetBodyID))
@@ -270,8 +270,7 @@ namespace DMagic
 				}
 				subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 			}
-			if (type == 3)
-				anomContract = (DMAnomalyContract)this.Root;
+
 
 		}
 
