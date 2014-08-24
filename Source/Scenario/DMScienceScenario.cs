@@ -64,9 +64,10 @@ namespace DMagic
 			}
 		}
 
-		internal bool Recovered = false;
+		internal static bool Recovered = false;
 		internal DMTransmissionWatcher tranWatcher;
 		internal DMRecoveryWatcher recoveryWatcher;
+		internal DMAnomalyList anomalyList;
 
 		internal List<DMScienceData> recoveredScienceList = new List<DMScienceData>();
 
@@ -77,14 +78,11 @@ namespace DMagic
 			foreach (DMScienceData data in recoveredScienceList)
 			{
 				ConfigNode scienceResults_node = new ConfigNode("Science");
-				//scienceResults_node.AddValue("id", data.id);
 				scienceResults_node.AddValue("title", data.title);
 				scienceResults_node.AddValue("bsv", data.basevalue);
-				//scienceResults_node.AddValue("dsc", data.dataScale);
 				scienceResults_node.AddValue("scv", data.scival);
 				scienceResults_node.AddValue("sci", data.science);
 				scienceResults_node.AddValue("cap", data.cap);
-				scienceResults_node.AddValue("expNo", data.expNo);
 				results_node.AddNode(scienceResults_node);
 			}
 			node.AddNode(results_node);
@@ -99,21 +97,20 @@ namespace DMagic
 			{
 				foreach (ConfigNode scienceResults_node in results_node.GetNodes("Science"))
 				{
-					//string id = scienceResults_node.GetValue("id");
 					string title = scienceResults_node.GetValue("title");
 					float bsv = float.Parse(scienceResults_node.GetValue("bsv"));
-					//float dsc = Convert.ToSingle(scienceResults_node.GetValue("dsc"));
 					float scv = float.Parse(scienceResults_node.GetValue("scv"));
 					float sci = float.Parse(scienceResults_node.GetValue("sci"));
 					float cap = float.Parse(scienceResults_node.GetValue("cap"));
-					int eNo = int.Parse(scienceResults_node.GetValue("expNo"));
-					RecordNewScience(title, bsv, scv, sci, cap, eNo);
+					RecordNewScience(title, bsv, scv, sci, cap);
 				}
 			}
-			recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
+			if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
+				recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
 			if (HighLogic.LoadedSceneIsFlight)
 			{
 				tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
+				anomalyList = gameObject.AddComponent<DMAnomalyList>();
 				updateRemainingData();
 			}
 		}
@@ -122,29 +119,30 @@ namespace DMagic
 		{
 			if (tranWatcher != null)
 				Destroy(tranWatcher);
-			Destroy(recoveryWatcher);
+			if (anomalyList != null)
+				Destroy(anomalyList);
+			if (recoveryWatcher != null)
+				Destroy(recoveryWatcher);
 		}
 
 		internal class DMScienceData
 		{
 			internal string title;
-			internal int expNo;
 			internal float scival, science, cap, basevalue;
 
-			internal DMScienceData(string Title, float BaseVal, float Scv, float Sci, float Cap, int ENo)
+			internal DMScienceData(string Title, float BaseVal, float Scv, float Sci, float Cap)
 			{
 				title = Title;
 				basevalue = BaseVal;
 				scival = Scv;
 				science = Sci;
 				cap = Cap;
-				expNo = ENo;
 			}
 		}
 
-		internal void RecordNewScience(string title, float baseval, float scv, float sci, float cap, int eNo)
+		internal void RecordNewScience(string title, float baseval, float scv, float sci, float cap)
 		{
-			DMScienceData DMData = new DMScienceData(title, baseval, scv, sci, cap, eNo);
+			DMScienceData DMData = new DMScienceData(title, baseval, scv, sci, cap);
 			recoveredScienceList.Add(DMData);
 			DMUtils.DebugLog("Adding new DMData to list");
 		}
@@ -156,7 +154,6 @@ namespace DMagic
 				if (DMSci.title == DMData.title)
 				{
 					DMSci.science = DMData.science;
-					DMSci.expNo = DMData.expNo;
 					DMSci.scival = DMData.scival;
 					break;
 				}
@@ -165,10 +162,17 @@ namespace DMagic
 
 		internal void submitDMScience(DMScienceData DMData, ScienceSubject sub)
 		{
-			DMData.scival = ScienceValue(DMData.expNo, DMData.scival);
-			DMData.science += DMData.basevalue * sub.subjectValue * DMData.scival;
-			DMData.expNo++;
+			DMData.scival = ScienceValue(DMData.science, DMData.cap);
+			DMData.science = Math.Min(DMData.science + (DMData.basevalue * sub.subjectValue * DMData.scival), DMData.cap);
 			UpdateNewScience(DMData);
+		}
+
+		internal void submitDMScience(DMScienceData DMData, ScienceSubject sub, float science)
+		{
+			DMData.science = Math.Min(DMData.science + science, DMData.cap);
+			DMData.scival = ScienceValue(DMData.science, DMData.cap);
+			UpdateNewScience(DMData);
+			updateRemainingData();
 		}
 
 		internal void RemoveDMScience(DMScienceData DMdata)
@@ -176,11 +180,10 @@ namespace DMagic
 			recoveredScienceList.Remove(DMdata);
 		}
 
-		private float ScienceValue(int i, float f)
+		private float ScienceValue(float sci, float cap)
 		{
 			float sciVal = 1f;
-			if (i < 3) sciVal = f - 0.05f * (6 / i);
-			else sciVal = f - 0.05f;
+			sciVal = Math.Max(1f - (sci / cap), 0f);
 			return sciVal;
 		}
 
@@ -188,45 +191,29 @@ namespace DMagic
 		{
 			DMUtils.DebugLog("Updating Existing Data");
 			List<ScienceData> dataList = new List<ScienceData>();
-			foreach (IScienceDataContainer container in FlightGlobals.ActiveVessel.FindPartModulesImplementing<IScienceDataContainer>())
+			if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
 			{
-				dataList.AddRange(container.GetData());
-			}
-			if (dataList.Count > 0)
-			{
-				foreach (ScienceData data in dataList)
+				foreach (IScienceDataContainer container in FlightGlobals.ActiveVessel.FindPartModulesImplementing<IScienceDataContainer>())
 				{
-					foreach (DMScienceScenario.DMScienceData DMData in recoveredScienceList)
+					dataList.AddRange(container.GetData());
+				}
+				if (dataList.Count > 0)
+				{
+					foreach (ScienceData data in dataList)
 					{
-						if (DMData.title == data.title)
+						foreach (DMScienceScenario.DMScienceData DMData in recoveredScienceList)
 						{
-							ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
-							sub.scientificValue = DMData.scival;
-							sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
+							if (DMData.title == data.title)
+							{
+								ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
+								sub.scientificValue = DMData.scival;
+								sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
+							}
 						}
 					}
 				}
 			}
 		}
-
-		//internal float SciSub(string s)
-		//{
-		//    switch (s[s.Length - 1])
-		//    {
-		//        case 'A':
-		//            return 1.5f;
-		//        case 'B':
-		//            return 3f;
-		//        case 'C':
-		//            return 5f;
-		//        case 'D':
-		//            return 8f;
-		//        case 'E':
-		//            return 10f;
-		//        default:
-		//            return 30f;
-		//    }
-		//}
 
 	}
 }
