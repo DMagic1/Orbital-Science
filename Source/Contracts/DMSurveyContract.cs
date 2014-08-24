@@ -41,7 +41,7 @@ namespace DMagic
 {
 	class DMSurveyContract: Contract
 	{
-		internal DMCollectScience[] newParams = new DMCollectScience[5];
+		internal DMCollectScience[] newParams = new DMCollectScience[6];
 		private CelestialBody body;
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
@@ -51,8 +51,6 @@ namespace DMagic
 
 		protected override bool Generate()
 		{
-			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
-				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMSurveyContract>().Count();
 			if (total >= DMUtils.maxOrbital)
 				return false;
@@ -125,6 +123,8 @@ namespace DMagic
 				//Duna and Eve are the easy targets
 				else if (this.Prestige == ContractPrestige.Significant)
 				{
+					if (!ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" }))
+						return false;
 					if (rand.Next(0, 2) == 0)
 						body = FlightGlobals.Bodies[5];
 					else
@@ -133,6 +133,8 @@ namespace DMagic
 				else if (this.Prestige == ContractPrestige.Exceptional)
 				{
 					//Account for mod planets and Laythe
+					if (!ProgressTracking.Instance.NodeComplete(new string[] { "Jool", "Flyby" }))
+						return false;
 					List<CelestialBody> bList = new List<CelestialBody>();
 					foreach (CelestialBody b in FlightGlobals.Bodies)
 					{
@@ -164,7 +166,7 @@ namespace DMagic
 			else
 				return false;
 
-			for (j = 1; j < 4; j++)
+			for (j = 1; j < 5; j++)
 			{
 				if (sciList.Count > 0)
 				{
@@ -223,7 +225,7 @@ namespace DMagic
 
 		protected override string GetHashString()
 		{
-			return string.Format("{0}{1}", body.name, surveyType, this.ParameterCount);
+			return string.Format("{0}{1}{2}", body.name, surveyType, this.ParameterCount);
 		}
 
 		protected override string GetTitle()
@@ -294,7 +296,7 @@ namespace DMagic
 
 		public override bool MeetRequirements()
 		{
-			return true;
+			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Orbit" });
 		}
 
 	}

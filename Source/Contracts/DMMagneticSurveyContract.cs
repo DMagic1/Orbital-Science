@@ -47,8 +47,6 @@ namespace DMagic
 
 		protected override bool Generate()
 		{
-			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
-				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>().Count();
 			if (total >= DMUtils.maxMagnetic)
 				return false;
@@ -127,7 +125,7 @@ namespace DMagic
 
 		protected override string GetHashString()
 		{
-			return body.name;
+			return string.Format("{0}{1}", body.name, (int)this.prestige);
 		}
 
 		protected override string GetTitle()
@@ -174,7 +172,7 @@ namespace DMagic
 
 		public override bool MeetRequirements()
 		{
-			return true;
+			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" });
 		}
 	}
 }

@@ -54,8 +54,6 @@ namespace DMagic
 
 		protected override bool Generate()
 		{
-			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
-				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>().Count();
 			if (total >= DMUtils.maxAnomaly)
 				return false;
@@ -78,6 +76,8 @@ namespace DMagic
 			//Minmus and Duna are next
 			else if (this.Prestige == ContractPrestige.Significant)
 			{
+				if (!ProgressTracking.Instance.NodeComplete(new string[] { "Mun", "Flyby" }))
+					return false;
 				if (rand.Next(0, 2) == 0)
 					body = FlightGlobals.Bodies[3];
 				else
@@ -86,7 +86,7 @@ namespace DMagic
 			//Vall, Tylo, and Bop are last; only if we've been to Jool first
 			else if (this.Prestige == ContractPrestige.Exceptional)
 			{
-				if (!GetBodies_Reached(false, false).Contains(FlightGlobals.Bodies[8]))
+				if (!ProgressTracking.Instance.NodeComplete(new string[] { "Jool", "Orbit" }))
 					return false;
 				int i = rand.Next(0, 3);
 				if (i == 0)
@@ -278,7 +278,7 @@ namespace DMagic
 
 		public override bool MeetRequirements()
 		{
-			return true;
+			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Orbit" });
 		}
 
 		internal double Lat

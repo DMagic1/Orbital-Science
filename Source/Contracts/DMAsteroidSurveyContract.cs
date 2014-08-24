@@ -164,7 +164,7 @@ namespace DMagic
 
 		public override bool MeetRequirements()
 		{
-			return true;
+			return ProgressTracking.Instance.NodeComplete(new string[] { "Minmus", "ReturnFromOrbit" });
 		}
 
 	}
