@@ -59,8 +59,7 @@ namespace DMagic
 			{
 				if (sub.title == DMData.title)
 				{
-					DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
-					DMScienceScenario.SciScenario.updateRemainingData();
+					DMScienceScenario.SciScenario.submitDMScience(DMData, sub, sci);
 					break;
 				}
 			}
