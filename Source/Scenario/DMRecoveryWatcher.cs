@@ -32,85 +32,61 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace DMagic
 {
 	internal class DMRecoveryWatcher : MonoBehaviour
 	{
-		private DMScienceScenario science = DMScienceScenario.SciScenario;
 
 		private void Start()
 		{
 			DMUtils.DebugLog("Starting Recovery Watcher");
 			GameEvents.onVesselRecovered.Add(ProtoRecoveryWatcher);
-			GameEvents.OnVesselRecoveryRequested.Add(RecoveryWatcher);
+			//GameEvents.OnVesselRecoveryRequested.Add(RecoveryWatcher);
 		}
 
 		private void OnDestroy()
 		{
 			DMUtils.DebugLog("Destroying Recovery Watcher");
 			GameEvents.onVesselRecovered.Remove(ProtoRecoveryWatcher);
-			GameEvents.OnVesselRecoveryRequested.Remove(RecoveryWatcher);
+			//GameEvents.OnVesselRecoveryRequested.Remove(RecoveryWatcher);
 		}
 
-		private void EventDebug(string gevent)
-		{
-			DMUtils.DebugLog("GameEvent {0} Triggered", gevent);
-		}
-
-		private ConfigNode SubjectNode()
-		{
-			ConfigNode node = new ConfigNode();
-
-			return node;
-		}
-
-		private void RecoveryWatcher(Vessel v)
-		{
-			DMUtils.DebugLog("Vessel Recovery Triggered");
-			List<ScienceData> dataList = new List<ScienceData>();
-			foreach (IScienceDataContainer container in v.FindPartModulesImplementing<IScienceDataContainer>())
-			{
-				dataList.AddRange(container.GetData());
-			}
-			if (dataList.Count > 0)
-			{
-				DMUtils.DebugLog("Found Data In Recovered Vessel");
-				foreach (ScienceData data in dataList)
-				{
-					DMUtils.DebugLog("Searching For DMData...");
-					if (DMScienceScenario.SciScenario.recoveredScienceList.Count > 0)
-					{
-						foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
-						{
-							if (DMData.title == data.title)
-							{
-								ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
-								sub.scientificValue = DMData.scival;
-								DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
-							}
-						}
-					}
-				}
-				DMUtils.DebugLog("Setting Bool to True");
-				DMScienceScenario.SciScenario.Recovered = true;
-			}
-		}
+		//private void RecoveryWatcher(Vessel v)
+		//{
+		//	DMUtils.DebugLog("Vessel Recovery Triggered");
+		//	List<ScienceData> dataList = new List<ScienceData>();
+		//	if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+		//	{
+		//		foreach (IScienceDataContainer container in v.FindPartModulesImplementing<IScienceDataContainer>())
+		//			dataList.AddRange(container.GetData());
+		//		foreach (ScienceData data in dataList)
+		//		{
+		//			foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
+		//			{
+		//				if (DMData.title == data.title)
+		//				{
+		//					ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
+		//					sub.scientificValue = DMData.scival;
+		//					DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
+		//				}
+		//			}
+		//		}
+		//		DMScienceScenario.Recovered = true;
+		//	}
+		//}
 
 		private void ProtoRecoveryWatcher(ProtoVessel v)
 		{
 			DMUtils.DebugLog("ProtoVessel Recovery Triggered");
-			EventDebug(v.vesselName);
 			float totalRecoveredScience = 0;
 			float totalDMScience = 0;
-
-			if (!DMScienceScenario.SciScenario.Recovered)
+			foreach (ProtoPartSnapshot snap in v.protoPartSnapshots)
 			{
-				foreach (ProtoPartSnapshot snap in v.protoPartSnapshots)
+				foreach (ProtoPartModuleSnapshot msnap in snap.modules)
 				{
-					foreach (ProtoPartModuleSnapshot msnap in snap.modules)
+					if (msnap.moduleValues.HasNode("ScienceData"))
 					{
 						foreach (ConfigNode dataNode in msnap.moduleValues.GetNodes("ScienceData"))
 						{
@@ -118,17 +94,14 @@ namespace DMagic
 							if (data != null)
 							{
 								DMUtils.DebugLog("Found Data In Recovered Vessel");
-								if (DMScienceScenario.SciScenario.recoveredScienceList.Count > 0)
+								foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
 								{
-									foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
+									if (DMData.title == data.title)
 									{
-										if (DMData.title == data.title)
-										{
-											ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
-											totalRecoveredScience += (data.dataAmount / sub.dataScale);
-											totalDMScience += sub.subjectValue * DMData.basevalue * DMData.scival;
-											DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
-										}
+										ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
+										totalRecoveredScience += ResearchAndDevelopment.GetScienceValue(data.dataAmount, sub, 1f);
+										totalDMScience += sub.subjectValue * DMData.basevalue * DMData.scival;
+										DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
 									}
 								}
 							}
@@ -136,15 +109,9 @@ namespace DMagic
 					}
 				}
 			}
-			else
-			{
-				DMUtils.DebugLog("Data Already Recovered");
-				DMScienceScenario.SciScenario.Recovered = false;
-			}
 			float extraScience = totalRecoveredScience - totalDMScience;
-			DMUtils.Logging("Removed {0} Extra Science From R&D Center After Asteroid Calculations", extraScience);
+			Debug.LogWarning(string.Format("Add/Remove {0} Science From R&D Center After Asteroid Calculations", extraScience));
 			ResearchAndDevelopment.Instance.Science -= extraScience;
-			DMScienceScenario.SciScenario.Recovered = false;
 		}
 	}
 }
