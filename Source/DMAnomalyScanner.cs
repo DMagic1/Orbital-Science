@@ -149,6 +149,28 @@ namespace DMagic
 			fullyDeployed = false;
 		}
 
+		new public void editorDeployEvent()
+		{
+			deployEvent();
+			newSecondaryAnimator(camAnimate, 1f, 1f, WrapMode.Default);
+			newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
+			IsDeployed = false;
+			Events["editorDeployEvent"].active = false;
+			Events["editorRetractEvent"].active = true;
+		}
+
+		new public void editorRetractEvent()
+		{
+			retractEvent();
+			fullyDeployed = false;
+			IsDeployed = false;
+			newSecondaryAnimator(dishAnimate, 0f, 0f, WrapMode.Default);
+			newSecondaryAnimator(camAnimate, -1f, 0f, WrapMode.Default);
+			animSecondary[foundAnimate].wrapMode = WrapMode.Default;
+			Events["editorDeployEvent"].active = true;
+			Events["editorRetractEvent"].active = false;
+		}
+
 		//Rotate camera on its y-axis to look at the anomaly.
 		private void camRotate(Vector3 anom)
 		{
@@ -219,6 +241,9 @@ namespace DMagic
 
 		private void getAnomValues()
 		{
+			anomCloseRange = false;
+			anomInRange = false;
+			closestAnom = "";
 			foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
 			{
 				if (anom.Vhorizontal < (30000 * (1 - anom.Vheight / 15000)))	//Determine cutoff distance on sliding scale based on altitude above the anomaly.
@@ -293,9 +318,9 @@ namespace DMagic
 			}
 		}
 
-		protected override string getBiome(ExperimentSituations s, string anomName)
+		protected override string getBiome(ExperimentSituations s)
 		{
-			return anomalyCleanup(anomName);
+			return anomalyCleanup(closestAnom);
 		}
 
 		internal static string anomalyCleanup(string anomName)
@@ -346,9 +371,9 @@ namespace DMagic
 		protected override string situationCleanup(ExperimentSituations expSit, string b)
 		{
 			if (expSit == ExperimentSituations.SrfLanded)
-				return string.Format(" Scan of the {0} from {1}'s surface", b, vessel.mainBody.theName);
+				return string.Format(" of the {0} from {1}'s surface", b, vessel.mainBody.theName);
 			if (expSit == ExperimentSituations.FlyingHigh)
-				return string.Format(" Scan while flying above the {0} on {1}", b, vessel.mainBody.theName);
+				return string.Format(" while flying above the {0} on {1}", b, vessel.mainBody.theName);
 			return "Dummy";
 		}
 
