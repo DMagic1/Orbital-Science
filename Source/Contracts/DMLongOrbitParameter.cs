@@ -103,7 +103,7 @@ namespace DMagic
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Root.RemoveParameter(this);
-			}			
+			}
 			if (!double.TryParse(orbitString[1], out orbitTime))
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
