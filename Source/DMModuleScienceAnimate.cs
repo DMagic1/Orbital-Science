@@ -710,7 +710,7 @@ namespace DMagic
 				newAsteroid = new DMAsteroidScience();
 				asteroids = true;
 				mainBody = newAsteroid.body;
-				biome = newAsteroid.aSeed.ToString();
+				biome = newAsteroid.aType + newAsteroid.aSeed.ToString();
 			}
 
 			ScienceData data = null;
@@ -741,8 +741,6 @@ namespace DMagic
 		private void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub, ExperimentSituations expsit, string s)
 		{
 			DMScienceScenario.DMScienceData DMData = null;
-			float astSciCap = exp.scienceCap * 40f;
-
 			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.recoveredScienceList.Count);
 			foreach (DMScienceScenario.DMScienceData DMScience in DMScienceScenario.SciScenario.recoveredScienceList)
 			{
@@ -756,6 +754,7 @@ namespace DMagic
 			}
 			if (DMData == null)
 			{
+				float astSciCap = exp.scienceCap * 40f;
 				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, 1f, 0f, astSciCap);
 				sub.scientificValue= 1f;
 			}
