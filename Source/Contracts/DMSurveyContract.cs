@@ -52,7 +52,7 @@ namespace DMagic
 		protected override bool Generate()
 		{
 			int total = ContractSystem.Instance.GetCurrentContracts<DMSurveyContract>().Count();
-			if (total >= DMUtils.maxOrbital)
+			if (total >= DMUtils.maxSurvey)
 				return false;
 
 			surveyType = rand.Next(0, 3);
@@ -110,6 +110,8 @@ namespace DMagic
 			}
 			else if (surveyType == 2)
 			{
+				if (this.Prestige == ContractPrestige.Trivial)
+					return false;
 				//Make sure that drill is at least available
 				AvailablePart aPart = PartLoader.getPartInfoByName("dmbioDrill");
 				if (aPart == null)
@@ -117,9 +119,6 @@ namespace DMagic
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 					return false;
 
-				//Kerbin is the easy target
-				if (this.Prestige == ContractPrestige.Trivial)
-					body = FlightGlobals.Bodies[1];
 				//Duna and Eve are the easy targets
 				else if (this.Prestige == ContractPrestige.Significant)
 				{
@@ -171,8 +170,10 @@ namespace DMagic
 				if (sciList.Count > 0)
 				{
 					DMScience = sciList[rand.Next(0, sciList.Count)];
-					if (surveyType == 0 || surveyType == 1)
+					if (surveyType == 0)
 						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, surveyType);
+					else if (surveyType == 1)
+						newParams[j] = DMSurveyGenerator.fetchSurevyScience(body, DMScience, newParams[0].Biome);
 					else if (surveyType == 2)
 						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience);
 					if (newParams[j] != null)
@@ -188,9 +189,10 @@ namespace DMagic
 				if (DMC != null)
 				{
 					this.AddParameter(DMC, "collectDMScience");
+					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(DMC.Situation), DMC.Body);
 					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
-					DMC.SetFunds(4000f * DMUtils.reward, 2000f * DMUtils.penalty, body);
-					DMC.SetReputation(15f * DMUtils.reward, 10f * DMUtils.penalty, body);
+					DMC.SetFunds(4000f * DMUtils.reward * locationMod, 2000f * DMUtils.penalty * locationMod, body);
+					DMC.SetReputation(15f * DMUtils.reward * locationMod, 10f * DMUtils.penalty * locationMod, body);
 					DMUtils.DebugLog("Survey Parameter Added");
 				}
 			}

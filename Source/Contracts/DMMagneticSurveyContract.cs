@@ -67,10 +67,10 @@ namespace DMagic
 			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, ResearchAndDevelopment.GetExperiment("rpwsScan"));
 			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, ResearchAndDevelopment.GetExperiment("rpwsScan"));
 
-			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(5, 16) / 10d);
-			double eccen = 0.1d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
+			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 21) / 10d);
+			double eccen = 0.15d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
 			if (eccen > 0.7) eccen = 0.7;
-			double inclination = 15d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
+			double inclination = 20d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 			if (inclination > 75) inclination = 75;
 
 			DMLongOrbitParameter longParam = new DMLongOrbitParameter(body, time);

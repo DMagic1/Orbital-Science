@@ -132,8 +132,9 @@ namespace DMagic
 
 			this.AddParameter(newParam);
 			DMUtils.DebugLog("Added Primary Anomaly Parameter");
-			newParam.SetFunds(10000f * DMUtils.reward, 5000f * DMUtils.penalty, body);
-			newParam.SetReputation(60f * DMUtils.reward, 10f * DMUtils.penalty, body);
+			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParam.Situation), newParam.Body);
+			newParam.SetFunds(10000f * DMUtils.reward * primaryLocationMod, 5000f * DMUtils.penalty * primaryLocationMod, body);
+			newParam.SetReputation(60f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
 			newParam.SetScience(25f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
 
 			foreach (DMAnomalyParameter aP in anomParams)
@@ -142,8 +143,9 @@ namespace DMagic
 				{
 					this.AddParameter(aP, "collectDMAnomaly");
 					DMUtils.DebugLog("Added Secondary Anomaly Parameter");
-					aP.SetFunds(7000f * DMUtils.reward, 3000f * DMUtils.penalty, body);
-					aP.SetReputation(10f * DMUtils.reward, 5f * DMUtils.penalty, body);
+					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), aP.Body);
+					aP.SetFunds(7000f * DMUtils.reward * locationMod, 3000f * DMUtils.penalty * locationMod, body);
+					aP.SetReputation(10f * DMUtils.reward * locationMod, 5f * DMUtils.penalty * locationMod, body);
 					aP.SetScience(aP.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
 				}
 			}
@@ -154,8 +156,8 @@ namespace DMagic
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
 			base.SetDeadlineYears(4f, body);
-			base.SetReputation(20f * DMUtils.reward, 10f * DMUtils.penalty, body);
-			base.SetFunds(30000f * DMUtils.forward, 25000f * DMUtils.reward, 25000f * DMUtils.penalty, body);
+			base.SetReputation(20f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
+			base.SetFunds(30000f * DMUtils.forward * primaryLocationMod, 25000f * DMUtils.reward * primaryLocationMod, 25000f * DMUtils.penalty * primaryLocationMod, body);
 			return true;
 		}
 
