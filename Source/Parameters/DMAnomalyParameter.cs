@@ -134,11 +134,13 @@ namespace DMagic
 		protected override void OnRegister()
 		{
 			GameEvents.OnScienceRecieved.Add(anomalyScience);
+			DMUtils.OnAnomalyScience.Add(monitorAnomScience);
 		}
 
 		protected override void OnUnregister()
 		{
 			GameEvents.OnScienceRecieved.Remove(anomalyScience);
+			DMUtils.OnAnomalyScience.Remove(monitorAnomScience);
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -150,7 +152,6 @@ namespace DMagic
 		protected override void OnLoad(ConfigNode node)
 		{
 			//DMUtils.DebugLog("Loading Anomaly Parameter");
-			DMUtils.newExp = "";
 			int bodyID, sitID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];
@@ -191,48 +192,34 @@ namespace DMagic
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
 		}
 
-		protected override void OnUpdate()
+		private void monitorAnomScience(CelestialBody B, string s, string name)
 		{
-			if (this.Root.ContractState == Contract.State.Active && HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+			if (FlightGlobals.currentMainBody == B)
 			{
-				if (setExp(DMUtils.newExp))
+				if (s == scienceContainer.exp.id)
 				{
-					if (FlightGlobals.currentMainBody == body)
+					if (!DMAnomalyList.MagUpdating && !DMAnomalyList.ScannerUpdating)
+						DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
+					DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
+
+					//Draw a cone above the anomaly position up to 100km with a diameter of 30km at its widest
+					if (city.Vdistance < 100000)
 					{
-						if (!DMAnomalyList.MagUpdating && !DMAnomalyList.ScannerUpdating)
-							DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
-
-						DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
-
-						//Draw a cone above the anomaly position up to 100km with a diameter of 30km at its widest
-						if (city.Vdistance < 100000)
+						if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
 						{
-							if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
+							if (city.Vheight > 1000 && city.Vheight < 100000)
 							{
-								if (city.Vheight > 1000 && city.Vheight < 100000)
+								if (city.Vhorizontal < (50000 * (city.Vheight / 100000)))
 								{
-									if (city.Vhorizontal < (50000 * (city.Vheight / 100000)))
-									{
-										ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
-										collected = true;
-									}
-									else
-										ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+									collected = true;
 								}
-								else if (city.Vheight < 1000)
-								{
-									if (city.Vhorizontal < 500)
-									{
-										ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
-										collected = true;
-									}
-									else
-										ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
-								}
+								else
+									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
-							else if (situation == ExperimentSituations.SrfLanded)
+							else if (city.Vheight < 1000)
 							{
-								if (city.Vhorizontal < 250)
+								if (city.Vhorizontal < 500)
 								{
 									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
@@ -241,26 +228,91 @@ namespace DMagic
 									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
 						}
+						else if (situation == ExperimentSituations.SrfLanded)
+						{
+							if (city.Vhorizontal < 250)
+							{
+								ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+								collected = true;
+							}
+							else
+								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+						}
 					}
-					DMUtils.newExp = "";
 				}
 			}
 		}
 
-		//Event triggered by an experiment activating
-		private bool setExp(string s)
-		{
-			if (string.IsNullOrEmpty(s))
-				return false;
-			else
-			{
-				DMUtils.DebugLog("Matching Experiment Names");
-				if (s == scienceContainer.exp.id)
-					return true;
-				else
-					return false;
-			}
-		}
+		//protected override void OnUpdate()
+		//{
+		//    if (this.Root.ContractState == Contract.State.Active && HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+		//    {
+		//        if (setExp(DMUtils.newExp))
+		//        {
+		//            if (FlightGlobals.currentMainBody == body)
+		//            {
+		//                if (!DMAnomalyList.MagUpdating && !DMAnomalyList.ScannerUpdating)
+		//                    DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
+
+		//                DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
+
+		//                //Draw a cone above the anomaly position up to 100km with a diameter of 30km at its widest
+		//                if (city.Vdistance < 100000)
+		//                {
+		//                    if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
+		//                    {
+		//                        if (city.Vheight > 1000 && city.Vheight < 100000)
+		//                        {
+		//                            if (city.Vhorizontal < (50000 * (city.Vheight / 100000)))
+		//                            {
+		//                                ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+		//                                collected = true;
+		//                            }
+		//                            else
+		//                                ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+		//                        }
+		//                        else if (city.Vheight < 1000)
+		//                        {
+		//                            if (city.Vhorizontal < 500)
+		//                            {
+		//                                ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+		//                                collected = true;
+		//                            }
+		//                            else
+		//                                ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+		//                        }
+		//                    }
+		//                    else if (situation == ExperimentSituations.SrfLanded)
+		//                    {
+		//                        if (city.Vhorizontal < 250)
+		//                        {
+		//                            ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+		//                            collected = true;
+		//                        }
+		//                        else
+		//                            ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+		//                    }
+		//                }
+		//            }
+		//            DMUtils.newExp = "";
+		//        }
+		//    }
+		//}
+
+		////Event triggered by an experiment activating
+		//private bool setExp(string s)
+		//{
+		//    if (string.IsNullOrEmpty(s))
+		//        return false;
+		//    else
+		//    {
+		//        DMUtils.DebugLog("Matching Experiment Names");
+		//        if (s == scienceContainer.exp.id)
+		//            return true;
+		//        else
+		//            return false;
+		//    }
+		//}
 
 		private void anomalyScience(float sci, ScienceSubject sub)
 		{
