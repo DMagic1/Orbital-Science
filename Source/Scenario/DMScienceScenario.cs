@@ -64,7 +64,6 @@ namespace DMagic
 			}
 		}
 
-		internal static bool Recovered = false;
 		internal DMTransmissionWatcher tranWatcher;
 		internal DMRecoveryWatcher recoveryWatcher;
 		internal DMAnomalyList anomalyList;
@@ -162,12 +161,12 @@ namespace DMagic
 
 		internal void submitDMScience(DMScienceData DMData, ScienceSubject sub)
 		{
-			DMData.scival = ScienceValue(DMData.science, DMData.cap);
 			DMData.science = Math.Min(DMData.science + (DMData.basevalue * sub.subjectValue * DMData.scival), DMData.cap);
+			DMData.scival = ScienceValue(DMData.science, DMData.cap);
 			UpdateNewScience(DMData);
 		}
 
-		internal void submitDMScience(DMScienceData DMData, ScienceSubject sub, float science)
+		internal void submitDMScience(DMScienceData DMData, float science)
 		{
 			DMData.science = Math.Min(DMData.science + science, DMData.cap);
 			DMData.scival = ScienceValue(DMData.science, DMData.cap);
