@@ -66,6 +66,12 @@ namespace DMagic
 			startDrill();
 		}
 
+		protected override void onComplete(ScienceData data)
+		{
+			data.transmitValue = 0.6f;
+			base.onComplete(data);
+		}
+
 		//Determine drill orientation relative to parent part, set angle to -90 to 90.
 		private void startDrill()
 		{
