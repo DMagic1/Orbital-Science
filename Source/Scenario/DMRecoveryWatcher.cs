@@ -43,39 +43,13 @@ namespace DMagic
 		{
 			DMUtils.DebugLog("Starting Recovery Watcher");
 			GameEvents.onVesselRecovered.Add(ProtoRecoveryWatcher);
-			//GameEvents.OnVesselRecoveryRequested.Add(RecoveryWatcher);
 		}
 
 		private void OnDestroy()
 		{
 			DMUtils.DebugLog("Destroying Recovery Watcher");
 			GameEvents.onVesselRecovered.Remove(ProtoRecoveryWatcher);
-			//GameEvents.OnVesselRecoveryRequested.Remove(RecoveryWatcher);
 		}
-
-		//private void RecoveryWatcher(Vessel v)
-		//{
-		//	DMUtils.DebugLog("Vessel Recovery Triggered");
-		//	List<ScienceData> dataList = new List<ScienceData>();
-		//	if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
-		//	{
-		//		foreach (IScienceDataContainer container in v.FindPartModulesImplementing<IScienceDataContainer>())
-		//			dataList.AddRange(container.GetData());
-		//		foreach (ScienceData data in dataList)
-		//		{
-		//			foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
-		//			{
-		//				if (DMData.title == data.title)
-		//				{
-		//					ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
-		//					sub.scientificValue = DMData.scival;
-		//					DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
-		//				}
-		//			}
-		//		}
-		//		DMScienceScenario.Recovered = true;
-		//	}
-		//}
 
 		private void ProtoRecoveryWatcher(ProtoVessel v)
 		{
@@ -102,6 +76,7 @@ namespace DMagic
 										totalRecoveredScience += ResearchAndDevelopment.GetScienceValue(data.dataAmount, sub, 1f);
 										totalDMScience += sub.subjectValue * DMData.basevalue * DMData.scival;
 										DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
+										DMUtils.DebugLog("Submitted {0} Standard Science Data; And {1} DM Asteroid Data", totalDMScience, totalDMScience);
 									}
 								}
 							}
