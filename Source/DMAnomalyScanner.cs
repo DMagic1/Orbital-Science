@@ -82,7 +82,7 @@ namespace DMagic
 				DMAnomalyList.ScannerUpdating = false;
 		}
 
-		private void OnDestroy()
+		new private void OnDestroy()
 		{
 			DMAnomalyList.ScannerUpdating = false;
 		}
