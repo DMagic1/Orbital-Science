@@ -41,7 +41,7 @@ namespace DMagic
 {
 	class DMAsteroidSurveyContract: Contract
 	{
-		internal DMCollectScience[] newParams = new DMCollectScience[4];
+		internal DMAsteroidParameter[] newParams = new DMAsteroidParameter[4];
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
 		private string hash;
@@ -80,7 +80,7 @@ namespace DMagic
 				if (sciList.Count > 0)
 				{
 					DMScience = sciList[rand.Next(0, sciList.Count)];
-					newParams[i] = DMAsteroidGenerator.fetchAsteroidParameter(size, DMScience, 2);
+					newParams[i] = DMAsteroidGenerator.fetchAsteroidParameter(size, DMScience);
 					sciList.Remove(DMScience);
 				}
 				else
@@ -88,19 +88,19 @@ namespace DMagic
 			}
 
 			//Add in all acceptable paramaters to the contract
-			foreach (DMCollectScience DMC in newParams)
+			foreach (DMAsteroidParameter DMAP in newParams)
 			{
-				if (DMC != null)
+				if (DMAP != null)
 				{
-					this.AddParameter(DMC, "collectDMScience");
-					DMC.SetScience(DMC.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
-					DMC.SetFunds(15000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size), 10000f * DMUtils.penalty * (size + 1), null);
-					DMC.SetReputation(15f * DMUtils.reward * (size + 1), 10f * DMUtils.penalty * (size + 1), null);
+					this.AddParameter(DMAP, "collectDMScience");
+					DMAP.SetScience(DMAP.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
+					DMAP.SetFunds(15000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size), 10000f * DMUtils.penalty * (size + 1), null);
+					DMAP.SetReputation(15f * DMUtils.reward * (size + 1), 10f * DMUtils.penalty * (size + 1), null);
 					DMUtils.DebugLog("Asteroid Survey Parameter Added");
 				}
 			}
 
-			if (this.ParameterCount == 0)
+			if (this.ParameterCount < 3)
 				return false;
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
