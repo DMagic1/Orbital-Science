@@ -43,9 +43,7 @@ namespace DMagic
 		private ExperimentSituations scienceLocation;
 		private DMScienceContainer scienceContainer;
 		private DMAnomalyContract anomContract;
-		private string subject, name, biomeName, aSize, partName;
-		private bool collected;
-		private int size;
+		private string subject, name, biomeName, partName;
 		private int type; //type 0: standard experiment; type 1: standard survey; type 2: asteroid survey; type 3: anomaly
 
 		public DMCollectScience()
@@ -59,27 +57,11 @@ namespace DMagic
 			name = Name;
 			biomeName = BiomeName;
 			type = Type;
-			collected = true;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			partName = scienceContainer.sciPart;
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 			if (type == 3)
 				anomContract = (DMAnomalyContract)this.Root;
-		}
-
-		internal DMCollectScience(int Size, ExperimentSituations Location, string Name, int Type)
-		{
-			body = null;
-			scienceLocation = Location;
-			name = Name;
-			type = Type;
-			size = Size;
-			aSize = DMUtils.sizeHash(size);
-			biomeName = "";
-			collected = false;
-			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.sciPart;
-			subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, biomeName);
 		}
 
 		/// <summary>
@@ -132,11 +114,7 @@ namespace DMagic
 
 		protected override string GetHashString()
 		{
-			if (type == 0 || type == 1 || type == 3)
-				return body.name;
-			else if (type == 2)
-				return aSize;
-			return "Derp, Derp";
+			return body.name;
 		}
 
 		protected override string GetNotes()
@@ -148,19 +126,9 @@ namespace DMagic
 
 		protected override string GetTitle()
 		{
-			if (type == 2)
-			{
-				if (scienceLocation == ExperimentSituations.InSpaceLow)
-					return string.Format("{0} data from in space near a {1} asteroid", scienceContainer.exp.experimentTitle, aSize);
-				else if (scienceLocation == ExperimentSituations.SrfLanded)
-					return string.Format("{0} data while grappled to a {1} asteroid", scienceContainer.exp.experimentTitle, aSize);
-				else
-					return "Stupid Code Is Stupid";
-			}
-			else if (type == 3)
+			if (type == 3)
 			{
 				if (scienceLocation == ExperimentSituations.SrfLanded)
-					
 					return string.Format("{0} data from the surface near the anomalous signal", scienceContainer.exp.experimentTitle);
 				else if (scienceLocation == ExperimentSituations.FlyingLow)
 					return string.Format("{0} data while flying above the anomalous signal", scienceContainer.exp.experimentTitle);
@@ -205,20 +173,21 @@ namespace DMagic
 
 		protected override void OnRegister()
 		{
-			GameEvents.OnScienceRecieved.Add(scienceRecieve);
+			GameEvents.OnScienceRecieved.Add(scienceReceive);
+			if (type == 3)
+				DMUtils.OnAnomalyScience.Add(anomalyReceive);
 		}
 
 		protected override void OnUnregister()
 		{
-			GameEvents.OnScienceRecieved.Remove(scienceRecieve);
+			GameEvents.OnScienceRecieved.Remove(scienceReceive);
+			if (type == 3)
+				DMUtils.OnAnomalyScience.Remove(anomalyReceive);
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			if (type == 2)
-				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, size, (int)scienceLocation, "", collected));
-			else
-				node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, body.flightGlobalsIndex, (int)scienceLocation, biomeName, collected));
+			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}", type, name, body.flightGlobalsIndex, (int)scienceLocation, biomeName));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -241,78 +210,25 @@ namespace DMagic
 				this.Root.RemoveParameter(this);
 			}
 			biomeName = scienceString[4];
-			if (!bool.TryParse(scienceString[5], out collected))
+			if (int.TryParse(scienceString[2], out targetBodyID))
+				body = FlightGlobals.Bodies[targetBodyID];
+			else
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Root.RemoveParameter(this);
 			}
-			if (type == 2)
-			{
-				if (int.TryParse(scienceString[2], out size))
-					aSize = DMUtils.sizeHash(size);
-				else
-				{
-					DMUtils.Logging("Failed To Load Contract Parameter; Parameter Removed");
-					this.Root.RemoveParameter(this);
-				}
-				subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, biomeName);
-			}
-			else if (type == 3)
+			if (type == 3)
 				anomContract = (DMAnomalyContract)this.Root;
-			else
-			{
-				if (int.TryParse(scienceString[2], out targetBodyID))
-					body = FlightGlobals.Bodies[targetBodyID];
-				else
-				{
-					DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-					this.Root.RemoveParameter(this);
-				}
-				subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
-			}
-
-
+			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 		}
 
-		protected override void OnUpdate()
+		private void anomalyReceive(CelestialBody Body, string exp, string name)
 		{
-			if (type == 2)
-			{
-				if (this.Root.ContractState == Contract.State.Active && HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
-				{
-					if (!collected)
-					{
-						if (setAstVessel(DMUtils.astSize, DMUtils.newAstExp))
-						{
-							ScreenMessages.PostScreenMessage("Asteroid Science Results Collected", 6f, ScreenMessageStyle.UPPER_CENTER);
-							collected = true;
-							DMUtils.astSize = "";
-							DMUtils.newAstExp = "";
-						}
-					}
-				}
-			}
+			if (body == Body && exp == scienceContainer.exp.id && biomeName.Replace(" ", "") == name)
+				ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		private bool setAstVessel(string s, string e)
-		{
-			if (string.IsNullOrEmpty(s))
-				return false;
-			else
-			{
-				if (e == scienceContainer.exp.id)
-				{
-					if (s == aSize)
-						return true;
-					else
-						return false;
-				}
-				else
-					return false;
-			}
-		}
-
-		private void scienceRecieve(float sci, ScienceSubject sub)
+		private void scienceReceive(float sci, ScienceSubject sub)
 		{
 			DMUtils.DebugLog("New Science Results Collected With ID: {0}", sub.id);
 			DMUtils.DebugLog("Comparing To Target Science With ID: {0}", subject);
@@ -329,10 +245,11 @@ namespace DMagic
 				}
 				else
 				{
-					string clippedSub = sub.id.Replace("@", "");
-					string clippedTargetSub = subject.Replace("@", "");
-					DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
-					if (clippedSub.StartsWith(clippedTargetSub))
+					//string clippedSub = sub.id.Replace("@", "");
+					//string clippedTargetSub = subject.Replace("@", "");
+					//DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
+					//if (clippedSub.StartsWith(clippedTargetSub))
+					if (sub.id.Contains(subject))
 					{
 						if (sci < (scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.4f))
 							ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
@@ -357,39 +274,14 @@ namespace DMagic
 				}
 				else
 				{
-					string clippedSub = sub.id.Replace("@", "");
-					string clippedTargetSub = subject.Replace("@", "");
-					DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
-					if (clippedSub.StartsWith(clippedTargetSub))
+					//string clippedSub = sub.id.Replace("@", "");
+					//string clippedTargetSub = subject.Replace("@", "");
+					//DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
+					//if (clippedSub.StartsWith(clippedTargetSub))
+					if (sub.id.Contains(subject))
 					{
 						DMUtils.DebugLog("Contract Complete");
 						base.SetComplete();
-					}
-				}
-			}
-			else if (type == 2)
-			{
-				if (collected)
-				{
-					DMUtils.DebugLog("Checking Science Results For Type [{0}] Contract", type);
-					if (!string.IsNullOrEmpty(biomeName))
-					{
-						if (sub.id == subject)
-						{
-							DMUtils.DebugLog("Contract Complete");
-							base.SetComplete();
-						}
-					}
-					else
-					{
-						string clippedSub = sub.id.Replace("@", "");
-						string clippedTargetSub = subject.Replace("@", "");
-						DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
-						if (clippedSub.StartsWith(clippedTargetSub))
-						{
-							DMUtils.DebugLog("Contract Complete");
-							base.SetComplete();
-						}
 					}
 				}
 			}
