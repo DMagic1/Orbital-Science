@@ -719,15 +719,14 @@ namespace DMagic
 
 			if (asteroids)
 			{
-				DMUtils.astSize = newAsteroid.aClass;
-				DMUtils.newAstExp = experimentID;
+				DMUtils.OnAsteroidScience.Fire(newAsteroid.aClass, experimentID);
 				sub.title = exp.experimentTitle + astCleanup(vesselSituation, newAsteroid.aType);
 				registerDMScience(newAsteroid, exp, sub, vesselSituation, biome);
 				mainBody.bodyName = bodyNameFixed;
 			}
 			else
 			{
-				DMUtils.newExp = experimentID;
+				DMUtils.OnAnomalyScience.Fire(mainBody, experimentID, biome);
 				sub.title = exp.experimentTitle + situationCleanup(vesselSituation, biome);
 				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost, mainBody);
 				sub.scienceCap = exp.scienceCap * sub.subjectValue;
