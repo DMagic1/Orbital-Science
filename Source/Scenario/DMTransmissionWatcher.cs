@@ -57,9 +57,9 @@ namespace DMagic
 			DMUtils.DebugLog("Science Data Transmitted For {0} Science", sci);
 			foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
 			{
-				if (sub.title == DMData.title)
+				if (DMData.title == sub.title)
 				{
-					DMScienceScenario.SciScenario.submitDMScience(DMData, sub, sci);
+					DMScienceScenario.SciScenario.submitDMScience(DMData, sci);
 					break;
 				}
 			}
