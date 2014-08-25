@@ -84,7 +84,7 @@ namespace DMagic
 
 		protected override string GetNotes()
 		{
-			return "Make sure that your vessel or vessels are equipped with both magnetometer and RPWS instruments while matching the specified orbital parameters";
+			return "Your vessel, or vessels, must be equipped with both magnetometer and RPWS instruments; vessels do not need to remain active throughout the period specified";
 		}
 
 		protected override void OnSave(ConfigNode node)
