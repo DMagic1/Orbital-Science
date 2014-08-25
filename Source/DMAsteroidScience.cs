@@ -114,15 +114,15 @@ namespace DMagic
 		//Assign a spectral type based on the ModuleAsteroid.seed value
 		private string asteroidSpectral(int seed)
 		{
-			if (seed >= 0 && seed < 40000000) return "Type C";
-			else if (seed >= 40000000 && seed < 65000000) return "Type S";
-			else if (seed >= 65000000 && seed < 80000000) return "Type M";
-			else if (seed >= 80000000 && seed < 85000000) return "Type E";
-			else if (seed >= 85000000 && seed < 88000000) return "Type P";
-			else if (seed >= 88000000 && seed < 91000000) return "Type B";
-			else if (seed >= 91000000 && seed < 94000000) return "Type A";
-			else if (seed >= 94000000 && seed < 97000000) return "Type R";
-			else if (seed >= 97000000 && seed < 100000000) return "Type G";
+			if (seed >= 0 && seed < 40000000) return "C Type";
+			else if (seed >= 40000000 && seed < 65000000) return "S Type";
+			else if (seed >= 65000000 && seed < 80000000) return "M Type";
+			else if (seed >= 80000000 && seed < 85000000) return "E Type";
+			else if (seed >= 85000000 && seed < 88000000) return "P Type";
+			else if (seed >= 88000000 && seed < 91000000) return "B Type";
+			else if (seed >= 91000000 && seed < 94000000) return "A Type";
+			else if (seed >= 94000000 && seed < 97000000) return "R Type";
+			else if (seed >= 97000000 && seed < 100000000) return "G Type";
 			else return "Unknown Type";
 		}
 
