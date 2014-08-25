@@ -201,23 +201,38 @@ namespace DMagic
 					{
 						if (!DMAnomalyList.MagUpdating && !DMAnomalyList.ScannerUpdating)
 							DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
-						DMUtils.DebugLog("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
+
+						DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
+
 						//Draw a cone above the anomaly position up to 100km with a diameter of 30km at its widest
-						if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
+						if (city.Vdistance < 100000)
 						{
-							if (city.Vheight > 1000 && city.Vheight < 100000)
+							if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
 							{
-								if (city.Vhorizontal < (30000 * (city.Vheight / 100000)))
+								if (city.Vheight > 1000 && city.Vheight < 100000)
 								{
-									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
-									collected = true;
+									if (city.Vhorizontal < (50000 * (city.Vheight / 100000)))
+									{
+										ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+										collected = true;
+									}
+									else
+										ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 								}
-								else
-									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+								else if (city.Vheight < 1000)
+								{
+									if (city.Vhorizontal < 500)
+									{
+										ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+										collected = true;
+									}
+									else
+										ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+								}
 							}
-							else if (city.Vheight < 1000)
+							else if (situation == ExperimentSituations.SrfLanded)
 							{
-								if (city.Vhorizontal < 300)
+								if (city.Vhorizontal < 250)
 								{
 									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
@@ -226,14 +241,6 @@ namespace DMagic
 									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
 						}
-						else if (situation == ExperimentSituations.SrfLanded)
-							if (city.Vhorizontal < 150)
-							{
-								ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
-								collected = true;
-							}
-							else
-								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 					}
 					DMUtils.newExp = "";
 				}
