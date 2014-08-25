@@ -82,6 +82,11 @@ namespace DMagic
 				DMAnomalyList.ScannerUpdating = false;
 		}
 
+		private void OnDestroy()
+		{
+			DMAnomalyList.ScannerUpdating = false;
+		}
+
 		#region animators
 
 		private void newPrimaryAnimator(string whichAnim, float speed, float time, float waitTime, Animation a)
