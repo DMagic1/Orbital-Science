@@ -281,6 +281,7 @@ namespace DMagic
 
 
 					//Anomaly Detection
+					Cities.Clear();
 					if (!DMAnomalyList.ScannerUpdating)
 					{
 						DMAnomalyList.MagUpdating = true;
