@@ -41,11 +41,12 @@ namespace DMagic
 {
 	class DMSurveyContract: Contract
 	{
-		internal DMCollectScience[] newParams = new DMCollectScience[6];
+		internal DMCollectScience[] newParams = new DMCollectScience[8];
 		private CelestialBody body;
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
-		private int j = 0;
+		private string biome = "";
+		private int i, j = 0;
 		private int surveyType;
 		private System.Random rand = DMUtils.rand;
 
@@ -106,6 +107,13 @@ namespace DMagic
 					return false;
 
 				body = newParams[0].Body;
+				biome = newParams[0].Biome;
+
+				if (biome == "")
+				{
+					List<string> biomes = DMUtils.fetchBiome(body);
+					biome = biomes[rand.Next(0, biomes.Count)];
+				}
 				this.AddParameter(new LandOnBody(body), null);
 			}
 			else if (surveyType == 2)
@@ -138,7 +146,7 @@ namespace DMagic
 					foreach (CelestialBody b in FlightGlobals.Bodies)
 					{
 						if (b.flightGlobalsIndex != 1 && b.flightGlobalsIndex != 5 && b.flightGlobalsIndex != 6 && b.flightGlobalsIndex != 8)
-							if (b.atmosphere)
+							if (b.atmosphere && b.pqsController != null)
 								bList.Add(b);
 					}
 					body = bList[rand.Next(0, bList.Count)];
@@ -146,18 +154,16 @@ namespace DMagic
 				else
 					return false;
 
+				sciList.AddRange(DMUtils.availableScience[DMScienceType.Biological.ToString()].Values);
+
 				if (sciList.Count > 0)
-				{
 					DMScience = sciList[rand.Next(0, sciList.Count)];
-					sciList.Remove(DMScience);
-				}
 				else
 					return false;
 
-				sciList.AddRange(DMUtils.availableScience[DMScienceType.Biological.ToString()].Values);
-
-				if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(body, DMScience)) == null)
+				if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, 1)) == null)
 					return false;
+				sciList.Remove(DMScience);
 
 				this.AddParameter(new LandOnBody(body), null);
 				this.AddParameter(new EnterOrbit(body), null);
@@ -165,19 +171,18 @@ namespace DMagic
 			else
 				return false;
 
-			for (j = 1; j < 5; j++)
+			for (j = 1; j < 7; j++)
 			{
 				if (sciList.Count > 0)
 				{
 					DMScience = sciList[rand.Next(0, sciList.Count)];
 					if (surveyType == 0)
-						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, surveyType);
-					else if (surveyType == 1)
-						newParams[j] = DMSurveyGenerator.fetchSurevyScience(body, DMScience, newParams[0].Biome);
-					else if (surveyType == 2)
 						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience);
-					if (newParams[j] != null)
-						sciList.Remove(DMScience);
+					else if (surveyType == 1)
+						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, biome);
+					else if (surveyType == 2)
+						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, 1);
+					sciList.Remove(DMScience);
 				}
 				else
 					newParams[j] = null;
@@ -186,6 +191,7 @@ namespace DMagic
 			//Add in all acceptable paramaters to the contract
 			foreach (DMCollectScience DMC in newParams)
 			{
+				if (i > 6) break;
 				if (DMC != null)
 				{
 					this.AddParameter(DMC, "collectDMScience");
@@ -193,12 +199,19 @@ namespace DMagic
 					DMC.SetScience(DMC.Container.exp.baseValue * 0.6f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
 					DMC.SetFunds(4000f * DMUtils.reward * locationMod, 2000f * DMUtils.penalty * locationMod, body);
 					DMC.SetReputation(15f * DMUtils.reward * locationMod, 10f * DMUtils.penalty * locationMod, body);
+					i++;
 					DMUtils.DebugLog("Survey Parameter Added");
 				}
 			}
 
-			if (this.ParameterCount < 4)
-				return false;
+			if (surveyType == 0 || surveyType == 1)
+			{
+				if (this.ParameterCount < 4)
+					return false;
+			}
+			else if (surveyType == 2)
+				if (this.ParameterCount < 5)
+					return false;
 
 			int a = rand.Next(0, 4);
 			if (a == 0)
@@ -209,7 +222,7 @@ namespace DMagic
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.expiryType = DeadlineType.None;
-			base.SetDeadlineYears(3f, body);
+			base.SetDeadlineYears(3f * ((float)rand.Next(80, 121)) / 100f, body);
 			base.SetReputation(newParams.Length * 8f * DMUtils.reward, newParams.Length * 5f * DMUtils.penalty, body);
 			base.SetFunds(5000 * newParams.Length * DMUtils.forward, 3000 * newParams.Length * DMUtils.reward, 2000 * newParams.Length * DMUtils.penalty, body);
 			return true;
@@ -233,9 +246,9 @@ namespace DMagic
 		protected override string GetTitle()
 		{
 			if (surveyType == 0)
-				return string.Format("Conduct an orbital survey of {0}; return or transmit multiple scienctific observations", body.theName);
+				return string.Format("Conduct orbital survey of {0}; return or transmit multiple scienctific observations", body.theName);
 			else if (surveyType == 1)
-				return string.Format("Conduct ground surface survey of {0}; return or transmit multiple scienctific observations", body.theName);
+				return string.Format("Conduct surface survey of {0}; return or transmit multiple scienctific observations", body.theName);
 			else if (surveyType == 2)
 				return string.Format("Conduct biological survey of {0}; return or transmit multiple scienctific observations", body.theName);
 			else
@@ -277,7 +290,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Loading Orbital Contract");
 			int target;
 			if (int.TryParse(node.GetValue("Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];
@@ -291,7 +303,6 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Saving Orbital Contract");
 			node.AddValue("Survey_Target", body.flightGlobalsIndex);
 			node.AddValue("Survey_Type", surveyType);
 		}
