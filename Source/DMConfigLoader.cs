@@ -57,10 +57,7 @@ namespace DMagic
 					DMUtils.reward = float.Parse(setNode.GetValue("Global_Fund_Reward"));
 					DMUtils.forward = float.Parse(setNode.GetValue("Global_Fund_Forward"));
 					DMUtils.penalty = float.Parse(setNode.GetValue("Global_Fund_Penalty"));
-					//DMUtils.maxCollect = int.Parse(setNode.GetValue("Max_Collect"));
 					DMUtils.maxSurvey = int.Parse(setNode.GetValue("Max_Survey"));
-					//DMUtils.maxGround = int.Parse(setNode.GetValue("Max_Ground"));
-					//DMUtils.maxBiological = int.Parse(setNode.GetValue("Max_Biological"));
 					DMUtils.maxAsteroid = int.Parse(setNode.GetValue("Max_Asteroid"));
 					DMUtils.maxAnomaly = int.Parse(setNode.GetValue("Max_Anomaly"));
 					DMUtils.maxMagnetic = int.Parse(setNode.GetValue("Max_Magnetic"));

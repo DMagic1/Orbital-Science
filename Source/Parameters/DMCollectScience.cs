@@ -245,10 +245,6 @@ namespace DMagic
 				}
 				else
 				{
-					//string clippedSub = sub.id.Replace("@", "");
-					//string clippedTargetSub = subject.Replace("@", "");
-					//DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
-					//if (clippedSub.StartsWith(clippedTargetSub))
 					if (sub.id.Contains(subject))
 					{
 						if (sci < (scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.4f))
@@ -274,10 +270,6 @@ namespace DMagic
 				}
 				else
 				{
-					//string clippedSub = sub.id.Replace("@", "");
-					//string clippedTargetSub = subject.Replace("@", "");
-					//DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
-					//if (clippedSub.StartsWith(clippedTargetSub))
 					if (sub.id.Contains(subject))
 					{
 						DMUtils.DebugLog("Contract Complete");
