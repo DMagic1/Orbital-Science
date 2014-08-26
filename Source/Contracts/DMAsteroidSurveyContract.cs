@@ -131,6 +131,11 @@ namespace DMagic
 			return string.Format("Conduct a survey of a {0} asteroid; return or transmit multiple scienctific observations", hash);
 		}
 
+		protected override string GetNotes()
+		{
+			return "Data must be collected while near to, or grappled to an asteroid of the specified class. An on-screen message will indicate successful collection of data; return or transmit data to complete each parameter.";
+		}
+
 		protected override string GetDescription()
 		{
 			//Return a random asteroid survey backstory; use the same format as generic backstory

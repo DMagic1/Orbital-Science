@@ -211,6 +211,11 @@ namespace DMagic
 			return string.Format("Study the source of the anomalous readings coming from {0}'s surface", body.theName);
 		}
 
+		protected override string GetNotes()
+		{
+			return "An on-screen message will indicate successful collection of anomaly science results; data must be transmitted or returned to complete each parameter.";
+		}
+
 		protected override string GetDescription()
 		{
 			string story = DMUtils.backStory["anomaly"][rand.Next(0, DMUtils.backStory["anomaly"].Count)];
