@@ -159,19 +159,13 @@ namespace DMagic
 			}
 		}
 
-		internal void submitDMScience(DMScienceData DMData, ScienceSubject sub)
-		{
-			DMData.science = Math.Min(DMData.science + (DMData.basevalue * sub.subjectValue * DMData.scival), DMData.cap);
-			DMData.scival = ScienceValue(DMData.science, DMData.cap);
-			UpdateNewScience(DMData);
-		}
-
 		internal void submitDMScience(DMScienceData DMData, float science)
 		{
 			DMData.science = Math.Min(DMData.science + science, DMData.cap);
 			DMData.scival = ScienceValue(DMData.science, DMData.cap);
 			UpdateNewScience(DMData);
-			updateRemainingData();
+			if (HighLogic.LoadedSceneIsFlight)
+				updateRemainingData();
 		}
 
 		internal void RemoveDMScience(DMScienceData DMdata)
@@ -205,7 +199,7 @@ namespace DMagic
 							if (DMData.title == data.title)
 							{
 								ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
-								sub.scientificValue = DMData.scival;
+								sub.scientificValue *= DMData.scival;
 								sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
 							}
 						}
