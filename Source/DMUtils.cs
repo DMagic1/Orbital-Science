@@ -90,15 +90,15 @@ namespace DMagic
 			switch (i)
 			{
 				case 0:
-					return 1f;
-				case 1:
 					return 2f;
-				case 2:
+				case 1:
 					return 4f;
-				case 3:
+				case 2:
 					return 6f;
-				case 4:
+				case 3:
 					return 8f;
+				case 4:
+					return 10f;
 				default:
 					return 1f;
 			}
@@ -276,7 +276,7 @@ namespace DMagic
 					}
 					else
 					{
-						if (subB.scientificValue > 0.4f)
+						if (subB.scientificValue > 0.5f)
 							s.Add(bName);
 					}
 				}
@@ -632,10 +632,12 @@ namespace DMagic
 	{
 		private static System.Random rand = DMUtils.rand;
 
+		//Used for initial orbital and surface survey parameter
 		internal static DMCollectScience fetchSurveyScience(Contract.ContractPrestige c, List<CelestialBody> cR, List<CelestialBody> cUR, DMScienceContainer DMScience, int sT)
 		{
 			CelestialBody body;
 			ExperimentSituations targetSituation;
+			ScienceSubject sub;
 			AvailablePart aPart;
 			string name;
 			string biome = "";
@@ -716,19 +718,17 @@ namespace DMagic
 					DMUtils.DebugLog("Planet All Tapped Out; No Remaining Science Here");
 					return null;
 				}
-				int i = rand.Next(0, 2);
-				if (i == 0)
+				else
 				{
 					biome = bList[rand.Next(0, bList.Count)];
 					DMUtils.DebugLog("Acceptable Biome Found: {0}", biome);
 				}
 			}
 
-			ScienceSubject sub;
 			//Make sure that our chosen science subject has science remaining to be gathered
 			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.exp.id, body.name, targetSituation, biome.Replace(" ", "")))) != null)
 			{
-				if (sub.scientificValue < 0.4f)
+				if (sub.scientificValue < 0.5f)
 					return null;
 			}
 
@@ -742,14 +742,13 @@ namespace DMagic
 				return null;
 		}
 
-		internal static DMCollectScience fetchSurveyScience(CelestialBody b, DMScienceContainer DMScience, int sT)
+		//Used for orbital survey
+		internal static DMCollectScience fetchSurveyScience(CelestialBody Body, DMScienceContainer DMScience)
 		{
-			CelestialBody body = b;
 			ExperimentSituations targetSituation;
+			ScienceSubject sub;
 			AvailablePart aPart;
 			string name;
-			string biome = "";
-			int surveyType = sT;
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
@@ -769,70 +768,38 @@ namespace DMagic
 			if (DMScience.exp == null)
 				return null;
 
-			if (surveyType == 0)
+			if (!Body.atmosphere && DMScience.exp.requireAtmosphere)
+				return null;
+			if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
 			{
-				if (!body.atmosphere && DMScience.exp.requireAtmosphere)
-					return null;
-				if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
-				{
-					if (rand.Next(0, 2) == 0)
-						targetSituation = ExperimentSituations.InSpaceHigh;
-					else
-						targetSituation = ExperimentSituations.InSpaceLow;
-				}
+				if (rand.Next(0, 2) == 0)
+					targetSituation = ExperimentSituations.InSpaceHigh;
 				else
 					targetSituation = ExperimentSituations.InSpaceLow;
 			}
-			else if (surveyType == 1)
-			{
-				if (body.pqsController == null)
-					return null;
-				if (!body.atmosphere && DMScience.exp.requireAtmosphere)
-					return null;
-				if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.SrfSplashed) == ExperimentSituations.SrfSplashed)
-				{
-					if (rand.Next(0, 2) == 0 && body.ocean)
-						targetSituation = ExperimentSituations.SrfSplashed;
-					else
-						targetSituation = ExperimentSituations.SrfLanded;
-				}
-				else if (DMScience.exp.id != "dmbiodrillscan")
-					targetSituation = ExperimentSituations.SrfLanded;
-				else if (body.atmosphere)
-					targetSituation = ExperimentSituations.SrfLanded;
-				else
-					return null;
-			}
-			else if (surveyType == 2)
-			{
-				if (!body.atmosphere)
-					return null;
-				if (rand.Next(0, 2) == 0)
-					targetSituation = ExperimentSituations.FlyingHigh;
-				else
-					targetSituation = ExperimentSituations.FlyingLow;
-			}
 			else
-				return null;
+				targetSituation = ExperimentSituations.InSpaceLow;
 
-			if (DMUtils.biomeRelevant(targetSituation, DMScience.bioMask) && targetSituation != ExperimentSituations.SrfSplashed)
+			if (DMUtils.biomeRelevant(targetSituation, DMScience.bioMask))
 			{
 				DMUtils.DebugLog("Checking For Biome Usage");
-				if (body.BiomeMap == null || body.BiomeMap.Map == null)
-					biome = "";
-				else if (rand.Next(0, 2) == 0)
+				List<string> bList = DMUtils.fetchBiome(Body, DMScience.exp, targetSituation);
+				if (bList.Count == 0)
 				{
-					biome = body.BiomeMap.Attributes[rand.Next(0, body.BiomeMap.Attributes.Length)].name;
+					DMUtils.DebugLog("Planet All Tapped Out; No Remaining Science Here");
+					return null;
 				}
-				else
-					biome = "";
 			}
 
-			return new DMCollectScience(body, targetSituation, biome, name, 1);
+			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}", DMScience.exp.id, Body.name, targetSituation))) != null)
+				if (sub.scientificValue < 0.5f)
+					return null;
+
+			return new DMCollectScience(Body, targetSituation, "", name, 0);
 		}
 
 		//Used for biological survey
-		internal static DMCollectScience fetchSurveyScience(CelestialBody body, DMScienceContainer DMScience)
+		internal static DMCollectScience fetchSurveyScience(CelestialBody body, DMScienceContainer DMScience, int j)
 		{
 			ExperimentSituations targetSituation;
 			List<ExperimentSituations> situations;
@@ -875,10 +842,7 @@ namespace DMagic
 				DMUtils.DebugLog("Checking For Biome Usage");
 				List<string> bList = DMUtils.fetchBiome(body);
 				if (bList.Count == 0)
-				{
-					DMUtils.DebugLog("Planet All Tapped Out; No Remaining Science Here");
 					return null;
-				}
 				int i = rand.Next(0, 2);
 				if (i == 0)
 				{
@@ -891,9 +855,10 @@ namespace DMagic
 		}
 
 		//Used for surface surveys
-		internal static DMCollectScience fetchSurevyScience(CelestialBody Body, DMScienceContainer DMScience, string Biome)
+		internal static DMCollectScience fetchSurveyScience(CelestialBody Body, DMScienceContainer DMScience, string Biome)
 		{
 			AvailablePart aPart;
+			ScienceSubject sub;
 			string name;
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
@@ -925,11 +890,12 @@ namespace DMagic
 				return null;
 			if (DMScience.exp.id == "dmbiodrillscan" && !Body.atmosphere)
 				return null;
+			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.exp.id, Body.name, ExperimentSituations.SrfLanded, Biome.Replace(" ", "")))) != null)
+				if (sub.scientificValue < 0.5f)
+					return null;
 
-			return new DMCollectScience(Body, ExperimentSituations.SrfLanded, Biome, name, 1);
+			return new DMCollectScience(Body, ExperimentSituations.SrfLanded, Biome, name, 0);
 		}
-
-
 	}
 
 	static class DMAsteroidGenerator
