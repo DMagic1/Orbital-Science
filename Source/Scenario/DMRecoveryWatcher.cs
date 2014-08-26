@@ -42,14 +42,12 @@ namespace DMagic
 		private void Start()
 		{
 			DMUtils.DebugLog("Starting Recovery Watcher");
-			//GameEvents.onVesselRecovered.Add(ProtoRecoveryWatcher);
 			GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
 		}
 
 		private void OnDestroy()
 		{
 			DMUtils.DebugLog("Destroying Recovery Watcher");
-			//GameEvents.onVesselRecovered.Remove(ProtoRecoveryWatcher);
 			GameEvents.OnScienceRecieved.Remove(RecoveryWatcher);
 		}
 
@@ -63,8 +61,9 @@ namespace DMagic
 				{
 					if (DMData.title == sub.title)
 					{
-						DMScience = sub.subjectValue * DMData.basevalue * DMData.scival;
-						DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
+						float oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
+						DMScience = sub.subjectValue * DMData.basevalue * DMData.scival * oldSciVal;
+						DMScienceScenario.SciScenario.submitDMScience(DMData, DMScience);
 						break;
 					}
 				}
@@ -77,42 +76,5 @@ namespace DMagic
 			}
 		}
 
-		//private void ProtoRecoveryWatcher(ProtoVessel v)
-		//{
-		//    DMUtils.DebugLog("ProtoVessel Recovery Triggered");
-		//    float totalRecoveredScience = 0;
-		//    float totalDMScience = 0;
-		//    foreach (ProtoPartSnapshot snap in v.protoPartSnapshots)
-		//    {
-		//        foreach (ProtoPartModuleSnapshot msnap in snap.modules)
-		//        {
-		//            if (msnap.moduleValues.HasNode("ScienceData"))
-		//            {
-		//                foreach (ConfigNode dataNode in msnap.moduleValues.GetNodes("ScienceData"))
-		//                {
-		//                    ScienceData data = new ScienceData(dataNode);
-		//                    if (data != null)
-		//                    {
-		//                        DMUtils.DebugLog("Found Data In Recovered Vessel");
-		//                        foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
-		//                        {
-		//                            if (DMData.title == data.title)
-		//                            {
-		//                                ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
-		//                                totalRecoveredScience += ResearchAndDevelopment.GetScienceValue(data.dataAmount, sub, 1f);
-		//                                totalDMScience += sub.subjectValue * DMData.basevalue * DMData.scival;
-		//                                DMScienceScenario.SciScenario.submitDMScience(DMData, sub);
-		//                                DMUtils.DebugLog("Submitted {0} Standard Science Data; And {1} DM Asteroid Data", totalDMScience, totalDMScience);
-		//                            }
-		//                        }
-		//                    }
-		//                }
-		//            }
-		//        }
-		//    }
-		//    float extraScience = totalRecoveredScience - totalDMScience;
-		//    Debug.LogWarning(string.Format("Add/Remove {0} Science From R&D Center After Asteroid Calculations", extraScience));
-		//    ResearchAndDevelopment.Instance.Science -= extraScience;
-		//}
 	}
 }
