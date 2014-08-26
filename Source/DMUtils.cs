@@ -710,17 +710,36 @@ namespace DMagic
 			if (DMUtils.biomeRelevant(targetSituation, DMScience.bioMask) && targetSituation != ExperimentSituations.SrfSplashed)
 			{
 				DMUtils.DebugLog("Checking For Biome Usage");
-				if (body.BiomeMap == null || body.BiomeMap.Map == null)
-					biome = "";
-				else if (rand.Next(0, 2) == 0)
+				List<string> bList = DMUtils.fetchBiome(body, DMScience.exp, targetSituation);
+				if (bList.Count == 0)
 				{
-					biome = body.BiomeMap.Attributes[rand.Next(0, body.BiomeMap.Attributes.Length)].name;
+					DMUtils.DebugLog("Planet All Tapped Out; No Remaining Science Here");
+					return null;
 				}
-				else
-					biome = "";
+				int i = rand.Next(0, 2);
+				if (i == 0)
+				{
+					biome = bList[rand.Next(0, bList.Count)];
+					DMUtils.DebugLog("Acceptable Biome Found: {0}", biome);
+				}
 			}
 
-			return new DMCollectScience(body, targetSituation, biome, name, 1);
+			ScienceSubject sub;
+			//Make sure that our chosen science subject has science remaining to be gathered
+			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.exp.id, body.name, targetSituation, biome.Replace(" ", "")))) != null)
+			{
+				if (sub.scientificValue < 0.4f)
+					return null;
+			}
+
+			if (surveyType == 0)
+				return new DMCollectScience(body, targetSituation, "", name, 0);
+			else if (surveyType == 1)
+				return new DMCollectScience(body, targetSituation, biome, name, 0);
+			else if (surveyType == 2)
+				return new DMCollectScience(body, targetSituation, biome, name, 1);
+			else
+				return null;
 		}
 
 		internal static DMCollectScience fetchSurveyScience(CelestialBody b, DMScienceContainer DMScience, int sT)
