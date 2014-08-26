@@ -746,7 +746,7 @@ namespace DMagic
 				if (DMScience.title == sub.title)
 				{
 					DMUtils.DebugLog("found matching DM Data");
-					sub.scientificValue = sub.scientificValue * DMScience.scival;
+					sub.scientificValue *= DMScience.scival;
 					DMData = DMScience;
 					break;
 				}

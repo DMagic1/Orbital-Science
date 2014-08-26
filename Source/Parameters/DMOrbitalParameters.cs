@@ -84,7 +84,7 @@ namespace DMagic
 			if (type == 0)
 				return string.Format("Orbit with at least {0:N2} eccentricity", orbitalParameter);
 			else if (type == 1)
-				return string.Format("Orbit of at least {0:N1} degrees inclination", orbitalParameter);
+				return string.Format("Orbit of at least {0:N1}° inclination", orbitalParameter);
 			else
 				return "Stupid things";
 		}

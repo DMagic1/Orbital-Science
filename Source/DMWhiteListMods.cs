@@ -50,7 +50,7 @@ namespace DMagic
 			foreach (string name in assemblies) {
 				AssemblyLoader.LoadedAssembly assembly = AssemblyLoader.loadedAssemblies.FirstOrDefault(a => a.assembly.GetName().Name == name);
 				if (assembly != null) {
-					print(string.Format("[DM] Assembly: {0} found; Reactivating Experiment Properties", assembly.assembly.GetName().Name));
+					DMUtils.Logging("Assembly: {0} Found; Reactivating Experiment Properties", assembly.assembly.GetName().Name);
 					whiteListed = true;
 				}
 			}

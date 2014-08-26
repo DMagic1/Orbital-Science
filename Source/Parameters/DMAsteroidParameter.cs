@@ -172,15 +172,10 @@ namespace DMagic
 
 		private void scienceRecieve(float sci, ScienceSubject sub)
 		{
-			DMUtils.DebugLog("New Science Results Collected With ID: {0}", sub.id);
-			DMUtils.DebugLog("Comparing To Target Science With ID: {0}", subject);
 			if (sub.id.Contains(subject))
 			{
 				if (collected)
-				{
-					DMUtils.DebugLog("Contract Complete");
 					base.SetComplete();
-				}
 				else
 					DMUtils.Logging("Data Not Collected From Correctly Sized Asteroid");
 			}

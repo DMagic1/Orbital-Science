@@ -59,7 +59,7 @@ namespace DMagic
 			city = City;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			partName = scienceContainer.sciPart;
-			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
+			subject = string.Format("{0}@{1}{2}", scienceContainer.exp.id, body.name, situation);
 			hash = city.name;
 		}
 
@@ -189,7 +189,7 @@ namespace DMagic
 					this.Root.RemoveParameter(this);
 				}
 			}
-			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
+			subject = string.Format("{0}@{1}{2}", scienceContainer.exp.id, body.name, situation);
 		}
 
 		private void monitorAnomScience(CelestialBody B, string s, string name)
@@ -245,12 +245,10 @@ namespace DMagic
 
 		private void anomalyScience(float sci, ScienceSubject sub)
 		{
-			if (collected)
+			if (sub.id.Contains(subject))
 			{
-				{
-					DMUtils.DebugLog("Anomaly Contract Complete");
+				if (collected)
 					base.SetComplete();
-				}
 			}
 		}
 	}
