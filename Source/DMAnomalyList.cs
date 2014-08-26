@@ -41,6 +41,8 @@ namespace DMagic
 
 		private void pqsBuild(CelestialBody body)
 		{
+			scannerUpdating = false;
+			magUpdating = false;
 			anomObjects.Clear();
 			PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
 			foreach (PQSCity anomalyObject in Cities)
@@ -53,6 +55,7 @@ namespace DMagic
 		internal static void updateAnomaly(Vessel v, DMAnomalyObject a)
 		{
 			Vector3d vPos = v.transform.position;
+			a.worldLocation = a.city.transform.position;
 			double vAlt = v.mainBody.GetAltitude(vPos);
 			a.Vdistance = (a.worldLocation - vPos).magnitude;
 			a.Vheight = Math.Abs(vAlt - a.alt);
