@@ -95,15 +95,15 @@ namespace DMagic
 		{
 			switch (aclass) {
 				case "Class A":
-					return 1f;
-				case "Class B":
 					return 2f;
-				case "Class C":
+				case "Class B":
 					return 4f;
-				case "Class D":
+				case "Class C":
 					return 6f;
-				case "Class E":
+				case "Class D":
 					return 8f;
+				case "Class E":
+					return 10f;
 				case "Class Unholy":
 					return 15f;
 				default:
