@@ -133,7 +133,7 @@ namespace DMagic
 
 		protected override string GetNotes()
 		{
-			return "Data must be collected while near to, or grappled to an asteroid of the specified class. An on-screen message will indicate successful collection of data; return or transmit data to complete each parameter.";
+			return "Only DMagic brand science parts can be used for this contract. Data must be collected while near to, or grappled to an asteroid of the specified class. An on-screen message will indicate successful collection of data; return or transmit data to complete each parameter.";
 		}
 
 		protected override string GetDescription()
