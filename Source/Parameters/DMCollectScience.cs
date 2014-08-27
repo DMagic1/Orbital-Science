@@ -37,7 +37,7 @@ using Contracts.Parameters;
 
 namespace DMagic
 {
-	public class DMCollectScience : CollectScience
+	public class DMCollectScience : ContractParameter
 	{
 		private CelestialBody body;
 		private ExperimentSituations scienceLocation;
@@ -192,7 +192,7 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int targetBodyID, targetLocation;
+			int targetBodyID, targetSituation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			if (!int.TryParse(scienceString[0], out type))
 			{
@@ -202,8 +202,8 @@ namespace DMagic
 			name = scienceString[1];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			partName = scienceContainer.sciPart;
-			if (int.TryParse(scienceString[3], out targetLocation))
-				scienceLocation = (ExperimentSituations)targetLocation;
+			if (int.TryParse(scienceString[3], out targetSituation))
+				scienceLocation = (ExperimentSituations)targetSituation;
 			else
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
@@ -242,7 +242,12 @@ namespace DMagic
 					if (sub.id.Contains(subject))
 					{
 						if (sub.science < (scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.3f))
-							ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
+						{
+							if (DMUtils.biomeRelevant(this.Situation, this.Container.bioMask))
+								ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
+							else
+								ScreenMessages.PostScreenMessage("Not enough science remaining; this experiment may need to be returned to Kerbin for credit", 6f, ScreenMessageStyle.UPPER_CENTER);
+						}
 						else
 							base.SetComplete();
 					}
