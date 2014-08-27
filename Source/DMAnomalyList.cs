@@ -56,10 +56,13 @@ namespace DMagic
 		{
 			Vector3d vPos = v.transform.position;
 			a.worldLocation = a.city.transform.position;
+			a.alt = v.mainBody.GetAltitude(a.worldLocation);
+			a.lat = v.mainBody.GetLatitude(a.worldLocation);
+			a.lon = v.mainBody.GetLongitude(a.worldLocation);
 			double vAlt = v.mainBody.GetAltitude(vPos);
 			a.Vdistance = (a.worldLocation - vPos).magnitude;
 			a.Vheight = Math.Abs(vAlt - a.alt);
-			a.Vhorizontal = Math.Sqrt((a.Vdistance * a.Vdistance) + (a.Vheight * a.Vheight));
+			a.Vhorizontal = Math.Sqrt((a.Vdistance * a.Vdistance) - (a.Vheight * a.Vheight));
 		}
 
 		internal static void bearing(Vessel v, DMAnomalyObject a)
