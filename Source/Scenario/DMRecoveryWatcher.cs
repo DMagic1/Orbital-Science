@@ -70,7 +70,7 @@ namespace DMagic
 				if (DMScience != sci)
 				{
 					float scienceAdded = sci - DMScience;
-					Debug.LogWarning(string.Format("Add/Remove {0} Science From R&D Center After Asteroid Calculations", scienceAdded));
+					Debug.LogWarning(string.Format("[DMagic Orbital Science] [Asteroid Science Retrieval] Remove {0} Science From R&D Center After Asteroid Calculations", scienceAdded));
 					ResearchAndDevelopment.Instance.Science -= scienceAdded;
 				}
 			}
