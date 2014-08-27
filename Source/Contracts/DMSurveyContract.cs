@@ -128,7 +128,7 @@ namespace DMagic
 					return false;
 
 				//Duna and Eve are the easy targets
-				else if (this.Prestige == ContractPrestige.Significant)
+				if (this.Prestige == ContractPrestige.Significant)
 				{
 					if (!ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" }))
 						return false;
@@ -156,14 +156,16 @@ namespace DMagic
 
 				sciList.AddRange(DMUtils.availableScience[DMScienceType.Biological.ToString()].Values);
 
-				if (sciList.Count > 0)
-					DMScience = sciList[rand.Next(0, sciList.Count)];
-				else
+				if ((newParams[0] = DMSurveyGenerator.fetchBioSurveyScience(body)) == null)
 					return false;
 
-				if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, 1)) == null)
-					return false;
-				sciList.Remove(DMScience);
+				biome = newParams[0].Biome;
+
+				if (biome == "")
+				{
+					List<string> biomes = DMUtils.fetchBiome(body);
+					biome = biomes[rand.Next(0, biomes.Count)];
+				}
 
 				this.AddParameter(new LandOnBody(body), null);
 				this.AddParameter(new EnterOrbit(body), null);
@@ -181,7 +183,7 @@ namespace DMagic
 					else if (surveyType == 1)
 						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, biome);
 					else if (surveyType == 2)
-						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, 1);
+						newParams[j] = DMSurveyGenerator.fetchBioSurveyScience(body, DMScience, biome);
 					sciList.Remove(DMScience);
 				}
 				else
@@ -191,7 +193,7 @@ namespace DMagic
 			//Add in all acceptable paramaters to the contract
 			foreach (DMCollectScience DMC in newParams)
 			{
-				if (i > 6) break;
+				if (i > (4 + (int)this.prestige)) break;
 				if (DMC != null)
 				{
 					this.AddParameter(DMC, "collectDMScience");
@@ -221,10 +223,11 @@ namespace DMagic
 			else
 				this.agent = AgentList.Instance.GetAgentRandom();
 
+			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParams[0].Situation), newParams[0].Body);
 			base.expiryType = DeadlineType.None;
-			base.SetDeadlineYears(3f * ((float)rand.Next(80, 121)) / 100f, body);
-			base.SetReputation(newParams.Length * 8f * DMUtils.reward, newParams.Length * 5f * DMUtils.penalty, body);
-			base.SetFunds(5000 * newParams.Length * DMUtils.forward, 3000 * newParams.Length * DMUtils.reward, 2000 * newParams.Length * DMUtils.penalty, body);
+			base.SetDeadlineYears(3f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
+			base.SetReputation(newParams.Length * 8f * DMUtils.reward * primaryLocationMod, newParams.Length * 5f * DMUtils.penalty * primaryLocationMod, body);
+			base.SetFunds(5000 * newParams.Length * DMUtils.forward * primaryLocationMod, 3000 * newParams.Length * DMUtils.reward * primaryLocationMod, 2000 * newParams.Length * DMUtils.penalty * primaryLocationMod, body);
 			return true;
 		}
 
@@ -250,9 +253,17 @@ namespace DMagic
 			else if (surveyType == 1)
 				return string.Format("Conduct surface survey of {0}; return or transmit multiple scienctific observations", body.theName);
 			else if (surveyType == 2)
-				return string.Format("Conduct biological survey of {0}; return or transmit multiple scienctific observations", body.theName);
+				return string.Format("Conduct a search for on-going or past biological activity on {0}; return or transmit multiple scienctific observations", body.theName);
 			else
 				return "Durrr";
+		}
+
+		protected override string GetNotes()
+		{
+			if (surveyType == 0 || surveyType == 1)
+				return "Science experiments with little to no transmission value remaining may need to be returned to Kerbin to complete each parameter";
+			else
+				return "Science experiments for biological activity surveys are not required to yield any science value";
 		}
 
 		protected override string GetDescription()
