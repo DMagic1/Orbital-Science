@@ -57,13 +57,14 @@ namespace DMagic
 					DMUtils.reward = float.Parse(setNode.GetValue("Global_Fund_Reward"));
 					DMUtils.forward = float.Parse(setNode.GetValue("Global_Fund_Forward"));
 					DMUtils.penalty = float.Parse(setNode.GetValue("Global_Fund_Penalty"));
+					DMUtils.deadline = float.Parse(setNode.GetValue("Global_Deadline"));
 					DMUtils.maxSurvey = int.Parse(setNode.GetValue("Max_Survey"));
 					DMUtils.maxAsteroid = int.Parse(setNode.GetValue("Max_Asteroid"));
 					DMUtils.maxAnomaly = int.Parse(setNode.GetValue("Max_Anomaly"));
 					DMUtils.maxMagnetic = int.Parse(setNode.GetValue("Max_Magnetic"));
 
-					DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3}",
-						DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty);
+					DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3} ; Deadline Length: {4}",
+						DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty, DMUtils.deadline);
 					DMUtils.Logging("Max Contract Variables Set: Survey: {0} ; Asteroid: {1} ; Anomaly: {2} ; Magnetic: {3}",
 						DMUtils.maxSurvey, DMUtils.maxAsteroid, DMUtils.maxAnomaly, DMUtils.maxMagnetic);
 					break;
