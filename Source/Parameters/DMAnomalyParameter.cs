@@ -124,9 +124,9 @@ namespace DMagic
 		protected override string GetTitle()
 		{
 			if (situation == ExperimentSituations.SrfLanded)
-				return string.Format("Gather {0} data from the surface on the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
+				return string.Format("{0} data from the surface near the anomalous signal", scienceContainer.exp.experimentTitle, body.theName);
 			else if (situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingLow)
-				return string.Format("Gather {0} data from above on the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
+				return string.Format("{0} data from above close to the anomalous signal", scienceContainer.exp.experimentTitle, body.theName);
 			else
 				return "Fix Your Stupid Code Idiot";
 		}
@@ -198,8 +198,7 @@ namespace DMagic
 			{
 				if (s == scienceContainer.exp.id)
 				{
-					if (!DMAnomalyList.MagUpdating && !DMAnomalyList.ScannerUpdating)
-						DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
+					DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
 					DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
 
 					//Draw a cone above the anomaly position up to 100km with a diameter of 30km at its widest
