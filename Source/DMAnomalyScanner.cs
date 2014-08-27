@@ -316,8 +316,10 @@ namespace DMagic
 				}
 				getAnomValues();
 				if (anomInRange)
+				{
 					if (anomCloseRange)
 						runExperiment();
+				}
 				else
 					ScreenMessages.PostScreenMessage("No anomalous signals detected.", 4f, ScreenMessageStyle.UPPER_CENTER);
 			}
@@ -377,7 +379,7 @@ namespace DMagic
 		{
 			if (expSit == ExperimentSituations.SrfLanded)
 				return string.Format(" of the {0} from {1}'s surface", b, vessel.mainBody.theName);
-			if (expSit == ExperimentSituations.FlyingHigh)
+			if (expSit == ExperimentSituations.FlyingLow)
 				return string.Format(" while flying above the {0} on {1}", b, vessel.mainBody.theName);
 			return "Dummy";
 		}
