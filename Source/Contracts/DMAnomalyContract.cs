@@ -46,6 +46,7 @@ namespace DMagic
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
 		private DMAnomalyParameter[] anomParams = new DMAnomalyParameter[4];
 		private CelestialBody body;
+		private List<PQSCity> cities = new List<PQSCity>();
 		private DMAnomalyObject targetAnomaly;
 		private double lat, lon, fudgedLat, fudgedLon;
 		private string cardNS, cardEW, hash;
@@ -101,8 +102,15 @@ namespace DMagic
 			else
 				return false;
 
+			PQSCity[] Cities = UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
+			foreach (PQSCity city in Cities)
+			{
+				if (city.transform.parent.name == body.name)
+					cities.Add(city);
+			}
+
 			//Select random anomaly
-			targetAnomaly = DMAnomalyList.anomObjects[rand.Next(0, DMAnomalyList.anomObjects.Count)];
+			targetAnomaly = new DMAnomalyObject(cities[rand.Next(0, cities.Count)]);
 			hash = targetAnomaly.name;
 			lon = targetAnomaly.lon;
 			lat = targetAnomaly.lat;
@@ -262,7 +270,7 @@ namespace DMagic
 			if (HighLogic.LoadedSceneIsFlight)
 				try
 				{
-					targetAnomaly = DMAnomalyList.anomObjects.FirstOrDefault(a => a.name == hash);
+					targetAnomaly = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash));
 					if (lat == 0.000d)
 						lat = targetAnomaly.lat;
 					if (lon == 0.000d)
