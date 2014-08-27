@@ -56,9 +56,6 @@ namespace DMagic
 		{
 			Vector3d vPos = v.transform.position;
 			a.worldLocation = a.city.transform.position;
-			a.alt = v.mainBody.GetAltitude(a.worldLocation);
-			a.lat = v.mainBody.GetLatitude(a.worldLocation);
-			a.lon = v.mainBody.GetLongitude(a.worldLocation);
 			double vAlt = v.mainBody.GetAltitude(vPos);
 			a.Vdistance = (a.worldLocation - vPos).magnitude;
 			a.Vheight = Math.Abs(vAlt - a.alt);
