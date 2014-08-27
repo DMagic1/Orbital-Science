@@ -981,7 +981,7 @@ namespace DMagic
 			}
 
 			DMUtils.DebugLog("Primary Anomaly Parameter Assigned");
-			return new DMCollectScience(body, targetSituation, anomName, "Anomaly Scan", 3);
+			return new DMCollectScience(body, targetSituation, anomName, "Anomaly Scan", 2);
 		}
 
 		internal static DMAnomalyParameter fetchAnomalyParameter(CelestialBody Body, DMAnomalyObject City, DMScienceContainer DMScience)
