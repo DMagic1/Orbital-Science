@@ -43,6 +43,7 @@ namespace DMagic
 		private ExperimentSituations scienceLocation;
 		private DMScienceContainer scienceContainer;
 		private DMAnomalyContract anomContract;
+		private float returnedScience;
 		private string subject, name, biomeName, partName;
 		private int type; //type 0: standard survey; type 1: biological survey; type 2: anomaly
 
@@ -57,6 +58,7 @@ namespace DMagic
 			name = Name;
 			biomeName = BiomeName;
 			type = Type;
+			returnedScience = 0f;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			partName = scienceContainer.sciPart;
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
@@ -112,16 +114,15 @@ namespace DMagic
 			private set { }
 		}
 
+		internal float ReturnedScience
+		{
+			get { return returnedScience; }
+			private set { }
+		}
+
 		protected override string GetHashString()
 		{
 			return body.name;
-		}
-
-		protected override string GetNotes()
-		{
-			if (type == 2)
-				return string.Format("Locate the anomalous signal coming from roughly {0}° {1} and {2}° {3}", Math.Abs(anomContract.Lat), anomContract.CardNS, Math.Abs(anomContract.Lon), anomContract.CardEW);
-			else return base.GetNotes();
 		}
 
 		protected override string GetTitle()
@@ -187,7 +188,7 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}", type, name, body.flightGlobalsIndex, (int)scienceLocation, biomeName));
+			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, body.flightGlobalsIndex, (int)scienceLocation, biomeName, returnedScience));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -202,6 +203,13 @@ namespace DMagic
 			name = scienceString[1];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			partName = scienceContainer.sciPart;
+			if (int.TryParse(scienceString[2], out targetBodyID))
+				body = FlightGlobals.Bodies[targetBodyID];
+			else
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Root.RemoveParameter(this);
+			}
 			if (int.TryParse(scienceString[3], out targetSituation))
 				scienceLocation = (ExperimentSituations)targetSituation;
 			else
@@ -210,13 +218,8 @@ namespace DMagic
 				this.Root.RemoveParameter(this);
 			}
 			biomeName = scienceString[4];
-			if (int.TryParse(scienceString[2], out targetBodyID))
-				body = FlightGlobals.Bodies[targetBodyID];
-			else
-			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Root.RemoveParameter(this);
-			}
+			if (!float.TryParse(scienceString[5], out returnedScience))
+				returnedScience = 0;
 			if (type == 2)
 				anomContract = (DMAnomalyContract)this.Root;
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
@@ -235,13 +238,20 @@ namespace DMagic
 				if (!string.IsNullOrEmpty(biomeName))
 				{
 					if (sub.id == subject)
-						base.SetComplete();
+					{
+						returnedScience += sci;
+						if (returnedScience >= scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.3f)
+							base.SetComplete();
+						else
+							ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
+					}
 				}
 				else
 				{
 					if (sub.id.Contains(subject))
 					{
-						if (sub.science < (scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.3f))
+						returnedScience += sci;
+						if (returnedScience >= scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.3f)
 						{
 							if (DMUtils.biomeRelevant(this.Situation, this.Container.bioMask))
 								ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
