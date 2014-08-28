@@ -31,6 +31,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace DMagic
@@ -45,6 +46,12 @@ namespace DMagic
 			configLoad();
 			DMUtils.OnAnomalyScience = new EventData<CelestialBody,String,String>("OnAnomalyScience");
 			DMUtils.OnAsteroidScience = new EventData<String, String>("OnAsteroidScience");
+			var infoAtt = Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute)) as AssemblyInformationalVersionAttribute;
+			if (infoAtt != null)
+			{
+				DMUtils.version = infoAtt.InformationalVersion;
+				DMUtils.Logging("DMagic Orbital Science Version: [{0}] Loaded", DMUtils.version);
+			}
 		}
 
 		private void configLoad()

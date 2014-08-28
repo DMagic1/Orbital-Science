@@ -64,6 +64,11 @@ namespace DMagic
 			}
 		}
 
+		[KSPField(isPersistant = true)]
+		public string DMagicVersion = "v0.84";
+		[KSPField(isPersistant = true)]
+		public bool contractsReload = false;
+
 		internal DMTransmissionWatcher tranWatcher;
 		internal DMRecoveryWatcher recoveryWatcher;
 		internal DMAnomalyList anomalyList;
@@ -89,6 +94,15 @@ namespace DMagic
 
 		public override void OnLoad(ConfigNode node)
 		{
+			if (DMagicVersion != DMUtils.version)
+			{
+				DMUtils.DebugLog("[DM] New DMagic Version Detected; Resetting Contracts");
+				DMagicVersion = DMUtils.version;
+				contractsReload = true;
+			}
+			else
+				contractsReload = false;
+
 			DMUtils.DebugLog("Loading Science Scenario");
 			recoveredScienceList.Clear();
 			ConfigNode results_node = node.GetNode("Asteroid_Science");

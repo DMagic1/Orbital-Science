@@ -42,8 +42,9 @@ namespace DMagic
 		internal static System.Random rand;
 		internal static Dictionary<string, Dictionary<string, DMScienceContainer>> availableScience;
 		internal static Dictionary<string, List<string>> backStory;
-		internal static float science, reward, forward, penalty, deadline;
-		internal static int maxSurvey, maxAsteroid, maxAnomaly, maxMagnetic;
+		internal static float science, reward, forward, penalty, deadline = 1f;
+		internal static int maxSurvey, maxAsteroid, maxAnomaly, maxMagnetic = 1;
+		internal static string version;
 		internal static EventData<CelestialBody, String, String> OnAnomalyScience;
 		internal static EventData<String, String> OnAsteroidScience;
 
@@ -130,6 +131,37 @@ namespace DMagic
 			else
 				D /= (3600 * 24);
 			return D;
+		}
+
+		internal static void resetContracts()
+		{
+			DMScienceScenario.SciScenario.contractsReload = false;
+			Debug.LogWarning("[DM] Version Change Detected: Reloading DMagic Contracts...");
+
+			foreach (DMAnomalyContract c in ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>())
+			{
+				c.Unregister();
+				ContractSystem.Instance.Contracts.Remove(c);
+			}
+
+			foreach (DMAsteroidSurveyContract c in ContractSystem.Instance.GetCurrentContracts<DMAsteroidSurveyContract>())
+			{
+				c.Unregister();
+				ContractSystem.Instance.Contracts.Remove(c);
+			}
+
+			foreach (DMMagneticSurveyContract c in ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>())
+			{
+				c.Unregister();
+				ContractSystem.Instance.Contracts.Remove(c);
+			}
+
+			foreach (DMSurveyContract c in ContractSystem.Instance.GetCurrentContracts<DMSurveyContract>())
+			{
+				c.Unregister();
+				ContractSystem.Instance.Contracts.Remove(c);
+			}
+
 		}
 
 		#region Debug Logging
