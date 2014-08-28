@@ -161,7 +161,6 @@ namespace DMagic
 				c.Unregister();
 				ContractSystem.Instance.Contracts.Remove(c);
 			}
-
 		}
 
 		#region Debug Logging

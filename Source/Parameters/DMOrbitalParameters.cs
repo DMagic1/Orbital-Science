@@ -152,6 +152,8 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
+			if (DMScienceScenario.SciScenario.contractsReload)
+				DMUtils.resetContracts();
 			int target;
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
 			if (!int.TryParse(orbitString[0], out type))

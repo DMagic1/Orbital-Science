@@ -243,10 +243,7 @@ namespace DMagic
 		protected override void OnLoad(ConfigNode node)
 		{
 			if (DMScienceScenario.SciScenario.contractsReload)
-			{
 				DMUtils.resetContracts();
-				return;
-			}
 			int targetBodyID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];

@@ -131,6 +131,8 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
+			if (DMScienceScenario.SciScenario.contractsReload)
+				DMUtils.resetContracts();
 			int targetLocation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			name = scienceString[0];

@@ -157,10 +157,7 @@ namespace DMagic
 		protected override void OnLoad(ConfigNode node)
 		{
 			if (DMScienceScenario.SciScenario.contractsReload)
-			{
 				DMUtils.resetContracts();
-				return;
-			}
 			int target;
 			if (int.TryParse(node.GetValue("Mag_Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];

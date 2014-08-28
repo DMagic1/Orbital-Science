@@ -150,6 +150,8 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
+			if (DMScienceScenario.SciScenario.contractsReload)
+				DMUtils.resetContracts();
 			int bodyID, sitID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];
