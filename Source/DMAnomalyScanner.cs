@@ -199,37 +199,40 @@ namespace DMagic
 			foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
 			{
 				DMAnomalyList.updateAnomaly(vessel, anom);
-				if (anom.Vhorizontal < (11000 * (1 - anom.Vheight / 6000)))
+				if (anom.Vdistance < 50000)
 				{
-					anomInRange = true;
-					if (anom.Vhorizontal < (10000 * (1 - anom.Vheight / 5000)))
+					if (anom.Vhorizontal < (11000 * (1 - anom.Vheight / 6000)))
 					{
-						if (!camDeployed)
+						anomInRange = true;
+						if (anom.Vhorizontal < (10000 * (1 - anom.Vheight / 5000)))
 						{
-							newSecondaryAnimator(camAnimate, 1f, 0f, WrapMode.Default);
-							camDeployed = true;
-							if (anom.Vdistance < 250)
+							if (!camDeployed)
 							{
-								newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
-								closeRange = true;
+								newSecondaryAnimator(camAnimate, 1f, 0f, WrapMode.Default);
+								camDeployed = true;
+								if (anom.Vdistance < 250)
+								{
+									newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
+									closeRange = true;
+								}
+								else
+								{
+									closeRange = false;
+								}
 							}
-							else
+							if (camDeployed)
 							{
-								closeRange = false;
-							}
-						}
-						if (camDeployed)
-						{
-							camRotate(anom.worldLocation);
-							if (anom.Vdistance < 250 && closeRange == false)
-							{
-								newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
-								closeRange = true;
-							}
-							if (anom.Vdistance >= 275 && closeRange == true)
-							{
-								animSecondary[foundAnimate].wrapMode = WrapMode.Default;
-								closeRange = false;
+								camRotate(anom.worldLocation);
+								if (anom.Vdistance < 250 && closeRange == false)
+								{
+									newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
+									closeRange = true;
+								}
+								if (anom.Vdistance >= 275 && closeRange == true)
+								{
+									animSecondary[foundAnimate].wrapMode = WrapMode.Default;
+									closeRange = false;
+								}
 							}
 						}
 					}
@@ -251,24 +254,27 @@ namespace DMagic
 			closestAnom = "";
 			foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
 			{
-				if (anom.Vhorizontal < (30000 * (1 - anom.Vheight / 15000)))	//Determine cutoff distance on sliding scale based on altitude above the anomaly.
+				if (anom.Vdistance < 100000)
 				{
-					DMAnomalyList.bearing(vessel, anom);			//Calculate the bearing to the anomaly from the current vessel position.
-					string anomDirection = direction(anom.bearing);			//Get cardinal directions based on the bearing.
-					anomInRange = true;
-					DMUtils.Logging("Anomaly: {0} is at bearing: {1:N1} deg at a distance of {2:N1}m.", anom.name, anom.bearing, anom.Vdistance);
-					if (anom.Vdistance < 250)           //Scanning range distance for science experiment.
+					if (anom.Vhorizontal < (30000 * (1 - anom.Vheight / 15000)))	//Determine cutoff distance on sliding scale based on altitude above the anomaly.
 					{
-						closestAnom = anom.name;
-						anomCloseRange = true;
-					}
-					else if (anom.Vheight > 10000)				//Use alternate message when more than 10km above the anomaly.
-					{
-						ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km below current position, get closer for a better signal", anom.Vdistance / 1000 + RandomDouble((2 * (anom.Vdistance / 1000) / 30), (4 * (anom.Vdistance / 1000) / 30))), 6f, ScreenMessageStyle.UPPER_CENTER);
-					}
-					else
-					{
-						ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km away to the {1}, get closer for a better signal.", anom.Vdistance / 1000 + RandomDouble((2 * (anom.Vdistance / 1000) / 30), (4 * (anom.Vdistance / 1000) / 30)), anomDirection), 6f, ScreenMessageStyle.UPPER_CENTER);
+						DMAnomalyList.bearing(vessel, anom);			//Calculate the bearing to the anomaly from the current vessel position.
+						string anomDirection = direction(anom.bearing);			//Get cardinal directions based on the bearing.
+						anomInRange = true;
+						DMUtils.Logging("Anomaly: {0} is at bearing: {1:N1} deg at a distance of {2:N1}m.", anom.name, anom.bearing, anom.Vdistance);
+						if (anom.Vdistance < 250)           //Scanning range distance for science experiment.
+						{
+							closestAnom = anom.name;
+							anomCloseRange = true;
+						}
+						else if (anom.Vheight > 10000)				//Use alternate message when more than 10km above the anomaly.
+						{
+							ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km below current position, get closer for a better signal", anom.Vdistance / 1000 + RandomDouble((2 * (anom.Vdistance / 1000) / 30), (4 * (anom.Vdistance / 1000) / 30))), 6f, ScreenMessageStyle.UPPER_CENTER);
+						}
+						else
+						{
+							ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km away to the {1}, get closer for a better signal.", anom.Vdistance / 1000 + RandomDouble((2 * (anom.Vdistance / 1000) / 30), (4 * (anom.Vdistance / 1000) / 30)), anomDirection), 6f, ScreenMessageStyle.UPPER_CENTER);
+						}
 					}
 				}
 			}
