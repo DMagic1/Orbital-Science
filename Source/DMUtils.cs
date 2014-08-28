@@ -601,22 +601,24 @@ namespace DMagic
 		//    return new DMCollectScience(body, targetSituation, biome, name, 0);
 		//}
 
-		internal static DMCollectScience fetchScienceContract(CelestialBody Body, ExperimentSituations Situation, ScienceExperiment Exp)
+		//Use for magnetic field survey
+		internal static DMCollectScience fetchScienceContract(CelestialBody Body, ExperimentSituations Situation, DMScienceContainer DMScience)
 		{
-			DMScienceContainer scienceContainer;
 			AvailablePart aPart;
 			string name;
 
 			//Choose science container based on a given science experiment
-			scienceContainer = DMUtils.availableScience["All"].FirstOrDefault(e => e.Value.exp == Exp).Value;
-			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == scienceContainer).Key;
+			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 			DMUtils.DebugLog("Checking Contract Requirements");
 
+			if (DMScience.exp == null)
+				return null;
+
 			//Determine if the science part is available if applicable
-			if (scienceContainer.sciPart != "None")
+			if (DMScience.sciPart != "None")
 			{
-				DMUtils.DebugLog("Checking For Part {0} Now", scienceContainer.sciPart);
-				aPart = PartLoader.getPartInfoByName(scienceContainer.sciPart);
+				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.sciPart);
+				aPart = PartLoader.getPartInfoByName(DMScience.sciPart);
 				if (aPart == null)
 					return null;
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
@@ -849,6 +851,10 @@ namespace DMagic
 
 			DMUtils.DebugLog("Checking Contract Requirements");
 
+			//Make sure our experiment is OK
+			if (ResearchAndDevelopment.GetExperiment("dmbiodrillscan") == null)
+				return null;
+
 			//Build a list of acceptable biomes if applicable, choose one with remaining science
 			DMUtils.DebugLog("Checking For Biome Usage");
 			List<string> bList = DMUtils.fetchBiome(body);
@@ -959,18 +965,17 @@ namespace DMagic
 
 		internal static DMCollectScience fetchAnomalyParameter(CelestialBody Body, DMAnomalyObject City)
 		{
-			CelestialBody body;
 			ExperimentSituations targetSituation;
-			DMAnomalyObject city;
 			ScienceSubject sub;
 			string subject, anomName;
 
-			body = Body;
-			if (body == null)
+			if (Body == null)
 				return null;
 
-			city = City;
-			if (city == null)
+			if (City == null)
+				return null;
+
+			if (ResearchAndDevelopment.GetExperiment("AnomalyScan") == null)
 				return null;
 
 			if (rand.Next(0, 2) == 0)
@@ -978,9 +983,9 @@ namespace DMagic
 			else
 				targetSituation = ExperimentSituations.FlyingLow;
 
-			anomName = DMAnomalyScanner.anomalyCleanup(city.name);
+			anomName = DMAnomalyScanner.anomalyCleanup(City.name);
 
-			subject = string.Format("AnomalyScan@{0}{1}{2}", body.name, targetSituation, anomName);
+			subject = string.Format("AnomalyScan@{0}{1}{2}", Body.name, targetSituation, anomName);
 
 			//Make sure that our chosen science subject has science remaining to be gathered
 			if ((sub = ResearchAndDevelopment.GetSubjectByID(subject)) != null)
@@ -990,7 +995,7 @@ namespace DMagic
 			}
 
 			DMUtils.DebugLog("Primary Anomaly Parameter Assigned");
-			return new DMCollectScience(body, targetSituation, anomName, "Anomaly Scan", 2);
+			return new DMCollectScience(Body, targetSituation, anomName, "Anomaly Scan", 2);
 		}
 
 		internal static DMAnomalyParameter fetchAnomalyParameter(CelestialBody Body, DMAnomalyObject City, DMScienceContainer DMScience)
@@ -1001,6 +1006,9 @@ namespace DMagic
 			string name;
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
+
+			if (DMScience.exp == null)
+				return null;
 
 			//Determine if the science part is available if applicable
 			if (DMScience.sciPart != "None")

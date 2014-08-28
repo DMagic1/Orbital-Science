@@ -62,10 +62,13 @@ namespace DMagic
 			if (body == null)
 				return false;
 
-			magParams[0] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, ResearchAndDevelopment.GetExperiment("magScan"));
-			magParams[1] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, ResearchAndDevelopment.GetExperiment("magScan"));
-			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, ResearchAndDevelopment.GetExperiment("rpwsScan"));
-			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, ResearchAndDevelopment.GetExperiment("rpwsScan"));
+			DMScienceContainer magContainer = DMUtils.availableScience["All"].FirstOrDefault(m => m.Key == "Magnetometer Scan").Value;
+			DMScienceContainer rpwsContainer = DMUtils.availableScience["All"].FirstOrDefault(r => r.Key == "Radio Plasma Wave Scan").Value;
+
+			magParams[0] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, magContainer);
+			magParams[1] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, magContainer);
+			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, rpwsContainer);
+			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, rpwsContainer);
 
 			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 21) / 10d);
 			double eccen = 0.15d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
@@ -81,9 +84,9 @@ namespace DMagic
 			longParam.AddParameter(eccentricParam);
 			longParam.AddParameter(inclinedParam);
 
-			longParam.SetFunds(50000f * DMUtils.reward, body);
-			longParam.SetReputation(50f * DMUtils.reward, body);
-			longParam.SetScience(50f * DMUtils.science, body);
+			longParam.SetFunds(50000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
+			longParam.SetReputation(50f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
+			longParam.SetScience(50f * DMUtils.science  * ((float)rand.Next(85, 116) / 100f), body);
 
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
@@ -96,8 +99,8 @@ namespace DMagic
 				{
 					this.AddParameter(DMCS, "collectDMScience");
 					DMUtils.DebugLog("Added Mag Survey Param");
-					DMCS.SetFunds(5000f * DMUtils.reward, body);
-					DMCS.SetReputation(25f * DMUtils.reward, body);
+					DMCS.SetFunds(5000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
+					DMCS.SetReputation(25f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
 					DMCS.SetScience(20f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
 				}
 			}
