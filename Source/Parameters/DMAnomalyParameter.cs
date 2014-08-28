@@ -126,7 +126,7 @@ namespace DMagic
 			if (situation == ExperimentSituations.SrfLanded)
 				return string.Format("{0} data from the surface near the anomalous signal", scienceContainer.exp.experimentTitle, body.theName);
 			else if (situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingLow)
-				return string.Format("{0} data from above close to the anomalous signal", scienceContainer.exp.experimentTitle, body.theName);
+				return string.Format("{0} data from above near the anomalous signal", scienceContainer.exp.experimentTitle, body.theName);
 			else
 				return "Fix Your Stupid Code Idiot";
 		}
@@ -158,6 +158,7 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			name = anomalyString[2];
@@ -168,6 +169,7 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			if (!bool.TryParse(anomalyString[4], out collected))
@@ -184,6 +186,7 @@ namespace DMagic
 				catch
 				{
 					DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+					this.Unregister();
 					this.Root.RemoveParameter(this);
 				}
 			}
@@ -199,41 +202,43 @@ namespace DMagic
 					DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
 					DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
 
-					//Draw a cone above the anomaly position up to 100km with a diameter of 30km at its widest
+					//Draw a cone above the anomaly position up to 100km with a diameter of 60km at its widest
 					if (city.Vdistance < 100000)
 					{
 						if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
 						{
-							if (city.Vheight > 1000 && city.Vheight < 100000)
+							if (city.Vheight > 625 && city.Vheight < 100000)
 							{
-								if (city.Vhorizontal < (50000 * (city.Vheight / 100000)))
+								double vHeight = city.Vheight;
+								if (vHeight > 50000) vHeight = 50000;
+								if (city.Vhorizontal < (60000 * (city.Vheight / 50000)))
 								{
-									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+									ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
 								}
 								else
-									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+									ScreenMessages.PostScreenMessage("Anomalous signal too weak, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
-							else if (city.Vheight < 1000)
+							else if (city.Vheight < 625)
 							{
-								if (city.Vhorizontal < 500)
+								if (city.Vhorizontal < 750)
 								{
-									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+									ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
 								}
 								else
-									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+									ScreenMessages.PostScreenMessage("Anomalous signal too weak, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
 						}
 						else if (situation == ExperimentSituations.SrfLanded)
 						{
-							if (city.Vhorizontal < 250)
+							if (city.Vhorizontal < 500)
 							{
-								ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+								ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 								collected = true;
 							}
 							else
-								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+								ScreenMessages.PostScreenMessage("Anomalous signal too weak, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 						}
 					}
 				}
