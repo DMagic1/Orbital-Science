@@ -108,11 +108,13 @@ namespace DMagic
 			if (this.ParameterCount == 0)
 				return false;
 
+			float primaryModifier = ((float)rand.Next(80, 121) / 100f);
+
 			this.agent = AgentList.Instance.GetAgent("DMagic");
-			base.SetExpiry(10, 15f * (float)(this.prestige + 1));
-			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 5f * (this.GetDestinationWeight(body) / 1.5f) * DMUtils.deadline, null);
-			base.SetReputation(50f * DMUtils.reward, 10f * DMUtils.penalty, body);
-			base.SetFunds(50000 * DMUtils.forward, 55000 * DMUtils.reward, 20000 * DMUtils.penalty, body);
+			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
+			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 5f * (this.GetDestinationWeight(body) / 1.4f) * DMUtils.deadline * primaryModifier, null);
+			base.SetReputation(50f * DMUtils.reward * primaryModifier, 10f * DMUtils.penalty * primaryModifier, body);
+			base.SetFunds(50000 * DMUtils.forward * primaryModifier, 55000 * DMUtils.reward * primaryModifier, 20000 * DMUtils.penalty * primaryModifier, body);
 			return true;
 		}
 
@@ -154,22 +156,29 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Loading Mag Contract");
+			if (DMScienceScenario.SciScenario.contractsReload)
+			{
+				DMUtils.resetContracts();
+				return;
+			}
 			int target;
 			if (int.TryParse(node.GetValue("Mag_Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];
 			else
 			{
 				DMUtils.Logging("Failed To Load Mag Contract");
-				this.Cancel();
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
 			}
 			if (this.ParameterCount == 0)
-				this.Cancel();
+			{
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+			}
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Saving Mag Contract");
 			node.AddValue("Mag_Survey_Target", body.flightGlobalsIndex);
 		}
 

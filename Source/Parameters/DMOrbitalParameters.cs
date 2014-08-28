@@ -105,7 +105,6 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Saving Long Orbital Parameter");
 			if (HighLogic.LoadedSceneIsEditor)
 				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3:N3}", type, body.flightGlobalsIndex, vName, orbitalParameter));
 			else if (suitableV.Count > 0)
@@ -153,12 +152,12 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Loading Orbital Parameter");
 			int target;
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
 			if (!int.TryParse(orbitString[0], out type))
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			if (int.TryParse(orbitString[1], out target))
@@ -166,12 +165,14 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			vName = orbitString[2];
 			if (!double.TryParse(orbitString[3], out orbitalParameter))
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			if (!HighLogic.LoadedSceneIsEditor)

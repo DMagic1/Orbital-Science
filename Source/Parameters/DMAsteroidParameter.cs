@@ -141,6 +141,7 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Contract Parameter; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			if (int.TryParse(scienceString[2], out targetLocation))
@@ -148,6 +149,7 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			if (!bool.TryParse(scienceString[3], out collected))

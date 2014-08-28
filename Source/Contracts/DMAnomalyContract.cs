@@ -162,7 +162,7 @@ namespace DMagic
 				return false;
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
-			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
+			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
 			base.SetDeadlineYears(3f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
 			base.SetReputation(20f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
 			base.SetFunds(20000f * DMUtils.forward * primaryLocationMod, 18000f * DMUtils.reward * primaryLocationMod, 16000f * DMUtils.penalty * primaryLocationMod, body);
@@ -221,7 +221,7 @@ namespace DMagic
 
 		protected override string GetNotes()
 		{
-			return string.Format("Locate the anomalous signal coming from roughly {0}° {1} and {2}° {3}. An on-screen message will indicate successful collection of anomaly science results; data must be transmitted or returned to complete each parameter.\n", Math.Abs(fudgedLat), cardNS, Math.Abs(fudgedLon), cardEW);
+			return string.Format("Locate the anomalous signal coming from roughly {0}° {1} and {2}° {3}. An on-screen message will indicate successful collection of results; data must be transmitted or returned to complete each parameter.\n", Math.Abs(fudgedLat), cardNS, Math.Abs(fudgedLon), cardEW);
 		}
 
 		protected override string GetDescription()
@@ -242,7 +242,11 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Loading Anomaly Contract");
+			if (DMScienceScenario.SciScenario.contractsReload)
+			{
+				DMUtils.resetContracts();
+				return;
+			}
 			int targetBodyID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];
@@ -251,7 +255,8 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract");
-				this.Cancel();
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
 			}
 			if (!double.TryParse(anomalyString[2], out lat))
 			{
@@ -279,15 +284,18 @@ namespace DMagic
 				catch
 				{
 					DMUtils.Logging("Failed To Load Anomaly Contract");
-					this.Cancel();
+					this.Unregister();
+					ContractSystem.Instance.Contracts.Remove(this);
 				}
 			if (this.ParameterCount == 0)
-				this.Cancel();
+			{
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+			}
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Saving Anomaly Contract");
 			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2:N2}|{3:N2}", hash, body.flightGlobalsIndex, lat, lon));
 		}
 

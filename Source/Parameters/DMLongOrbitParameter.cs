@@ -94,7 +94,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Loading Long Orbital Parameter");
 			int target;
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
 			if (int.TryParse(orbitString[0], out target))
@@ -102,6 +101,7 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			if (!double.TryParse(orbitString[1], out orbitTime))

@@ -93,9 +93,10 @@ namespace DMagic
 				if (DMAP != null)
 				{
 					this.AddParameter(DMAP, "collectDMScience");
+					float modifier = ((float)rand.Next(85, 116) / 100f);
 					DMAP.SetScience(DMAP.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
-					DMAP.SetFunds(8000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size), 6000f * DMUtils.penalty * (size + 1), null);
-					DMAP.SetReputation(15f * DMUtils.reward * (size + 1), 10f * DMUtils.penalty * (size + 1), null);
+					DMAP.SetFunds(8000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size) * modifier, 6000f * DMUtils.penalty * (size + 1) * modifier, null);
+					DMAP.SetReputation(15f * DMUtils.reward * (size + 1) * modifier, 10f * DMUtils.penalty * (size + 1) * modifier, null);
 					DMUtils.DebugLog("Asteroid Survey Parameter Added");
 				}
 			}
@@ -103,11 +104,13 @@ namespace DMagic
 			if (this.ParameterCount < 3)
 				return false;
 
+			float primaryModifier = ((float)rand.Next(85, 116) / 100f);
+
 			this.agent = AgentList.Instance.GetAgent("DMagic");
-			base.SetExpiry(10, 20 * (float)(this.prestige + 1));
-			base.SetDeadlineYears(4f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, null);
-			base.SetReputation(newParams.Length * 5f * DMUtils.reward * (size + 1), newParams.Length * 3f * DMUtils.penalty, null);
-			base.SetFunds(12000 * newParams.Length * DMUtils.forward * (size + 1), 11000 * newParams.Length * DMUtils.reward * (size + 1), 9000 * newParams.Length * DMUtils.penalty * (size + 1), null);
+			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
+			base.SetDeadlineYears(4f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline * primaryModifier, null);
+			base.SetReputation(newParams.Length * 5f * DMUtils.reward * (size + 1) * primaryModifier, newParams.Length * 3f * DMUtils.penalty * primaryModifier, null);
+			base.SetFunds(12000 * newParams.Length * DMUtils.forward * (size + 1) * primaryModifier, 11000 * newParams.Length * DMUtils.reward * (size + 1) * primaryModifier, 9000 * newParams.Length * DMUtils.penalty * (size + 1) * primaryModifier, null);
 			return true;
 		}
 
@@ -155,15 +158,21 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Loading Asteroid Survey Contract");
+			if (DMScienceScenario.SciScenario.contractsReload)
+			{
+				DMUtils.resetContracts();
+				return;
+			}
 			hash = node.GetValue("Asteroid_Size_Class");
 			if (this.ParameterCount == 0)
-				this.Cancel();
+			{
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+			}
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			//DMUtils.DebugLog("Saving Asteroid Survey Contract");
 			node.AddValue("Asteroid_Size_Class", hash);
 		}
 

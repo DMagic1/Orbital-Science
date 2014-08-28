@@ -224,7 +224,7 @@ namespace DMagic
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParams[0].Situation), newParams[0].Body) * ((float)rand.Next(85, 116) / 100f);
-			base.expiryType = DeadlineType.None;
+			base.SetExpiry(10f * DMUtils.deadline, 20f * DMUtils.deadline);
 			base.SetDeadlineYears(3f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
 			base.SetReputation(newParams.Length * 8f * DMUtils.reward * primaryLocationMod, newParams.Length * 5f * DMUtils.penalty * primaryLocationMod, body);
 			base.SetFunds(3000 * newParams.Length * DMUtils.forward * primaryLocationMod, 2500 * newParams.Length * DMUtils.reward * primaryLocationMod, 2000 * newParams.Length * DMUtils.penalty * primaryLocationMod, body);
@@ -285,11 +285,11 @@ namespace DMagic
 		protected override string GetSynopsys()
 		{
 			if (surveyType == 0)
-				return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit collecting multiple science observations.", body.theName);
+				return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit multiple science observations.", body.theName);
 			else if (surveyType == 1)
-				return string.Format("We would like you to study the surface of {0}. Collect and return or transmit collecting multiple science observations.", body.theName);
+				return string.Format("We would like you to study a region on the surface of {0}. Collect and return or transmit multiple science observations.", body.theName);
 			else if (surveyType == 2)
-				return string.Format("We would like you to study {0} for signs of on-going or past biological activity. Collect and return or transmit collecting multiple science observations.", body.theName);
+				return string.Format("We would like you to study {0} for signs of on-going or past biological activity. Collect and return or transmit multiple science observations.", body.theName);
 			else
 				return "Fix me :(";
 		}
@@ -301,15 +301,29 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
+			if (DMScienceScenario.SciScenario.contractsReload)
+			{
+				DMUtils.resetContracts();
+				return;
+			}
 			int target;
 			if (int.TryParse(node.GetValue("Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];
 			else
-				this.Cancel();
+			{
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+			}
 			if (!int.TryParse(node.GetValue("Survey_Type"), out surveyType))
-				this.Cancel();
+			{
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+			}
 			if (this.ParameterCount == 0)
-				this.Cancel();
+			{
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+			}
 		}
 
 		protected override void OnSave(ConfigNode node)
