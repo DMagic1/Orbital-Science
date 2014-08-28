@@ -42,7 +42,6 @@ namespace DMagic
 		private CelestialBody body;
 		private ExperimentSituations scienceLocation;
 		private DMScienceContainer scienceContainer;
-		private DMAnomalyContract anomContract;
 		private float returnedScience;
 		private string subject, name, biomeName, partName;
 		private int type; //type 0: standard survey; type 1: biological survey; type 2: anomaly
@@ -62,8 +61,6 @@ namespace DMagic
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			partName = scienceContainer.sciPart;
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
-			if (type == 3)
-				anomContract = (DMAnomalyContract)this.Root;
 		}
 
 		/// <summary>
@@ -141,9 +138,9 @@ namespace DMagic
 				if (!string.IsNullOrEmpty(biomeName))
 				{
 					if (scienceLocation == ExperimentSituations.InSpaceHigh)
-						return string.Format("{0} data from high orbit around {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+						return string.Format("{0} data from high orbit above {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
 					else if (scienceLocation == ExperimentSituations.InSpaceLow)
-						return string.Format("{0} data from low orbit around {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
+						return string.Format("{0} data from low orbit above {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
 					else if (scienceLocation == ExperimentSituations.SrfLanded)
 						return string.Format("{0} data from the surface at {1}'s {2}", scienceContainer.exp.experimentTitle, body.theName, biomeName);
 					else if (scienceLocation == ExperimentSituations.SrfSplashed)
@@ -156,9 +153,9 @@ namespace DMagic
 				else
 				{
 					if (scienceLocation == ExperimentSituations.InSpaceHigh)
-						return string.Format("{0} data from high orbit around {1}", scienceContainer.exp.experimentTitle, body.theName);
+						return string.Format("{0} data from high orbit above {1}", scienceContainer.exp.experimentTitle, body.theName);
 					else if (scienceLocation == ExperimentSituations.InSpaceLow)
-						return string.Format("{0} data from low orbit around {1}", scienceContainer.exp.experimentTitle, body.theName);
+						return string.Format("{0} data from low orbit above {1}", scienceContainer.exp.experimentTitle, body.theName);
 					else if (scienceLocation == ExperimentSituations.SrfLanded)
 						return string.Format("{0} data from the surface of {1}", scienceContainer.exp.experimentTitle, body.theName);
 					else if (scienceLocation == ExperimentSituations.SrfSplashed)
@@ -197,8 +194,8 @@ namespace DMagic
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			if (!int.TryParse(scienceString[0], out type))
 			{
-				DMUtils.Logging("Failed To Load Contract Parameter; Parameter Removed");
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Contract Parameter; Parameter Reset");
+				type = 1;
 			}
 			name = scienceString[1];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
@@ -208,6 +205,7 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			if (int.TryParse(scienceString[3], out targetSituation))
@@ -215,20 +213,19 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			biomeName = scienceString[4];
 			if (!float.TryParse(scienceString[5], out returnedScience))
 				returnedScience = 0;
-			if (type == 2)
-				anomContract = (DMAnomalyContract)this.Root;
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 		}
 
 		private void anomalyReceive(CelestialBody Body, string exp, string biome)
 		{
 			if (body == Body && exp == scienceContainer.exp.id && biomeName.Replace(" ", "") == biome)
-				ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+				ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void scienceReceive(float sci, ScienceSubject sub)
@@ -252,14 +249,14 @@ namespace DMagic
 					{
 						returnedScience += sci;
 						if (returnedScience >= scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.3f)
+							base.SetComplete();
+						else
 						{
 							if (DMUtils.biomeRelevant(this.Situation, this.Container.bioMask))
 								ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
 							else
 								ScreenMessages.PostScreenMessage("Not enough science remaining; this experiment may need to be returned to Kerbin for credit", 6f, ScreenMessageStyle.UPPER_CENTER);
 						}
-						else
-							base.SetComplete();
 					}
 				}
 			}
