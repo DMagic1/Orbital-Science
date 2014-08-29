@@ -45,6 +45,8 @@ namespace DMagic
 		public string camAnimate = null;
 		[KSPField]
 		public string foundAnimate = null;
+		[KSPField]
+		public float resourceCost = 0f;
 
 		private string closestAnom = null;
 		private bool anomCloseRange, anomInRange, camDeployed, closeRange, fullyDeployed = false;
@@ -74,7 +76,7 @@ namespace DMagic
 				inRange();
 				if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
 				{
-					float cost = resourceExpCost * Time.deltaTime;
+					float cost = resourceCost * Time.deltaTime;
 					part.RequestResource(resourceExperiment, cost);
 				}
 			}
