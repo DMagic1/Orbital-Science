@@ -71,9 +71,9 @@ namespace DMagic
 				}
 				if (DMScience != sci)
 				{
-					float scienceAdded = sci - DMScience;
-					Debug.LogWarning(string.Format("[DMagic Orbital Science] [Asteroid Science Retrieval] Remove {0} Science From R&D Center After Asteroid Calculations", scienceAdded));
-					ResearchAndDevelopment.Instance.Science -= scienceAdded;
+					float extraScience = sci - DMScience;
+					Debug.LogWarning(string.Format("[DMagic Orbital Science] [Asteroid Science Retrieval] Remove {0} Science From R&D Center After Asteroid Calculations", extraScience));
+					ResearchAndDevelopment.Instance.Science = Math.Max(ResearchAndDevelopment.Instance.Science - extraScience, 0f);
 				}
 			}
 		}
