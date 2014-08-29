@@ -38,7 +38,7 @@ using Contracts.Parameters;
 
 namespace DMagic
 {
-	class DMOrbitalParameters: ContractParameter
+	public class DMOrbitalParameters: ContractParameter
 	{
 		private CelestialBody body;
 		private Vessel newV;

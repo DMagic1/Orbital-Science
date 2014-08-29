@@ -37,7 +37,7 @@ using System.Linq;
 namespace DMagic
 {
 	[KSPScenario(ScenarioCreationOptions.AddToExistingCareerGames | ScenarioCreationOptions.AddToExistingScienceSandboxGames | ScenarioCreationOptions.AddToNewCareerGames | ScenarioCreationOptions.AddToNewScienceSandboxGames, GameScenes.FLIGHT, GameScenes.SPACECENTER, GameScenes.TRACKSTATION, GameScenes.EDITOR)]
-	class DMScienceScenario : ScenarioModule
+	public class DMScienceScenario : ScenarioModule
 	{
 		internal static DMScienceScenario SciScenario
 		{
@@ -81,7 +81,7 @@ namespace DMagic
 			ConfigNode results_node = new ConfigNode("Asteroid_Science");
 			foreach (DMScienceData data in recoveredScienceList)
 			{
-				ConfigNode scienceResults_node = new ConfigNode("Science");
+				ConfigNode scienceResults_node = new ConfigNode("DM_Science");
 				scienceResults_node.AddValue("title", data.title);
 				scienceResults_node.AddValue("bsv", data.basevalue);
 				scienceResults_node.AddValue("scv", data.scival);
@@ -108,7 +108,7 @@ namespace DMagic
 			ConfigNode results_node = node.GetNode("Asteroid_Science");
 			if (results_node != null)
 			{
-				foreach (ConfigNode scienceResults_node in results_node.GetNodes("Science"))
+				foreach (ConfigNode scienceResults_node in results_node.GetNodes("DM_Science"))
 				{
 					string title = scienceResults_node.GetValue("title");
 					float bsv = float.Parse(scienceResults_node.GetValue("bsv"));

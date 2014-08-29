@@ -37,7 +37,7 @@ using UnityEngine;
 
 namespace DMagic
 {
-	class DMTransmissionWatcher : MonoBehaviour
+	internal class DMTransmissionWatcher : MonoBehaviour
 	{
 
 		private void Start()
