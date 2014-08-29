@@ -202,7 +202,14 @@ namespace DMagic
 			}
 			name = scienceString[1];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.sciPart;
+			if (scienceContainer == null)
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
+				this.Root.RemoveParameter(this);
+			}
+			else
+				partName = scienceContainer.sciPart;
 			if (int.TryParse(scienceString[2], out targetBodyID))
 				body = FlightGlobals.Bodies[targetBodyID];
 			else
@@ -221,7 +228,10 @@ namespace DMagic
 			}
 			biomeName = scienceString[4];
 			if (!float.TryParse(scienceString[5], out returnedScience))
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
 				returnedScience = 0;
+			}
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 		}
 

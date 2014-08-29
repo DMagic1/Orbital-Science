@@ -138,7 +138,14 @@ namespace DMagic
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			name = scienceString[0];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.sciPart;
+			if (scienceContainer == null)
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
+				this.Root.RemoveParameter(this);
+			}
+			else
+				partName = scienceContainer.sciPart;
 			if (int.TryParse(scienceString[1], out size))
 				aSize = DMUtils.sizeHash(size);
 			else
