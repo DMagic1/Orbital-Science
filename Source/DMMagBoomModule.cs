@@ -114,7 +114,9 @@ namespace DMagic
 
 		public void Update()
 		{
-			float deltaTime = TimeWarp.deltaTime / Time.deltaTime;
+			float deltaTime = 1f;
+			if (Time.deltaTime != 0)
+				deltaTime = TimeWarp.deltaTime / Time.deltaTime;
 			if (deltaTime > 10) deltaTime = 10;
 			if (((Time.time * deltaTime) - lastUpdate) > updateInterval) {
 				lastUpdate = Time.time;
@@ -307,10 +309,16 @@ namespace DMagic
 						var sortAnom = from entry in Cities orderby entry.Vdistance ascending select entry;
 						var closestAnom = sortAnom.First();
 
-						double anomMult = 1 + ((100000 - closestAnom.Vdistance) / 10000);
-						double anomMultZ = 1 + (anomMult * ((closestAnom.Vdistance - closestAnom.Vhorizontal) / closestAnom.Vdistance));
-						double anomMultH = 1 + (anomMult * ((closestAnom.Vdistance - closestAnom.Vheight) / closestAnom.Vdistance));
+						double anomMult = 1d;
+						double anomMultZ = 1d;
+						double anomMultH = 1d;
 
+						if (closestAnom.Vdistance != 0)
+						{
+							anomMult = 1 + ((100000 - closestAnom.Vdistance) / 10000);
+							anomMultZ = 1 + (anomMult * ((closestAnom.Vdistance - closestAnom.Vhorizontal) / closestAnom.Vdistance));
+							anomMultH = 1 + (anomMult * ((closestAnom.Vdistance - closestAnom.Vheight) / closestAnom.Vdistance));
+						}
 						Bz *= anomMultZ;
 						Bh *= anomMultH;
 					}
@@ -451,7 +459,9 @@ namespace DMagic
 		{
 			double solarDay = planet.rotationPeriod;
 			if (planet.flightGlobalsIndex > 0)
-				solarDay = planet.rotationPeriod / (1 - (planet.rotationPeriod / planet.orbit.period));
+				if (planet.orbit.period != 0)
+					if ((planet.rotationPeriod / planet.orbit.period) != 1)
+						solarDay = planet.rotationPeriod / (1 - (planet.rotationPeriod / planet.orbit.period));
 			return solarDay;
 		}
 

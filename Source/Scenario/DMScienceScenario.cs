@@ -178,7 +178,7 @@ namespace DMagic
 			DMData.science = Math.Min(DMData.science + science, DMData.cap);
 			DMData.scival = ScienceValue(DMData.science, DMData.cap);
 			UpdateNewScience(DMData);
-			if (HighLogic.LoadedSceneIsFlight)
+			if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
 				updateRemainingData();
 		}
 
@@ -190,7 +190,10 @@ namespace DMagic
 		private float ScienceValue(float sci, float cap)
 		{
 			float sciVal = 1f;
-			sciVal = Math.Max(1f - (sci / cap), 0f);
+			if (cap == 0)
+				sciVal = 0f;
+			else
+				sciVal = Math.Max(1f - (sci / cap), 0f);
 			return sciVal;
 		}
 
@@ -214,7 +217,7 @@ namespace DMagic
 							{
 								ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
 								sub.scientificValue *= DMData.scival;
-								sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
+								sub.science = Math.Max(0f, sub.scienceCap - (sub.scienceCap * sub.scientificValue));
 							}
 						}
 					}

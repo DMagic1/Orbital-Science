@@ -61,7 +61,9 @@ namespace DMagic
 				{
 					if (DMData.title == sub.title)
 					{
-						float oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
+						float oldSciVal = 0f;
+						if (sub.scienceCap != 0)
+							oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
 						DMScience = sub.subjectValue * DMData.basevalue * DMData.scival * oldSciVal;
 						DMScienceScenario.SciScenario.submitDMScience(DMData, DMScience);
 						break;

@@ -310,7 +310,10 @@ namespace DMagic
 						if (removeV.Count > 0)
 						{
 							foreach (Vessel V in removeV)
-								suitableV.Remove(V);
+							{
+								if (suitableV.Contains(V))
+									suitableV.Remove(V);
+							}
 						}
 						if (complete)
 							this.SetComplete();

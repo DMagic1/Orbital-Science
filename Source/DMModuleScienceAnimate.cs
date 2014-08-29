@@ -133,13 +133,15 @@ namespace DMagic
 		private string failMessage = "";
 		protected float labDataBoost = 0.5f;
 
-		//You never know...
-		public bool conduct
+		/// <summary>
+		/// For external use to determine if a module can conduct science
+		/// </summary>
+		/// <param name="MSE">The base ModuleScienceExperiment instance</param>
+		/// <returns>True if the experiment can be conducted under current conditions</returns>
+		public static bool conduct(ModuleScienceExperiment MSE)
 		{
-			get {
-			return canConduct();
-			}
-			private set {}
+			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)MSE;
+			return DMMod.canConduct();
 		}
 
 		#endregion
@@ -152,11 +154,13 @@ namespace DMagic
 				anim = part.FindModelAnimators(animationName)[0];
 			if (!string.IsNullOrEmpty(sampleAnim)) {
 				anim2 = part.FindModelAnimators(sampleAnim)[0];
-				secondaryAnimator(sampleAnim, 0f, experimentNumber * (1f / experimentLimit), 1f);
+				if (experimentLimit != 0)
+					secondaryAnimator(sampleAnim, 0f, experimentNumber * (1f / experimentLimit), 1f);
 			}
 			if (!string.IsNullOrEmpty(indicatorAnim)) {
 				anim2 = part.FindModelAnimators(indicatorAnim)[0];
-				secondaryAnimator(indicatorAnim, 0f, experimentNumber * (1f / experimentLimit), 1f);
+				if (experimentLimit != 0)
+					secondaryAnimator(indicatorAnim, 0f, experimentNumber * (1f / experimentLimit), 1f);
 			}
 			if (!string.IsNullOrEmpty(sampleEmptyAnim))
 				anim2 = part.FindModelAnimators(sampleEmptyAnim)[0];
@@ -214,12 +218,15 @@ namespace DMagic
 				lastInOperableState = true;
 			else if (lastInOperableState) {
 				lastInOperableState = false;
-				if (!string.IsNullOrEmpty(sampleEmptyAnim))
-					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-				else if (!string.IsNullOrEmpty(sampleAnim))
-					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-				if (!string.IsNullOrEmpty(indicatorAnim))
-					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+				if (experimentLimit != 0)
+				{
+					if (!string.IsNullOrEmpty(sampleEmptyAnim))
+						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+					else if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+				}
 				experimentNumber = 0;
 				experimentsReturned = 0;
 				if (keepDeployedMode == 0) retractEvent();
@@ -268,7 +275,7 @@ namespace DMagic
 			}
 			if (USStock)
 				enviroList = this.part.FindModulesImplementing<DMEnviroSensor>();
-			if (waitForAnimationTime == -1)
+			if (waitForAnimationTime == -1 && animSpeed != 0)
 				waitForAnimationTime = anim[animationName].length / animSpeed;
 			if (experimentID != null) {
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
@@ -380,7 +387,7 @@ namespace DMagic
 			IsDeployed = false;
 			if (USScience) {
 				if (anim4 != null) {
-					if (anim[animationName].length > anim4[bayAnimation].length)
+					if (anim[animationName].length > anim4[bayAnimation].length && anim4[bayAnimation].length != 0)
 						primaryAnimator(-1f * animSpeed, (anim[animationName].length / anim4[bayAnimation].length), WrapMode.Default, bayAnimation, anim4);
 					else
 						primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, bayAnimation, anim4);
@@ -466,12 +473,15 @@ namespace DMagic
 			{
 				if (storedScienceReports.Count > 0)
 				{
-					if (!string.IsNullOrEmpty(sampleEmptyAnim))
-						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-					else if (!string.IsNullOrEmpty(sampleAnim))
-						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-					if (!string.IsNullOrEmpty(indicatorAnim))
-						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+					if (experimentLimit != 0)
+					{
+						if (!string.IsNullOrEmpty(sampleEmptyAnim))
+							secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+						else if (!string.IsNullOrEmpty(sampleAnim))
+							secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+						if (!string.IsNullOrEmpty(indicatorAnim))
+							secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+					}
 					foreach (ScienceData data in storedScienceReports)
 					{
 						storedScienceReports.Remove(data);
@@ -807,13 +817,17 @@ namespace DMagic
 
 		private void onDiscardData(ScienceData data)
 		{
-			if (storedScienceReports.Count > 0) {
-				if (!string.IsNullOrEmpty(sampleEmptyAnim))
-					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), anim2[sampleEmptyAnim].length / experimentLimit);
-				else if (!string.IsNullOrEmpty(sampleAnim))
-					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
-				if (!string.IsNullOrEmpty(indicatorAnim))
-					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), anim[indicatorAnim].length / experimentLimit);
+			if (storedScienceReports.Count > 0)
+			{
+				if (experimentLimit != 0)
+				{
+					if (!string.IsNullOrEmpty(sampleEmptyAnim))
+						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), anim2[sampleEmptyAnim].length / experimentLimit);
+					else if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), anim[indicatorAnim].length / experimentLimit);
+				}
 				storedScienceReports.Remove(data);
 				if (keepDeployedMode == 0) retractEvent();
 				experimentNumber--;
@@ -871,15 +885,20 @@ namespace DMagic
 
 		private void onKeepInitialData(ScienceData data)
 		{
-			if (experimentNumber >= experimentLimit) {
+			if (experimentNumber >= experimentLimit)
+			{
 				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 				initialResultsPage();
 			}
-			else if (scienceReports.Count > 0) {
-				if (!string.IsNullOrEmpty(sampleAnim))
-					secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
-				if (!string.IsNullOrEmpty(indicatorAnim))
-					secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
+			else if (scienceReports.Count > 0)
+			{
+				if (experimentLimit != 0)
+				{
+					if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
+				}
 				storedScienceReports.Add(data);
 				scienceReports.Remove(data);
 				experimentNumber++;
@@ -889,11 +908,15 @@ namespace DMagic
 		private void onTransmitInitialData(ScienceData data)
 		{
 			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
-			if (tranList.Count > 0 && scienceReports.Count > 0) {
-				if (!string.IsNullOrEmpty(sampleAnim))
-					secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
-				if (!string.IsNullOrEmpty(indicatorAnim))
-					secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
+			if (tranList.Count > 0 && scienceReports.Count > 0)
+			{
+				if (experimentLimit != 0)
+				{
+					if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
+				}
 				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
 				DumpInitialData(data);
 				experimentNumber++;

@@ -139,7 +139,8 @@ namespace DMagic
 					currentSensorValue = parseSensor();
 					if (sensorInt == 3)
 						currentSensorValue += 429; //For negative temp values
-					normSensorValue = Mathf.Clamp(currentSensorValue / maxSensorValue, 0f, 1f);
+					if (maxSensorValue != 0)
+						normSensorValue = Mathf.Clamp(currentSensorValue / maxSensorValue, 0f, 1f);
 					normSensorValue *= timeDelay;
 					lastValue = normSensorValue;
 				}
