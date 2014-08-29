@@ -240,9 +240,12 @@ namespace DMagic
 					{
 						returnedScience += sci;
 						if (returnedScience >= scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.3f)
+						{
+							ScreenMessages.PostScreenMessage("DMagic Orbital Science Survey Parameter Complete", 4f, ScreenMessageStyle.UPPER_CENTER);
 							base.SetComplete();
+						}
 						else
-							ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
+							ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 6f, ScreenMessageStyle.UPPER_CENTER);
 					}
 				}
 				else
@@ -251,11 +254,14 @@ namespace DMagic
 					{
 						returnedScience += sci;
 						if (returnedScience >= scienceContainer.exp.baseValue * scienceContainer.transmit * sub.subjectValue * 0.3f)
+						{
+							ScreenMessages.PostScreenMessage("DMagic Orbital Science Survey Parameter Complete", 4f, ScreenMessageStyle.UPPER_CENTER);
 							base.SetComplete();
+						}
 						else
 						{
 							if (DMUtils.biomeRelevant(this.Situation, this.Container.bioMask))
-								ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 8f, ScreenMessageStyle.UPPER_CENTER);
+								ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 6f, ScreenMessageStyle.UPPER_CENTER);
 							else
 								ScreenMessages.PostScreenMessage("Not enough science remaining; this experiment may need to be returned to Kerbin for credit", 6f, ScreenMessageStyle.UPPER_CENTER);
 						}
