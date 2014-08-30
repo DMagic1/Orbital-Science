@@ -77,7 +77,7 @@ namespace DMagic
 			//Minmus and Duna are next
 			else if (this.Prestige == ContractPrestige.Significant)
 			{
-				if (!ProgressTracking.Instance.NodeComplete(new string[] { "Mun", "Flyby" }))
+				if (!ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" }))
 					return false;
 				if (rand.Next(0, 2) == 0)
 					body = FlightGlobals.Bodies[3];
@@ -87,7 +87,7 @@ namespace DMagic
 			//Vall, Tylo, and Bop are last; only if we've been to Jool first
 			else if (this.Prestige == ContractPrestige.Exceptional)
 			{
-				if (!ProgressTracking.Instance.NodeComplete(new string[] { "Jool", "Orbit" }))
+				if (!ProgressTracking.Instance.NodeComplete(new string[] { "Jool", "Flyby" }))
 					return false;
 				int i = rand.Next(0, 3);
 				if (i == 0)
