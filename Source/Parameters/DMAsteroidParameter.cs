@@ -37,7 +37,7 @@ using Contracts.Parameters;
 
 namespace DMagic
 {
-	public class DMAsteroidParameter : CollectScience
+	public class DMAsteroidParameter : ContractParameter
 	{
 		private ExperimentSituations scienceLocation;
 		private DMScienceContainer scienceContainer;
