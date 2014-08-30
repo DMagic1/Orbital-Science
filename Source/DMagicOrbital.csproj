@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <IntermediateOutputPath>C:\Users\David\Documents\Visual Studio 2010\Backup Files\Obj and Bin Folders\DMagic</IntermediateOutputPath>
+    <IntermediateOutputPath>C:\Users\david_000\Documents\Visual Studio 2010\Projects\Bin and Obj Backup\DMagic</IntermediateOutputPath>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
@@ -36,46 +36,42 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\KSP Science\SCANsat Dev\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\..\..\Visual Studio 2010\Projects\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\KSP Science\SCANsat Dev\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\..\..\..\Visual Studio 2010\Projects\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contracts\DMAnomalyContract.cs" />
-    <Compile Include="Contracts\DMAnomalyParameter.cs" />
-    <Compile Include="Contracts\DMLongOrbitParameter.cs" />
+    <Compile Include="Parameters\DMAnomalyParameter.cs" />
+    <Compile Include="Parameters\DMAsteroidParameter.cs" />
+    <Compile Include="Parameters\DMCollectScience.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Parameters\DMLongOrbitParameter.cs" />
     <Compile Include="Contracts\DMMagneticSurveyContract.cs" />
-    <Compile Include="Contracts\DMOrbitalParameters.cs" />
+    <Compile Include="Contracts\DMSurveyContract.cs" />
     <Compile Include="DMAnomalyList.cs" />
     <Compile Include="DMAnomalyObject.cs" />
-    <Compile Include="DMAnomalyScanner.cs" />
     <Compile Include="DMAsteroidScience.cs" />
-    <Compile Include="DMAnomalyScannerOld.cs">
+    <Compile Include="DMAnomalyScanner.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Contracts\DMAsteroidSurveyContract.cs" />
     <Compile Include="DMBioDrill.cs" />
-    <Compile Include="Contracts\DMBioSurveyContract.cs" />
-    <Compile Include="Contracts\DMCollectContract.cs" />
-    <Compile Include="Contracts\DMCollectScience.cs" />
     <Compile Include="DMConfigLoader.cs" />
     <Compile Include="DMEnviroSensor.cs" />
-    <Compile Include="Contracts\DMGroundSurveyContract.cs" />
-    <Compile Include="DMEvents.cs" />
     <Compile Include="DMMagBoomModule.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DMModuleScienceAnimate.cs" />
-    <Compile Include="Contracts\DMSurveyContract.cs" />
-    <Compile Include="Contracts\DMScienceContainer.cs" />
+    <Compile Include="DMScienceContainer.cs" />
+    <Compile Include="Parameters\DMOrbitalParameters.cs" />
     <Compile Include="DMSolarCollector.cs" />
     <Compile Include="DMUtils.cs" />
     <Compile Include="DMWhiteListMods.cs" />
@@ -86,8 +82,8 @@
     <Compile Include="Scenario\DMRecoveryWatcher.cs" />
     <Compile Include="Scenario\DMScienceScenario.cs" />
     <Compile Include="Scenario\DMTransmissionWatcher.cs" />
-    <Compile Include="Scenario\KSPAddonImproved.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
