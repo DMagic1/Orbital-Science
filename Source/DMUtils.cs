@@ -691,6 +691,7 @@ namespace DMagic
 			}
 
 			body = DMUtils.nextTargetBody(c, cR, cUR);
+			DMUtils.DebugLog("Body: {0} Selected", body.name);
 			if (body == null)
 				return null;
 
@@ -742,6 +743,8 @@ namespace DMagic
 			else
 				return null;
 
+			DMUtils.DebugLog("Experimental Situation: {0} Selected", targetSituation.ToString());
+
 			if (DMUtils.biomeRelevant(targetSituation, DMScience.bioMask) && targetSituation != ExperimentSituations.SrfSplashed)
 			{
 				DMUtils.DebugLog("Checking For Biome Usage");
@@ -758,6 +761,7 @@ namespace DMagic
 				}
 			}
 
+			DMUtils.DebugLog("Checking For Remaining Science");
 			//Make sure that our chosen science subject has science remaining to be gathered
 			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.exp.id, body.name, targetSituation, biome.Replace(" ", "")))) != null)
 			{
