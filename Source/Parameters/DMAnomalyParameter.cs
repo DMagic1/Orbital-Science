@@ -38,35 +38,43 @@ using Contracts.Parameters;
 
 namespace DMagic
 {
-	class DMAnomalyParameter: ContractParameter
+	public class DMAnomalyParameter: ContractParameter
 	{
 		private CelestialBody body;
-		private PQSCity city;
+		private DMAnomalyObject city;
 		private ExperimentSituations situation;
 		private DMScienceContainer scienceContainer;
-		private Vector3d anomPosition;
-		private Vector3d recoveryPosition;
-		private string name;
-		private string subject;
-		private string hash;
+		private string name, subject, hash, partName;
 		private bool collected = false;
 
 		public DMAnomalyParameter()
 		{
 		}
 
-		internal DMAnomalyParameter(CelestialBody Body, PQSCity City, ExperimentSituations Situation, string Name)
+		internal DMAnomalyParameter(CelestialBody Body, DMAnomalyObject City, ExperimentSituations Situation, string Name)
 		{
 			body = Body;
 			situation = Situation;
 			name = Name;
 			city = City;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
+			partName = scienceContainer.sciPart;
+			subject = string.Format("{0}@{1}{2}", scienceContainer.exp.id, body.name, situation);
 			hash = city.name;
 		}
 
-		internal PQSCity City
+		/// <summary>
+		/// Used externally to return the name of the requested part
+		/// </summary>
+		/// <param name="cP">Instance of the requested Contract Parameter</param>
+		/// <returns>Available Part name string</returns>
+		public static string PartName(ContractParameter cP)
+		{
+			DMAnomalyParameter aP = (DMAnomalyParameter)cP;
+			return aP.partName;
+		}
+
+		internal DMAnomalyObject City
 		{
 			get
 			{
@@ -116,9 +124,9 @@ namespace DMagic
 		protected override string GetTitle()
 		{
 			if (situation == ExperimentSituations.SrfLanded)
-				return string.Format("Gather {0} data from the surface on the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
+				return string.Format("{0} data from the surface near the anomalous signal", scienceContainer.exp.experimentTitle, body.theName);
 			else if (situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingLow)
-				return string.Format("Gather {0} data from above on the anomalous signal emanating from {1}", scienceContainer.exp.experimentTitle, body.theName);
+				return string.Format("{0} data from above near the anomalous signal", scienceContainer.exp.experimentTitle, body.theName);
 			else
 				return "Fix Your Stupid Code Idiot";
 		}
@@ -126,23 +134,25 @@ namespace DMagic
 		protected override void OnRegister()
 		{
 			GameEvents.OnScienceRecieved.Add(anomalyScience);
+			DMUtils.OnAnomalyScience.Add(monitorAnomScience);
 		}
 
 		protected override void OnUnregister()
 		{
 			GameEvents.OnScienceRecieved.Remove(anomalyScience);
+			DMUtils.OnAnomalyScience.Remove(monitorAnomScience);
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Anomaly Parameter");
 			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2}|{3}|{4}", hash, body.flightGlobalsIndex, name, (int)situation, collected));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Anomaly Parameter");
-			DMUtils.newExp = "";
+			if (DMScienceScenario.SciScenario != null)
+				if (DMScienceScenario.SciScenario.contractsReload)
+					DMUtils.resetContracts();
 			int bodyID, sitID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];
@@ -151,15 +161,25 @@ namespace DMagic
 			else
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			name = anomalyString[2];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+			if (scienceContainer == null)
+			{
+				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				this.Unregister();
+				this.Root.RemoveParameter(this);
+			}
+			else
+				partName = scienceContainer.sciPart;
 			if (int.TryParse(anomalyString[3], out sitID))
 				situation = (ExperimentSituations)sitID;
 			else
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+				this.Unregister();
 				this.Root.RemoveParameter(this);
 			}
 			if (!bool.TryParse(anomalyString[4], out collected))
@@ -171,100 +191,76 @@ namespace DMagic
 			{
 				try
 				{
-					city = (UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash);
+					city = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash));
 				}
 				catch
 				{
 					DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+					this.Unregister();
 					this.Root.RemoveParameter(this);
 				}
 			}
-			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, situation, "");
+			subject = string.Format("{0}@{1}{2}", scienceContainer.exp.id, body.name, situation);
 		}
 
-		protected override void OnUpdate()
+		private void monitorAnomScience(CelestialBody B, string s, string name)
 		{
-			if (this.Root.ContractState == Contract.State.Active && HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+			if (FlightGlobals.currentMainBody == B)
 			{
-				if (setExp(DMUtils.newExp))
+				if (s == scienceContainer.exp.id)
 				{
-					DMUtils.DebugLog("Checking Distance To Anomaly");
-					//Calculate distance to the anomaly on science collection
-					if (FlightGlobals.currentMainBody == body)
+					DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
+					DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
+
+					//Draw a cone above the anomaly position up to 100km with a diameter of 60km at its widest
+					if (city.Vdistance < 100000)
 					{
-						recoveryPosition = FlightGlobals.ActiveVessel.transform.position;
-						anomPosition = city.transform.position;
-						double valt = FlightGlobals.ActiveVessel.mainBody.GetAltitude(recoveryPosition);
-						double anomAlt = FlightGlobals.ActiveVessel.mainBody.GetAltitude(anomPosition);
-						double verticalD = Math.Abs(anomAlt - valt);
-						double totalD = (anomPosition - recoveryPosition).magnitude;
-						double horizantalD = Math.Sqrt((totalD * totalD) - (verticalD * verticalD));
-						DMUtils.DebugLog("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", totalD, verticalD, horizantalD);
-						//Draw a cone above the anomaly position up to 100km with a diametere of 15km at its widest
 						if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
 						{
-							if (verticalD > 1000 && verticalD < 100000)
+							if (city.Vheight > 625 && city.Vheight < 100000)
 							{
-								if (horizantalD < (15000 * (verticalD / 100000)))
+								double vHeight = city.Vheight;
+								if (vHeight > 50000) vHeight = 50000;
+								if (city.Vhorizontal < (60000 * (city.Vheight / 50000)))
 								{
-									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+									ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
 								}
 								else
-									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+									ScreenMessages.PostScreenMessage("Anomalous signal too weak, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
-							else if (verticalD < 1000)
+							else if (city.Vheight < 625)
 							{
-								if (horizantalD < 150)
+								if (city.Vhorizontal < 750)
 								{
-									ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+									ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
 								}
 								else
-									ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+									ScreenMessages.PostScreenMessage("Anomalous signal too weak, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
 						}
 						else if (situation == ExperimentSituations.SrfLanded)
-							if (horizantalD < 50)
+						{
+							if (city.Vhorizontal < 500)
 							{
-								ScreenMessages.PostScreenMessage("Results from Anomalous Signal recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
+								ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 								collected = true;
 							}
 							else
-								ScreenMessages.PostScreenMessage("No anomalies detected in this area, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+								ScreenMessages.PostScreenMessage("Anomalous signal too weak, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
+						}
 					}
-					DMUtils.newExp = "";
 				}
-			}
-		}
-
-		//Event triggered by an experiment activating
-		private bool setExp(string s)
-		{
-			if (string.IsNullOrEmpty(s))
-				return false;
-			else
-			{
-				DMUtils.DebugLog("Matching Experiment Names");
-				if (s == scienceContainer.exp.id)
-					return true;
-				else
-					return false;
 			}
 		}
 
 		private void anomalyScience(float sci, ScienceSubject sub)
 		{
-			if (collected)
+			if (sub.id.Contains(subject))
 			{
-				string clippedSub = sub.id.Replace("@", "");
-				string clippedTargetSub = subject.Replace("@", "");
-				DMUtils.DebugLog("Comparing New Strings [{0}] And [{1}]", clippedSub, clippedTargetSub);
-				if (clippedSub.StartsWith(clippedTargetSub))
-				{
-					DMUtils.DebugLog("Anomaly Contract Complete");
+				if (collected)
 					base.SetComplete();
-				}
 			}
 		}
 	}

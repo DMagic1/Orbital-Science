@@ -36,39 +36,42 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\..\..\Visual Studio 2010\Projects\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\..\..\..\Visual Studio 2010\Projects\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contracts\DMAnomalyContract.cs" />
-    <Compile Include="Contracts\DMAnomalyParameter.cs" />
+    <Compile Include="Parameters\DMAnomalyParameter.cs" />
+    <Compile Include="Parameters\DMAsteroidParameter.cs" />
+    <Compile Include="Parameters\DMCollectScience.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Parameters\DMLongOrbitParameter.cs" />
+    <Compile Include="Contracts\DMMagneticSurveyContract.cs" />
+    <Compile Include="Contracts\DMSurveyContract.cs" />
+    <Compile Include="DMAnomalyList.cs" />
+    <Compile Include="DMAnomalyObject.cs" />
     <Compile Include="DMAsteroidScience.cs" />
     <Compile Include="DMAnomalyScanner.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Contracts\DMAsteroidSurveyContract.cs" />
     <Compile Include="DMBioDrill.cs" />
-    <Compile Include="Contracts\DMBioSurveyContract.cs" />
     <Compile Include="DMConfigLoader.cs" />
-    <Compile Include="Contracts\DMCollectContract.cs" />
-    <Compile Include="Contracts\DMCollectScience.cs" />
     <Compile Include="DMEnviroSensor.cs" />
-    <Compile Include="Contracts\DMGroundSurveyContract.cs" />
     <Compile Include="DMMagBoomModule.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DMModuleScienceAnimate.cs" />
-    <Compile Include="Contracts\DMOrbitalSurveyContract.cs" />
-    <Compile Include="Contracts\DMScienceContainer.cs" />
+    <Compile Include="DMScienceContainer.cs" />
+    <Compile Include="Parameters\DMOrbitalParameters.cs" />
     <Compile Include="DMSolarCollector.cs" />
     <Compile Include="DMUtils.cs" />
     <Compile Include="DMWhiteListMods.cs" />
@@ -76,6 +79,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scenario\DMRecoveryWatcher.cs" />
+    <Compile Include="Scenario\DMScienceScenario.cs" />
+    <Compile Include="Scenario\DMTransmissionWatcher.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

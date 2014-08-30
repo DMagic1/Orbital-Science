@@ -1,6 +1,6 @@
 ﻿#region license
-/* DMagic Orbital Science - White List Mods
- * Class to handle the few non-poorly coded science monitoring mods
+/* DMagic Orbital Science - DM Recovery Watcher
+ * Monobehaviour to watch for science data recovery
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
@@ -25,35 +25,58 @@
  * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace DMagic
 {
-	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
-	internal class DMWhiteListMods: MonoBehaviour
+	internal class DMRecoveryWatcher : MonoBehaviour
 	{
-		//Whitelist of non-faulty mods, sadly only one exists that I know of
-		private string[] WhiteList = new string[1] {"ScienceAlert"};
-		internal static bool whiteListed = false;
 
 		private void Start()
 		{
-			findAssemblies(WhiteList);
+			DMUtils.DebugLog("Starting Recovery Watcher");
+			GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
 		}
 
-		private void findAssemblies(string [] assemblies)
+		private void OnDestroy()
 		{
-			foreach (string name in assemblies) {
-				AssemblyLoader.LoadedAssembly assembly = AssemblyLoader.loadedAssemblies.FirstOrDefault(a => a.assembly.GetName().Name == name);
-				if (assembly != null) {
-					DMUtils.Logging("Assembly: {0} Found; Reactivating Experiment Properties", assembly.assembly.GetName().Name);
-					whiteListed = true;
+			DMUtils.DebugLog("Destroying Recovery Watcher");
+			GameEvents.OnScienceRecieved.Remove(RecoveryWatcher);
+		}
+
+		private void RecoveryWatcher(float sci, ScienceSubject sub)
+		{
+			if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
+			{
+				float DMScience = sci;
+				DMUtils.DebugLog("Science Data Recovered For {0} Science", sci);
+				foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
+				{
+					if (DMData.title == sub.title)
+					{
+						float oldSciVal = 0f;
+						if (sub.scienceCap != 0)
+							oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
+						DMScience = sub.subjectValue * DMData.basevalue * DMData.scival * oldSciVal;
+						DMScienceScenario.SciScenario.submitDMScience(DMData, DMScience);
+						break;
+					}
+				}
+				if (DMScience != sci)
+				{
+					float extraScience = sci - DMScience;
+					Debug.LogWarning(string.Format("[DMagic Orbital Science] [Asteroid Science Retrieval] Remove {0} Science From R&D Center After Asteroid Calculations", extraScience));
+					ResearchAndDevelopment.Instance.Science = Math.Max(ResearchAndDevelopment.Instance.Science - extraScience, 0f);
 				}
 			}
 		}
+
 	}
 }

@@ -45,6 +45,7 @@ namespace DMagic
 			base.OnStart(state);
 			if (!string.IsNullOrEmpty(verticalDrill))
 				anim = part.FindModelAnimators(verticalDrill)[0];
+			base.labDataBoost = 0.3f;
 		}
 
 		public override void DeployExperiment()
@@ -63,6 +64,12 @@ namespace DMagic
 		public override void deployEvent()
 		{
 			startDrill();
+		}
+
+		protected override void onComplete(ScienceData data)
+		{
+			data.transmitValue = 0.6f;
+			base.onComplete(data);
 		}
 
 		//Determine drill orientation relative to parent part, set angle to -90 to 90.

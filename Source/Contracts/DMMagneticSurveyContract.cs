@@ -39,19 +39,14 @@ using Contracts.Agents;
 
 namespace DMagic
 {
-	class DMMagneticSurveyContract: Contract
+	public class DMMagneticSurveyContract: Contract
 	{
 		private CelestialBody body;
 		private DMCollectScience[] magParams = new DMCollectScience[4];
-		private DMLongOrbitParameter longParam;
-		private DMOrbitalParameters inclinedParam, eccentricParam;
-		private bool eccentric, inclined, loaded;
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
 		{
-			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
-				return false;
 			int total = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>().Count();
 			if (total >= DMUtils.maxMagnetic)
 				return false;
@@ -67,28 +62,31 @@ namespace DMagic
 			if (body == null)
 				return false;
 
-			magParams[0] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, ResearchAndDevelopment.GetExperiment("magScan"));
-			magParams[1] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, ResearchAndDevelopment.GetExperiment("magScan"));
-			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, ResearchAndDevelopment.GetExperiment("rpwsScan"));
-			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, ResearchAndDevelopment.GetExperiment("rpwsScan"));
+			DMScienceContainer magContainer = DMUtils.availableScience["All"].FirstOrDefault(m => m.Key == "Magnetometer Scan").Value;
+			DMScienceContainer rpwsContainer = DMUtils.availableScience["All"].FirstOrDefault(r => r.Key == "Radio Plasma Wave Scan").Value;
 
-			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(5, 16) / 10d);
-			double eccen = 0.1d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
+			magParams[0] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, magContainer);
+			magParams[1] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, magContainer);
+			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, rpwsContainer);
+			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, rpwsContainer);
+
+			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 21) / 10d);
+			double eccen = 0.15d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
 			if (eccen > 0.7) eccen = 0.7;
-			double inclination = 15d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
+			double inclination = 20d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 			if (inclination > 75) inclination = 75;
 
-			longParam = new DMLongOrbitParameter(body, time, eccen, inclination);
-			eccentricParam = new DMOrbitalParameters(body, eccen, 0);
-			inclinedParam = new DMOrbitalParameters(body, inclination, 1);
+			DMLongOrbitParameter longParam = new DMLongOrbitParameter(body, time);
+			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(body, eccen, 0);
+			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(body, inclination, 1);
 
 			this.AddParameter(longParam);
-			this.AddParameter(eccentricParam);
-			this.AddParameter(inclinedParam);
+			longParam.AddParameter(eccentricParam);
+			longParam.AddParameter(inclinedParam);
 
-			longParam.SetFunds(50000f * DMUtils.reward, body);
-			longParam.SetReputation(50f * DMUtils.reward, body);
-			longParam.SetScience(50f * DMUtils.science, body);
+			longParam.SetFunds(50000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
+			longParam.SetReputation(50f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
+			longParam.SetScience(50f * DMUtils.science  * ((float)rand.Next(85, 116) / 100f), body);
 
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
@@ -99,10 +97,10 @@ namespace DMagic
 					return false;
 				else
 				{
-					this.AddParameter(DMCS, null);
+					this.AddParameter(DMCS, "collectDMScience");
 					DMUtils.DebugLog("Added Mag Survey Param");
-					DMCS.SetFunds(5000f * DMUtils.reward, body);
-					DMCS.SetReputation(25f * DMUtils.reward, body);
+					DMCS.SetFunds(5000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
+					DMCS.SetReputation(25f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
 					DMCS.SetScience(20f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
 				}
 			}
@@ -110,19 +108,13 @@ namespace DMagic
 			if (this.ParameterCount == 0)
 				return false;
 
-			int a = rand.Next(0, 3);
-			if (a == 0)
-				this.agent = AgentList.Instance.GetAgent("DMagic");
-			else
-				this.agent = AgentList.Instance.GetAgentRandom();
+			float primaryModifier = ((float)rand.Next(80, 121) / 100f);
 
-			base.SetExpiry(10, 15f * (float)(this.prestige + 1));
-			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 9f, body);
-			base.SetReputation(50f * DMUtils.reward, 10f * DMUtils.penalty, body);
-			base.SetFunds(50000 * DMUtils.forward, 55000 * DMUtils.reward, 20000 * DMUtils.penalty, body);
-			eccentric = true;
-			inclined = true;
-			loaded = false;
+			this.agent = AgentList.Instance.GetAgent("DMagic");
+			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
+			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 5f * (this.GetDestinationWeight(body) / 1.4f) * DMUtils.deadline * primaryModifier, null);
+			base.SetReputation(50f * DMUtils.reward * primaryModifier, 10f * DMUtils.penalty * primaryModifier, body);
+			base.SetFunds(50000 * DMUtils.forward * primaryModifier, 55000 * DMUtils.reward * primaryModifier, 20000 * DMUtils.penalty * primaryModifier, body);
 			return true;
 		}
 
@@ -138,7 +130,7 @@ namespace DMagic
 
 		protected override string GetHashString()
 		{
-			return body.name;
+			return string.Format("{0}{1}", body.name, (int)this.prestige);
 		}
 
 		protected override string GetTitle()
@@ -154,7 +146,6 @@ namespace DMagic
 
 		protected override string GetSynopsys()
 		{
-			DMUtils.DebugLog("Generating Mag Synopsis From Target Body: [{0}]", body.theName);
 			return string.Format("Study the magnetic field environment around {0} by inserting a long-term research vessel into orbit.", body.theName);
 		}
 
@@ -165,71 +156,33 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			DMUtils.DebugLog("Loading Mag Contract");
+			if (DMScienceScenario.SciScenario != null)
+				if (DMScienceScenario.SciScenario.contractsReload)
+					DMUtils.resetContracts();
 			int target;
 			if (int.TryParse(node.GetValue("Mag_Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];
 			else
 			{
 				DMUtils.Logging("Failed To Load Mag Contract");
-				this.Cancel();
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
 			}
 			if (this.ParameterCount == 0)
-				this.Cancel();
-			eccentricParam = (DMOrbitalParameters)this.GetParameter(1);
-			inclinedParam = (DMOrbitalParameters)this.GetParameter(2);
-			longParam = (DMLongOrbitParameter)this.GetParameter(0);
-			if (eccentricParam == null || inclinedParam == null)
-				this.Cancel();
-			if (eccentricParam.State == ParameterState.Complete)
-				eccentric = true;
-			if (inclinedParam.State == ParameterState.Complete)
-				inclined = true;
-			loaded = true;
+			{
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+			}
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Mag Contract");
 			node.AddValue("Mag_Survey_Target", body.flightGlobalsIndex);
 		}
 
 		public override bool MeetRequirements()
 		{
-			return true;
+			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" });
 		}
-
-		protected override void OnUpdate()
-		{
-			if (this.ContractState == State.Active && !HighLogic.LoadedSceneIsEditor)
-			{
-				eccentric = eccentricParam.State == ParameterState.Complete;
-				inclined = inclinedParam.State == ParameterState.Complete;
-				if (longParam.State == ParameterState.Complete)
-				{
-					eccentricParam.setStateChangeDisable();
-					inclinedParam.setStateChangeDisable();
-				}
-			}
-		}
-
-		internal bool Eccentric
-		{
-			get { return eccentric; }
-			private set { }
-		}
-
-		internal bool Inclined
-		{
-			get { return inclined; }
-			private set { }
-		}
-
-		internal bool Loaded
-		{
-			get { return loaded; }
-			private set { }
-		}
-
 	}
 }

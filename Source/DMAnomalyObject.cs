@@ -1,6 +1,6 @@
 ﻿#region license
-/* DMagic Orbital Science - White List Mods
- * Class to handle the few non-poorly coded science monitoring mods
+/* DMagic Orbital Science - DMAnomalyObject
+ * An object to hold anomaly data
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
@@ -14,7 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright notice, 
  * this list of conditions and the following disclaimer in the documentation and/or other materials 
  * provided with the distribution.
- *  
+ * 
  * 3. Neither the name of the copyright holder nor the names of its contributors may be used 
  * to endorse or promote products derived from this software without specific prior written permission.
  * 
@@ -25,35 +25,56 @@
  * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace DMagic
 {
-	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
-	internal class DMWhiteListMods: MonoBehaviour
+	internal class DMAnomalyObject
 	{
-		//Whitelist of non-faulty mods, sadly only one exists that I know of
-		private string[] WhiteList = new string[1] {"ScienceAlert"};
-		internal static bool whiteListed = false;
+		internal PQSCity city;
+		internal Vector3d worldLocation;
+		internal CelestialBody body;
+		internal double lat, lon, alt;
+		internal double Vdistance, Vheight, Vhorizontal;
+		internal double bearing;
+		internal string name;
 
-		private void Start()
+		internal DMAnomalyObject(PQSCity City)
 		{
-			findAssemblies(WhiteList);
+			city = City;
+			name = city.name;
+			try
+			{
+				body = FlightGlobals.Bodies.FirstOrDefault(b => b.name == city.transform.parent.name);
+			}
+			catch (Exception e)
+			{
+				DMUtils.Logging("Something Went Wrong Here: {0}", e);
+			}
+			if (body != null)
+			{
+				worldLocation = city.transform.position;
+				lat = clampLat(body.GetLatitude(worldLocation));
+				lon = clampLon(body.GetLongitude(worldLocation));
+				alt = body.GetAltitude(worldLocation);
+			}
 		}
 
-		private void findAssemblies(string [] assemblies)
+		private double clampLat(double l)
 		{
-			foreach (string name in assemblies) {
-				AssemblyLoader.LoadedAssembly assembly = AssemblyLoader.loadedAssemblies.FirstOrDefault(a => a.assembly.GetName().Name == name);
-				if (assembly != null) {
-					DMUtils.Logging("Assembly: {0} Found; Reactivating Experiment Properties", assembly.assembly.GetName().Name);
-					whiteListed = true;
-				}
-			}
+			return (l + 180 + 90) % 180 - 90;
+		}
+
+		private double clampLon(double l)
+		{
+			return (l + 360 + 180) % 360 - 180;
 		}
 	}
 }

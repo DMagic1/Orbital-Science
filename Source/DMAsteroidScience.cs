@@ -29,6 +29,7 @@
 #endregion
 
 using System.Collections.Generic;
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -39,6 +40,7 @@ namespace DMagic
 		private static Vessel asteroidVessel;
 		internal string aClass = null;
 		internal string aType = null;
+		internal int aSeed = 0;
 		internal float sciMult = 1f;
 		internal CelestialBody body = null;
 		internal int ID = 0;
@@ -56,12 +58,16 @@ namespace DMagic
 			if (asteroidNear()) {
 				ModuleAsteroid asteroidM = asteroidVessel.FindPartModulesImplementing<ModuleAsteroid>().First();
 				aClass = asteroidClass(asteroidM.prefabBaseURL);
+				aSeed = Math.Abs(asteroidM.seed);
+				aType = asteroidSpectral(aSeed);
 				ID = asteroidM.seed;
 				sciMult = asteroidValue(aClass);
 			}
 			else if (asteroidGrappled()) {
 				ModuleAsteroid asteroidM = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleAsteroid>().First();
 				aClass = asteroidClass(asteroidM.prefabBaseURL);
+				aSeed = Math.Abs(asteroidM.seed);
+				aType = asteroidSpectral(aSeed);
 				ID = asteroidM.seed;
 				sciMult = asteroidValue(aClass) * 1.5f;
 			}
@@ -89,20 +95,35 @@ namespace DMagic
 		{
 			switch (aclass) {
 				case "Class A":
-					return 1f;
-				case "Class B":
 					return 2f;
-				case "Class C":
+				case "Class B":
 					return 4f;
-				case "Class D":
+				case "Class C":
 					return 6f;
-				case "Class E":
+				case "Class D":
 					return 8f;
+				case "Class E":
+					return 10f;
 				case "Class Unholy":
 					return 15f;
 				default:
 					return 1f;
 			}
+		}
+
+		//Assign a spectral type based on the ModuleAsteroid.seed value
+		private string asteroidSpectral(int seed)
+		{
+			if (seed >= 0 && seed < 40000000) return "C Type";
+			else if (seed >= 40000000 && seed < 65000000) return "S Type";
+			else if (seed >= 65000000 && seed < 80000000) return "M Type";
+			else if (seed >= 80000000 && seed < 85000000) return "E Type";
+			else if (seed >= 85000000 && seed < 88000000) return "P Type";
+			else if (seed >= 88000000 && seed < 91000000) return "B Type";
+			else if (seed >= 91000000 && seed < 94000000) return "A Type";
+			else if (seed >= 94000000 && seed < 97000000) return "R Type";
+			else if (seed >= 97000000 && seed < 100000000) return "G Type";
+			else return "Unknown Type";
 		}
 
 		//Are we attached to the asteroid, check if an asteroid part is on our vessel

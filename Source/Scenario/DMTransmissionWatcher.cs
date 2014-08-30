@@ -1,6 +1,6 @@
 ﻿#region license
-/* DMagic Orbital Science - White List Mods
- * Class to handle the few non-poorly coded science monitoring mods
+/* DMagic Orbital Science - DM Transmission Watcher
+ * Monobehaviour to watch for science data transmission
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
@@ -25,33 +25,42 @@
  * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 namespace DMagic
 {
-	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
-	internal class DMWhiteListMods: MonoBehaviour
+	internal class DMTransmissionWatcher : MonoBehaviour
 	{
-		//Whitelist of non-faulty mods, sadly only one exists that I know of
-		private string[] WhiteList = new string[1] {"ScienceAlert"};
-		internal static bool whiteListed = false;
 
 		private void Start()
 		{
-			findAssemblies(WhiteList);
+			DMUtils.DebugLog("Starting Transmission Watcher");
+			GameEvents.OnScienceRecieved.Add(scienceReceived);
 		}
 
-		private void findAssemblies(string [] assemblies)
+		private void OnDestroy()
 		{
-			foreach (string name in assemblies) {
-				AssemblyLoader.LoadedAssembly assembly = AssemblyLoader.loadedAssemblies.FirstOrDefault(a => a.assembly.GetName().Name == name);
-				if (assembly != null) {
-					DMUtils.Logging("Assembly: {0} Found; Reactivating Experiment Properties", assembly.assembly.GetName().Name);
-					whiteListed = true;
+			DMUtils.DebugLog("Stopping Transmission Watcher");
+			GameEvents.OnScienceRecieved.Remove(scienceReceived);
+		}
+
+		private void scienceReceived(float sci, ScienceSubject sub)
+		{
+			DMUtils.DebugLog("Science Data Transmitted For {0} Science", sci);
+			foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
+			{
+				if (DMData.title == sub.title)
+				{
+					DMScienceScenario.SciScenario.submitDMScience(DMData, sci);
+					break;
 				}
 			}
 		}
