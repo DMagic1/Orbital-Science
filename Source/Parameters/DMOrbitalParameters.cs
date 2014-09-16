@@ -124,7 +124,8 @@ namespace DMagic
 			string[] s = new string[i];
 			for (int j = 0; j < i; j++)
 			{
-				s[j] = source[j].id.ToString() + ",";
+				if (source[j] != null)
+					s[j] = source[j].id.ToString() + ",";
 			}
 			return string.Concat(s).TrimEnd(',');
 		}
