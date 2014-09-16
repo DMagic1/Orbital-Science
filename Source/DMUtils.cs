@@ -138,29 +138,22 @@ namespace DMagic
 			DMScienceScenario.SciScenario.contractsReload = false;
 			Debug.LogWarning("[DM] Version Change Detected: Reloading DMagic Contracts...");
 
-			foreach (DMAnomalyContract c in ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>())
+			List<Contract> resetList = new List<Contract>();
+
+			foreach (Contract c in ContractSystem.Instance.Contracts)
 			{
-				c.Unregister();
-				ContractSystem.Instance.Contracts.Remove(c);
+				Type cType = c.GetType();
+
+				if (cType is DMAnomalyContract || cType is DMAsteroidSurveyContract || cType is DMSurveyContract || cType is DMMagneticSurveyContract)
+				{
+					if (c.ContractState == Contract.State.Active)
+						c.Unregister();
+					resetList.Add(c);
+				}
 			}
 
-			foreach (DMAsteroidSurveyContract c in ContractSystem.Instance.GetCurrentContracts<DMAsteroidSurveyContract>())
-			{
-				c.Unregister();
+			foreach (Contract c in resetList)
 				ContractSystem.Instance.Contracts.Remove(c);
-			}
-
-			foreach (DMMagneticSurveyContract c in ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>())
-			{
-				c.Unregister();
-				ContractSystem.Instance.Contracts.Remove(c);
-			}
-
-			foreach (DMSurveyContract c in ContractSystem.Instance.GetCurrentContracts<DMSurveyContract>())
-			{
-				c.Unregister();
-				ContractSystem.Instance.Contracts.Remove(c);
-			}
 		}
 
 		#region Debug Logging
