@@ -43,15 +43,13 @@ namespace DMagic
 		private void Start()
 		{
 			initializeUtils();
-			configLoad();
-			DMUtils.OnAnomalyScience = new EventData<CelestialBody,String,String>("OnAnomalyScience");
-			DMUtils.OnAsteroidScience = new EventData<String, String>("OnAsteroidScience");
 			var infoAtt = Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute)) as AssemblyInformationalVersionAttribute;
 			if (infoAtt != null)
 			{
 				DMUtils.version = infoAtt.InformationalVersion;
 				DMUtils.Logging("DMagic Orbital Science Version: [{0}] Loaded", DMUtils.version);
 			}
+			configLoad();
 		}
 
 		private void configLoad()
@@ -83,7 +81,18 @@ namespace DMagic
 				int sitMask, bioMask, type = 0;
 				float transmit = 0;
 				DMScienceContainer DMscience = null;
-				ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(node.GetValue("experimentID"));
+				ScienceExperiment exp = null;
+
+				//Some apparently not impossible errors can cause deplicate experiments to be added to the R&D science experiment dictionary
+				try
+				{
+					exp = ResearchAndDevelopment.GetExperiment(node.GetValue("experimentID"));
+				}
+				catch (Exception e)
+				{
+					Debug.LogError("[DM] Whoops. Something really wrong happened here; stopping this contract experiment from loading..." + e);
+					continue;
+				}
 				if (exp != null)
 				{
 					name = node.GetValue("name");
@@ -104,19 +113,20 @@ namespace DMagic
 					else
 						agent = "Any";
 					DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent, transmit);
-					if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface)
+					if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface && !DMUtils.availableScience[DMScienceType.Surface.ToString()].ContainsKey(name))
 						DMUtils.availableScience[DMScienceType.Surface.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Aerial) == DMScienceType.Aerial)
+					if (((DMScienceType)type & DMScienceType.Aerial) == DMScienceType.Aerial && !DMUtils.availableScience[DMScienceType.Aerial.ToString()].ContainsKey(name))
 						DMUtils.availableScience[DMScienceType.Aerial.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Space) == DMScienceType.Space)
+					if (((DMScienceType)type & DMScienceType.Space) == DMScienceType.Space && !DMUtils.availableScience[DMScienceType.Space.ToString()].ContainsKey(name))
 						DMUtils.availableScience[DMScienceType.Space.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Biological) == DMScienceType.Biological)
+					if (((DMScienceType)type & DMScienceType.Biological) == DMScienceType.Biological && !DMUtils.availableScience[DMScienceType.Biological.ToString()].ContainsKey(name))
 						DMUtils.availableScience[DMScienceType.Biological.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Asteroid) == DMScienceType.Asteroid)
+					if (((DMScienceType)type & DMScienceType.Asteroid) == DMScienceType.Asteroid && !DMUtils.availableScience[DMScienceType.Asteroid.ToString()].ContainsKey(name))
 						DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Anomaly) == DMScienceType.Anomaly)
+					if (((DMScienceType)type & DMScienceType.Anomaly) == DMScienceType.Anomaly && !DMUtils.availableScience[DMScienceType.Anomaly.ToString()].ContainsKey(name))
 						DMUtils.availableScience[DMScienceType.Anomaly.ToString()].Add(name, DMscience);
-					DMUtils.availableScience["All"].Add(name, DMscience);
+					if (!DMUtils.availableScience["All"].ContainsKey(name))
+						DMUtils.availableScience["All"].Add(name, DMscience);
 					DMUtils.DebugLog("New Experiment: [{0}] Available For Contracts", name);
 				}
 			}
@@ -193,7 +203,11 @@ namespace DMagic
 
 		private void initializeUtils()
 		{
+			DMUtils.OnAnomalyScience = new EventData<CelestialBody, String, String>("OnAnomalyScience");
+			DMUtils.OnAsteroidScience = new EventData<String, String>("OnAsteroidScience");
+
 			DMUtils.rand = new System.Random();
+
 			DMUtils.availableScience = new Dictionary<string, Dictionary<string, DMScienceContainer>>();
 			DMUtils.availableScience["All"] = new Dictionary<string, DMScienceContainer>();
 			DMUtils.availableScience[DMScienceType.Surface.ToString()] = new Dictionary<string, DMScienceContainer>();
