@@ -279,7 +279,7 @@ namespace DMagic
 				waitForAnimationTime = anim[animationName].length / animSpeed;
 			if (experimentID != null) {
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
-				if (scienceExp != null && DMWhiteListMods.whiteListed) {
+				if (scienceExp != null && DMUtils.whiteListed) {
 					scienceExp.situationMask = (uint)sitMask;
 					scienceExp.biomeMask = (uint)bioMask;
 				}

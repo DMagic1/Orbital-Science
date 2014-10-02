@@ -47,6 +47,7 @@ namespace DMagic
 		internal static string version = "v0.84";
 		internal static EventData<CelestialBody, String, String> OnAnomalyScience;
 		internal static EventData<String, String> OnAsteroidScience;
+		internal static bool whiteListed = false;
 
 		internal static void Logging(string s, params object[] stringObjects)
 		{

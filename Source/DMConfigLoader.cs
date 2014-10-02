@@ -32,6 +32,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using UnityEngine;
 
 namespace DMagic
@@ -39,16 +40,12 @@ namespace DMagic
 	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
 	internal class DMConfigLoader: MonoBehaviour
 	{
+		private string[] WhiteList = new string[1] { "ScienceAlert" };
 
 		private void Start()
 		{
 			initializeUtils();
-			var infoAtt = Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute)) as AssemblyInformationalVersionAttribute;
-			if (infoAtt != null)
-			{
-				DMUtils.version = infoAtt.InformationalVersion;
-				DMUtils.Logging("DMagic Orbital Science Version: [{0}] Loaded", DMUtils.version);
-			}
+			findAssemblies(WhiteList);
 			configLoad();
 		}
 
@@ -206,6 +203,18 @@ namespace DMagic
 			DMUtils.OnAnomalyScience = new EventData<CelestialBody, String, String>("OnAnomalyScience");
 			DMUtils.OnAsteroidScience = new EventData<String, String>("OnAsteroidScience");
 
+			var infoAtt = Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute)) as AssemblyInformationalVersionAttribute;
+			if (infoAtt != null)
+			{
+				DMUtils.version = infoAtt.InformationalVersion;
+				DMUtils.Logging("DMagic Orbital Science Version: [{0}] Loaded", DMUtils.version);
+			}
+			else
+			{
+				DMUtils.version = "";
+				DMUtils.Logging("Something Went Wrong Here... Version Not Set, Contracts Might Reset");
+			}
+
 			DMUtils.rand = new System.Random();
 
 			DMUtils.availableScience = new Dictionary<string, Dictionary<string, DMScienceContainer>>();
@@ -224,6 +233,19 @@ namespace DMagic
 			DMUtils.backStory["asteroid"] = new List<string>();
 			DMUtils.backStory["anomaly"] = new List<string>();
 			DMUtils.backStory["magnetic"] = new List<string>();
+		}
+
+		private void findAssemblies(string[] assemblies)
+		{
+			foreach (string name in assemblies)
+			{
+				AssemblyLoader.LoadedAssembly assembly = AssemblyLoader.loadedAssemblies.FirstOrDefault(a => a.assembly.GetName().Name == name);
+				if (assembly != null)
+				{
+					DMUtils.Logging("Assembly: {0} Found; Reactivating Experiment Properties", assembly.assembly.GetName().Name);
+					DMUtils.whiteListed = true;
+				}
+			}
 		}
 
 		private void OnDestroy()
