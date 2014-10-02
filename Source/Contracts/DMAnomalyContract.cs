@@ -273,7 +273,7 @@ namespace DMagic
 			if (HighLogic.LoadedSceneIsFlight)
 				try
 				{
-					targetAnomaly = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash));
+					targetAnomaly = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash && c.transform.parent.name == body.name));
 					if (lat == 0.000d)
 						lat = targetAnomaly.lat;
 					if (lon == 0.000d)
