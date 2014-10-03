@@ -88,10 +88,13 @@ namespace DMagic
 			Vector3d vPos = v.transform.position;
 			a.worldLocation = a.city.transform.position;
 			//Calculate vectors from CBody position to object positions
-			Vector3d vSurfaceV = v.mainBody.GetRelSurfacePosition(vPos);
-			Vector3d aSurfaceV = v.mainBody.GetRelSurfacePosition(a.worldLocation);
-			//Project vessel vector onto anomaly vector, use magnitude to determine height above or below anomaly
-			a.Vheight = Vector3d.Project(vSurfaceV, aSurfaceV).magnitude - aSurfaceV.magnitude;
+			Vector3d anomBody = v.mainBody.position - a.worldLocation;
+			Vector3d vesselBody = v.mainBody.position - v.transform.position;
+			//Project vessel vector onto anomaly vector
+			Vector3d projectedV = Vector3d.Project(vesselBody, anomBody);
+			//Calculate height above or below anomaly by drawing a line between the projected vector and the anomaly vector
+			//Take the magnitude of that line, which equals the height
+			a.Vheight = (projectedV - anomBody).magnitude;
 			a.Vdistance = (a.worldLocation - vPos).magnitude;
 			if (Math.Abs(a.Vheight) <= a.Vdistance)
 				a.Vhorizontal = Math.Sqrt((a.Vdistance * a.Vdistance) - (a.Vheight * a.Vheight));
