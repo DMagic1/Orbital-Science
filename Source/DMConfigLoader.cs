@@ -109,6 +109,9 @@ namespace DMagic
 						agent = node.GetValue("agent");
 					else
 						agent = "Any";
+					if (DMUtils.whiteListed)
+						exp.situationMask = (uint)sitMask;
+						exp.biomeMask = (uint)bioMask;
 					DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent, transmit);
 					if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface && !DMUtils.availableScience[DMScienceType.Surface.ToString()].ContainsKey(name))
 						DMUtils.availableScience[DMScienceType.Surface.ToString()].Add(name, DMscience);

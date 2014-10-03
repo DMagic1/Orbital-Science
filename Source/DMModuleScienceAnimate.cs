@@ -279,10 +279,10 @@ namespace DMagic
 				waitForAnimationTime = anim[animationName].length / animSpeed;
 			if (experimentID != null) {
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
-				if (scienceExp != null && DMUtils.whiteListed) {
-					scienceExp.situationMask = (uint)sitMask;
-					scienceExp.biomeMask = (uint)bioMask;
-				}
+				//if (scienceExp != null && DMUtils.whiteListed) {
+				//	scienceExp.situationMask = (uint)sitMask;
+				//	scienceExp.biomeMask = (uint)bioMask;
+				//}
 			}
 			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
 				FlightGlobals.Bodies[16].bodyName = bodyNameFixed;
