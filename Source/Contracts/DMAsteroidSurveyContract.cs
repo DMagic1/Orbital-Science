@@ -39,7 +39,7 @@ using Contracts.Agents;
 
 namespace DMagic
 {
-	public class DMAsteroidSurveyContract: Contract
+	public class DMAsteroidSurveyContract: Contract, IDMagicContract
 	{
 		internal DMAsteroidParameter[] newParams = new DMAsteroidParameter[4];
 		private DMScienceContainer DMScience;

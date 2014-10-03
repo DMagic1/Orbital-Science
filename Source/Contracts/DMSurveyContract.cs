@@ -39,7 +39,7 @@ using Contracts.Agents;
 
 namespace DMagic
 {
-	public class DMSurveyContract: Contract
+	public class DMSurveyContract: Contract, IDMagicContract
 	{
 		internal DMCollectScience[] newParams = new DMCollectScience[8];
 		private CelestialBody body;

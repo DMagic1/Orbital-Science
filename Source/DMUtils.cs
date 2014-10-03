@@ -37,6 +37,9 @@ using Contracts;
 
 namespace DMagic
 {
+	interface IDMagicContract
+	{ }
+
 	internal static class DMUtils
 	{
 		internal static System.Random rand;
@@ -145,7 +148,7 @@ namespace DMagic
 			{
 				Type cType = c.GetType();
 
-				if (cType is DMAnomalyContract || cType is DMAsteroidSurveyContract || cType is DMSurveyContract || cType is DMMagneticSurveyContract)
+				if (cType is IDMagicContract)
 				{
 					if (c.ContractState == Contract.State.Active)
 						c.Unregister();

@@ -39,7 +39,7 @@ using Contracts.Agents;
 
 namespace DMagic
 {
-	public class DMAnomalyContract: Contract
+	public class DMAnomalyContract: Contract, IDMagicContract
 	{
 		private DMCollectScience newParam;
 		private DMScienceContainer DMScience;
