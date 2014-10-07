@@ -21,5 +21,5 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyVersion("0.8.6.0")]
 [assembly: AssemblyFileVersion("0.8.6.0")]
-[assembly: AssemblyInformationalVersion("v0.85")]
+[assembly: AssemblyInformationalVersion("v0.86")]
 [assembly: KSPAssembly("DMagic", 0, 86)]
