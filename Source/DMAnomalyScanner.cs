@@ -59,6 +59,8 @@ namespace DMagic
 			animSecondary = part.FindModelAnimators(dishAnimate)[0];
 			animSecondary = part.FindModelAnimators(camAnimate)[0];
 			animSecondary = part.FindModelAnimators(foundAnimate)[0];
+			if (IsDeployed && !string.IsNullOrEmpty(dishAnimate))
+				newSecondaryAnimator(dishAnimate, 1f, 0f, WrapMode.Loop);
 			base.labDataBoost = 0.45f;
 			base.Events["CollectDataExternalEvent"].active = false;
 			if (!HighLogic.LoadedSceneIsEditor)
