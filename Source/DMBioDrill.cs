@@ -55,6 +55,7 @@ namespace DMagic
 					base.scienceBoost = 2f;
 				else 
 					base.scienceBoost = 1f;
+				if (anim.IsPlaying(verticalDrill)) return;
 				base.DeployExperiment();
 			}
 			else
