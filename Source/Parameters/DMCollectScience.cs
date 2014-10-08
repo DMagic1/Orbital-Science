@@ -190,9 +190,9 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			if (DMScienceScenario.SciScenario != null)
-				if (DMScienceScenario.SciScenario.contractsReload)
-					DMUtils.resetContracts();
+			//if (DMScienceScenario.SciScenario != null)
+			//	if (DMScienceScenario.SciScenario.contractsReload)
+			//		DMUtils.resetContracts();
 			int targetBodyID, targetSituation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			if (!int.TryParse(scienceString[0], out type))

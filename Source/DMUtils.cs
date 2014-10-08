@@ -146,18 +146,26 @@ namespace DMagic
 
 			foreach (Contract c in ContractSystem.Instance.Contracts)
 			{
+				DebugLog("Checking Contract For Reset");
 				Type cType = c.GetType();
 
 				if (cType is IDMagicContract)
 				{
+					DebugLog("Reset Contract Of Type: {}", cType);
 					if (c.ContractState == Contract.State.Active)
+					{
+						DebugLog("Cancelling Contract");
 						c.Unregister();
+					}
 					resetList.Add(c);
 				}
 			}
 
 			foreach (Contract c in resetList)
+			{
+				DebugLog("Removing Contract From List");
 				ContractSystem.Instance.Contracts.Remove(c);
+			}
 		}
 
 		#region Debug Logging

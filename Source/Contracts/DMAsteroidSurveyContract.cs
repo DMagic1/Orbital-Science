@@ -158,9 +158,9 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			if (DMScienceScenario.SciScenario != null)
-				if (DMScienceScenario.SciScenario.contractsReload)
-					DMUtils.resetContracts();
+			//if (DMScienceScenario.SciScenario != null)
+			//	if (DMScienceScenario.SciScenario.contractsReload)
+			//		DMUtils.resetContracts();
 			hash = node.GetValue("Asteroid_Size_Class");
 			if (this.ParameterCount == 0)
 			{
