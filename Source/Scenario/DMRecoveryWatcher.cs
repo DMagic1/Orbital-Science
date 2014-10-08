@@ -73,8 +73,8 @@ namespace DMagic
 				{
 					float extraScience = sci - DMScience;
 					Debug.LogWarning(string.Format("[DMagic Orbital Science] [Asteroid Science Retrieval] Remove {0} Science From R&D Center After Asteroid Calculations", extraScience));
-					ResearchAndDevelopment.Instance.AddScience(Math.Max(ResearchAndDevelopment.Instance.Science - extraScience, 0f), TransactionReasons.ScienceTransmission);
-					//= Math.Max(ResearchAndDevelopment.Instance.Science - extraScience, 0f);
+					DMUtils.DebugLog("Remove {0} Science From R&D Center: From {1} To {2}", extraScience, ResearchAndDevelopment.Instance.Science, ResearchAndDevelopment.Instance.Science - extraScience);
+					ResearchAndDevelopment.Instance.AddScience(-1f * extraScience, TransactionReasons.ScienceTransmission);
 				}
 			}
 		}
