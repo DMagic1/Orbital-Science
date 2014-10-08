@@ -39,7 +39,7 @@ using Contracts.Agents;
 
 namespace DMagic
 {
-	public class DMAsteroidSurveyContract: Contract
+	public class DMAsteroidSurveyContract: Contract, IDMagicContract
 	{
 		internal DMAsteroidParameter[] newParams = new DMAsteroidParameter[4];
 		private DMScienceContainer DMScience;
@@ -158,9 +158,9 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			if (DMScienceScenario.SciScenario != null)
-				if (DMScienceScenario.SciScenario.contractsReload)
-					DMUtils.resetContracts();
+			//if (DMScienceScenario.SciScenario != null)
+			//	if (DMScienceScenario.SciScenario.contractsReload)
+			//		DMUtils.resetContracts();
 			hash = node.GetValue("Asteroid_Size_Class");
 			if (this.ParameterCount == 0)
 			{

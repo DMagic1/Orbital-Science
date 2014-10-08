@@ -37,6 +37,9 @@ using Contracts;
 
 namespace DMagic
 {
+	interface IDMagicContract
+	{ }
+
 	internal static class DMUtils
 	{
 		internal static System.Random rand;
@@ -47,6 +50,7 @@ namespace DMagic
 		internal static string version = "v0.84";
 		internal static EventData<CelestialBody, String, String> OnAnomalyScience;
 		internal static EventData<String, String> OnAsteroidScience;
+		internal static bool whiteListed = false;
 
 		internal static void Logging(string s, params object[] stringObjects)
 		{
@@ -142,18 +146,26 @@ namespace DMagic
 
 			foreach (Contract c in ContractSystem.Instance.Contracts)
 			{
+				DebugLog("Checking Contract For Reset");
 				Type cType = c.GetType();
 
-				if (cType is DMAnomalyContract || cType is DMAsteroidSurveyContract || cType is DMSurveyContract || cType is DMMagneticSurveyContract)
+				if (cType is IDMagicContract)
 				{
+					DebugLog("Reset Contract Of Type: {}", cType);
 					if (c.ContractState == Contract.State.Active)
+					{
+						DebugLog("Cancelling Contract");
 						c.Unregister();
+					}
 					resetList.Add(c);
 				}
 			}
 
 			foreach (Contract c in resetList)
+			{
+				DebugLog("Removing Contract From List");
 				ContractSystem.Instance.Contracts.Remove(c);
+			}
 		}
 
 		#region Debug Logging

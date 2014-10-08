@@ -150,9 +150,9 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			if (DMScienceScenario.SciScenario != null)
-				if (DMScienceScenario.SciScenario.contractsReload)
-					DMUtils.resetContracts();
+			//if (DMScienceScenario.SciScenario != null)
+			//	if (DMScienceScenario.SciScenario.contractsReload)
+			//		DMUtils.resetContracts();
 			int bodyID, sitID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];
@@ -191,7 +191,7 @@ namespace DMagic
 			{
 				try
 				{
-					city = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash));
+					city = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash && c.transform.parent.name == body.name));
 				}
 				catch
 				{

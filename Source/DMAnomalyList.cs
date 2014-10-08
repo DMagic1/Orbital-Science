@@ -87,10 +87,20 @@ namespace DMagic
 		{
 			Vector3d vPos = v.transform.position;
 			a.worldLocation = a.city.transform.position;
-			double vAlt = v.mainBody.GetAltitude(vPos);
+			//Calculate vectors from CBody position to object positions
+			Vector3d anomBody = v.mainBody.position - a.worldLocation;
+			Vector3d vesselBody = v.mainBody.position - v.transform.position;
+			//Project vessel vector onto anomaly vector
+			Vector3d projectedV = Vector3d.Project(vesselBody, anomBody);
+			//Calculate height above or below anomaly by drawing a line between the projected vector and the anomaly vector
+			//Take the magnitude of that line, which equals the height
+			a.Vheight = (projectedV - anomBody).magnitude;
 			a.Vdistance = (a.worldLocation - vPos).magnitude;
-			a.Vheight = Math.Abs(vAlt - a.alt);
-			a.Vhorizontal = Math.Sqrt((a.Vdistance * a.Vdistance) - (a.Vheight * a.Vheight));
+			if (Math.Abs(a.Vheight) <= a.Vdistance)
+				a.Vhorizontal = Math.Sqrt((a.Vdistance * a.Vdistance) - (a.Vheight * a.Vheight));
+			else
+				a.Vhorizontal = double.MaxValue; //This should never happen...
+			
 		}
 
 		internal static void bearing(Vessel v, DMAnomalyObject a)

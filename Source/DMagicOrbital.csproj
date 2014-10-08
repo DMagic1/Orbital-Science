@@ -37,17 +37,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\Visual Studio 2010\Projects\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\Visual Studio 2010\Projects\KSP Science\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\KSP Dev Build\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contracts\DMAnomalyContract.cs" />
+    <Compile Include="DMSoilMoisture.cs" />
     <Compile Include="Parameters\DMAnomalyParameter.cs" />
     <Compile Include="Parameters\DMAsteroidParameter.cs" />
     <Compile Include="Parameters\DMCollectScience.cs">

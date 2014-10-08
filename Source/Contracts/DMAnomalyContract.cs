@@ -39,7 +39,7 @@ using Contracts.Agents;
 
 namespace DMagic
 {
-	public class DMAnomalyContract: Contract
+	public class DMAnomalyContract: Contract, IDMagicContract
 	{
 		private DMCollectScience newParam;
 		private DMScienceContainer DMScience;
@@ -242,9 +242,9 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			if (DMScienceScenario.SciScenario != null)
-				if (DMScienceScenario.SciScenario.contractsReload)
-					DMUtils.resetContracts();
+			//if (DMScienceScenario.SciScenario != null)
+			//	if (DMScienceScenario.SciScenario.contractsReload)
+			//		DMUtils.resetContracts();
 			int targetBodyID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];
@@ -256,28 +256,13 @@ namespace DMagic
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
 			}
-			if (!double.TryParse(anomalyString[2], out lat))
-			{
-				DMUtils.Logging("Failed To Load Anomaly Values");
-				lat = 0.000d;
-			}
-			if (!double.TryParse(anomalyString[3], out lon))
-			{
-				DMUtils.Logging("Failed To Load Anomaly Values");
-				lon = 0.000d;
-			}
-			fudgedLat = fudgeLat(lat);
-			fudgedLon = fudgeLon(lon);
-			cardNS = NSDirection(lat);
-			cardEW = EWDirection(lon);
 			if (HighLogic.LoadedSceneIsFlight)
+			{
 				try
 				{
-					targetAnomaly = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash));
-					if (lat == 0.000d)
-						lat = targetAnomaly.lat;
-					if (lon == 0.000d)
-						lon = targetAnomaly.lon;
+					targetAnomaly = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash && c.transform.parent.name == body.name));
+					lat = targetAnomaly.lat;
+					lon = targetAnomaly.lon;
 				}
 				catch
 				{
@@ -285,6 +270,24 @@ namespace DMagic
 					this.Unregister();
 					ContractSystem.Instance.Contracts.Remove(this);
 				}
+			}
+			else
+			{
+				if (!double.TryParse(anomalyString[2], out lat))
+				{
+					DMUtils.Logging("Failed To Load Anomaly Values");
+					lat = 0.000d;
+				}
+				if (!double.TryParse(anomalyString[3], out lon))
+				{
+					DMUtils.Logging("Failed To Load Anomaly Values");
+					lon = 0.000d;
+				}
+			}
+			fudgedLat = fudgeLat(lat);
+			fudgedLon = fudgeLon(lon);
+			cardNS = NSDirection(lat);
+			cardEW = EWDirection(lon);
 			if (this.ParameterCount == 0)
 			{
 				this.Unregister();

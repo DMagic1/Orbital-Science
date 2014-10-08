@@ -279,10 +279,10 @@ namespace DMagic
 				waitForAnimationTime = anim[animationName].length / animSpeed;
 			if (experimentID != null) {
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
-				if (scienceExp != null && DMWhiteListMods.whiteListed) {
-					scienceExp.situationMask = (uint)sitMask;
-					scienceExp.biomeMask = (uint)bioMask;
-				}
+				//if (scienceExp != null && DMUtils.whiteListed) {
+				//	scienceExp.situationMask = (uint)sitMask;
+				//	scienceExp.biomeMask = (uint)bioMask;
+				//}
 			}
 			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
 				FlightGlobals.Bodies[16].bodyName = bodyNameFixed;
@@ -561,16 +561,23 @@ namespace DMagic
 		protected void runExperiment()
 		{
 			ScienceData data = makeScience(scienceBoost);
-			if (experimentLimit <= 1) {
-				dataIndex = 0;
-				storedScienceReports.Add(data);
-				ReviewData();
+			if (data == null)
+				Debug.LogError("[DM] Something Went Wrong Here; Null Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
+			else
+			{
+				if (experimentLimit <= 1)
+				{
+					dataIndex = 0;
+					storedScienceReports.Add(data);
+					ReviewData();
+				}
+				else
+				{
+					scienceReports.Add(data);
+					initialResultsPage();
+				}
+				if (keepDeployedMode == 1) retractEvent();
 			}
-			else {
-				scienceReports.Add(data);
-				initialResultsPage();
-			}
-			if (keepDeployedMode == 1) retractEvent();
 		}
 
 		internal float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
@@ -724,8 +731,22 @@ namespace DMagic
 			}
 
 			ScienceData data = null;
-			ScienceExperiment exp = ResearchAndDevelopment.GetExperiment(experimentID);
-			ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, mainBody, biome);
+			ScienceExperiment exp = null;
+			ScienceSubject sub = null;
+
+			exp = ResearchAndDevelopment.GetExperiment(experimentID);
+			if (exp == null)
+			{
+				Debug.LogError("[DM] Something Went Wrong Here; Null Experiment Returned; Please Report This On The KSP Forum With Output.log Data");
+				return null;
+			}
+			
+			sub = ResearchAndDevelopment.GetExperimentSubject(exp, vesselSituation, mainBody, biome);
+			if (sub == null)
+			{
+				Debug.LogError("[DM] Something Went Wrong Here; Null Subject Returned; Please Report This On The KSP Forum With Output.log Data");
+				return null;
+			}
 
 			if (asteroids)
 			{
@@ -742,8 +763,8 @@ namespace DMagic
 				sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			}
 
-			if (sub != null)
-				data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, 0f, sub.id, sub.title);
+			data = new ScienceData(exp.baseValue * sub.dataScale, xmitDataScalar, 0f, sub.id, sub.title);
+
 			return data;
 		}
 
