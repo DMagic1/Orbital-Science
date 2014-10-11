@@ -2,81 +2,83 @@
 
 namespace DMagic
 {
-    /*  module magfield.c */
+	#region license
+	/*  module magfield.c */
     // http://williams.best.vwh.net/magvar/magfield.c
 
-    /* Module to calculate magnetic variation and field given position,
-    **               altitude, and date
-    ** Implements the NIMA (formerly DMA) WMM and IGRF models
-    **
-    **    http://www.nima.mil/GandG/ngdc-wmm2000.html
-    **    For WMM2000 coefficients:
-    **    ftp://ftp.ngdc.noaa.gov/Solid_Earth/Mainfld_Mag/DoD_Model/wmm.cof
-    **    For IGRF/DGRF coefficients:
-    **    http://swdcdb.kugi.kyoto-u.ac.jp/igrf/coef/igrfall.d
-    **
-    ** Copyright (C) 2000  Edward A Williams <Ed_Williams@compuserve.com>
-    ** C# Port by Michael Coyle <Michael.Coyle@BlueToque.ca>,
-    **
-    **  The routine uses a spherical harmonic expansion of the magnetic
-    ** potential up to twelfth order, together with its time variation, as
-    ** described in Chapter 4 of "Geomagnetism, Vol 1, Ed. J.A.Jacobs,
-    ** Academic Press (London 1987)". The program first converts geodetic
-    ** coordinates (lat/long on elliptic earth and altitude) to spherical
-    ** geocentric (spherical lat/long and radius) coordinates. Using this,
-    ** the spherical (B_r, B_theta, B_phi) magnetic field components are
-    ** computed from the model. These are finally referred to surface (X, Y,
-    ** Z) coordinates.
-    **
-    **   Fields are accurate to better than 200nT, variation and dip to
-    ** better than 0.5 degrees, with the exception of the declination near
-    ** the magnetic poles (where it is ill-defined) where the error may reach
-    ** 4 degrees or more.
-    **
-    **   Variation is undefined at both the geographic and  
-    ** magnetic poles, even though the field itself is well-behaved. To
-    ** avoid the routine blowing up, latitude entries corresponding to
-    ** the geographic poles are slightly offset. At the magnetic poles,
-    ** the routine returns zero variation.
-    **
-    ** HISTORY
-    ** Adapted from EAW Excel 3.0 version 3/27/94 EAW
-    ** Recoded in C++ by Starry Chan
-    ** WMM95 added and rearranged in ANSI-C EAW 7/9/95
-    ** Put shell around program and made Borland & GCC compatible EAW 11/22/95
-    ** IGRF95 added 2/96 EAW
-    ** WMM2000 IGR2000 added 2/00 EAW
-    ** Released under GPL  3/26/00 EAW
-    ** Adaptions and modifications for the SimGear project  3/27/2000 CLO
-    ** Removed all pow() calls and made static roots[,] arrays to
-    ** save many sqrt() calls on subsequent invocations
-    ** 3/28/2000  Norman Vine -- nhv@yahoo.com
-    ** Put in some bullet-proofing to handle magnetic and geographic poles.
-    ** 3/28/2000 EAW
-    ** Added missing comment close, the lack of which caused the altitude 
-    ** correction to be omitted.
-    ** 01/31/01 Jim Seymour (jseymour@LinxNet.com)
-    ** 23/01/13 POrt to C# (michael.coyle@BlueToque.ca)
-    ** 03/22/2014 -- david.grandy@gmail.com
-    ** Modified to return array with all magnetic field components.
-    ** 
-    **
-    ** This program is free software; you can redistribute it and/or
-    ** modify it under the terms of the GNU General Public Licence as
-    ** published by the Free Software Foundation; either version 2 of the
-    ** Licence, or (at your option) any later version.
-    **
-    ** This program is distributed in the hope that it will be useful, but
-    ** WITHOUT ANY WARRANTY; without even the implied warranty of
-    ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    ** General Public Licence for more details.
-    **
-    ** You should have received a copy of the GNU General Public Licence
-    ** along with this program; if not, write to the Free Software
-    ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-    **
-    */
-    class MagVar
+	/* Module to calculate magnetic variation and field given position,
+	**               altitude, and date
+	** Implements the NIMA (formerly DMA) WMM and IGRF models
+	**
+	**    http://www.nima.mil/GandG/ngdc-wmm2000.html
+	**    For WMM2000 coefficients:
+	**    ftp://ftp.ngdc.noaa.gov/Solid_Earth/Mainfld_Mag/DoD_Model/wmm.cof
+	**    For IGRF/DGRF coefficients:
+	**    http://swdcdb.kugi.kyoto-u.ac.jp/igrf/coef/igrfall.d
+	**
+	** Copyright (C) 2000  Edward A Williams <Ed_Williams@compuserve.com>
+	** C# Port by Michael Coyle <Michael.Coyle@BlueToque.ca>,
+	**
+	**  The routine uses a spherical harmonic expansion of the magnetic
+	** potential up to twelfth order, together with its time variation, as
+	** described in Chapter 4 of "Geomagnetism, Vol 1, Ed. J.A.Jacobs,
+	** Academic Press (London 1987)". The program first converts geodetic
+	** coordinates (lat/long on elliptic earth and altitude) to spherical
+	** geocentric (spherical lat/long and radius) coordinates. Using this,
+	** the spherical (B_r, B_theta, B_phi) magnetic field components are
+	** computed from the model. These are finally referred to surface (X, Y,
+	** Z) coordinates.
+	**
+	**   Fields are accurate to better than 200nT, variation and dip to
+	** better than 0.5 degrees, with the exception of the declination near
+	** the magnetic poles (where it is ill-defined) where the error may reach
+	** 4 degrees or more.
+	**
+	**   Variation is undefined at both the geographic and  
+	** magnetic poles, even though the field itself is well-behaved. To
+	** avoid the routine blowing up, latitude entries corresponding to
+	** the geographic poles are slightly offset. At the magnetic poles,
+	** the routine returns zero variation.
+	**
+	** HISTORY
+	** Adapted from EAW Excel 3.0 version 3/27/94 EAW
+	** Recoded in C++ by Starry Chan
+	** WMM95 added and rearranged in ANSI-C EAW 7/9/95
+	** Put shell around program and made Borland & GCC compatible EAW 11/22/95
+	** IGRF95 added 2/96 EAW
+	** WMM2000 IGR2000 added 2/00 EAW
+	** Released under GPL  3/26/00 EAW
+	** Adaptions and modifications for the SimGear project  3/27/2000 CLO
+	** Removed all pow() calls and made static roots[,] arrays to
+	** save many sqrt() calls on subsequent invocations
+	** 3/28/2000  Norman Vine -- nhv@yahoo.com
+	** Put in some bullet-proofing to handle magnetic and geographic poles.
+	** 3/28/2000 EAW
+	** Added missing comment close, the lack of which caused the altitude 
+	** correction to be omitted.
+	** 01/31/01 Jim Seymour (jseymour@LinxNet.com)
+	** 23/01/13 POrt to C# (michael.coyle@BlueToque.ca)
+	** 03/22/2014 -- david.grandy@gmail.com
+	** Modified to return array with all magnetic field components.
+	** 
+	**
+	** This program is free software; you can redistribute it and/or
+	** modify it under the terms of the GNU General Public Licence as
+	** published by the Free Software Foundation; either version 2 of the
+	** Licence, or (at your option) any later version.
+	**
+	** This program is distributed in the hope that it will be useful, but
+	** WITHOUT ANY WARRANTY; without even the implied warranty of
+	** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+	** General Public Licence for more details.
+	**
+	** You should have received a copy of the GNU General Public Licence
+	** along with this program; if not, write to the Free Software
+	** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+	**
+	*/
+	#endregion
+	class MagVar
     {
 
         #region statics
