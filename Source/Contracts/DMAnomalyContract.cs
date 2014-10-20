@@ -141,9 +141,9 @@ namespace DMagic
 			this.AddParameter(newParam);
 			DMUtils.DebugLog("Added Primary Anomaly Parameter");
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParam.Situation), newParam.Body) * ((float)rand.Next(85, 116) / 100f);
-			newParam.SetFunds(10000f * DMUtils.reward * primaryLocationMod, 5000f * DMUtils.penalty * primaryLocationMod, body);
-			newParam.SetReputation(60f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
-			newParam.SetScience(25f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
+			newParam.SetFunds(20000f * DMUtils.reward * primaryLocationMod, 10000f * DMUtils.penalty * primaryLocationMod, body);
+			newParam.SetReputation(80f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
+			newParam.SetScience(35f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
 
 			foreach (DMAnomalyParameter aP in anomParams)
 			{
@@ -152,8 +152,8 @@ namespace DMagic
 					this.AddParameter(aP, "collectDMAnomaly");
 					DMUtils.DebugLog("Added Secondary Anomaly Parameter");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), aP.Body) * ((float)rand.Next(85, 116) / 100f);
-					aP.SetFunds(5000f * DMUtils.reward * locationMod, 3000f * DMUtils.penalty * locationMod, body);
-					aP.SetReputation(10f * DMUtils.reward * locationMod, 5f * DMUtils.penalty * locationMod, body);
+					aP.SetFunds(9000f * DMUtils.reward * locationMod, 6000f * DMUtils.penalty * locationMod, body);
+					aP.SetReputation(20f * DMUtils.reward * locationMod, 5f * DMUtils.penalty * locationMod, body);
 					aP.SetScience(aP.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
 				}
 			}
@@ -163,9 +163,9 @@ namespace DMagic
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
-			base.SetDeadlineYears(4f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
+			base.SetDeadlineYears(3.2f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
 			base.SetReputation(20f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
-			base.SetFunds(20000f * DMUtils.forward * primaryLocationMod, 18000f * DMUtils.reward * primaryLocationMod, 16000f * DMUtils.penalty * primaryLocationMod, body);
+			base.SetFunds(25000f * DMUtils.forward * primaryLocationMod, 22000f * DMUtils.reward * primaryLocationMod, 16000f * DMUtils.penalty * primaryLocationMod, body);
 			return true;
 		}
 
