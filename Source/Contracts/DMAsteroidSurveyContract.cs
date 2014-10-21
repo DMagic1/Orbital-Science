@@ -108,7 +108,7 @@ namespace DMagic
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
-			base.SetDeadlineYears(4f * DMUtils.deadline * primaryModifier, null);
+			base.SetDeadlineYears(2.8f * DMUtils.deadline * primaryModifier, null);
 			base.SetReputation(newParams.Length * 5f * DMUtils.reward * (size + 1) * primaryModifier, newParams.Length * 3f * DMUtils.penalty * primaryModifier, null);
 			base.SetFunds(12000 * newParams.Length * DMUtils.forward * (size + 1) * primaryModifier, 11000 * newParams.Length * DMUtils.reward * (size + 1) * primaryModifier, 9000 * newParams.Length * DMUtils.penalty * (size + 1) * primaryModifier, null);
 			return true;

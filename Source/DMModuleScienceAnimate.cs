@@ -598,14 +598,10 @@ namespace DMagic
 				return "";
 			else {
 				switch (vessel.landedAt) {
-					case "LaunchPad":
-						return vessel.landedAt;
-					case "Runway":
-						return vessel.landedAt;
-					case "KSC":
-						return vessel.landedAt;
-					default:
+					case "":
 						return FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name;
+					default:
+						return Vessel.GetLandedAtString(vessel.landedAt);
 				}
 			}
 		}
