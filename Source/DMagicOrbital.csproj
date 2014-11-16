@@ -48,7 +48,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contracts\DMAnomalyContract.cs" />
-    <Compile Include="DMSoilMoisture.cs" />
+    <Compile Include="Part Modules\DMRoverGooMat.cs" />
+    <Compile Include="Part Modules\DMSoilMoisture.cs" />
     <Compile Include="Parameters\DMAnomalyParameter.cs" />
     <Compile Include="Parameters\DMAsteroidParameter.cs" />
     <Compile Include="Parameters\DMCollectScience.cs">
@@ -60,22 +61,23 @@
     <Compile Include="DMAnomalyList.cs" />
     <Compile Include="DMAnomalyObject.cs" />
     <Compile Include="DMAsteroidScience.cs" />
-    <Compile Include="DMAnomalyScanner.cs">
+    <Compile Include="Part Modules\DMAnomalyScanner.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Contracts\DMAsteroidSurveyContract.cs" />
-    <Compile Include="DMBioDrill.cs" />
+    <Compile Include="Part Modules\DMBioDrill.cs" />
     <Compile Include="DMConfigLoader.cs" />
-    <Compile Include="DMEnviroSensor.cs" />
-    <Compile Include="DMMagBoomModule.cs">
+    <Compile Include="Part Modules\DMEnviroSensor.cs" />
+    <Compile Include="Part Modules\DMMagBoomModule.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DMModuleScienceAnimate.cs" />
+    <Compile Include="Part Modules\DMModuleScienceAnimate.cs" />
     <Compile Include="DMScienceContainer.cs" />
     <Compile Include="Parameters\DMOrbitalParameters.cs" />
-    <Compile Include="DMSolarCollector.cs" />
+    <Compile Include="Part Modules\DMSolarCollector.cs" />
     <Compile Include="DMUtils.cs" />
-    <Compile Include="MagVar.cs">
+    <Compile Include="Part Modules\DMXRayDiffract.cs" />
+    <Compile Include="Part Modules\MagVar.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

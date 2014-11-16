@@ -1,6 +1,6 @@
 ﻿#region license
 /* DMagic Orbital Science - Soil Moisture
- * Some Soil Moisture-Specific Code On Top Of DMScienceMultiple
+ * Some Soil Moisture-Specific Code On Top Of DMModuleScienceAnimate
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
@@ -29,10 +29,9 @@
  */
 #endregion
 
-using System;
 using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Part_Modules
 {
 	class DMSoilMoisture: DMModuleScienceAnimate
 	{
