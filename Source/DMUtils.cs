@@ -131,9 +131,9 @@ namespace DMagic
 		internal static double timeInDays(double D)
 		{
 			if (GameSettings.KERBIN_TIME)
-				D /= (3600 * 6);
+				D /= KSPUtil.KerbinDay;
 			else
-				D /= (3600 * 24);
+				D /= KSPUtil.EarthDay;
 			return D;
 		}
 
@@ -1023,7 +1023,7 @@ namespace DMagic
 			else
 				targetSituation = ExperimentSituations.FlyingLow;
 
-			anomName = DMAnomalyScanner.anomalyCleanup(City.name);
+			anomName = DMagic.Part_Modules.DMAnomalyScanner.anomalyCleanup(City.name);
 
 			subject = string.Format("AnomalyScan@{0}{1}{2}", Body.name, targetSituation, anomName);
 
