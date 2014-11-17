@@ -42,13 +42,13 @@ namespace DMagic.Part_Modules
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
-			if (!IsDeployed)
+			if (!IsDeployed && anim2 != null && anim != null)
 				sampleAnimator(0f, 0f, 1f);
 		}
 
 		public override void deployEvent()
 		{
-			if (anim2 != null)
+			if (anim2 != null && anim != null)
 				sampleAnimator(anim[animationName].length);
 			base.deployEvent();
 		}
@@ -64,9 +64,9 @@ namespace DMagic.Part_Modules
 		{
 			yield return new WaitForSeconds(waitTime);
 			if (IsDeployed)
-				sampleAnimator(1f, 0f, (experimentNumber * (1f / experimentLimit)) * anim2[sampleAnim].length);
+				sampleAnimator(1.5f, 0f, (experimentNumber * (1f / experimentLimit)) * (anim2[sampleAnim].length) / 1.5f);
 			else
-				sampleAnimator(-1f, experimentNumber * (1f / experimentLimit), (experimentNumber * (1f / experimentLimit)) * anim2[sampleAnim].length);
+				sampleAnimator(-2f, (experimentNumber * 1f / experimentLimit), (experimentNumber * (1f / experimentLimit)) * (anim2[sampleAnim].length) / 2f);
 		}
 
 		private IEnumerator stopAnimSample(float timer)
@@ -82,7 +82,7 @@ namespace DMagic.Part_Modules
 				if (anim2.IsPlaying(sampleAnim))
 				{
 					StopCoroutine("stopAnimSample");
-					anim2[sampleAnim].speed = -1f;
+					anim2[sampleAnim].speed = -1.5f;
 				}
 				else if (anim.IsPlaying(animationName))
 					StopCoroutine("waitForSamples");
@@ -94,8 +94,8 @@ namespace DMagic.Part_Modules
 				if (anim2.IsPlaying(sampleAnim))
 				{
 					StopCoroutine("stopAnimSample");
-					anim2[sampleAnim].speed = 1f;
-					StartCoroutine("stopAnimSample", (1 - (anim2[sampleAnim].time / (experimentNumber * (1f / experimentLimit)) * anim2[sampleAnim].length)) * ((experimentNumber * (1f / experimentLimit)) * anim2[sampleAnim].length));
+					anim2[sampleAnim].speed = 1.5f;
+					StartCoroutine("stopAnimSample", (1 - (anim2[sampleAnim].time / ((experimentNumber * (1f / experimentLimit)) * anim2[sampleAnim].length))) * ((experimentNumber * (1f / experimentLimit)) * (anim2[sampleAnim].length / 1.5f)));
 				}
 				else
 					StartCoroutine("waitForSamples", waitTime);
