@@ -236,17 +236,17 @@ namespace DMagic.Part_Modules
 
 		public override string GetInfo()
 		{
-			if (resourceExpCost > 0) {
+			string info = base.GetInfo();
+			if (!rerunnable)
+				info += string.Format("Max Samples: {0}\n", experimentLimit);
+			if (resourceExpCost > 0)
+			{
 				float time = waitForAnimationTime;
 				if (time == -1 && anim != null && !string.IsNullOrEmpty(animationName))
 					time = anim[animationName].length;
-				string info = base.GetInfo();
-				if (!rerunnable)
-					info += "Max Samples: " + experimentLimit.ToString() + "\n";
-				info += "Requires:\n-" + resourceExperiment + ": " + resourceExpCost.ToString() + "/s for " + waitForAnimationTime.ToString() + "s\n";
-				return info;
+				info += string.Format("Requires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
 			}
-			else return base.GetInfo();
+			return info;
 		}
 
 		private void setup()
