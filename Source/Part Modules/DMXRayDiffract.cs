@@ -32,11 +32,56 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace DMagic.Part_Modules
 {
 	class DMXRayDiffract : DMModuleScienceAnimate
 	{
+		private const string drillTransform = "SampleDrill";
+		private const string potato = "PotatoRoid";
 
+		protected override bool canConduct()
+		{
+			if (base.canConduct())
+			{
+				if (drillImpact(asteroidReports && DMAsteroidScience.asteroidGrappled()))
+					return true;
+				failMessage = "The drill cannot impact the surface from this distance";
+			}
+			return false;
+		}
+
+		private bool drillImpact(bool b)
+		{
+			RaycastHit hit;
+			Transform t = part.FindModelTransform(drillTransform);
+			Vector3 p = t.position;
+			Ray r = new Ray(p, -1f * t.forward);
+			float drillLength = 4f * part.rescaleFactor; //Needs fix for tweakscale
+			DMUtils.DebugLog("Drill Distance Set: {0}; RescaleFactor: {1}", drillLength, part.rescaleFactor);
+			Physics.Raycast(r, out hit, drillLength);
+			if (hit.collider != null)
+			{
+				if (b)
+				{
+					DMUtils.DebugLog("Checking Asteroid Surface");
+					string obj = hit.collider.attachedRigidbody.gameObject.name;
+					return (obj.StartsWith(potato));
+				}
+				else
+				{
+					Transform hitT = hit.collider.transform;
+					while (hitT != null)
+					{
+						DMUtils.DebugLog("Transform: {0} Hit", hitT.name);
+						if (hitT.name.Contains(vessel.mainBody.name))
+							return true;
+						hitT = hitT.parent;
+					}
+				}
+			}
+			return false;
+		}
 	}
 }
