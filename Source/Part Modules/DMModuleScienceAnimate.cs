@@ -130,7 +130,7 @@ namespace DMagic.Part_Modules
 		private const string bodyNameFixed = "Eeloo";
 		private bool lastInOperableState = false;
 		protected float scienceBoost = 1f;
-		private string failMessage = "";
+		protected string failMessage = "";
 		protected float labDataBoost = 0.5f;
 
 		/// <summary>
@@ -685,7 +685,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private bool canConduct()
+		protected virtual bool canConduct()
 		{
 			failMessage = "";
 			if (Inoperable) {
