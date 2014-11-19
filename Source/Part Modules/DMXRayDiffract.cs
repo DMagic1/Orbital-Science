@@ -72,13 +72,12 @@ namespace DMagic.Part_Modules
 					}
 					catch
 					{
-						DMUtils.Logging("Error in TweakScale PartModule Field; Resetting Scale Calculation to 100%");
+						DMUtils.Logging("Error in TweakScale PartModule Field; Resetting TweakScale Factor to 100%");
 					}
 					scale *= (tweakedScale / 100);
 				}
 			}
 			float drillLength = 4f * scale;
-			DMUtils.DebugLog("Drill Distance Set: {0}; RescaleFactor: {1}", drillLength, part.rescaleFactor);
 			Physics.Raycast(r, out hit, drillLength);
 			if (hit.collider != null)
 			{
