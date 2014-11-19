@@ -30,6 +30,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -54,11 +55,29 @@ namespace DMagic.Part_Modules
 
 		private bool drillImpact(bool b)
 		{
-			RaycastHit hit;
+			RaycastHit hit = new RaycastHit();
 			Transform t = part.FindModelTransform(drillTransform);
 			Vector3 p = t.position;
 			Ray r = new Ray(p, -1f * t.forward);
-			float drillLength = 4f * part.rescaleFactor; //Needs fix for tweakscale
+			float scale = part.rescaleFactor;
+			if (part.Modules.Contains("TweakScale"))
+			{
+				PartModule pM = part.Modules["TweakScale"];
+				if (pM.Fields.GetValue("currentScale") != null)
+				{
+					float tweakedScale = 100f;
+					try
+					{
+						tweakedScale = pM.Fields.GetValue<float>("currentScale");
+					}
+					catch
+					{
+						DMUtils.Logging("Error in TweakScale PartModule Field; Resetting Scale Calculation to 100%");
+					}
+					scale *= (tweakedScale / 100);
+				}
+			}
+			float drillLength = 4f * scale;
 			DMUtils.DebugLog("Drill Distance Set: {0}; RescaleFactor: {1}", drillLength, part.rescaleFactor);
 			Physics.Raycast(r, out hit, drillLength);
 			if (hit.collider != null)
