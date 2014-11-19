@@ -69,6 +69,7 @@ namespace DMagic.Part_Modules
 					try
 					{
 						tweakedScale = pM.Fields.GetValue<float>("currentScale");
+						DMUtils.Logging("TweakScale Value Detected On XRay Instrument; Drill Length Set To 8.8m * {0}%", tweakedScale);
 					}
 					catch
 					{
