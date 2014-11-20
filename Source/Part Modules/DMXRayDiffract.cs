@@ -91,12 +91,14 @@ namespace DMagic.Part_Modules
 				else
 				{
 					Transform hitT = hit.collider.transform;
-					while (hitT != null)
+					int i = 0; //Just to prevent this from getting stuck in a loop
+					while (hitT != null && i < 200)
 					{
 						DMUtils.DebugLog("Transform: {0} Hit", hitT.name);
 						if (hitT.name.Contains(vessel.mainBody.name))
 							return true;
 						hitT = hitT.parent;
+						i++;
 					}
 				}
 			}
