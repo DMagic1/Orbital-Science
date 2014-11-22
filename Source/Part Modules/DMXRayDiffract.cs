@@ -65,17 +65,17 @@ namespace DMagic.Part_Modules
 				PartModule pM = part.Modules["TweakScale"];
 				if (pM.Fields.GetValue("currentScale") != null)
 				{
-					float tweakedScale = 100f;
+					float tweakedScale = 1f;
 					try
 					{
 						tweakedScale = pM.Fields.GetValue<float>("currentScale");
-						DMUtils.Logging("TweakScale Value Detected On XRay Instrument; Drill Length Set To 8.8m * {0}%", tweakedScale);
+						DMUtils.Logging("TweakScale Value Detected On XRay Instrument; Drill Length Set To 8.8m * {0}", tweakedScale);
 					}
 					catch
 					{
-						DMUtils.Logging("Error in TweakScale PartModule Field; Resetting TweakScale Factor to 100%");
+						DMUtils.Logging("Error in TweakScale PartModule Field; Resetting TweakScale Factor to 1");
 					}
-					scale *= (tweakedScale / 100);
+					scale *= tweakedScale;
 				}
 			}
 			float drillLength = 4f * scale;
