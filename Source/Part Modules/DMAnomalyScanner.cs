@@ -29,13 +29,10 @@
  */
 #endregion
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Part_Modules
 {
 	class DMAnomalyScanner : DMModuleScienceAnimate
 	{

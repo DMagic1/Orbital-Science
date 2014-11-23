@@ -112,7 +112,7 @@ namespace DMagic
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
-			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
+			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
 			base.SetReputation(50f * DMUtils.reward * primaryModifier, 10f * DMUtils.penalty * primaryModifier, body);
 			base.SetFunds(50000 * DMUtils.forward * primaryModifier, 55000 * DMUtils.reward * primaryModifier, 20000 * DMUtils.penalty * primaryModifier, body);
 			return true;

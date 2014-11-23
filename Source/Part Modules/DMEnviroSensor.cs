@@ -33,7 +33,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Part_Modules
 {
 	internal class DMEnviroSensor : ModuleEnviroSensor
 	{

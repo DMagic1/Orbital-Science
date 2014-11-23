@@ -1,6 +1,6 @@
 ﻿#region license
 /* DMagic Orbital Science - Bio Drill
- * Some Drill-Specific Code On Top Of DMScienceMultiple
+ * Some Drill-Specific Code On Top Of DMModuleScienceAnimate
  *
  * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
  * All rights reserved.
@@ -32,7 +32,7 @@
 using System;
 using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Part_Modules
 {
 	class DMBioDrill: DMModuleScienceAnimate
 	{

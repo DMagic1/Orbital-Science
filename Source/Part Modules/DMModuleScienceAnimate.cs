@@ -34,7 +34,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Part_Modules
 {
 	class DMModuleScienceAnimate: ModuleScienceExperiment, IScienceDataContainer
 	{
@@ -115,7 +115,7 @@ namespace DMagic
 		public bool externalDeploy = false;
 
 		protected Animation anim;
-		private Animation anim2;
+		protected Animation anim2;
 		private Animation anim3;
 		private Animation anim4;
 		private ScienceExperiment scienceExp;
@@ -130,7 +130,7 @@ namespace DMagic
 		private const string bodyNameFixed = "Eeloo";
 		private bool lastInOperableState = false;
 		protected float scienceBoost = 1f;
-		private string failMessage = "";
+		protected string failMessage = "";
 		protected float labDataBoost = 0.5f;
 
 		/// <summary>
@@ -236,15 +236,17 @@ namespace DMagic
 
 		public override string GetInfo()
 		{
-			if (resourceExpCost > 0) {
+			string info = base.GetInfo();
+			if (!rerunnable)
+				info += string.Format("Max Samples: {0}\n", experimentLimit);
+			if (resourceExpCost > 0)
+			{
 				float time = waitForAnimationTime;
 				if (time == -1 && anim != null && !string.IsNullOrEmpty(animationName))
 					time = anim[animationName].length;
-				string info = base.GetInfo();
-				info += "Requires:\n-" + resourceExperiment + ": " + resourceExpCost.ToString() + "/s for " + waitForAnimationTime.ToString() + "s\n";
-				return info;
+				info += string.Format("Requires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
 			}
-			else return base.GetInfo();
+			return info;
 		}
 
 		private void setup()
@@ -332,7 +334,7 @@ namespace DMagic
 			}
 		}
 
-		private void secondaryAnimator(string whichAnim, float sampleSpeed, float sampleTime, float waitTime)
+		protected void secondaryAnimator(string whichAnim, float sampleSpeed, float sampleTime, float waitTime)
 		{
 			if (anim2 != null) {
 				anim2[whichAnim].speed = sampleSpeed;
@@ -683,7 +685,7 @@ namespace DMagic
 			}
 		}
 
-		private bool canConduct()
+		protected virtual bool canConduct()
 		{
 			failMessage = "";
 			if (Inoperable) {

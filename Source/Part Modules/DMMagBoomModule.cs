@@ -34,7 +34,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 
-namespace DMagic
+namespace DMagic.Part_Modules
 {
 
 	public class DMMagBoomModule : PartModule
