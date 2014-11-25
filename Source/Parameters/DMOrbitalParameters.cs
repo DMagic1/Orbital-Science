@@ -163,6 +163,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			if (int.TryParse(orbitString[1], out target))
 				body = FlightGlobals.Bodies[target];
@@ -171,6 +172,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			vName = orbitString[2];
 			if (!double.TryParse(orbitString[3], out orbitalParameter))
@@ -178,6 +180,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			if (!HighLogic.LoadedSceneIsEditor)
 			{

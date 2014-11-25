@@ -106,6 +106,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			if (!double.TryParse(orbitString[1], out orbitTime))
 			{
@@ -116,6 +117,13 @@ namespace DMagic
 			{
 				DMUtils.Logging("Failed To Load Variables; Parameter Reset to Default Value Of 100 Days");
 				timeNeeded = 2160000;
+			}
+			if (this.GetParameter(0) != null || this.GetParameter(1) != null)
+			{
+				DMUtils.Logging("Failed To Load Magnetic Survey Orbital Parameters; Removing Long Orbit Parameter");
+				this.Unregister();
+				this.Root.RemoveParameter(this);
+				return;
 			}
 		}
 
