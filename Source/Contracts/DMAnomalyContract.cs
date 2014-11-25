@@ -255,6 +255,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Anomaly Contract");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 			if (HighLogic.LoadedSceneIsFlight)
 			{
@@ -269,6 +270,7 @@ namespace DMagic
 					DMUtils.Logging("Failed To Load Anomaly Contract");
 					this.Unregister();
 					ContractSystem.Instance.Contracts.Remove(this);
+					return;
 				}
 			}
 			else
@@ -290,8 +292,10 @@ namespace DMagic
 			cardEW = EWDirection(lon);
 			if (this.ParameterCount == 0)
 			{
+				DMUtils.Logging("No Parameters Loaded For This Contract; Removing Now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 		}
 

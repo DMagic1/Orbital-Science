@@ -163,6 +163,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			name = anomalyString[2];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
@@ -171,6 +172,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			else
 				partName = scienceContainer.sciPart;
@@ -181,6 +183,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			if (!bool.TryParse(anomalyString[4], out collected))
 			{
@@ -198,6 +201,7 @@ namespace DMagic
 					DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
 					this.Unregister();
 					this.Root.RemoveParameter(this);
+					return;
 				}
 			}
 			subject = string.Format("{0}@{1}{2}", scienceContainer.exp.id, body.name, situation);

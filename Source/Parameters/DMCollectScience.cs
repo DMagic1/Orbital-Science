@@ -207,6 +207,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			else
 				partName = scienceContainer.sciPart;
@@ -217,6 +218,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			if (int.TryParse(scienceString[3], out targetSituation))
 				scienceLocation = (ExperimentSituations)targetSituation;
@@ -225,6 +227,7 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
+				return;
 			}
 			biomeName = scienceString[4];
 			if (!float.TryParse(scienceString[5], out returnedScience))

@@ -311,16 +311,20 @@ namespace DMagic
 			{
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 			if (!int.TryParse(node.GetValue("Survey_Type"), out surveyType))
 			{
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 			if (this.ParameterCount == 0)
 			{
+				DMUtils.Logging("No Parameters Loaded For This Contract; Removing Now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 		}
 
