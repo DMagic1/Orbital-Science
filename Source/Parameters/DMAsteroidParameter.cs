@@ -140,7 +140,7 @@ namespace DMagic
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -151,7 +151,7 @@ namespace DMagic
 				aSize = DMUtils.sizeHash(size);
 			else
 			{
-				DMUtils.Logging("Failed To Load Contract Parameter; Parameter Removed");
+				DMUtils.Logging("Failed To Load Asteroid Size Value; Asteroid Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -160,14 +160,14 @@ namespace DMagic
 				scienceLocation = (ExperimentSituations)targetLocation;
 			else
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Situation Variables; Asteroid Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
 			}
 			if (!bool.TryParse(scienceString[3], out collected))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
+				DMUtils.Logging("Failed To Load Collecte State; Asteroid Parameter Reset");
 				collected = false;
 			}
 			subject = string.Format("{0}@Asteroid{1}", scienceContainer.exp.id, scienceLocation);

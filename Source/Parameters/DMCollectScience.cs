@@ -197,14 +197,14 @@ namespace DMagic
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			if (!int.TryParse(scienceString[0], out type))
 			{
-				DMUtils.Logging("Failed To Load Contract Parameter; Parameter Reset");
+				DMUtils.Logging("Failed To Load Contract Type Value; Collect Science Parameter Reset");
 				type = 1;
 			}
 			name = scienceString[1];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -215,7 +215,7 @@ namespace DMagic
 				body = FlightGlobals.Bodies[targetBodyID];
 			else
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Target Body Variables; Collect Science Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -224,7 +224,7 @@ namespace DMagic
 				scienceLocation = (ExperimentSituations)targetSituation;
 			else
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Situation Variables; Collect Science Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -232,7 +232,7 @@ namespace DMagic
 			biomeName = scienceString[4];
 			if (!float.TryParse(scienceString[5], out returnedScience))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
+				DMUtils.Logging("Failed To Load Returned Data Variables; Collect Science Parameter Reset");
 				returnedScience = 0;
 			}
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));

@@ -160,7 +160,7 @@ namespace DMagic
 				body = FlightGlobals.Bodies[bodyID];
 			else
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+				DMUtils.Logging("Failed To Load Anomaly Contract Target Body Value; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -169,7 +169,7 @@ namespace DMagic
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -180,14 +180,14 @@ namespace DMagic
 				situation = (ExperimentSituations)sitID;
 			else
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+				DMUtils.Logging("Failed To Load Anomaly Contract Situation Value; Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
 			}
 			if (!bool.TryParse(anomalyString[4], out collected))
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Reset Parameter");
+				DMUtils.Logging("Failed To Load Anomaly Contract Collected State; Reset Parameter");
 				collected = false;
 			}
 			if (HighLogic.LoadedSceneIsFlight)
@@ -198,7 +198,7 @@ namespace DMagic
 				}
 				catch
 				{
-					DMUtils.Logging("Failed To Load Anomaly Contract Parameter; Parameter Removed");
+					DMUtils.Logging("Failed To Load Anomaly Contract Object; Parameter Removed");
 					this.Unregister();
 					this.Root.RemoveParameter(this);
 					return;

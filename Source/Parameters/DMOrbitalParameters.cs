@@ -160,7 +160,7 @@ namespace DMagic
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
 			if (!int.TryParse(orbitString[0], out type))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Type Variables; Mag Orbital Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -169,7 +169,7 @@ namespace DMagic
 				body = FlightGlobals.Bodies[target];
 			else
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Target Body Variables; Mag Orbital Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -177,7 +177,7 @@ namespace DMagic
 			vName = orbitString[2];
 			if (!double.TryParse(orbitString[3], out orbitalParameter))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Orbital Variables; Mag Orbital Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -199,7 +199,7 @@ namespace DMagic
 							}
 							catch
 							{
-								DMUtils.Logging("Failed To Load Vessel; Parameter Reset");
+								DMUtils.Logging("Failed To Load Vessel; Mag Orbital Parameter Reset");
 								if (HighLogic.LoadedSceneIsFlight)
 								{
 									DMUtils.Logging("Checking If Currently Loaded Vessel Is Appropriate");

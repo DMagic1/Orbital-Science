@@ -164,7 +164,7 @@ namespace DMagic
 			hash = node.GetValue("Asteroid_Size_Class");
 			if (this.ParameterCount == 0)
 			{
-				DMUtils.Logging("No Parameters Loaded For This Contract; Removing Now...");
+				DMUtils.Logging("No Parameters Loaded For This Asteroid Contract; Removing Now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
 				return;

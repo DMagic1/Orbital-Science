@@ -321,7 +321,7 @@ namespace DMagic
 			}
 			if (this.ParameterCount == 0)
 			{
-				DMUtils.Logging("No Parameters Loaded For This Contract; Removing Now...");
+				DMUtils.Logging("No Parameters Loaded For This Survey Contract; Removing Now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
 				return;
