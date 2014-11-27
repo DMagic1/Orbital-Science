@@ -103,27 +103,20 @@ namespace DMagic
 				body = FlightGlobals.Bodies[target];
 			else
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
+				DMUtils.Logging("Failed To Load Target Body Variables; Mag Long Orbit Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
 			}
 			if (!double.TryParse(orbitString[1], out orbitTime))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
+				DMUtils.Logging("Failed To Load Orbit Time Variables; Mag Long Orbit Parameter Reset");
 				orbitTime = 0;
 			}
 			if (!double.TryParse(orbitString[2], out timeNeeded))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Reset to Default Value Of 100 Days");
+				DMUtils.Logging("Failed To Load Time Needed Variables; Mag Long Orbit Parameter Reset to Default Value Of 100 Days");
 				timeNeeded = 2160000;
-			}
-			if (this.GetParameter(0) != null || this.GetParameter(1) != null)
-			{
-				DMUtils.Logging("Failed To Load Magnetic Survey Orbital Parameters; Removing Long Orbit Parameter");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
-				return;
 			}
 		}
 
