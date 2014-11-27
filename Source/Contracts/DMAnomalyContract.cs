@@ -252,9 +252,10 @@ namespace DMagic
 				body = FlightGlobals.Bodies[targetBodyID];
 			else
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract");
+				DMUtils.Logging("Failed To Load Anomaly Contract Target Body");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 			if (HighLogic.LoadedSceneIsFlight)
 			{
@@ -266,21 +267,22 @@ namespace DMagic
 				}
 				catch
 				{
-					DMUtils.Logging("Failed To Load Anomaly Contract");
+					DMUtils.Logging("Failed To Load Anomaly Contract Object");
 					this.Unregister();
 					ContractSystem.Instance.Contracts.Remove(this);
+					return;
 				}
 			}
 			else
 			{
 				if (!double.TryParse(anomalyString[2], out lat))
 				{
-					DMUtils.Logging("Failed To Load Anomaly Values");
+					DMUtils.Logging("Failed To Load Anomaly Lat Values");
 					lat = 0.000d;
 				}
 				if (!double.TryParse(anomalyString[3], out lon))
 				{
-					DMUtils.Logging("Failed To Load Anomaly Values");
+					DMUtils.Logging("Failed To Load Anomaly Long Values");
 					lon = 0.000d;
 				}
 			}
@@ -290,8 +292,10 @@ namespace DMagic
 			cardEW = EWDirection(lon);
 			if (this.ParameterCount == 0)
 			{
+				DMUtils.Logging("No Parameters Loaded For This Anomaly Contract; Removing Now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 		}
 

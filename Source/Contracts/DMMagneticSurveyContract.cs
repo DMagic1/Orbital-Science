@@ -167,11 +167,21 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Mag Contract");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
+			}
+			if (this.GetParameter<DMLongOrbitParameter>() == null)
+			{
+				DMUtils.Logging("Magnetic Field Long Orbit Parameter Not Found; Removing This Contract");
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 			if (this.ParameterCount == 0)
 			{
+				DMUtils.Logging("No Parameters Loaded For Mag Contract; Removing Now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 		}
 
