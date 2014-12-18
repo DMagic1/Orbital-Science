@@ -293,7 +293,7 @@ namespace DMagic
 		{
 			DMUtils.DebugLog("Searching For Biomes: Value Sensitive");
 			List<string> s = new List<string>();
-			if (b.BiomeMap == null || b.BiomeMap.Map == null)
+            if (b.BiomeMap == null || b.BiomeMap.Attributes == null)
 			{
 				DMUtils.DebugLog("No Biomes Present For Target Planet");
 				s.Add("");
@@ -325,7 +325,7 @@ namespace DMagic
 		{
 			DMUtils.DebugLog("Searching For Biomes: Value InSensitive");
 			List<string> s = new List<string>();
-			if (b.BiomeMap == null || b.BiomeMap.Map == null)
+            if (b.BiomeMap == null | b.BiomeMap.Attributes == null)
 			{
 				DMUtils.DebugLog("No Biomes Present For Target Planet");
 				s.Add("");
