@@ -601,7 +601,10 @@ namespace DMagic.Part_Modules
 			else {
 				switch (vessel.landedAt) {
 					case "":
-						return FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name;
+						if (vessel.mainBody.BiomeMap != null)
+							return vessel.mainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name;
+						else
+							return "";
 					default:
 						return Vessel.GetLandedAtString(vessel.landedAt);
 				}
