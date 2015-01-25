@@ -1,7 +1,7 @@
 {
      "NAME":"DMagic Orbital Science",
-	 "URL":"https://github.com/DMagic1/Orbital-Science/blob/master/GameData/DMagic%20Orbital%20Science/DMagic%20Orbital%20Science.version",
-     "DOWNLOAD":"https://kerbalstuff.com/mod/5/DMagic%20Orbital%20Science/download/0.9.1",
+	 "URL":"https://raw.githubusercontent.com/DMagic1/Orbital-Science/master/GameData/DMagic%20Orbital%20Science/DMagic%20Orbital%20Science.version",
+     "DOWNLOAD":"https://kerbalstuff.com/mod/5/DMagic%20Orbital%20Science/download/0.9.1.1",
      "GITHUB":{
          "USERNAME":"DMagic1",
          "REPOSITORY":"Orbital-Science",
@@ -11,7 +11,7 @@
          "MAJOR":0,
          "MINOR":9,
          "PATCH":1,
-         "BUILD":0
+         "BUILD":1
      },
      "KSP_VERSION":{
          "MAJOR":0,
