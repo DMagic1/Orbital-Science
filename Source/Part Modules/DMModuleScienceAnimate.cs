@@ -461,6 +461,7 @@ namespace DMagic.Part_Modules
 					if (keepDeployedMode == 0) retractEvent();
 					storedScienceReports.Clear();
 				}
+				Deployed = false;
 			}
 		}
 
@@ -492,10 +493,11 @@ namespace DMagic.Part_Modules
 					if (experimentNumber < 0)
 						experimentNumber = 0;
 					if (keepDeployedMode == 0) retractEvent();
+					Deployed = false;
 				}
-				else
-					ResetExperiment();
 			}
+			else
+				ResetExperiment();
 		}
 
 		new public void CollectDataExternalEvent()
@@ -571,11 +573,14 @@ namespace DMagic.Part_Modules
 				{
 					dataIndex = 0;
 					storedScienceReports.Add(data);
+					Deployed = true;
 					ReviewData();
 				}
 				else
 				{
 					scienceReports.Add(data);
+					if (experimentNumber >= experimentLimit - 1)
+						Deployed = true;
 					initialResultsPage();
 				}
 				if (keepDeployedMode == 1) retractEvent();
@@ -601,7 +606,10 @@ namespace DMagic.Part_Modules
 			else {
 				switch (vessel.landedAt) {
 					case "":
-						return FlightGlobals.currentMainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name;
+						if (vessel.mainBody.BiomeMap != null)
+							return vessel.mainBody.BiomeMap.GetAtt(vessel.latitude * Mathf.Deg2Rad, vessel.longitude * Mathf.Deg2Rad).name;
+						else
+							return "";
 					default:
 						return Vessel.GetLandedAtString(vessel.landedAt);
 				}
@@ -690,6 +698,11 @@ namespace DMagic.Part_Modules
 			failMessage = "";
 			if (Inoperable) {
 				failMessage = "Experiment is no longer functional; must be reset at a science lab or returned to Kerbin";
+				return false;
+			}
+			else if (Deployed)
+			{
+				failMessage = storageFullMessage;
 				return false;
 			}
 			else if ((experimentNumber >= experimentLimit) && experimentLimit > 1) {
@@ -852,6 +865,7 @@ namespace DMagic.Part_Modules
 				experimentNumber--;
 				if (experimentNumber < 0)
 					experimentNumber = 0;
+				Deployed = false;
 			}
 		}
 
@@ -899,6 +913,7 @@ namespace DMagic.Part_Modules
 			if (scienceReports.Count > 0) {
 				scienceReports.Remove(data);
 				if (keepDeployedMode == 0) retractEvent();
+				Deployed = false;
 			}
 		}
 
@@ -997,6 +1012,7 @@ namespace DMagic.Part_Modules
 			if (storedScienceReports.Contains(data)) {
 				experimentsReturned++;
 				Inoperable = !IsRerunnable();
+				Deployed = Inoperable;
 				storedScienceReports.Remove(data);
 			}
 		}
@@ -1006,6 +1022,7 @@ namespace DMagic.Part_Modules
 			if (scienceReports.Contains(data)) {
 				experimentsReturned++;
 				Inoperable = !IsRerunnable();
+				Deployed = Inoperable;
 				scienceReports.Remove(data);
 			}
 		}
