@@ -37,12 +37,19 @@ namespace DMagic.Part_Modules
 {
 	class DMAsteroidScanner : PartModule, IScienceDataContainer
 	{
+
+		#region Fields
+
 		[KSPField]
 		public string animationName;
 		[KSPField]
 		public string experimentID;
 		[KSPField]
-		public string indicatorAnim;
+		public string greenLight;
+		[KSPField]
+		public string yellowLight;
+		[KSPField]
+		public string redLight;
 		[KSPField]
 		public string experimentResource;
 		[KSPField]
@@ -57,25 +64,47 @@ namespace DMagic.Part_Modules
 		public bool Inoperable = false;
 		[KSPField(isPersistant = true)]
 		public bool Deployed = false;
+		[KSPField(guiActive = false, guiName = "Status")]
+		public string status;
 
 		private const string asteroidBodyNameFixed = "Eeloo";
+		private const string transformName = "";
+		private const string potato = "PotatoRoid";
 		private Animation Anim;
-		private Animation IndicatorAnim;
+		private Animation IndicatorAnim1;
+		private Animation IndicatorAnim2;
+		private Animation IndicatorAnim3;
 		private ScienceExperiment exp = null;
 		private List<ScienceData> scienceReports = new List<ScienceData>();
+		private bool validTarget = false;
+		private bool targetInRange = false;
+		private bool targetInSite = false;
+		private DMAsteroidScanner targetModule = null;
+		private Transform t;
+		private float targetDistance = 0f;
+		private float[] astWidth = new float[6] { 4, 8, 12, 16, 20, 30 };
+
+		#endregion
+
+		#region PartModule
 
 		public override void OnStart(PartModule.StartState state)
 		{
 			if (!string.IsNullOrEmpty(animationName))
 				Anim = part.FindModelAnimators(animationName)[0];
-			if (!string.IsNullOrEmpty(indicatorAnim))
-				IndicatorAnim = part.FindModelAnimators(indicatorAnim)[0];
+			if (!string.IsNullOrEmpty(greenLight))
+				IndicatorAnim1 = part.FindModelAnimators(greenLight)[0];
+			if (!string.IsNullOrEmpty(yellowLight))
+				IndicatorAnim2 = part.FindModelAnimators(yellowLight)[0];
+			if (!string.IsNullOrEmpty(redLight))
+				IndicatorAnim3 = part.FindModelAnimators(redLight)[0];
 			if (!string.IsNullOrEmpty(experimentID))
 				exp = ResearchAndDevelopment.GetExperiment(experimentID);
 			if (IsDeployed)
 				animator(0f, 1f);
 			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
 				FlightGlobals.Bodies[16].bodyName = asteroidBodyNameFixed;
+			t = part.FindModelTransform(transformName);
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -104,7 +133,49 @@ namespace DMagic.Part_Modules
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
+				if (IsDeployed)
+				{
+					Vessel target = vessel.targetObject as Vessel;
 
+					if (target != null)
+					{
+						if (target != vessel)
+						{
+							targetModule = target.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault();
+							if (targetModule != null)
+							{
+								validTarget = true;
+								targetDistance = (targetModule.transform.position - t.position).magnitude;
+								if (targetDistance < 5000)
+								{
+									targetInRange = true;
+									targetInSite = simpleRayHit();
+									lightAnimationController(IndicatorAnim2, IndicatorAnim1, IndicatorAnim3, yellowLight, greenLight, redLight);
+								}
+							}
+							else
+							{
+								validTarget = targetInRange = false;
+								targetDistance = 0f;
+								lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
+							}
+						}
+						else
+						{
+							targetDistance = 0f;
+							targetModule = null;
+							validTarget = targetInRange = false;
+							lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
+						}
+					}
+					else
+					{
+						targetDistance = 0f;
+						targetModule = null;
+						validTarget = targetInRange = false;
+						lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
+					}
+				}
 			}
 		}
 
@@ -112,8 +183,35 @@ namespace DMagic.Part_Modules
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-
+				if (IsDeployed)
+				{
+					if (validTarget && targetInRange && targetModule != null)
+					{
+						//Point dish at the target; Activate green light when asteroid is in sites
+					}
+					else
+					{
+						//Slowly rotate dish
+					}
+				}
 			}
+		}
+
+		private bool simpleRayHit()
+		{
+			Vector3 tPos = t.position;
+			Vector3 targetPos = targetModule.part.transform.position;
+			Vector3 direction = targetPos - tPos;
+			Ray r = new Ray(tPos, direction);
+			RaycastHit hit = new RaycastHit();
+			Physics.Raycast(r, out hit, 5000);
+			if (hit.collider != null)
+			{
+				string obj = hit.collider.attachedRigidbody.gameObject.name;
+				if (obj.StartsWith(potato))
+					return true;
+			}
+			return false;
 		}
 
 		public override string GetInfo()
@@ -126,7 +224,11 @@ namespace DMagic.Part_Modules
 			return info;
 		}
 
+		#endregion
 
+		#region Animator
+
+		//Controls the main, door-opening animation
 		private void animator(float speed, float time)
 		{
 			if (Anim != null)
@@ -140,9 +242,43 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private void dishAnimator()
+		private void lightAnimator(Animation a, string name, bool stop)
 		{
+			if (a != null)
+			{
+				if (!a.IsPlaying(name) && !stop)
+				{
+					a[name].speed = 1f;
+					a[name].normalizedTime = 0f;
+					a[name].wrapMode = WrapMode.Loop;
+					a.Blend(name);
+				}
+				else if (stop)
+				{
+					a[name].normalizedTime = a[name].normalizedTime % 1;
+					a[name].wrapMode = WrapMode.Clamp;
+				}
+			}
+		}
 
+		//Cludgy method for controlling the indicator lights...
+		private void lightAnimationController(Animation a, Animation stop1, Animation stop2, string name1, string stopName1, string stopName2)
+		{
+			if (a != null)
+			{
+				if (!a.IsPlaying(name1))
+					lightAnimator(a, name1, false);
+			}
+			if (stop1 != null)
+			{
+				if (stop1.IsPlaying(stopName1))
+					lightAnimator(stop1, stopName1, true);
+			}
+			if (stop2 != null)
+			{
+				if (stop2.IsPlaying(stopName2))
+					lightAnimator(stop2, stopName2, true);
+			}
 		}
 
 		private void deployEvent()
@@ -156,6 +292,10 @@ namespace DMagic.Part_Modules
 			animator(-1f, 1f);
 			IsDeployed = false;
 		}
+
+		#endregion
+
+		#region Events and Actions
 
 		[KSPEvent(guiActive = true, guiName = "Toggle Asteroid Scanner", active = true)]
 		public void toggleEvent()
@@ -226,21 +366,74 @@ namespace DMagic.Part_Modules
 			ReviewData();
 		}
 
-		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Deploy Asteroid Scanner", active = true)]
+		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Scan Asteroid Interior", active = false)]
 		public void DeployExperiment()
 		{
-			runExperiment();
+			if (validTarget && targetInRange && targetInSite)
+				runExperiment(asteroidScanLength());
+			else
+				ScreenMessages.PostScreenMessage("No valid targets within scaning range", 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		[KSPAction("Deploy Asteroid Experiment")]
+		[KSPAction("Scan Asteroid")]
 		public void DeployAction(KSPActionParam param)
 		{
 			DeployExperiment();
 		}
 
-		private void runExperiment()
+		#endregion
+
+		#region Science Setup
+
+		//Determine if the signal passes through the asteroid, and what distance it travels if so
+		private float asteroidScanLength()
 		{
-			ScienceData data = makeScience();
+			float dist = 0f;
+			if (t != null && targetModule != null)
+			{
+				Vector3 tPos = t.position;
+				Vector3 targetPos = targetModule.part.transform.position;
+				Vector3 direction = targetPos - tPos;
+				Ray r = new Ray(tPos, direction);
+				RaycastHit hit = new RaycastHit();
+				Physics.Raycast(r, out hit, targetDistance);
+
+				//The first ray determines whether or not the asteroid was hit and the distance from the dish
+				//to that first encounter
+				if (hit.collider != null)
+				{
+					string obj = hit.collider.attachedRigidbody.gameObject.name;
+					if (obj.StartsWith(potato))
+					{
+						float firstDist = hit.distance;
+						Vector3 reverseDirection = tPos - targetPos;
+						Ray targetRay = new Ray(targetPos, reverseDirection);
+						RaycastHit targetHit = new RaycastHit();
+						Physics.Raycast(targetRay, out targetHit, targetDistance);
+
+						//The second ray determines the distance from the target vessel to the asteroid
+						if (targetHit.collider != null)
+						{
+							string targetObj = targetHit.collider.attachedRigidbody.gameObject.name;
+							if (targetObj.StartsWith(potato))
+							{
+								float secondDist = hit.distance;
+
+								//The two distances are subtracted from the total distance between vessels to 
+								//give the distance the signal travels while inside the asteroid
+								dist = targetDistance - secondDist - firstDist;
+							}
+						}
+					}
+				}
+			}
+
+			return dist;
+		}
+
+		private void runExperiment(float distance)
+		{
+			ScienceData data = makeScience(distance);
 			if (data == null)
 				Debug.LogError("[DM] Something Went Wrong Here; Null Asteroid Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
 			else
@@ -251,17 +444,43 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private ScienceData makeScience()
+		private int aClassInt(string s)
 		{
+			switch (s)
+			{
+				case "A":
+					return 0;
+				case "B":
+					return 1;
+				case "C":
+					return 2;
+				case "D":
+					return 3;
+				case "E":
+					return 4;
+				default:
+					return 5;
+			}
+		}
+
+		private ScienceData makeScience(float dist)
+		{
+			if (dist <= 0)
+			{
+				DMUtils.Logging("Asteroid Not Scanned...");
+				return null;
+			}
 			ScienceData data = null;
 			ScienceSubject sub = null;
 			CelestialBody body = null;
 			DMAsteroidScience ast = null;
 			string biome = "";
+			float multiplier = 1f;
 
 			ast = new DMAsteroidScience();
 			body = ast.body;
 			biome = ast.aType + ast.aSeed;
+			multiplier = Math.Max(1f, dist / astWidth[aClassInt(ast.aClass)]);
 
 			if (exp == null)
 			{
@@ -282,7 +501,7 @@ namespace DMagic.Part_Modules
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
 
-			data = new ScienceData(exp.baseValue * sub.dataScale, transmitValue, 0f, sub.id, sub.title);
+			data = new ScienceData(multiplier * exp.baseValue * sub.dataScale, transmitValue, 0f, sub.id, sub.title);
 
 			return data;
 		}
@@ -309,6 +528,10 @@ namespace DMagic.Part_Modules
 			sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
 		}
+
+		#endregion
+
+		#region Results Page
 
 		private void experimentResultsPage(ScienceData data)
 		{
@@ -350,7 +573,7 @@ namespace DMagic.Part_Modules
 			if (checkLabOps() && scienceReports.Count > 0)
 				labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
 			else
-				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
+				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void onComplete(ScienceData data)
@@ -368,6 +591,10 @@ namespace DMagic.Part_Modules
 			}
 			return false;
 		}
+
+		#endregion
+
+		#region IScienceDataContainer
 
 		public void ReviewData()
 		{
@@ -404,6 +631,8 @@ namespace DMagic.Part_Modules
 				scienceReports.Remove(data);
 			}
 		}
+
+		#endregion
 
 	}
 }
