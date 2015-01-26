@@ -1,0 +1,409 @@
+﻿#region license
+/* DMagic Orbital Science - Asteroid Scanner
+ * Science Module For Asteroid Scanning Experiment
+ *
+ * Copyright (c) 2014, David Grandy <david.grandy@gmail.com>
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, 
+ * are permitted provided that the following conditions are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright notice, 
+ * this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright notice, 
+ * this list of conditions and the following disclaimer in the documentation and/or other materials 
+ * provided with the distribution.
+ * 
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used 
+ * to endorse or promote products derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+#endregion
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+namespace DMagic.Part_Modules
+{
+	class DMAsteroidScanner : PartModule, IScienceDataContainer
+	{
+		[KSPField]
+		public string animationName;
+		[KSPField]
+		public string experimentID;
+		[KSPField]
+		public string indicatorAnim;
+		[KSPField]
+		public string experimentResource;
+		[KSPField]
+		public bool rerunnable;
+		[KSPField]
+		public float resourceCost = 1f;
+		[KSPField]
+		public float transmitValue = 1f;
+		[KSPField(isPersistant=true)]
+		public bool IsDeployed = false;
+		[KSPField(isPersistant=true)]
+		public bool Inoperable = false;
+		[KSPField(isPersistant = true)]
+		public bool Deployed = false;
+
+		private const string asteroidBodyNameFixed = "Eeloo";
+		private Animation Anim;
+		private Animation IndicatorAnim;
+		private ScienceExperiment exp = null;
+		private List<ScienceData> scienceReports = new List<ScienceData>();
+
+		public override void OnStart(PartModule.StartState state)
+		{
+			if (!string.IsNullOrEmpty(animationName))
+				Anim = part.FindModelAnimators(animationName)[0];
+			if (!string.IsNullOrEmpty(indicatorAnim))
+				IndicatorAnim = part.FindModelAnimators(indicatorAnim)[0];
+			if (!string.IsNullOrEmpty(experimentID))
+				exp = ResearchAndDevelopment.GetExperiment(experimentID);
+			if (IsDeployed)
+				animator(0f, 1f);
+			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
+				FlightGlobals.Bodies[16].bodyName = asteroidBodyNameFixed;
+		}
+
+		public override void OnSave(ConfigNode node)
+		{
+			node.RemoveNodes("ScienceData");
+			foreach (ScienceData storedData in scienceReports)
+			{
+				ConfigNode storedDataNode = node.AddNode("ScienceData");
+				storedData.Save(storedDataNode);
+			}
+		}
+
+		public override void OnLoad(ConfigNode node)
+		{
+			if (node.HasNode("ScienceData"))
+			{
+				foreach (ConfigNode storedDataNode in node.GetNodes("ScienceData"))
+				{
+					ScienceData data = new ScienceData(storedDataNode);
+					scienceReports.Add(data);
+				}
+			}
+		}
+
+		private void Update()
+		{
+			if (HighLogic.LoadedSceneIsFlight)
+			{
+
+			}
+		}
+
+		private void FixedUpdate()
+		{
+			if (HighLogic.LoadedSceneIsFlight)
+			{
+
+			}
+		}
+
+		public override string GetInfo()
+		{
+			string info = base.GetInfo();
+			if (resourceCost > 0f)
+			{
+				info += string.Format("Requires:\n-{0}: {1}/s\n", experimentResource, resourceCost);
+			}
+			return info;
+		}
+
+
+		private void animator(float speed, float time)
+		{
+			if (Anim != null)
+			{
+				Anim[animationName].speed = speed;
+				if (!Anim.IsPlaying(animationName))
+				{
+					Anim[animationName].normalizedTime = time;
+					Anim.Blend(animationName, 1f);
+				}
+			}
+		}
+
+		private void dishAnimator()
+		{
+
+		}
+
+		private void deployEvent()
+		{
+			animator(1f, 0f);
+			IsDeployed = true;
+		}
+
+		private void retractEvent()
+		{
+			animator(-1f, 1f);
+			IsDeployed = false;
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Toggle Asteroid Scanner", active = true)]
+		public void toggleEvent()
+		{
+			if (IsDeployed) retractEvent();
+			else deployEvent();
+		}
+
+		[KSPAction("Toggle Asteroid Scanner")]
+		public void toggleAction(KSPActionParam param)
+		{
+			toggleEvent();
+		}
+
+		[KSPEvent(guiActiveEditor = true, guiName = "Deploy Asteroid Scanner", active = true)]
+		public void editorDeployEvent()
+		{
+			deployEvent();
+			IsDeployed = false;
+			Events["editorDeployEvent"].active = false;
+			Events["editorRetractEvent"].active = true;
+		}
+
+		[KSPEvent(guiActiveEditor = true, guiName = "Retract Asteroid Scanner", active = false)]
+		public void editorRetractEvent()
+		{
+			retractEvent();
+			Events["editorDeployEvent"].active = true;
+			Events["editorRetractEvent"].active = false;
+		}
+
+		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Reset Asteroid Scanner", active = false)]
+		public void ResetExperiment()
+		{
+			if (scienceReports.Count > 0)
+			{
+				scienceReports.Clear();
+				Deployed = false;
+			}
+		}
+
+		[KSPAction("Reset Asteroid Scanner")]
+		public void ResetAction(KSPActionParam param)
+		{
+			ResetExperiment();
+		}
+
+		[KSPEvent(guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Collect Asteroid Data", active = false)]
+		public void CollectDataExternalEvent()
+		{
+			List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
+			if (scienceReports.Count > 0)
+			{
+				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false))
+					DumpData(scienceReports[0]);
+			}
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Review Data", active = false)]
+		public void ReviewDataEvent()
+		{
+			ReviewData();
+		}
+
+		[KSPAction("Review Data")]
+		public void ReviewDataAction(KSPActionParam param)
+		{
+			ReviewData();
+		}
+
+		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Deploy Asteroid Scanner", active = true)]
+		public void DeployExperiment()
+		{
+			runExperiment();
+		}
+
+		[KSPAction("Deploy Asteroid Experiment")]
+		public void DeployAction(KSPActionParam param)
+		{
+			DeployExperiment();
+		}
+
+		private void runExperiment()
+		{
+			ScienceData data = makeScience();
+			if (data == null)
+				Debug.LogError("[DM] Something Went Wrong Here; Null Asteroid Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
+			else
+			{
+				scienceReports.Add(data);
+				Deployed = true;
+				ReviewData();
+			}
+		}
+
+		private ScienceData makeScience()
+		{
+			ScienceData data = null;
+			ScienceSubject sub = null;
+			CelestialBody body = null;
+			DMAsteroidScience ast = null;
+			string biome = "";
+
+			ast = new DMAsteroidScience();
+			body = ast.body;
+			biome = ast.aType + ast.aSeed;
+
+			if (exp == null)
+			{
+				Debug.LogError("[DM] Something Went Wrong Here; Null Asteroid Experiment Returned; Please Report This On The KSP Forum With Output.log Data");
+				return null;
+			}
+
+			sub = ResearchAndDevelopment.GetExperimentSubject(exp, ExperimentSituations.InSpaceLow, body, biome);
+
+			if (sub == null)
+			{
+				Debug.LogError("[DM] Something Went Wrong Here; Null Asteroid Subject Returned; Please Report This On The KSP Forum With Output.log Data");
+				return null;
+			}
+
+			DMUtils.OnAsteroidScience.Fire(ast.aClass, exp.id);
+			sub.title = exp.experimentTitle + "";
+			registerDMScience(ast, sub);
+			body.bodyName = asteroidBodyNameFixed;
+
+			data = new ScienceData(exp.baseValue * sub.dataScale, transmitValue, 0f, sub.id, sub.title);
+
+			return data;
+		}
+
+		private void registerDMScience(DMAsteroidScience newAst, ScienceSubject sub)
+		{
+			DMScienceScenario.DMScienceData DMData = null;
+			foreach (DMScienceScenario.DMScienceData DMScience in DMScienceScenario.SciScenario.recoveredScienceList)
+			{
+				if (DMScience.title == sub.title)
+				{
+					sub.scientificValue *= DMScience.scival;
+					DMData = DMScience;
+					break;
+				}
+			}
+			if (DMData == null)
+			{
+				float astSciCap = exp.scienceCap * 40f;
+				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, 1f, 0f, astSciCap);
+				sub.scientificValue = 1f;
+			}
+			sub.subjectValue = newAst.sciMult;
+			sub.scienceCap = exp.scienceCap * sub.subjectValue;
+			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
+		}
+
+		private void experimentResultsPage(ScienceData data)
+		{
+			if (scienceReports.Count > 0)
+			{
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, transmitValue, 0f, false, "", true, data.labBoost < 1 && checkLabOps() && transmitValue < 1f, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentsResultDialog.DisplayResult(page);
+			}
+		}
+
+		private void onDiscardData(ScienceData data)
+		{
+			if (scienceReports.Count > 0)
+			{
+				scienceReports.Clear();
+				Deployed = false;
+			}
+		}
+
+		private void onKeepData(ScienceData data)
+		{
+		}
+
+		private void onTransmitData(ScienceData data)
+		{
+			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
+			if (tranList.Count > 0 && scienceReports.Count > 0)
+			{
+				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
+				DumpData(data);
+			}
+			else
+				ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 5f, ScreenMessageStyle.UPPER_LEFT);
+		}
+
+		private void onSendToLab(ScienceData data)
+		{
+			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+			if (checkLabOps() && scienceReports.Count > 0)
+				labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
+			else
+				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
+		}
+
+		private void onComplete(ScienceData data)
+		{
+			ReviewData();
+		}
+
+		private bool checkLabOps()
+		{
+			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
+			for (int i = 0; i < labList.Count; i++)
+			{
+				if (labList[i].IsOperational())
+					return true;
+			}
+			return false;
+		}
+
+		public void ReviewData()
+		{
+			if (scienceReports.Count > 0)
+				experimentResultsPage(scienceReports[0]);
+		}
+
+		public void ReviewDataItem(ScienceData data)
+		{
+			ReviewData();
+		}
+
+		public bool IsRerunnable()
+		{
+			return rerunnable;
+		}
+
+		public int GetScienceCount()
+		{
+			return scienceReports.Count;
+		}
+
+		public ScienceData[] GetData()
+		{
+			return scienceReports.ToArray();
+		}
+
+		public void DumpData(ScienceData data)
+		{
+			if (scienceReports.Count > 0)
+			{
+				Inoperable = !IsRerunnable();
+				Deployed = !Inoperable;
+				scienceReports.Remove(data);
+			}
+		}
+
+	}
+}
