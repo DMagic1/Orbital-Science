@@ -141,7 +141,15 @@ namespace DMagic.Part_Modules
 		public static bool conduct(ModuleScienceExperiment MSE)
 		{
 			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)MSE;
-			return DMMod.canConduct();
+			try
+			{
+				return DMMod.canConduct();
+			}
+			catch (Exception e)
+			{
+				Debug.LogWarning("[DM] Error in casting ModuleScienceExperiment to DMModuleScienceAnimate; Invalid Part Module... : " + e);
+				return false;
+			}
 		}
 
 		#endregion
