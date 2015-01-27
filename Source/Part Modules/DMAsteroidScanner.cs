@@ -55,6 +55,8 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public bool rerunnable;
 		[KSPField]
+		public bool dataIsCollectable;
+		[KSPField]
 		public float resourceCost = 1f;
 		[KSPField]
 		public float transmitValue = 1f;
@@ -68,7 +70,7 @@ namespace DMagic.Part_Modules
 		public string status;
 
 		private const string asteroidBodyNameFixed = "Eeloo";
-		private const string transformName = "";
+		private const string transformName = "DishTransform";
 		private const string potato = "PotatoRoid";
 		private Animation Anim;
 		private Animation IndicatorAnim1;
@@ -131,11 +133,14 @@ namespace DMagic.Part_Modules
 
 		private void Update()
 		{
-			if (HighLogic.LoadedSceneIsFlight)
+			if (HighLogic.LoadedSceneIsFlight && vessel == FlightGlobals.ActiveVessel)
 			{
+				EventsCheck();
+
 				if (IsDeployed)
 				{
 					Vessel target = vessel.targetObject as Vessel;
+					string s = "Searching...";
 
 					if (target != null)
 					{
@@ -144,18 +149,35 @@ namespace DMagic.Part_Modules
 							targetModule = target.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault();
 							if (targetModule != null)
 							{
+								s = "Receiver Located";
 								validTarget = true;
-								targetDistance = (targetModule.transform.position - t.position).magnitude;
+								targetDistance = (targetModule.part.transform.position - t.position).magnitude;
 								if (targetDistance < 5000)
 								{
+									s = "Receiver In Range";
 									targetInRange = true;
-									targetInSite = simpleRayHit();
-									lightAnimationController(IndicatorAnim2, IndicatorAnim1, IndicatorAnim3, yellowLight, greenLight, redLight);
+									if (simpleRayHit())
+									{
+										s = "Experiment Ready";
+										targetInSite = true;
+										lightAnimationController(IndicatorAnim1, IndicatorAnim2, IndicatorAnim3, greenLight, yellowLight, redLight);
+									}
+									else
+									{
+										targetInSite = false;
+										lightAnimationController(IndicatorAnim2, IndicatorAnim1, IndicatorAnim3, yellowLight, greenLight, redLight);
+									}
+								}
+								else
+								{
+									targetInRange = targetInSite = false;
+									targetDistance = 0f;
+									lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 								}
 							}
 							else
 							{
-								validTarget = targetInRange = false;
+								validTarget = targetInRange = targetInSite = false;
 								targetDistance = 0f;
 								lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 							}
@@ -164,7 +186,7 @@ namespace DMagic.Part_Modules
 						{
 							targetDistance = 0f;
 							targetModule = null;
-							validTarget = targetInRange = false;
+							validTarget = targetInRange = targetInSite = false;
 							lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 						}
 					}
@@ -172,11 +194,21 @@ namespace DMagic.Part_Modules
 					{
 						targetDistance = 0f;
 						targetModule = null;
-						validTarget = targetInRange = false;
+						validTarget = targetInRange = targetInSite = false;
 						lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 					}
+					status = s;
 				}
 			}
+		}
+
+		private void EventsCheck()
+		{
+			Events["ResetExperiment"].active = scienceReports.Count > 0;
+			Events["CollectDataExternalEvent"].active = scienceReports.Count > 0 && dataIsCollectable;
+			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable;
+			Events["ReviewDataEvent"].active = scienceReports.Count > 0;
+			Fields["status"].guiActive = IsDeployed;
 		}
 
 		private void FixedUpdate()
@@ -187,7 +219,7 @@ namespace DMagic.Part_Modules
 				{
 					if (validTarget && targetInRange && targetModule != null)
 					{
-						//Point dish at the target; Activate green light when asteroid is in sites
+						//Point dish at the target;
 					}
 					else
 					{
