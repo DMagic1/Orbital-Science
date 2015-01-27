@@ -71,6 +71,7 @@ namespace DMagic.Part_Modules
 
 		private const string asteroidBodyNameFixed = "Eeloo";
 		private const string transformName = "DishTransform";
+		private const string transformRotatorName = "DishBase";
 		private const string potato = "PotatoRoid";
 		private Animation Anim;
 		private Animation IndicatorAnim1;
@@ -83,6 +84,7 @@ namespace DMagic.Part_Modules
 		private bool targetInSite = false;
 		private DMAsteroidScanner targetModule = null;
 		private Transform t;
+		private Transform tR;
 		private float targetDistance = 0f;
 		private float[] astWidth = new float[6] { 4, 8, 12, 16, 20, 30 };
 
@@ -107,6 +109,7 @@ namespace DMagic.Part_Modules
 			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
 				FlightGlobals.Bodies[16].bodyName = asteroidBodyNameFixed;
 			t = part.FindModelTransform(transformName);
+			tR = part.FindModelTransform(transformRotatorName);
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -220,6 +223,15 @@ namespace DMagic.Part_Modules
 					if (validTarget && targetInRange && targetModule != null)
 					{
 						//Point dish at the target;
+						Vector3 localTarget = transform.InverseTransformPoint(targetModule.transform.position);
+						Quaternion lookToTarget = Quaternion.LookRotation(localTarget);
+						Quaternion lookToTargetFlat = lookToTarget;
+						lookToTargetFlat.x = 0;
+						lookToTargetFlat.z = 0;
+						tR.localRotation = Quaternion.Slerp(tR.localRotation, lookToTargetFlat, Time.deltaTime * 2f);
+						lookToTarget.y = 0;
+						lookToTarget.z = 0;
+						t.localRotation = Quaternion.Slerp(t.localRotation, lookToTarget, Time.deltaTime * 2f);
 					}
 					else
 					{
@@ -232,9 +244,7 @@ namespace DMagic.Part_Modules
 		private bool simpleRayHit()
 		{
 			Vector3 tPos = t.position;
-			Vector3 targetPos = targetModule.part.transform.position;
-			Vector3 direction = targetPos - tPos;
-			Ray r = new Ray(tPos, direction);
+			Ray r = new Ray(tPos, t.forward);
 			RaycastHit hit = new RaycastHit();
 			Physics.Raycast(r, out hit, 5000);
 			if (hit.collider != null)
