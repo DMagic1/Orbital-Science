@@ -255,6 +255,7 @@ namespace DMagic.Part_Modules
 			closestAnom = "";
 			foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
 			{
+				DMAnomalyList.updateAnomaly(vessel, anom);
 				if (anom.Vdistance < 100000)
 				{
 					if (anom.Vhorizontal < (30000 * (1 - anom.Vheight / 15000)))	//Determine cutoff distance on sliding scale based on altitude above the anomaly.
@@ -267,6 +268,7 @@ namespace DMagic.Part_Modules
 						{
 							closestAnom = anom.name;
 							anomCloseRange = true;
+							break;
 						}
 						else if (anom.Vheight > 10000)				//Use alternate message when more than 10km above the anomaly.
 						{
