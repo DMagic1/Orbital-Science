@@ -37,7 +37,7 @@ namespace DMagic
 {
 	internal class DMAsteroidScience
 	{
-		private static Vessel asteroidVessel;
+		private static ModuleAsteroid modAsteroid;
 		internal string aClass = null;
 		internal string aType = null;
 		internal int aSeed = 0;
@@ -49,28 +49,37 @@ namespace DMagic
 		{
 			body = FlightGlobals.Bodies[16];
 			body.bodyName = "Asteroid";
-			asteroidValues();
+			asteroidValues(false);
+		}
+
+		internal DMAsteroidScience(ModuleAsteroid mAst)
+		{
+			body = FlightGlobals.Bodies[16];
+			body.bodyName = "Asteroid";
+			modAsteroid = mAst;
+			asteroidValues(true);
 		}
 
 		//Alter some of the values to give us asteroid specific results based on asteroid class and current situation
-		private void asteroidValues()
+		private void asteroidValues(bool scanner)
 		{
-			if (asteroidNear()) {
-				ModuleAsteroid asteroidM = asteroidVessel.FindPartModulesImplementing<ModuleAsteroid>().First();
-				aClass = asteroidClass(asteroidM.prefabBaseURL);
-				aSeed = Math.Abs(asteroidM.seed);
-				aType = asteroidSpectral(aSeed);
-				ID = asteroidM.seed;
-				sciMult = asteroidValue(aClass);
-			}
+			if (scanner)
+				asteroidValues(modAsteroid, 1f);
+			else if (asteroidNear())
+				asteroidValues(modAsteroid, 1f);
 			else if (asteroidGrappled()) {
 				ModuleAsteroid asteroidM = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleAsteroid>().First();
-				aClass = asteroidClass(asteroidM.prefabBaseURL);
-				aSeed = Math.Abs(asteroidM.seed);
-				aType = asteroidSpectral(aSeed);
-				ID = asteroidM.seed;
-				sciMult = asteroidValue(aClass) * 1.5f;
+				asteroidValues(asteroidM, 1.5f);
 			}
+		}
+
+		private void asteroidValues(ModuleAsteroid m, float mult)
+		{
+			aClass = asteroidClass(m.prefabBaseURL);
+			aSeed = Math.Abs(m.seed);
+			aType = asteroidSpectral(aSeed);
+			ID = m.seed;
+			sciMult = asteroidValue(aClass) * mult;
 		}
 
 		private string asteroidClass(string s)
@@ -139,13 +148,13 @@ namespace DMagic
 			List<Vessel> vesselList = FlightGlobals.fetch.vessels;
 			foreach (Vessel v in vesselList) {
 				if (v != FlightGlobals.ActiveVessel) {
-					if (v.FindPartModulesImplementing<ModuleAsteroid>().Count > 0) {
-						Part asteroidPart = v.FindPartModulesImplementing<ModuleAsteroid>().First().part;
-						Vector3 asteroidPosition = asteroidPart.transform.position;
+					ModuleAsteroid m = v.FindPartModulesImplementing<ModuleAsteroid>().FirstOrDefault();
+					if (m != null) {
+						Vector3 asteroidPosition = m.part.transform.position;
 						Vector3 vesselPosition = FlightGlobals.ActiveVessel.transform.position;
 						double distance = (asteroidPosition - vesselPosition).magnitude;
 						if (distance < 2000) {
-							asteroidVessel = v;
+							modAsteroid = m;
 							return true;
 						}
 						else continue;
