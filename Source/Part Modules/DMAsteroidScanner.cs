@@ -139,49 +139,59 @@ namespace DMagic.Part_Modules
 			if (HighLogic.LoadedSceneIsFlight && vessel == FlightGlobals.ActiveVessel)
 			{
 				EventsCheck();
-
-				if (IsDeployed)
+				if (vessel == FlightGlobals.ActiveVessel)
 				{
-					Vessel target = vessel.targetObject as Vessel;
-					string s = "Searching...";
 
-					if (target != null)
+					if (IsDeployed)
 					{
-						if (target != vessel)
+						Vessel target = vessel.targetObject as Vessel;
+						string s = "Searching...";
+
+						if (target != null)
 						{
-							targetModule = target.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault();
-							if (targetModule != null)
+							if (target != vessel)
 							{
-								s = "Receiver Located";
-								validTarget = true;
-								targetDistance = (targetModule.part.transform.position - t.position).magnitude;
-								if (targetDistance < 5000)
+								targetModule = target.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault();
+								if (targetModule != null)
 								{
-									s = "Receiver In Range";
-									targetInRange = true;
-									if (simpleRayHit())
+									s = "Receiver Located";
+									validTarget = true;
+									targetDistance = (targetModule.part.transform.position - t.position).magnitude;
+									if (targetDistance < 5000)
 									{
-										s = "Experiment Ready";
-										targetInSite = true;
-										lightAnimationController(IndicatorAnim1, IndicatorAnim2, IndicatorAnim3, greenLight, yellowLight, redLight);
+										s = "Receiver In Range";
+										targetInRange = true;
+										if (simpleRayHit())
+										{
+											s = "Experiment Ready";
+											targetInSite = true;
+											lightAnimationController(IndicatorAnim1, IndicatorAnim2, IndicatorAnim3, greenLight, yellowLight, redLight);
+										}
+										else
+										{
+											targetInSite = false;
+											lightAnimationController(IndicatorAnim2, IndicatorAnim1, IndicatorAnim3, yellowLight, greenLight, redLight);
+										}
 									}
 									else
 									{
-										targetInSite = false;
-										lightAnimationController(IndicatorAnim2, IndicatorAnim1, IndicatorAnim3, yellowLight, greenLight, redLight);
+										targetInRange = targetInSite = false;
+										targetDistance = 0f;
+										lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 									}
 								}
 								else
 								{
-									targetInRange = targetInSite = false;
+									validTarget = targetInRange = targetInSite = false;
 									targetDistance = 0f;
 									lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 								}
 							}
 							else
 							{
-								validTarget = targetInRange = targetInSite = false;
 								targetDistance = 0f;
+								targetModule = null;
+								validTarget = targetInRange = targetInSite = false;
 								lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 							}
 						}
@@ -192,15 +202,8 @@ namespace DMagic.Part_Modules
 							validTarget = targetInRange = targetInSite = false;
 							lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 						}
+						status = s;
 					}
-					else
-					{
-						targetDistance = 0f;
-						targetModule = null;
-						validTarget = targetInRange = targetInSite = false;
-						lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
-					}
-					status = s;
 				}
 			}
 		}
@@ -228,14 +231,26 @@ namespace DMagic.Part_Modules
 						Quaternion lookToTargetFlat = lookToTarget;
 						lookToTargetFlat.x = 0;
 						lookToTargetFlat.z = 0;
-						tR.localRotation = Quaternion.Slerp(tR.localRotation, lookToTargetFlat, Time.deltaTime * 2f);
+						tR.localRotation = Quaternion.Slerp(tR.localRotation, lookToTargetFlat, Time.deltaTime * 5f);
 						lookToTarget.y = 0;
 						lookToTarget.z = 0;
-						t.localRotation = Quaternion.Slerp(t.localRotation, lookToTarget, Time.deltaTime * 2f);
+						t.localRotation = Quaternion.Slerp(t.localRotation, lookToTarget, Time.deltaTime * 5f);
 					}
 					else
 					{
 						//Slowly rotate dish
+						tR.Rotate(Vector3.up * Time.deltaTime * 60f);
+						if (t.localEulerAngles.x != 45)
+						{
+							if (t.localEulerAngles.x < 45)
+							{
+								t.Rotate(Vector3.right * Time.deltaTime * 20f);
+							}
+							else
+							{
+								t.Rotate(Vector3.left * Time.deltaTime * 20f);
+							}
+						}
 					}
 				}
 			}
@@ -412,7 +427,11 @@ namespace DMagic.Part_Modules
 		public void DeployExperiment()
 		{
 			if (validTarget && targetInRange && targetInSite)
-				runExperiment(asteroidScanLength());
+			{
+				ModuleAsteroid modAst = null;
+				float distance = asteroidScanLength(out modAst);
+				runExperiment(distance, modAst);
+			}
 			else
 				ScreenMessages.PostScreenMessage("No valid targets within scaning range", 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
@@ -428,8 +447,9 @@ namespace DMagic.Part_Modules
 		#region Science Setup
 
 		//Determine if the signal passes through the asteroid, and what distance it travels if so
-		private float asteroidScanLength()
+		private float asteroidScanLength(out ModuleAsteroid m)
 		{
+			m = null;
 			float dist = 0f;
 			if (t != null && targetModule != null)
 			{
@@ -461,6 +481,14 @@ namespace DMagic.Part_Modules
 							{
 								float secondDist = hit.distance;
 
+								Part p = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
+
+								if (p != null)
+								{
+									if (p.Modules.Contains("ModuleAsteroid"))
+										m = p.FindModuleImplementing<ModuleAsteroid>();
+								}
+
 								//The two distances are subtracted from the total distance between vessels to 
 								//give the distance the signal travels while inside the asteroid
 								dist = targetDistance - secondDist - firstDist;
@@ -473,9 +501,9 @@ namespace DMagic.Part_Modules
 			return dist;
 		}
 
-		private void runExperiment(float distance)
+		private void runExperiment(float distance, ModuleAsteroid m)
 		{
-			ScienceData data = makeScience(distance);
+			ScienceData data = makeScience(distance, m);
 			if (data == null)
 				Debug.LogError("[DM] Something Went Wrong Here; Null Asteroid Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
 			else
@@ -505,9 +533,9 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private ScienceData makeScience(float dist)
+		private ScienceData makeScience(float dist, ModuleAsteroid m)
 		{
-			if (dist <= 0)
+			if (dist <= 0 || m == null)
 			{
 				DMUtils.Logging("Asteroid Not Scanned...");
 				return null;
@@ -519,7 +547,7 @@ namespace DMagic.Part_Modules
 			string biome = "";
 			float multiplier = 1f;
 
-			ast = new DMAsteroidScience();
+			ast = new DMAsteroidScience(m);
 			body = ast.body;
 			biome = ast.aType + ast.aSeed;
 			multiplier = Math.Max(1f, dist / astWidth[aClassInt(ast.aClass)]);
@@ -539,7 +567,7 @@ namespace DMagic.Part_Modules
 			}
 
 			DMUtils.OnAsteroidScience.Fire(ast.aClass, exp.id);
-			sub.title = exp.experimentTitle + "";
+			sub.title = string.Format("{0} of a {1} asteroid", exp.experimentTitle, ast.aType);
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
 
