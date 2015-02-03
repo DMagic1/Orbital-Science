@@ -71,7 +71,7 @@ namespace DMagic.Part_Modules
 
 		private const string asteroidBodyNameFixed = "Eeloo";
 		private const string transformName = "DishTransform";
-		private const string transformRotatorName = "DishBase";
+		private const string transformRotatorName = "DishBaseTransform";
 		private const string potato = "PotatoRoid";
 		private Animation Anim;
 		private Animation IndicatorAnim1;
@@ -82,6 +82,7 @@ namespace DMagic.Part_Modules
 		private bool validTarget = false;
 		private bool targetInRange = false;
 		private bool targetInSite = false;
+		private bool rotating = false;
 		private DMAsteroidScanner targetModule = null;
 		private Transform t;
 		private Transform tR;
@@ -136,7 +137,7 @@ namespace DMagic.Part_Modules
 
 		private void Update()
 		{
-			if (HighLogic.LoadedSceneIsFlight && vessel == FlightGlobals.ActiveVessel)
+			if (HighLogic.LoadedSceneIsFlight)
 			{
 				EventsCheck();
 				if (vessel == FlightGlobals.ActiveVessel)
@@ -230,7 +231,7 @@ namespace DMagic.Part_Modules
 						Quaternion lookToTarget = Quaternion.LookRotation(localTarget);
 						Quaternion lookToTargetFlat = lookToTarget;
 						lookToTargetFlat.x = 0;
-						lookToTargetFlat.z = 0;
+						lookToTargetFlat.y = 0;
 						tR.localRotation = Quaternion.Slerp(tR.localRotation, lookToTargetFlat, Time.deltaTime * 5f);
 						lookToTarget.y = 0;
 						lookToTarget.z = 0;
@@ -239,19 +240,25 @@ namespace DMagic.Part_Modules
 					else
 					{
 						//Slowly rotate dish
-						tR.Rotate(Vector3.up * Time.deltaTime * 60f);
-						if (t.localEulerAngles.x != 45)
-						{
-							if (t.localEulerAngles.x < 45)
-							{
-								t.Rotate(Vector3.right * Time.deltaTime * 20f);
-							}
-							else
-							{
-								t.Rotate(Vector3.left * Time.deltaTime * 20f);
-							}
-						}
+						tR.Rotate(Vector3.forward * Time.deltaTime * 60f);
+						if (t.localEulerAngles.x < 42)
+							t.Rotate(Vector3.right * Time.deltaTime * 20f);
+						else if (t.localEulerAngles.x > 47)
+							t.Rotate(Vector3.left * Time.deltaTime * 20f);
 					}
+					rotating = true;
+				}
+				else if (rotating)
+				{
+					if (tR.localEulerAngles.z > 1 || t.localEulerAngles.x > 1)
+					{
+						if (tR.localEulerAngles.z > 1)
+							tR.Rotate(Vector3.forward * Time.deltaTime * 60f);
+						if (t.localEulerAngles.x > 1)
+							t.Rotate(Vector3.left * Time.deltaTime * 20f);
+					}
+					else
+						rotating = false;
 				}
 			}
 		}
