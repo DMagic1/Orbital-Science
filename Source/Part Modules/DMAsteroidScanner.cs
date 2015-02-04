@@ -228,14 +228,15 @@ namespace DMagic.Part_Modules
 					{
 						//Point dish at the target;
 						Vector3 localTarget = transform.InverseTransformPoint(targetModule.transform.position);
-						Quaternion lookToTarget = Quaternion.LookRotation(localTarget);
+						Vector3 lookTarget = transform.localPosition - localTarget;
+						Quaternion lookToTarget = Quaternion.LookRotation(lookTarget);
 						Quaternion lookToTargetFlat = lookToTarget;
 						lookToTargetFlat.x = 0;
 						lookToTargetFlat.y = 0;
-						tR.localRotation = Quaternion.Slerp(tR.localRotation, lookToTargetFlat, Time.deltaTime * 5f);
+						tR.localRotation = Quaternion.Slerp(tR.localRotation, lookToTargetFlat, Time.deltaTime * 2f);
 						lookToTarget.y = 0;
 						lookToTarget.z = 0;
-						t.localRotation = Quaternion.Slerp(t.localRotation, lookToTarget, Time.deltaTime * 5f);
+						t.localRotation = Quaternion.Slerp(t.localRotation, lookToTarget, Time.deltaTime * 2f);
 					}
 					else
 					{
