@@ -218,6 +218,17 @@ namespace DMagic.Part_Modules
 			Fields["status"].guiActive = IsDeployed;
 		}
 
+		[KSPField(guiActive = true, guiName = "Local Pos")]
+		public string field1 = "";
+		[KSPField(guiActive = true, guiName = "Local Target")]
+		public string field2 = "";
+		[KSPField(guiActive = true, guiName = "Target Quat")]
+		public string field3 = "";
+		[KSPField(guiActive = true, guiName = "Local Quat")]
+		public string field4 = "";
+		[KSPField(guiActive = true, guiName = "Target Quat Flat")]
+		public string field5 = "";
+
 		private void FixedUpdate()
 		{
 			if (HighLogic.LoadedSceneIsFlight)
@@ -227,15 +238,23 @@ namespace DMagic.Part_Modules
 					if (validTarget && targetInRange && targetModule != null)
 					{
 						//Point dish at the target;
-						Vector3 localTarget = transform.InverseTransformPoint(targetModule.transform.position);
-						Vector3 lookTarget = transform.localPosition - localTarget;
-						Quaternion lookToTarget = Quaternion.LookRotation(lookTarget);
-						Quaternion lookToTargetFlat = lookToTarget;
+						Vector3 localTarget = transform.InverseTransformPoint(targetModule.part.transform.position);
+						field1 = transform.localPosition.ToString();
+						field2 = localTarget.ToString();
+
+						Quaternion lookToTargetFlat = Quaternion.LookRotation(localTarget);
+
+						field4 = tR.localRotation.ToString();
+
 						lookToTargetFlat.x = 0;
+						lookToTargetFlat.z = lookToTargetFlat.y;
 						lookToTargetFlat.y = 0;
 						tR.localRotation = Quaternion.Slerp(tR.localRotation, lookToTargetFlat, Time.deltaTime * 2f);
+						Quaternion lookToTarget = Quaternion.LookRotation(localTarget, Vector3.forward);
+						field3 = lookToTarget.ToString();
 						lookToTarget.y = 0;
 						lookToTarget.z = 0;
+						field5 = lookToTarget.ToString();
 						t.localRotation = Quaternion.Slerp(t.localRotation, lookToTarget, Time.deltaTime * 2f);
 					}
 					else
@@ -467,6 +486,7 @@ namespace DMagic.Part_Modules
 				Ray r = new Ray(tPos, direction);
 				RaycastHit hit = new RaycastHit();
 				Physics.Raycast(r, out hit, targetDistance);
+				DMUtils.DebugLog("Target Distance: {0:N3}", targetDistance);
 
 				//The first ray determines whether or not the asteroid was hit and the distance from the dish
 				//to that first encounter
@@ -476,6 +496,7 @@ namespace DMagic.Part_Modules
 					if (obj.StartsWith(potato))
 					{
 						float firstDist = hit.distance;
+						DMUtils.DebugLog("First Ray Hit; Distance: {0:N3}", firstDist);
 						Vector3 reverseDirection = tPos - targetPos;
 						Ray targetRay = new Ray(targetPos, reverseDirection);
 						RaycastHit targetHit = new RaycastHit();
@@ -487,8 +508,8 @@ namespace DMagic.Part_Modules
 							string targetObj = targetHit.collider.attachedRigidbody.gameObject.name;
 							if (targetObj.StartsWith(potato))
 							{
-								float secondDist = hit.distance;
-
+								float secondDist = targetHit.distance;
+								DMUtils.DebugLog("Second Ray Hit; Distance: {0:N3}", secondDist);
 								Part p = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
 
 								if (p != null)
@@ -545,7 +566,7 @@ namespace DMagic.Part_Modules
 		{
 			if (dist <= 0 || m == null)
 			{
-				DMUtils.Logging("Asteroid Not Scanned...");
+				DMUtils.Logging("Asteroid Not Scanned...  Distance: " + dist.ToString("N3"));
 				return null;
 			}
 			ScienceData data = null;
@@ -558,7 +579,7 @@ namespace DMagic.Part_Modules
 			ast = new DMAsteroidScience(m);
 			body = ast.body;
 			biome = ast.aType + ast.aSeed;
-			multiplier = Math.Max(1f, dist / astWidth[aClassInt(ast.aClass)]);
+			multiplier = Math.Min(1f, dist / astWidth[aClassInt(ast.aClass)]);
 
 			if (exp == null)
 			{
