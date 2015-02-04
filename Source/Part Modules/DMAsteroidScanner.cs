@@ -70,8 +70,9 @@ namespace DMagic.Part_Modules
 		public string status;
 
 		private const string asteroidBodyNameFixed = "Eeloo";
+		private const string baseTransformName = "DishBaseTransform";
 		private const string transformName = "DishTransform";
-		private const string transformRotatorName = "DishBaseTransform";
+		private const string transformRotatorName = "DishArmTransform";
 		private const string potato = "PotatoRoid";
 		private Animation Anim;
 		private Animation IndicatorAnim1;
@@ -84,8 +85,9 @@ namespace DMagic.Part_Modules
 		private bool targetInSite = false;
 		private bool rotating = false;
 		private DMAsteroidScanner targetModule = null;
-		private Transform t;
-		private Transform tR;
+		private Transform dishBase;
+		private Transform dish;
+		private Transform dishArm;
 		private float targetDistance = 0f;
 		private float[] astWidth = new float[6] { 4, 8, 12, 16, 20, 30 };
 
@@ -109,8 +111,10 @@ namespace DMagic.Part_Modules
 				animator(0f, 1f);
 			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
 				FlightGlobals.Bodies[16].bodyName = asteroidBodyNameFixed;
-			t = part.FindModelTransform(transformName);
-			tR = part.FindModelTransform(transformRotatorName);
+
+			dishBase = part.FindModelTransform(baseTransformName);
+			dish = part.FindModelTransform(transformName);
+			dishArm = part.FindModelTransform(transformRotatorName);
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -135,6 +139,17 @@ namespace DMagic.Part_Modules
 			}
 		}
 
+		[KSPField(guiActive = true, guiName = "Local Pos")]
+		public string field1 = "";
+		[KSPField(guiActive = true, guiName = "Local Target")]
+		public string field2 = "";
+		[KSPField(guiActive = true, guiName = "Rotations")]
+		public string field3 = "";
+		[KSPField(guiActive = true, guiName = "Angle Z")]
+		public string field4 = "";
+		[KSPField(guiActive = true, guiName = "Angle X")]
+		public string field5 = "";
+
 		private void Update()
 		{
 			if (HighLogic.LoadedSceneIsFlight)
@@ -157,7 +172,7 @@ namespace DMagic.Part_Modules
 								{
 									s = "Receiver Located";
 									validTarget = true;
-									targetDistance = (targetModule.part.transform.position - t.position).magnitude;
+									targetDistance = (targetModule.part.transform.position - dishBase.position).magnitude;
 									if (targetDistance < 5000)
 									{
 										s = "Receiver In Range";
@@ -204,6 +219,39 @@ namespace DMagic.Part_Modules
 							lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 						}
 						status = s;
+
+						if (validTarget && targetInRange && targetModule != null)
+						{
+							lookAtTarget();
+							//Point dish at the target;
+							//Vector3 localTarget = dishBase.InverseTransformPoint(targetModule.part.transform.position);
+							//field1 = dishBase.localPosition.ToString();
+							//field2 = localTarget.ToString();
+
+							//Quaternion lookToTargetFlat = Quaternion.LookRotation(localTarget);
+
+							//field4 = dishArm.localRotation.ToString();
+
+							//lookToTargetFlat.x = 0;
+							//lookToTargetFlat.z = lookToTargetFlat.y;
+							//lookToTargetFlat.y = 0;
+							//dishArm.localRotation = Quaternion.Slerp(dishArm.localRotation, lookToTargetFlat, Time.deltaTime * 2f);
+							//Quaternion lookToTarget = Quaternion.LookRotation(localTarget, Vector3.forward);
+							//field3 = lookToTarget.ToString();
+							//lookToTarget.y = 0;
+							//lookToTarget.z = 0;
+							//field5 = lookToTarget.ToString();
+							//dish.localRotation = Quaternion.Slerp(dish.localRotation, lookToTarget, Time.deltaTime * 2f);
+						}
+						else
+						{
+							searchForTarget();
+						}
+						rotating = true;
+					}
+					else if (rotating)
+					{
+						spinDownDish();
 					}
 				}
 			}
@@ -218,77 +266,77 @@ namespace DMagic.Part_Modules
 			Fields["status"].guiActive = IsDeployed;
 		}
 
-		[KSPField(guiActive = true, guiName = "Local Pos")]
-		public string field1 = "";
-		[KSPField(guiActive = true, guiName = "Local Target")]
-		public string field2 = "";
-		[KSPField(guiActive = true, guiName = "Target Quat")]
-		public string field3 = "";
-		[KSPField(guiActive = true, guiName = "Local Quat")]
-		public string field4 = "";
-		[KSPField(guiActive = true, guiName = "Target Quat Flat")]
-		public string field5 = "";
-
-		private void FixedUpdate()
+		private void lookAtTarget()
 		{
-			if (HighLogic.LoadedSceneIsFlight)
+			field1 = dishBase.localPosition.ToString();
+			Vector3 targetPos = dishBase.InverseTransformPoint(targetModule.part.transform.position);
+			field2 = targetPos.ToString();
+			Vector2 rotations = convertPolar(targetPos);
+			field3 = rotations.ToString();
+
+			float angleZ = normalizeAngle(rotations.y + 90);
+			float angleX = normalizeAngle(rotations.x + 90);
+
+			if (Math.Abs(dishArm.localEulerAngles.z - angleZ) > 90)
 			{
-				if (IsDeployed)
-				{
-					if (validTarget && targetInRange && targetModule != null)
-					{
-						//Point dish at the target;
-						Vector3 localTarget = transform.InverseTransformPoint(targetModule.part.transform.position);
-						field1 = transform.localPosition.ToString();
-						field2 = localTarget.ToString();
-
-						Quaternion lookToTargetFlat = Quaternion.LookRotation(localTarget);
-
-						field4 = tR.localRotation.ToString();
-
-						lookToTargetFlat.x = 0;
-						lookToTargetFlat.z = lookToTargetFlat.y;
-						lookToTargetFlat.y = 0;
-						tR.localRotation = Quaternion.Slerp(tR.localRotation, lookToTargetFlat, Time.deltaTime * 2f);
-						Quaternion lookToTarget = Quaternion.LookRotation(localTarget, Vector3.forward);
-						field3 = lookToTarget.ToString();
-						lookToTarget.y = 0;
-						lookToTarget.z = 0;
-						field5 = lookToTarget.ToString();
-						t.localRotation = Quaternion.Slerp(t.localRotation, lookToTarget, Time.deltaTime * 2f);
-					}
-					else
-					{
-						//Slowly rotate dish
-						tR.Rotate(Vector3.forward * Time.deltaTime * 60f);
-						if (t.localEulerAngles.x < 42)
-							t.Rotate(Vector3.right * Time.deltaTime * 20f);
-						else if (t.localEulerAngles.x > 47)
-							t.Rotate(Vector3.left * Time.deltaTime * 20f);
-					}
-					rotating = true;
-				}
-				else if (rotating)
-				{
-					if (tR.localEulerAngles.z > 1 || t.localEulerAngles.x > 1)
-					{
-						if (tR.localEulerAngles.z > 1)
-							tR.Rotate(Vector3.forward * Time.deltaTime * 60f);
-						if (t.localEulerAngles.x > 1)
-							t.Rotate(Vector3.left * Time.deltaTime * 20f);
-					}
-					else
-						rotating = false;
-				}
+				angleX += 180;
+				angleZ = 360 - angleZ;
 			}
+
+			field4 = angleZ.ToString();
+			field5 = angleX.ToString();
+
+			dishArm.localRotation = Quaternion.RotateTowards(dishArm.localRotation, Quaternion.AngleAxis(angleZ, Vector3.forward), Time.deltaTime * 30f);
+			dish.localRotation = Quaternion.RotateTowards(dish.localRotation, Quaternion.AngleAxis(angleX, Vector3.right), Time.deltaTime * 30f);
+
+		}
+
+		private void searchForTarget()
+		{
+			//Slowly rotate dish
+			dishArm.Rotate(Vector3.forward * Time.deltaTime * 60f);
+			if (dish.localEulerAngles.x < 42)
+				dish.Rotate(Vector3.right * Time.deltaTime * 20f);
+			else if (dish.localEulerAngles.x > 47)
+				dish.Rotate(Vector3.left * Time.deltaTime * 20f);
+		}
+
+		private void spinDownDish()
+		{
+			if (dishArm.localEulerAngles.z > 1 || dish.localEulerAngles.x > 1)
+			{
+				if (dishArm.localEulerAngles.z > 1)
+					dishArm.Rotate(Vector3.forward * Time.deltaTime * 60f);
+				if (dish.localEulerAngles.x > 1)
+					dish.Rotate(Vector3.left * Time.deltaTime * 20f);
+			}
+			else
+				rotating = false;
+		}
+
+		private Vector2 convertPolar(Vector3 pos)
+		{
+			Vector2 coords = new Vector2();
+			coords.y = Mathf.Atan2(pos.y, pos.x);
+			coords.x = Mathf.Atan2(-pos.z, new Vector2(pos.x, pos.y).magnitude);
+			coords *= Mathf.Rad2Deg;
+			return coords;
+		}
+
+		private float normalizeAngle(float a)
+		{
+			a = a % 360;
+			if (a < 0)
+				a += 360;
+			return a;
 		}
 
 		private bool simpleRayHit()
 		{
-			Vector3 tPos = t.position;
-			Ray r = new Ray(tPos, t.forward);
+			Vector3 tPos = dish.position;
+			Ray r = new Ray(tPos, dish.forward);
 			RaycastHit hit = new RaycastHit();
-			Physics.Raycast(r, out hit, 5000);
+			Physics.Raycast(r, out hit, 5000, 0);
 			if (hit.collider != null)
 			{
 				string obj = hit.collider.attachedRigidbody.gameObject.name;
@@ -478,9 +526,9 @@ namespace DMagic.Part_Modules
 		{
 			m = null;
 			float dist = 0f;
-			if (t != null && targetModule != null)
+			if (dish != null && targetModule != null)
 			{
-				Vector3 tPos = t.position;
+				Vector3 tPos = dish.position;
 				Vector3 targetPos = targetModule.part.transform.position;
 				Vector3 direction = targetPos - tPos;
 				Ray r = new Ray(tPos, direction);
