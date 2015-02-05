@@ -41,8 +41,6 @@ namespace DMagic.Part_Modules
 		#region Fields
 
 		[KSPField]
-		public string animationName;
-		[KSPField]
 		public string experimentID;
 		[KSPField]
 		public string greenLight;
@@ -74,7 +72,6 @@ namespace DMagic.Part_Modules
 		private const string transformName = "DishTransform";
 		private const string transformRotatorName = "DishArmTransform";
 		private const string potato = "PotatoRoid";
-		private Animation Anim;
 		private Animation IndicatorAnim1;
 		private Animation IndicatorAnim2;
 		private Animation IndicatorAnim3;
@@ -84,6 +81,7 @@ namespace DMagic.Part_Modules
 		private bool targetInRange = false;
 		private bool targetInSite = false;
 		private bool rotating = false;
+		private bool resourceOn = false;
 		private DMAsteroidScanner targetModule = null;
 		private Transform dishBase;
 		private Transform dish;
@@ -97,8 +95,6 @@ namespace DMagic.Part_Modules
 
 		public override void OnStart(PartModule.StartState state)
 		{
-			if (!string.IsNullOrEmpty(animationName))
-				Anim = part.FindModelAnimators(animationName)[0];
 			if (!string.IsNullOrEmpty(greenLight))
 				IndicatorAnim1 = part.FindModelAnimators(greenLight)[0];
 			if (!string.IsNullOrEmpty(yellowLight))
@@ -107,8 +103,6 @@ namespace DMagic.Part_Modules
 				IndicatorAnim3 = part.FindModelAnimators(redLight)[0];
 			if (!string.IsNullOrEmpty(experimentID))
 				exp = ResearchAndDevelopment.GetExperiment(experimentID);
-			if (IsDeployed)
-				animator(0f, 1f);
 			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
 				FlightGlobals.Bodies[16].bodyName = asteroidBodyNameFixed;
 
@@ -139,17 +133,6 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		[KSPField(guiActive = true, guiName = "Ray Target")]
-		public string field1 = "";
-		[KSPField(guiActive = true, guiName = "Local Target")]
-		public string field2 = "";
-		[KSPField(guiActive = true, guiName = "Rotations")]
-		public string field3 = "";
-		[KSPField(guiActive = true, guiName = "Angle Z")]
-		public string field4 = "";
-		[KSPField(guiActive = true, guiName = "Angle X")]
-		public string field5 = "";
-
 		private void Update()
 		{
 			if (HighLogic.LoadedSceneIsFlight)
@@ -158,7 +141,7 @@ namespace DMagic.Part_Modules
 				if (vessel == FlightGlobals.ActiveVessel)
 				{
 
-					if (IsDeployed)
+					if (IsDeployed && resourceOn)
 					{
 						Vessel target = vessel.targetObject as Vessel;
 						string s = "Searching...";
@@ -221,38 +204,20 @@ namespace DMagic.Part_Modules
 						status = s;
 
 						if (validTarget && targetInRange && targetModule != null)
-						{
 							lookAtTarget();
-							//Point dish at the target;
-							//Vector3 localTarget = dishBase.InverseTransformPoint(targetModule.part.transform.position);
-							//field1 = dishBase.localPosition.ToString();
-							//field2 = localTarget.ToString();
-
-							//Quaternion lookToTargetFlat = Quaternion.LookRotation(localTarget);
-
-							//field4 = dishArm.localRotation.ToString();
-
-							//lookToTargetFlat.x = 0;
-							//lookToTargetFlat.z = lookToTargetFlat.y;
-							//lookToTargetFlat.y = 0;
-							//dishArm.localRotation = Quaternion.Slerp(dishArm.localRotation, lookToTargetFlat, Time.deltaTime * 2f);
-							//Quaternion lookToTarget = Quaternion.LookRotation(localTarget, Vector3.forward);
-							//field3 = lookToTarget.ToString();
-							//lookToTarget.y = 0;
-							//lookToTarget.z = 0;
-							//field5 = lookToTarget.ToString();
-							//dish.localRotation = Quaternion.Slerp(dish.localRotation, lookToTarget, Time.deltaTime * 2f);
-						}
 						else
-						{
 							searchForTarget();
-						}
 						rotating = true;
 					}
-					else if (rotating)
+					else if (!resourceOn)
 					{
-						spinDownDish();
+						status = "No Power";
+						targetDistance = 0f;
+						targetModule = null;
+						validTarget = targetInRange = targetInSite = false;
 					}
+					else if (rotating)
+						spinDownDish();
 				}
 			}
 		}
@@ -261,70 +226,49 @@ namespace DMagic.Part_Modules
 		{
 			Events["ResetExperiment"].active = scienceReports.Count > 0;
 			Events["CollectDataExternalEvent"].active = scienceReports.Count > 0 && dataIsCollectable;
-			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable;
+			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable && targetInSite;
 			Events["ReviewDataEvent"].active = scienceReports.Count > 0;
 			Fields["status"].guiActive = IsDeployed;
 		}
 
 		private void lookAtTarget()
 		{
-			//field1 = dishArm.localEulerAngles.z.ToString();
+			//Point the dish at the target
 			Vector3 targetPos = dishBase.InverseTransformPoint(targetModule.part.transform.position);
-			field2 = targetPos.ToString();
-			Vector2 rotations = convertPolar(targetPos);
-			field3 = rotations.ToString();
 
-			float angleZ = normalizeAngle(rotations.y + 90);
-			float angleX = normalizeAngle(rotations.x + 90);
+			float angleZ = Mathf.Atan2(targetPos.y, targetPos.x);
+			float angleX = Mathf.Atan2(-targetPos.z, new Vector2(targetPos.x, targetPos.y).magnitude);
 
-			//if (Math.Abs(dishArm.localEulerAngles.z - angleZ) > 90)
-			//{
-			//	angleX += 180;
-			//	angleZ = 360 - angleZ;
-			//}
+			angleZ *= Mathf.Rad2Deg;
+			angleX *= Mathf.Rad2Deg;
 
-			field4 = dishArm.localEulerAngles.z.ToString();
-			field5 = dish.localEulerAngles.x.ToString();
+			angleZ = normalizeAngle(angleZ + 90);
+			angleX = normalizeAngle(angleX + 90);
 
 			dishArm.localRotation = Quaternion.RotateTowards(dishArm.localRotation, Quaternion.AngleAxis(angleZ, Vector3.forward), Time.deltaTime * 30f);
 			dish.localRotation = Quaternion.RotateTowards(dish.localRotation, Quaternion.AngleAxis(angleX, Vector3.right), Time.deltaTime * 30f);
-
 		}
 
 		private void searchForTarget()
 		{
-			field4 = dishArm.localEulerAngles.z.ToString();
-			field5 = dish.localEulerAngles.x.ToString();
 			//Slowly rotate dish
-			dishArm.Rotate(Vector3.forward * Time.deltaTime * 60f);
+			dishArm.Rotate(Vector3.forward * Time.deltaTime * 20f);
 			if (dish.localEulerAngles.x < 44 || dish.localEulerAngles.x > 46)
-				dish.Rotate(Vector3.right * Time.deltaTime * 20f);
-			//else if (dish.localEulerAngles.x > 47)
-			//	dish.Rotate(Vector3.left * Time.deltaTime * 20f);
+				dish.localRotation = Quaternion.RotateTowards(dish.localRotation, Quaternion.AngleAxis(45, Vector3.right), Time.deltaTime * 20f);
 		}
 
 		private void spinDownDish()
 		{
-			field4 = dishArm.localEulerAngles.z.ToString();
-			field5 = dish.localEulerAngles.x.ToString();
+			//Spin the dish back to its starting position
 			if (dishArm.localEulerAngles.z > 1 || dish.localEulerAngles.x > 1)
 			{
 				if (dishArm.localEulerAngles.z > 1)
-					dishArm.Rotate(Vector3.forward * Time.deltaTime * 60f);
+					dishArm.Rotate(Vector3.forward * Time.deltaTime * 20f);
 				if (dish.localEulerAngles.x > 1)
-					dish.Rotate(Vector3.right * Time.deltaTime * 20f);
+					dish.localRotation = Quaternion.RotateTowards(dish.localRotation, Quaternion.AngleAxis(0, Vector3.right), Time.deltaTime * 20f);
 			}
 			else
 				rotating = false;
-		}
-
-		private Vector2 convertPolar(Vector3 pos)
-		{
-			Vector2 coords = new Vector2();
-			coords.y = Mathf.Atan2(pos.y, pos.x);
-			coords.x = Mathf.Atan2(-pos.z, new Vector2(pos.x, pos.y).magnitude);
-			coords *= Mathf.Rad2Deg;
-			return coords;
 		}
 
 		private float normalizeAngle(float a)
@@ -346,7 +290,6 @@ namespace DMagic.Part_Modules
 				if (hit.collider.attachedRigidbody != null)
 				{
 					string obj = hit.collider.attachedRigidbody.gameObject.name;
-					field1 = obj;
 					if (obj.StartsWith(potato))
 						return true;
 				}
@@ -364,23 +307,38 @@ namespace DMagic.Part_Modules
 			return info;
 		}
 
-		#endregion
-
-		#region Animator
-
-		//Controls the main, door-opening animation
-		private void animator(float speed, float time)
+		private void FixedUpdate()
 		{
-			if (Anim != null)
+			if (HighLogic.LoadedSceneIsFlight)
 			{
-				Anim[animationName].speed = speed;
-				if (!Anim.IsPlaying(animationName))
+				if (vessel == FlightGlobals.ActiveVessel)
 				{
-					Anim[animationName].normalizedTime = time;
-					Anim.Blend(animationName, 1f);
+					if (IsDeployed)
+					{
+						if (PartResourceLibrary.Instance.GetDefinition(experimentResource) != null)
+						{
+							float cost = 0f;
+							if (resourceOn)
+							{
+								cost = resourceCost * Time.fixedDeltaTime;
+							}
+							if (part.RequestResource(experimentResource, cost) <= cost)
+							{
+								resourceOn = false;
+							}
+							else
+							{
+								resourceOn = true;
+							}
+						}
+					}
 				}
 			}
 		}
+
+		#endregion
+
+		#region Animator
 
 		private void lightAnimator(Animation a, string name, bool stop)
 		{
@@ -421,18 +379,6 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private void deployEvent()
-		{
-			animator(1f, 0f);
-			IsDeployed = true;
-		}
-
-		private void retractEvent()
-		{
-			animator(-1f, 1f);
-			IsDeployed = false;
-		}
-
 		#endregion
 
 		#region Events and Actions
@@ -440,31 +386,13 @@ namespace DMagic.Part_Modules
 		[KSPEvent(guiActive = true, guiName = "Toggle Asteroid Scanner", active = true)]
 		public void toggleEvent()
 		{
-			if (IsDeployed) retractEvent();
-			else deployEvent();
+			IsDeployed = !IsDeployed;
 		}
 
 		[KSPAction("Toggle Asteroid Scanner")]
 		public void toggleAction(KSPActionParam param)
 		{
 			toggleEvent();
-		}
-
-		[KSPEvent(guiActiveEditor = true, guiName = "Deploy Asteroid Scanner", active = true)]
-		public void editorDeployEvent()
-		{
-			deployEvent();
-			IsDeployed = false;
-			Events["editorDeployEvent"].active = false;
-			Events["editorRetractEvent"].active = true;
-		}
-
-		[KSPEvent(guiActiveEditor = true, guiName = "Retract Asteroid Scanner", active = false)]
-		public void editorRetractEvent()
-		{
-			retractEvent();
-			Events["editorDeployEvent"].active = true;
-			Events["editorRetractEvent"].active = false;
 		}
 
 		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Reset Asteroid Scanner", active = false)]
@@ -624,7 +552,8 @@ namespace DMagic.Part_Modules
 		{
 			if (dist <= 0 || m == null)
 			{
-				DMUtils.Logging("Asteroid Not Scanned...  Distance: " + dist.ToString("N3"));
+				DMUtils.Logging("Asteroid Not Scanned...  Distance Passed Through Asteroid: " + dist.ToString("N3"));
+				ScreenMessages.PostScreenMessage("No Asteroids Detected In Scanning Area...", 6f, ScreenMessageStyle.UPPER_CENTER);
 				return null;
 			}
 			ScienceData data = null;
