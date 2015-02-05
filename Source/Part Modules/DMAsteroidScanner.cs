@@ -139,7 +139,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		[KSPField(guiActive = true, guiName = "Local Pos")]
+		[KSPField(guiActive = true, guiName = "Ray Target")]
 		public string field1 = "";
 		[KSPField(guiActive = true, guiName = "Local Target")]
 		public string field2 = "";
@@ -268,7 +268,7 @@ namespace DMagic.Part_Modules
 
 		private void lookAtTarget()
 		{
-			field1 = dishBase.localPosition.ToString();
+			//field1 = dishArm.localEulerAngles.z.ToString();
 			Vector3 targetPos = dishBase.InverseTransformPoint(targetModule.part.transform.position);
 			field2 = targetPos.ToString();
 			Vector2 rotations = convertPolar(targetPos);
@@ -277,14 +277,14 @@ namespace DMagic.Part_Modules
 			float angleZ = normalizeAngle(rotations.y + 90);
 			float angleX = normalizeAngle(rotations.x + 90);
 
-			if (Math.Abs(dishArm.localEulerAngles.z - angleZ) > 90)
-			{
-				angleX += 180;
-				angleZ = 360 - angleZ;
-			}
+			//if (Math.Abs(dishArm.localEulerAngles.z - angleZ) > 90)
+			//{
+			//	angleX += 180;
+			//	angleZ = 360 - angleZ;
+			//}
 
-			field4 = angleZ.ToString();
-			field5 = angleX.ToString();
+			field4 = dishArm.localEulerAngles.z.ToString();
+			field5 = dish.localEulerAngles.x.ToString();
 
 			dishArm.localRotation = Quaternion.RotateTowards(dishArm.localRotation, Quaternion.AngleAxis(angleZ, Vector3.forward), Time.deltaTime * 30f);
 			dish.localRotation = Quaternion.RotateTowards(dish.localRotation, Quaternion.AngleAxis(angleX, Vector3.right), Time.deltaTime * 30f);
@@ -293,22 +293,26 @@ namespace DMagic.Part_Modules
 
 		private void searchForTarget()
 		{
+			field4 = dishArm.localEulerAngles.z.ToString();
+			field5 = dish.localEulerAngles.x.ToString();
 			//Slowly rotate dish
 			dishArm.Rotate(Vector3.forward * Time.deltaTime * 60f);
-			if (dish.localEulerAngles.x < 42)
+			if (dish.localEulerAngles.x < 44 || dish.localEulerAngles.x > 46)
 				dish.Rotate(Vector3.right * Time.deltaTime * 20f);
-			else if (dish.localEulerAngles.x > 47)
-				dish.Rotate(Vector3.left * Time.deltaTime * 20f);
+			//else if (dish.localEulerAngles.x > 47)
+			//	dish.Rotate(Vector3.left * Time.deltaTime * 20f);
 		}
 
 		private void spinDownDish()
 		{
+			field4 = dishArm.localEulerAngles.z.ToString();
+			field5 = dish.localEulerAngles.x.ToString();
 			if (dishArm.localEulerAngles.z > 1 || dish.localEulerAngles.x > 1)
 			{
 				if (dishArm.localEulerAngles.z > 1)
 					dishArm.Rotate(Vector3.forward * Time.deltaTime * 60f);
 				if (dish.localEulerAngles.x > 1)
-					dish.Rotate(Vector3.left * Time.deltaTime * 20f);
+					dish.Rotate(Vector3.right * Time.deltaTime * 20f);
 			}
 			else
 				rotating = false;
@@ -336,12 +340,16 @@ namespace DMagic.Part_Modules
 			Vector3 tPos = dish.position;
 			Ray r = new Ray(tPos, dish.forward);
 			RaycastHit hit = new RaycastHit();
-			Physics.Raycast(r, out hit, 5000, 0);
+			Physics.Raycast(r, out hit, 5000, 1 << 28);
 			if (hit.collider != null)
 			{
-				string obj = hit.collider.attachedRigidbody.gameObject.name;
-				if (obj.StartsWith(potato))
-					return true;
+				if (hit.collider.attachedRigidbody != null)
+				{
+					string obj = hit.collider.attachedRigidbody.gameObject.name;
+					field1 = obj;
+					if (obj.StartsWith(potato))
+						return true;
+				}
 			}
 			return false;
 		}
@@ -533,7 +541,7 @@ namespace DMagic.Part_Modules
 				Vector3 direction = targetPos - tPos;
 				Ray r = new Ray(tPos, direction);
 				RaycastHit hit = new RaycastHit();
-				Physics.Raycast(r, out hit, targetDistance);
+				Physics.Raycast(r, out hit, targetDistance, 1 << 28);
 				DMUtils.DebugLog("Target Distance: {0:N3}", targetDistance);
 
 				//The first ray determines whether or not the asteroid was hit and the distance from the dish
@@ -548,7 +556,7 @@ namespace DMagic.Part_Modules
 						Vector3 reverseDirection = tPos - targetPos;
 						Ray targetRay = new Ray(targetPos, reverseDirection);
 						RaycastHit targetHit = new RaycastHit();
-						Physics.Raycast(targetRay, out targetHit, targetDistance);
+						Physics.Raycast(targetRay, out targetHit, targetDistance, 1 << 28);
 
 						//The second ray determines the distance from the target vessel to the asteroid
 						if (targetHit.collider != null)
@@ -569,6 +577,8 @@ namespace DMagic.Part_Modules
 								//The two distances are subtracted from the total distance between vessels to 
 								//give the distance the signal travels while inside the asteroid
 								dist = targetDistance - secondDist - firstDist;
+
+								DMUtils.DebugLog("Asteroid Scan Distance: {0:N3}", dist);
 							}
 						}
 					}
@@ -595,15 +605,15 @@ namespace DMagic.Part_Modules
 		{
 			switch (s)
 			{
-				case "A":
+				case "Class A":
 					return 0;
-				case "B":
+				case "Class B":
 					return 1;
-				case "C":
+				case "Class C":
 					return 2;
-				case "D":
+				case "Class D":
 					return 3;
-				case "E":
+				case "Class E":
 					return 4;
 				default:
 					return 5;
