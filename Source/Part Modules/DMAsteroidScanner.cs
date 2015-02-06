@@ -319,17 +319,11 @@ namespace DMagic.Part_Modules
 						{
 							float cost = 0f;
 							if (resourceOn)
-							{
 								cost = resourceCost * Time.fixedDeltaTime;
-							}
 							if (part.RequestResource(experimentResource, cost) <= cost)
-							{
 								resourceOn = false;
-							}
 							else
-							{
 								resourceOn = true;
-							}
 						}
 					}
 				}
