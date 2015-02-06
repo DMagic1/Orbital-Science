@@ -215,10 +215,12 @@ namespace DMagic.Part_Modules
 								{
 									newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
 									closeRange = true;
+									break;
 								}
 								else
 								{
 									closeRange = false;
+									break;
 								}
 							}
 							if (camDeployed)
@@ -228,11 +230,13 @@ namespace DMagic.Part_Modules
 								{
 									newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
 									closeRange = true;
+									break;
 								}
 								if (anom.Vdistance >= 275 && closeRange == true)
 								{
 									animSecondary[foundAnimate].wrapMode = WrapMode.Default;
 									closeRange = false;
+									break;
 								}
 							}
 						}
@@ -318,11 +322,6 @@ namespace DMagic.Part_Modules
 			else
 			{
 				if (!IsDeployed) deployEvent();
-				if (!DMAnomalyList.MagUpdating && !DMAnomalyList.ScannerUpdating)
-				{
-					foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
-						DMAnomalyList.updateAnomaly(vessel, anom);
-				}
 				getAnomValues();
 				if (anomInRange)
 				{
@@ -343,7 +342,13 @@ namespace DMagic.Part_Modules
 		{
 			switch (anomName)
 			{
+				case "UFO":
 				case "KSC":
+				case "Cave":
+				case "Face":
+				case "Pyramids":
+				case "Icehenge":
+				case "Pyramid":
 					return anomName;
 				case "IslandAirfield":
 					return "Island Airfield";
@@ -353,26 +358,14 @@ namespace DMagic.Part_Modules
 					return "Monolith 1";
 				case "Monolith01":
 					return "Monolith 2";
-				case "UFO":
-					return anomName;
-				case "Cave":
-					return anomName;
-				case "Face":
-					return anomName;
 				case "MSL":
 					return "Mast Camera";
-				case "Pyramid":
-					return anomName;
 				case "Monolith02":
 					return "Monolith 3";
-				case "Pyramids":
-					return anomName;
 				case "RockArch01":
 					return "Rock Arch 2";
 				case "ArmstrongMemorial":
 					return "Armstrong Memorial";
-				case "Icehenge":
-					return anomName;
 				case "RockArch00":
 					return "Rock Arch 1";
 				case "DeadKraken":
@@ -401,13 +394,8 @@ namespace DMagic.Part_Modules
 				case Vessel.Situations.PRELAUNCH:
 				case Vessel.Situations.SPLASHED:
 					return ExperimentSituations.SrfLanded;
-				case Vessel.Situations.FLYING:
-				case Vessel.Situations.SUB_ORBITAL:
-				case Vessel.Situations.ORBITING:
-				case Vessel.Situations.ESCAPING:
-					return ExperimentSituations.FlyingLow;
 				default:
-					return ExperimentSituations.InSpaceHigh;
+					return ExperimentSituations.FlyingLow;
 			}
 		}
 
