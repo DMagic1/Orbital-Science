@@ -55,7 +55,7 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public bool dataIsCollectable;
 		[KSPField]
-		public float resourceCost = 1f;
+		public float resourceCost = 0f;
 		[KSPField]
 		public float transmitValue = 1f;
 		[KSPField(isPersistant=true)]
@@ -64,7 +64,7 @@ namespace DMagic.Part_Modules
 		public bool Inoperable = false;
 		[KSPField(isPersistant = true)]
 		public bool Deployed = false;
-		[KSPField(guiActive = false, guiName = "Status")]
+		[KSPField(guiActive = true, guiName = "Status")]
 		public string status;
 
 		private const string asteroidBodyNameFixed = "Eeloo";
@@ -77,9 +77,8 @@ namespace DMagic.Part_Modules
 		private Animation IndicatorAnim3;
 		private ScienceExperiment exp = null;
 		private List<ScienceData> scienceReports = new List<ScienceData>();
-		private bool validTarget = false;
-		private bool targetInRange = false;
-		private bool targetInSite = false;
+		private bool receiverInRange = false;
+		private bool asteroidInSite = false;
 		private bool rotating = false;
 		private bool resourceOn = false;
 		private DMAsteroidScanner targetModule = null;
@@ -138,87 +137,88 @@ namespace DMagic.Part_Modules
 			if (HighLogic.LoadedSceneIsFlight)
 			{
 				EventsCheck();
-				if (vessel == FlightGlobals.ActiveVessel)
+				string s = "Deactivated";
+				if (IsDeployed && resourceOn)
 				{
+					Vessel target = vessel.targetObject as Vessel;
+					s = "Searching...";
 
-					if (IsDeployed && resourceOn)
+					if (target != null)
 					{
-						Vessel target = vessel.targetObject as Vessel;
-						string s = "Searching...";
-
-						if (target != null)
+						targetModule = target.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault();
+						if (targetModule != null)
 						{
-							if (target != vessel)
+							s = "Receiver Located";
+							targetDistance = (targetModule.part.transform.position - dishBase.position).magnitude;
+							if (targetDistance < 5000 && targetDistance > 2)
 							{
-								targetModule = target.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault();
-								if (targetModule != null)
+								s = "Receiver In Range";
+								receiverInRange = true;
+								if (simpleRayHit())
 								{
-									s = "Receiver Located";
-									validTarget = true;
-									targetDistance = (targetModule.part.transform.position - dishBase.position).magnitude;
-									if (targetDistance < 5000)
-									{
-										s = "Receiver In Range";
-										targetInRange = true;
-										if (simpleRayHit())
-										{
-											s = "Experiment Ready";
-											targetInSite = true;
-											lightAnimationController(IndicatorAnim1, IndicatorAnim2, IndicatorAnim3, greenLight, yellowLight, redLight);
-										}
-										else
-										{
-											targetInSite = false;
-											lightAnimationController(IndicatorAnim2, IndicatorAnim1, IndicatorAnim3, yellowLight, greenLight, redLight);
-										}
-									}
-									else
-									{
-										targetInRange = targetInSite = false;
-										targetDistance = 0f;
-										lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
-									}
+									s = "Experiment Ready";
+									asteroidInSite = true;
+									lightAnimationController(IndicatorAnim1, IndicatorAnim2, IndicatorAnim3, greenLight, yellowLight, redLight);
 								}
 								else
 								{
-									validTarget = targetInRange = targetInSite = false;
-									targetDistance = 0f;
-									lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
+									asteroidInSite = false;
+									lightAnimationController(IndicatorAnim2, IndicatorAnim1, IndicatorAnim3, yellowLight, greenLight, redLight);
 								}
 							}
 							else
 							{
+								receiverInRange = asteroidInSite = false;
 								targetDistance = 0f;
-								targetModule = null;
-								validTarget = targetInRange = targetInSite = false;
 								lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 							}
 						}
 						else
 						{
+							receiverInRange = asteroidInSite = false;
 							targetDistance = 0f;
-							targetModule = null;
-							validTarget = targetInRange = targetInSite = false;
 							lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 						}
-						status = s;
-
-						if (validTarget && targetInRange && targetModule != null)
-							lookAtTarget();
-						else
-							searchForTarget();
-						rotating = true;
 					}
-					else if (!resourceOn)
+					else
 					{
-						status = "No Power";
 						targetDistance = 0f;
 						targetModule = null;
-						validTarget = targetInRange = targetInSite = false;
+						receiverInRange = asteroidInSite = false;
+						lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
 					}
-					else if (rotating)
-						spinDownDish();
+
+					if (receiverInRange && targetModule != null)
+						lookAtTarget();
+					else
+						searchForTarget();
+					rotating = true;
 				}
+				else if (IsDeployed && !resourceOn && resourceCost > 0f)
+				{
+					s = "No Power";
+					targetDistance = 0f;
+					targetModule = null;
+					receiverInRange = asteroidInSite = false;
+					lightAnimationController(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
+				}
+				else if (rotating)
+				{
+					spinDownDish();
+					targetDistance = 0f;
+					targetModule = null;
+					receiverInRange = asteroidInSite = false;
+					stopAllLights(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
+				}
+				else
+				{
+					targetDistance = 0f;
+					targetModule = null;
+					receiverInRange = asteroidInSite = false;
+					stopAllLights(IndicatorAnim3, IndicatorAnim1, IndicatorAnim2, redLight, greenLight, yellowLight);
+				}
+
+				status = s;
 			}
 		}
 
@@ -226,9 +226,8 @@ namespace DMagic.Part_Modules
 		{
 			Events["ResetExperiment"].active = scienceReports.Count > 0;
 			Events["CollectDataExternalEvent"].active = scienceReports.Count > 0 && dataIsCollectable;
-			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable && targetInSite;
+			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable && asteroidInSite;
 			Events["ReviewDataEvent"].active = scienceReports.Count > 0;
-			Fields["status"].guiActive = IsDeployed;
 		}
 
 		private void lookAtTarget()
@@ -300,7 +299,7 @@ namespace DMagic.Part_Modules
 		public override string GetInfo()
 		{
 			string info = base.GetInfo();
-			if (resourceCost > 0f)
+			if (resourceCost > 0f && PartResourceLibrary.Instance.GetDefinition(experimentResource) != null)
 			{
 				info += string.Format("Requires:\n-{0}: {1}/s\n", experimentResource, resourceCost);
 			}
@@ -311,22 +310,24 @@ namespace DMagic.Part_Modules
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				if (vessel == FlightGlobals.ActiveVessel)
+				if (resourceCost > 0f)
 				{
 					if (IsDeployed)
 					{
 						if (PartResourceLibrary.Instance.GetDefinition(experimentResource) != null)
 						{
-							float cost = 0f;
+							float cost = 0.001f;
 							if (resourceOn)
-								cost = resourceCost * Time.fixedDeltaTime;
-							if (part.RequestResource(experimentResource, cost) <= cost)
+								cost = resourceCost * TimeWarp.fixedDeltaTime;
+							if (part.RequestResource(experimentResource, cost) < cost)
 								resourceOn = false;
 							else
 								resourceOn = true;
 						}
 					}
 				}
+				else
+					resourceOn = true;
 			}
 		}
 
@@ -370,6 +371,25 @@ namespace DMagic.Part_Modules
 			{
 				if (stop2.IsPlaying(stopName2))
 					lightAnimator(stop2, stopName2, true);
+			}
+		}
+
+		private void stopAllLights(Animation a, Animation b, Animation c, string name1, string name2, string name3)
+		{
+			if (a != null)
+			{
+				if (!a.IsPlaying(name1))
+					lightAnimator(a, name1, true);
+			}
+			if (b != null)
+			{
+				if (b.IsPlaying(name2))
+					lightAnimator(b, name2, true);
+			}
+			if (c != null)
+			{
+				if (c.IsPlaying(name3))
+					lightAnimator(c, name3, true);
 			}
 		}
 
@@ -431,7 +451,7 @@ namespace DMagic.Part_Modules
 		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Scan Asteroid Interior", active = false)]
 		public void DeployExperiment()
 		{
-			if (validTarget && targetInRange && targetInSite)
+			if (receiverInRange && asteroidInSite)
 			{
 				ModuleAsteroid modAst = null;
 				float distance = asteroidScanLength(out modAst);
@@ -544,10 +564,18 @@ namespace DMagic.Part_Modules
 
 		private ScienceData makeScience(float dist, ModuleAsteroid m)
 		{
-			if (dist <= 0 || m == null)
+			if (dist <= 0)
 			{
 				DMUtils.Logging("Asteroid Not Scanned...  Distance Passed Through Asteroid: " + dist.ToString("N3"));
-				ScreenMessages.PostScreenMessage("No Asteroids Detected In Scanning Area...", 6f, ScreenMessageStyle.UPPER_CENTER);
+				if (asteroidInSite)
+					ScreenMessages.PostScreenMessage("No Asteroid Detected Between The Transmitting And Receiving Instruments...", 6f, ScreenMessageStyle.UPPER_CENTER);
+				else if (receiverInRange)
+					ScreenMessages.PostScreenMessage("No Asteroid Detected In The Scanning Area...", 6f, ScreenMessageStyle.UPPER_CENTER);
+				return null;
+			}
+			if (m == null)
+			{
+				DMUtils.Logging("Asteroid Not Scanned. Something Went Wrong Here; No Asteroid Was Detected; Distance Passed Through Asteroid: " + dist.ToString("N3"));
 				return null;
 			}
 			ScienceData data = null;
@@ -577,7 +605,7 @@ namespace DMagic.Part_Modules
 			}
 
 			DMUtils.OnAsteroidScience.Fire(ast.aClass, exp.id);
-			sub.title = string.Format("{0} of a {1} asteroid", exp.experimentTitle, ast.aType);
+			sub.title = string.Format("{0} through {1:P0} of a {2} asteroid", exp.experimentTitle, multiplier, ast.aType);
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
 
