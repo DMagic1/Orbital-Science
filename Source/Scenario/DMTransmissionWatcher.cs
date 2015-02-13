@@ -35,7 +35,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Scenario
 {
 	internal class DMTransmissionWatcher : MonoBehaviour
 	{
@@ -55,13 +55,10 @@ namespace DMagic
 		private void scienceReceived(float sci, ScienceSubject sub)
 		{
 			DMUtils.DebugLog("Science Data Transmitted For {0} Science", sci);
-			foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
+			if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
 			{
-				if (DMData.title == sub.title)
-				{
-					DMScienceScenario.SciScenario.submitDMScience(DMData, sci);
-					break;
-				}
+				DMScienceData DMData = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
+				DMScienceScenario.SciScenario.submitDMScience(DMData, sci);
 			}
 		}
 	}

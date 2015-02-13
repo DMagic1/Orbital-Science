@@ -33,6 +33,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using DMagic.Scenario;
 
 namespace DMagic.Part_Modules
 {
@@ -789,17 +790,14 @@ namespace DMagic.Part_Modules
 
 		private void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub, ExperimentSituations expsit, string s)
 		{
-			DMScienceScenario.DMScienceData DMData = null;
-			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.recoveredScienceList.Count);
-			foreach (DMScienceScenario.DMScienceData DMScience in DMScienceScenario.SciScenario.recoveredScienceList)
+			DMScienceData DMData = null;
+			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.RecoveredDMScience.Count);
+			if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
 			{
-				if (DMScience.title == sub.title)
-				{
+				DMScienceData DMScience = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
 					DMUtils.DebugLog("found matching DM Data");
-					sub.scientificValue *= DMScience.scival;
+					sub.scientificValue *= DMScience.SciVal;
 					DMData = DMScience;
-					break;
-				}
 			}
 			if (DMData == null)
 			{

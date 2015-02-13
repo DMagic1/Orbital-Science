@@ -32,6 +32,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using DMagic.Scenario;
 
 namespace DMagic.Part_Modules
 {
@@ -648,15 +649,12 @@ namespace DMagic.Part_Modules
 
 		private void registerDMScience(DMAsteroidScience newAst, ScienceSubject sub)
 		{
-			DMScienceScenario.DMScienceData DMData = null;
-			foreach (DMScienceScenario.DMScienceData DMScience in DMScienceScenario.SciScenario.recoveredScienceList)
+			DMScienceData DMData = null;
+			if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
 			{
-				if (DMScience.title == sub.title)
-				{
-					sub.scientificValue *= DMScience.scival;
-					DMData = DMScience;
-					break;
-				}
+				DMScienceData DMScience = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
+				sub.scientificValue *= DMScience.SciVal;
+				DMData = DMScience;
 			}
 			if (DMData == null)
 			{
