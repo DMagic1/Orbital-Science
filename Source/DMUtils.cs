@@ -137,36 +137,36 @@ namespace DMagic
 			return D;
 		}
 
-		internal static void resetContracts()
-		{
-			DMScienceScenario.SciScenario.contractsReload = false;
-			Debug.LogWarning("[DM] Version Change Detected: Reloading DMagic Contracts...");
+		//internal static void resetContracts()
+		//{
+		//	DMScienceScenario.SciScenario.contractsReload = false;
+		//	Debug.LogWarning("[DM] Version Change Detected: Reloading DMagic Contracts...");
 
-			List<Contract> resetList = new List<Contract>();
+		//	List<Contract> resetList = new List<Contract>();
 
-			foreach (Contract c in ContractSystem.Instance.Contracts)
-			{
-				DebugLog("Checking Contract For Reset");
-				Type cType = c.GetType();
+		//	foreach (Contract c in ContractSystem.Instance.Contracts)
+		//	{
+		//		DebugLog("Checking Contract For Reset");
+		//		Type cType = c.GetType();
 
-				if (cType is IDMagicContract)
-				{
-					DebugLog("Reset Contract Of Type: {}", cType);
-					if (c.ContractState == Contract.State.Active)
-					{
-						DebugLog("Cancelling Contract");
-						c.Unregister();
-					}
-					resetList.Add(c);
-				}
-			}
+		//		if (cType is IDMagicContract)
+		//		{
+		//			DebugLog("Reset Contract Of Type: {}", cType);
+		//			if (c.ContractState == Contract.State.Active)
+		//			{
+		//				DebugLog("Cancelling Contract");
+		//				c.Unregister();
+		//			}
+		//			resetList.Add(c);
+		//		}
+		//	}
 
-			foreach (Contract c in resetList)
-			{
-				DebugLog("Removing Contract From List");
-				ContractSystem.Instance.Contracts.Remove(c);
-			}
-		}
+		//	foreach (Contract c in resetList)
+		//	{
+		//		DebugLog("Removing Contract From List");
+		//		ContractSystem.Instance.Contracts.Remove(c);
+		//	}
+		//}
 
 		#region Debug Logging
 
