@@ -53,24 +53,31 @@ namespace DMagic
 		{
 			//Load in global multipliers
 			foreach (ConfigNode setNode in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_SETTINGS"))
-				if (setNode.GetValue("name") == "Contract Settings")
+			{
+				if (setNode != null)
 				{
-					DMUtils.science = float.Parse(setNode.GetValue("Global_Science_Return"));
-					DMUtils.reward = float.Parse(setNode.GetValue("Global_Fund_Reward"));
-					DMUtils.forward = float.Parse(setNode.GetValue("Global_Fund_Forward"));
-					DMUtils.penalty = float.Parse(setNode.GetValue("Global_Fund_Penalty"));
-					DMUtils.deadline = float.Parse(setNode.GetValue("Global_Deadline"));
-					DMUtils.maxSurvey = int.Parse(setNode.GetValue("Max_Survey"));
-					DMUtils.maxAsteroid = int.Parse(setNode.GetValue("Max_Asteroid"));
-					DMUtils.maxAnomaly = int.Parse(setNode.GetValue("Max_Anomaly"));
-					DMUtils.maxMagnetic = int.Parse(setNode.GetValue("Max_Magnetic"));
+					if (setNode.GetValue("name") == "Contract Settings")
+					{
 
-					DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3} ; Deadline Length: {4}",
-						DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty, DMUtils.deadline);
-					DMUtils.Logging("Max Contract Variables Set: Survey: {0} ; Asteroid: {1} ; Anomaly: {2} ; Magnetic: {3}",
-						DMUtils.maxSurvey, DMUtils.maxAsteroid, DMUtils.maxAnomaly, DMUtils.maxMagnetic);
-					break;
+						float.TryParse(setNode.GetValue("Global_Science_Return"), out DMUtils.science);
+						float.TryParse(setNode.GetValue("Global_Fund_Reward"), out DMUtils.reward);
+						float.TryParse(setNode.GetValue("Global_Fund_Forward"), out DMUtils.forward);
+						float.TryParse(setNode.GetValue("Global_Fund_Penalty"), out DMUtils.penalty);
+						float.TryParse(setNode.GetValue("Global_Deadline"), out DMUtils.deadline);
+						int.TryParse(setNode.GetValue("Max_Survey"), out DMUtils.maxSurvey);
+						int.TryParse(setNode.GetValue("Max_Asteroid"), out DMUtils.maxAsteroid);
+						int.TryParse(setNode.GetValue("Max_Anomaly"), out DMUtils.maxAnomaly);
+						int.TryParse(setNode.GetValue("Max_Magnetic"), out DMUtils.maxMagnetic);
+
+						DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3} ; Deadline Length: {4}",
+							DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty, DMUtils.deadline);
+						DMUtils.Logging("Max Contract Variables Set: Survey: {0} ; Asteroid: {1} ; Anomaly: {2} ; Magnetic: {3}",
+							DMUtils.maxSurvey, DMUtils.maxAsteroid, DMUtils.maxAnomaly, DMUtils.maxMagnetic);
+						break;
+					}
 				}
+			}
+
 			//Load in experiment definitions
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_EXPERIMENT"))
 			{
@@ -80,7 +87,7 @@ namespace DMagic
 				DMScienceContainer DMscience = null;
 				ScienceExperiment exp = null;
 
-				//Some apparently not impossible errors can cause deplicate experiments to be added to the R&D science experiment dictionary
+				//Some apparently not impossible errors can cause duplicate experiments to be added to the R&D science experiment dictionary
 				try
 				{
 					exp = ResearchAndDevelopment.GetExperiment(node.GetValue("experimentID"));
@@ -112,7 +119,9 @@ namespace DMagic
 					if (DMUtils.whiteListed)
 						exp.situationMask = (uint)sitMask;
 						exp.biomeMask = (uint)bioMask;
+
 					DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent, transmit);
+
 					if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface && !DMUtils.availableScience[DMScienceType.Surface.ToString()].ContainsKey(name))
 						DMUtils.availableScience[DMScienceType.Surface.ToString()].Add(name, DMscience);
 					if (((DMScienceType)type & DMScienceType.Aerial) == DMScienceType.Aerial && !DMUtils.availableScience[DMScienceType.Aerial.ToString()].ContainsKey(name))
@@ -137,6 +146,7 @@ namespace DMagic
 			DMUtils.DebugLog("Successfully Added {0} New Biological Experiments To Contract List", DMUtils.availableScience[DMScienceType.Biological.ToString()].Count);
 			DMUtils.DebugLog("Successfully Added {0} New Asteroid Experiments To Contract List", DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Count);
 			DMUtils.DebugLog("Successfully Added {0} New Anomaly Experiments To Contract List", DMUtils.availableScience[DMScienceType.Anomaly.ToString()].Count);
+
 			//Load in custom contract descriptions
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_SCIENCE_STORY_DEF"))
 			{
@@ -198,6 +208,7 @@ namespace DMagic
 					}
 				}
 			}
+
 			DMUtils.Logging("Added {0} New Generic Backstories; {1} New Survey Backstories; {2} New Biological Backstories; {3} New Asteroid Backstories; {4} New Anomaly Backstories; {5} New Magnetic Backstories To The List", DMUtils.backStory["generic"].Count, DMUtils.backStory["survey"].Count, DMUtils.backStory["biological"].Count, DMUtils.backStory["asteroid"].Count, DMUtils.backStory["anomaly"].Count, DMUtils.backStory["magnetic"].Count);
 		}
 
@@ -230,12 +241,12 @@ namespace DMagic
 			DMUtils.availableScience[DMScienceType.Anomaly.ToString()] = new Dictionary<string, DMScienceContainer>();
 
 			DMUtils.backStory = new Dictionary<string, List<string>>();
-			DMUtils.backStory["generic"] = new List<string>();
-			DMUtils.backStory["survey"] = new List<string>();
-			DMUtils.backStory["biological"] = new List<string>();
-			DMUtils.backStory["asteroid"] = new List<string>();
-			DMUtils.backStory["anomaly"] = new List<string>();
-			DMUtils.backStory["magnetic"] = new List<string>();
+			DMUtils.backStory.Add("generic", new List<string>());
+			DMUtils.backStory.Add("survey", new List<string>());
+			DMUtils.backStory.Add("biological", new List<string>());
+			DMUtils.backStory.Add("asteroid", new List<string>());
+			DMUtils.backStory.Add("anomaly", new List<string>());
+			DMUtils.backStory.Add("magnetic", new List<string>());
 		}
 
 		private void findAssemblies(string[] assemblies)
@@ -251,12 +262,5 @@ namespace DMagic
 			}
 		}
 
-		private void OnDestroy()
-		{
-		}
-
 	}
-
-
-
 }
