@@ -191,7 +191,7 @@ namespace DMagic.Scenario
 				updateRemainingData();
 		}
 
-		internal void RemoveDMScience(DMScienceData DMdata)
+		private void RemoveDMScience(DMScienceData DMdata)
 		{
 			if (recoveredDMScience.ContainsKey(DMdata.Title))
 				recoveredDMScience.Remove(DMdata.Title);
@@ -207,7 +207,7 @@ namespace DMagic.Scenario
 			return sciVal;
 		}
 
-		internal void updateRemainingData()
+		private void updateRemainingData()
 		{
 			DMUtils.DebugLog("Updating Existing Data");
 			List<ScienceData> dataList = new List<ScienceData>();
@@ -225,8 +225,11 @@ namespace DMagic.Scenario
 						{
 							DMScienceData DMData = recoveredDMScience[data.title];
 							ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
-							sub.scientificValue *= DMData.SciVal;
-							sub.science = Math.Max(0f, sub.scienceCap - (sub.scienceCap * sub.scientificValue));
+							if (sub != null)
+							{
+								sub.scientificValue *= DMData.SciVal;
+								sub.science = Math.Max(0f, sub.scienceCap - (sub.scienceCap * sub.scientificValue));
+							}
 						}
 					}
 				}
