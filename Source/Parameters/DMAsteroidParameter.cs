@@ -57,8 +57,8 @@ namespace DMagic
 			aSize = DMUtils.sizeHash(size);
 			collected = false;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.sciPart;
-			subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, "");
+			partName = scienceContainer.SciPart;
+			subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.Exp.id, scienceLocation, "");
 		}
 
 		/// <summary>
@@ -105,9 +105,9 @@ namespace DMagic
 		protected override string GetTitle()
 		{
 			if (scienceLocation == ExperimentSituations.InSpaceLow)
-				return string.Format("{0} data from in space near a {1} asteroid", scienceContainer.exp.experimentTitle, aSize);
+				return string.Format("{0} data from in space near a {1} asteroid", scienceContainer.Exp.experimentTitle, aSize);
 			else if (scienceLocation == ExperimentSituations.SrfLanded)
-				return string.Format("{0} data while grappled to a {1} asteroid", scienceContainer.exp.experimentTitle, aSize);
+				return string.Format("{0} data while grappled to a {1} asteroid", scienceContainer.Exp.experimentTitle, aSize);
 			else
 				return "Stupid Code Is Stupid";
 		}
@@ -146,7 +146,7 @@ namespace DMagic
 				return;
 			}
 			else
-				partName = scienceContainer.sciPart;
+				partName = scienceContainer.SciPart;
 			if (int.TryParse(scienceString[1], out size))
 				aSize = DMUtils.sizeHash(size);
 			else
@@ -170,14 +170,14 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Collecte State; Asteroid Parameter Reset");
 				collected = false;
 			}
-			subject = string.Format("{0}@Asteroid{1}", scienceContainer.exp.id, scienceLocation);
+			subject = string.Format("{0}@Asteroid{1}", scienceContainer.Exp.id, scienceLocation);
 		}
 
 		private void asteroidMonitor(string size, string exp)
 		{
 			if (!collected)
 			{
-				if (size == aSize && exp == scienceContainer.exp.id)
+				if (size == aSize && exp == scienceContainer.Exp.id)
 				{
 					ScreenMessages.PostScreenMessage("Asteroid Science Results Collected", 6f, ScreenMessageStyle.UPPER_CENTER);
 					collected = true;

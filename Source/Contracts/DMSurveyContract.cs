@@ -198,7 +198,7 @@ namespace DMagic
 				{
 					this.AddParameter(DMC, "collectDMScience");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(DMC.Situation), DMC.Body) * ((float)rand.Next(85, 116) / 100f);
-					DMC.SetScience(DMC.Container.exp.baseValue * 0.7f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
+					DMC.SetScience(DMC.Container.Exp.baseValue * 0.7f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
 					DMC.SetFunds(4000f * DMUtils.reward * locationMod, 1500f * DMUtils.penalty * locationMod, body);
 					DMC.SetReputation(15f * DMUtils.reward * locationMod, 10f * DMUtils.penalty * locationMod, body);
 					i++;
@@ -219,7 +219,7 @@ namespace DMagic
 			if (a == 0)
 				this.agent = AgentList.Instance.GetAgent("DMagic");
 			else if (a == 1)
-				this.agent = AgentList.Instance.GetAgent(newParams[0].Container.agent);
+				this.agent = AgentList.Instance.GetAgent(newParams[0].Container.Agent);
 			else
 				this.agent = AgentList.Instance.GetAgentRandom();
 
