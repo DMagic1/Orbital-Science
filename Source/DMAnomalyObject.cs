@@ -36,17 +36,17 @@ using UnityEngine;
 
 namespace DMagic
 {
-	internal class DMAnomalyObject
+	public class DMAnomalyObject
 	{
-		internal PQSCity city;
-		internal Vector3d worldLocation;
-		internal CelestialBody body;
-		internal double lat, lon, alt;
-		internal double Vdistance, Vheight, Vhorizontal;
-		internal double bearing;
-		internal string name;
+		private PQSCity city;
+		private Vector3d worldLocation;
+		private CelestialBody body;
+		private double lat, lon, alt;
+		private double Vdistance, Vheight, Vhorizontal;
+		private double bearing;
+		private string name;
 
-		internal DMAnomalyObject(PQSCity City)
+		public DMAnomalyObject(PQSCity City)
 		{
 			city = City;
 			name = city.name;
@@ -75,6 +75,80 @@ namespace DMagic
 		private double clampLon(double l)
 		{
 			return (l + 360 + 180) % 360 - 180;
+		}
+
+		public PQSCity City
+		{
+			get { return city; }
+		}
+
+		public Vector3d WorldLocation
+		{
+			get { return worldLocation; }
+			internal set { worldLocation = value; }
+		}
+
+		public CelestialBody Body
+		{
+			get { return body; }
+		}
+
+		public double Lat
+		{
+			get { return lat; }
+		}
+
+		public double Lon
+		{
+			get { return lon; }
+		}
+
+		public double Alt
+		{
+			get { return alt; }
+		}
+
+		public double VDistance
+		{
+			get { return Vdistance; }
+			internal set
+			{
+				if (value >= 0)
+					Vdistance = value;
+			}
+		}
+
+		public double VHeight
+		{
+			get { return Vheight; }
+			internal set
+			{
+				if (value >= 0)
+					Vheight = value;
+			}
+		}
+
+		public double VHorizontal
+		{
+			get { return Vhorizontal; }
+			internal set
+			{
+				if (value >= 0)
+					Vhorizontal = value;
+				else
+					Vhorizontal = double.MaxValue;
+			}
+		}
+
+		public double Bearing
+		{
+			get { return bearing; }
+			internal set { bearing = value; }
+		}
+
+		public string Name
+		{
+			get { return name; }
 		}
 	}
 }
