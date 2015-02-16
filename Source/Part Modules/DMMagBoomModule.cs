@@ -287,37 +287,37 @@ namespace DMagic.Part_Modules
 					if (!DMAnomalyList.ScannerUpdating)
 					{
 						DMAnomalyList.MagUpdating = true;
-						foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
+						foreach (DMAnomalyObject anom in DMAnomalyList.AnomObjects)
 						{
 							DMAnomalyList.updateAnomaly(vessel, anom);
-							if (anom.Vdistance < 100000)
+							if (anom.VDistance < 100000)
 								Cities.Add(anom);
 						}
 					}
 					else
 					{
 						DMAnomalyList.MagUpdating = false;
-						foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
+						foreach (DMAnomalyObject anom in DMAnomalyList.AnomObjects)
 						{
-							if (anom.Vdistance < 100000)
+							if (anom.VDistance < 100000)
 								Cities.Add(anom);
 						}
 					}
 
 					if (Cities.Count > 0)
 					{
-						var sortAnom = from entry in Cities orderby entry.Vdistance ascending select entry;
+						var sortAnom = from entry in Cities orderby entry.VDistance ascending select entry;
 						var closestAnom = sortAnom.First();
 
 						double anomMult = 1d;
 						double anomMultZ = 1d;
 						double anomMultH = 1d;
 
-						if (closestAnom.Vdistance != 0)
+						if (closestAnom.VDistance != 0)
 						{
-							anomMult = 1 + ((100000 - closestAnom.Vdistance) / 10000);
-							anomMultZ = 1 + (anomMult * ((closestAnom.Vdistance - closestAnom.Vhorizontal) / closestAnom.Vdistance));
-							anomMultH = 1 + (anomMult * ((closestAnom.Vdistance - closestAnom.Vheight) / closestAnom.Vdistance));
+							anomMult = 1 + ((100000 - closestAnom.VDistance) / 10000);
+							anomMultZ = 1 + (anomMult * ((closestAnom.VDistance - closestAnom.VHorizontal) / closestAnom.VDistance));
+							anomMultH = 1 + (anomMult * ((closestAnom.VDistance - closestAnom.VHeight) / closestAnom.VDistance));
 						}
 						Bz *= anomMultZ;
 						Bh *= anomMultH;
