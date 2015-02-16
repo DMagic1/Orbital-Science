@@ -83,6 +83,7 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scenario\DMRecoveryWatcher.cs" />
+    <Compile Include="Scenario\DMScienceData.cs" />
     <Compile Include="Scenario\DMScienceScenario.cs" />
     <Compile Include="Scenario\DMTransmissionWatcher.cs" />
   </ItemGroup>
