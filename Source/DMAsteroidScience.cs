@@ -157,7 +157,6 @@ namespace DMagic
 							modAsteroid = m;
 							return true;
 						}
-						else continue;
 					}
 				}
 			}
