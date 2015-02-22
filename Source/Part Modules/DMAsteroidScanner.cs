@@ -85,7 +85,7 @@ namespace DMagic.Part_Modules
 		private ScienceExperiment exp = null;
 		private List<ScienceData> scienceReports = new List<ScienceData>();
 		private bool receiverInRange = false;
-		private bool asteroidInSite = false;
+		private bool asteroidInSight = false;
 		private bool rotating = false;
 		private bool resourceOn = false;
 		private DMAsteroidScanner targetModule = null;
@@ -184,7 +184,7 @@ namespace DMagic.Part_Modules
 								{
 									targetDistance = 0f;
 									targetModule = null;
-									receiverInRange = asteroidInSite = false;
+									receiverInRange = asteroidInSight = false;
 								}
 							}
 						}
@@ -192,7 +192,7 @@ namespace DMagic.Part_Modules
 						{
 							targetDistance = 0f;
 							targetModule = null;
-							receiverInRange = asteroidInSite = false;
+							receiverInRange = asteroidInSight = false;
 						}
 					}
 
@@ -207,20 +207,20 @@ namespace DMagic.Part_Modules
 							if (simpleRayHit())
 							{
 								s = "Experiment Ready";
-								asteroidInSite = true;
+								asteroidInSight = true;
 							}
 							else
-								asteroidInSite = false;
+								asteroidInSight = false;
 						}
 						else
 						{
-							receiverInRange = asteroidInSite = false;
+							receiverInRange = asteroidInSight = false;
 							targetDistance = 0f;
 						}
 					}
 					else
 					{
-						receiverInRange = asteroidInSite = false;
+						receiverInRange = asteroidInSight = false;
 						targetDistance = 0f;
 					}
 
@@ -235,23 +235,23 @@ namespace DMagic.Part_Modules
 					s = "No Power";
 					targetDistance = 0f;
 					targetModule = null;
-					receiverInRange = asteroidInSite = false;
+					receiverInRange = asteroidInSight = false;
 				}
 				else if (rotating)
 				{
 					spinDownDish();
 					targetDistance = 0f;
 					targetModule = null;
-					receiverInRange = asteroidInSite = false;
+					receiverInRange = asteroidInSight = false;
 				}
 				else
 				{
 					targetDistance = 0f;
 					targetModule = null;
-					receiverInRange = asteroidInSite = false;
+					receiverInRange = asteroidInSight = false;
 				}
 
-				lightSwitch(receiverInRange && asteroidInSite, !IsDeployed);
+				lightSwitch(receiverInRange && asteroidInSight, !IsDeployed);
 
 				status = s;
 			}
@@ -261,7 +261,7 @@ namespace DMagic.Part_Modules
 		{
 			Events["ResetExperiment"].active = scienceReports.Count > 0;
 			Events["CollectDataExternalEvent"].active = scienceReports.Count > 0 && dataIsCollectable;
-			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable && asteroidInSite;
+			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable && asteroidInSight;
 			Events["ReviewDataEvent"].active = scienceReports.Count > 0;
 		}
 
@@ -541,7 +541,7 @@ namespace DMagic.Part_Modules
 		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Scan Asteroid Interior", active = false)]
 		public void DeployExperiment()
 		{
-			if (receiverInRange && asteroidInSite)
+			if (receiverInRange && asteroidInSight)
 			{
 				ModuleAsteroid modAst = null;
 				float distance = asteroidScanLength(out modAst);
@@ -657,7 +657,7 @@ namespace DMagic.Part_Modules
 			if (dist <= 0)
 			{
 				DMUtils.Logging("Asteroid Not Scanned...  Distance Passed Through Asteroid: " + dist.ToString("N3"));
-				if (asteroidInSite)
+				if (asteroidInSight)
 					ScreenMessages.PostScreenMessage("No Asteroid Detected Between The Transmitting And Receiving Instruments...", 6f, ScreenMessageStyle.UPPER_CENTER);
 				else if (receiverInRange)
 					ScreenMessages.PostScreenMessage("No Asteroid Detected In The Scanning Area...", 6f, ScreenMessageStyle.UPPER_CENTER);
