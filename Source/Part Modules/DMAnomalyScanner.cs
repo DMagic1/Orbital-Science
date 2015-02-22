@@ -326,7 +326,7 @@ namespace DMagic.Part_Modules
 				if (anomInRange)
 				{
 					if (anomCloseRange)
-						runExperiment();
+						runExperiment(getSituationAnom());
 				}
 				else
 					ScreenMessages.PostScreenMessage("No anomalous signals detected.", 4f, ScreenMessageStyle.UPPER_CENTER);
@@ -386,7 +386,7 @@ namespace DMagic.Part_Modules
 			return "Dummy";
 		}
 
-		protected override ExperimentSituations getSituation()
+		private ExperimentSituations getSituationAnom()
 		{
 			switch (vessel.situation)
 			{

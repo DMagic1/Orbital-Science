@@ -544,16 +544,16 @@ namespace DMagic.Part_Modules
 								StartCoroutine("WaitForAnimation", waitForAnimationTime);
 							}
 							else
-								runExperiment();
+								runExperiment(getSituation());
 						}
 						else if (resourceExpCost > 0) {
 							resourceOn = true;
 							StartCoroutine("WaitForAnimation", waitForAnimationTime);
 						}
-						else runExperiment();
+						else runExperiment(getSituation());
 					}
 				}
-				else runExperiment();
+				else runExperiment(getSituation());
 			}
 			else
 				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
@@ -566,14 +566,15 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator WaitForAnimation(float waitTime)
 		{
+			ExperimentSituations vesselSit = getSituation();
 			yield return new WaitForSeconds(waitTime);
 			resourceOn = false;
-			runExperiment();
+			runExperiment(vesselSit);
 		}
 
-		protected void runExperiment()
+		protected void runExperiment(ExperimentSituations sit)
 		{
-			ScienceData data = makeScience(scienceBoost);
+			ScienceData data = makeScience(scienceBoost, sit);
 			if (data == null)
 				Debug.LogError("[DM] Something Went Wrong Here; Null Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
 			else
@@ -625,7 +626,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		protected virtual ExperimentSituations getSituation()
+		private ExperimentSituations getSituation()
 		{
 			if (asteroidReports && DMAsteroidScience.asteroidGrappled())
 				return ExperimentSituations.SrfLanded;
@@ -734,9 +735,8 @@ namespace DMagic.Part_Modules
 				return true;
 		}
 
-		private ScienceData makeScience(float boost)
+		private ScienceData makeScience(float boost, ExperimentSituations vesselSituation)
 		{
-			ExperimentSituations vesselSituation = getSituation();
 			string biome = getBiome(vesselSituation);
 			CelestialBody mainBody = vessel.mainBody;
 			bool asteroids = false;
