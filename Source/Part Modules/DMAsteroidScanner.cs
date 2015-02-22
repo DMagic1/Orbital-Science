@@ -51,6 +51,10 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public string yellowLight;
 		[KSPField]
+		public string USBayAnimation;
+		[KSPField]
+		public bool USScience;
+		[KSPField]
 		public string experimentResource;
 		[KSPField]
 		public bool rerunnable;
@@ -77,6 +81,7 @@ namespace DMagic.Part_Modules
 		private Animation Anim;
 		private Animation IndicatorAnim1;
 		private Animation IndicatorAnim2;
+		private Animation USAnim;
 		private ScienceExperiment exp = null;
 		private List<ScienceData> scienceReports = new List<ScienceData>();
 		private bool receiverInRange = false;
@@ -102,10 +107,16 @@ namespace DMagic.Part_Modules
 				IndicatorAnim1 = part.FindModelAnimators(greenLight)[0];
 			if (!string.IsNullOrEmpty(yellowLight))
 				IndicatorAnim2 = part.FindModelAnimators(yellowLight)[0];
+			if (USScience && !string.IsNullOrEmpty(USBayAnimation))
+				USAnim = part.FindModelAnimators(USBayAnimation)[0];
 			if (!string.IsNullOrEmpty(experimentID))
 				exp = ResearchAndDevelopment.GetExperiment(experimentID);
 			if (IsDeployed)
-				animator(0f, 1f);
+			{
+				animator(0f, 1f, Anim, animationName);
+				if (USScience)
+					animator(0f, 1f, USAnim, USBayAnimation);
+			}
 			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
 				FlightGlobals.Bodies[16].bodyName = asteroidBodyNameFixed;
 
@@ -267,7 +278,7 @@ namespace DMagic.Part_Modules
 			angleZ *= Mathf.Rad2Deg;
 			angleY *= Mathf.Rad2Deg;
 
-			//Normalize the resulting angle to make sure it is within 0-360; offset both angles by 90 to compensate
+			//Normalize the resulting angle to make sure it is within 0-360; offset the Y angle by 90 to compensate
 			//for the initial transform rotation
 			angleZ = normalizeAngle(angleZ);
 			angleY = normalizeAngle(angleY + 90);
@@ -368,15 +379,15 @@ namespace DMagic.Part_Modules
 		#region Animator
 
 		//Controls the main, door-opening animation
-		private void animator(float speed, float time)
+		private void animator(float speed, float time, Animation a, string name)
 		{
-			if (Anim != null)
+			if (a != null)
 			{
-				Anim[animationName].speed = speed;
-				if (!Anim.IsPlaying(animationName))
+				a[name].speed = speed;
+				if (!a.IsPlaying(name))
 				{
-					Anim[animationName].normalizedTime = time;
-					Anim.Blend(animationName, 1f);
+					a[name].normalizedTime = time;
+					a.Blend(name, 1f);
 				}
 			}
 		}
@@ -428,7 +439,9 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator deployEvent()
 		{
-			animator(1f, 0f);
+			animator(1f, 0f, Anim, animationName);
+			if (USScience)
+				animator(1f, 0f, USAnim, USBayAnimation);
 
 			yield return new WaitForSeconds(Anim[animationName].length);
 
@@ -442,7 +455,14 @@ namespace DMagic.Part_Modules
 			while (dishArm.localEulerAngles.z > 1 || dish.localEulerAngles.y > 1)
 				yield return null;
 
-			animator(-1f, 1f);
+			animator(-1f, 1f, Anim, animationName);
+			if (USScience)
+			{
+				if (Anim[animationName].length > USAnim[USBayAnimation].length && USAnim[USBayAnimation].length != 0)
+					animator(-1f, (Anim[animationName].length / USAnim[USBayAnimation].length), USAnim, USBayAnimation);
+				else
+					animator(-1f, 1f, USAnim, USBayAnimation);
+			}
 		}
 
 		#endregion
