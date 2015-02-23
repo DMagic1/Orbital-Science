@@ -81,62 +81,73 @@ namespace DMagic
 			//Load in experiment definitions
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_EXPERIMENT"))
 			{
-				string name, part, agent = "";
-				int sitMask, bioMask, type = 0;
-				float transmit = 0;
-				DMScienceContainer DMscience = null;
-				ScienceExperiment exp = null;
-
-				//Some apparently not impossible errors can cause duplicate experiments to be added to the R&D science experiment dictionary
-				try
+				if (node != null)
 				{
-					exp = ResearchAndDevelopment.GetExperiment(node.GetValue("experimentID"));
-				}
-				catch (Exception e)
-				{
-					Debug.LogError("[DM] Whoops. Something really wrong happened here; stopping this contract experiment from loading..." + e);
-					continue;
-				}
-				if (exp != null)
-				{
-					name = node.GetValue("name");
-					if (!int.TryParse(node.GetValue("sitMask"), out sitMask))
-						continue;
-					if (!int.TryParse(node.GetValue("bioMask"), out bioMask))
-						continue;
-					if (!int.TryParse(node.GetValue("type"), out type))
-						continue;
-					if (!float.TryParse(node.GetValue("xmitDataScalar"), out transmit))
-						continue;
-					if (node.HasValue("part"))
-						part = node.GetValue("part");
-					else
-						part = "None";
-					if (node.HasValue("agent"))
-						agent = node.GetValue("agent");
-					else
-						agent = "Any";
-					if (DMUtils.whiteListed)
-						exp.situationMask = (uint)sitMask;
-						exp.biomeMask = (uint)bioMask;
+					string name = "";
+					string part = "";
+					string agent = "";
+					int sitMask = 0;
+					int bioMask = 0;
+					int type = 0;
+					float transmit = 0;
+					DMScienceContainer DMscience = null;
+					ScienceExperiment exp = null;
 
-					DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent, transmit);
+					//Some apparently not impossible errors can cause duplicate experiments to be added to the R&D science experiment dictionary
+					try
+					{
+						exp = ResearchAndDevelopment.GetExperiment(node.GetValue("experimentID"));
+					}
+					catch (Exception e)
+					{
+						Debug.LogError("[DM] Whoops. Something really wrong happened here; stopping this contract experiment from loading..." + e);
+						continue;
+					}
+					if (exp != null)
+					{
+						if (!node.HasValue("name"))
+							continue;
+						name = node.GetValue("name");
+						if (!int.TryParse(node.GetValue("sitMask"), out sitMask))
+							continue;
+						if (!int.TryParse(node.GetValue("bioMask"), out bioMask))
+							continue;
+						if (!int.TryParse(node.GetValue("type"), out type))
+							continue;
+						if (!float.TryParse(node.GetValue("xmitDataScalar"), out transmit))
+							continue;
+						if (node.HasValue("part"))
+							part = node.GetValue("part");
+						else
+							part = "None";
+						if (node.HasValue("agent"))
+							agent = node.GetValue("agent");
+						else
+							agent = "Any";
+						if (DMUtils.whiteListed)
+						{
+							exp.situationMask = (uint)sitMask;
+							exp.biomeMask = (uint)bioMask;
+						}
 
-					if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface && !DMUtils.availableScience[DMScienceType.Surface.ToString()].ContainsKey(name))
-						DMUtils.availableScience[DMScienceType.Surface.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Aerial) == DMScienceType.Aerial && !DMUtils.availableScience[DMScienceType.Aerial.ToString()].ContainsKey(name))
-						DMUtils.availableScience[DMScienceType.Aerial.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Space) == DMScienceType.Space && !DMUtils.availableScience[DMScienceType.Space.ToString()].ContainsKey(name))
-						DMUtils.availableScience[DMScienceType.Space.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Biological) == DMScienceType.Biological && !DMUtils.availableScience[DMScienceType.Biological.ToString()].ContainsKey(name))
-						DMUtils.availableScience[DMScienceType.Biological.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Asteroid) == DMScienceType.Asteroid && !DMUtils.availableScience[DMScienceType.Asteroid.ToString()].ContainsKey(name))
-						DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Add(name, DMscience);
-					if (((DMScienceType)type & DMScienceType.Anomaly) == DMScienceType.Anomaly && !DMUtils.availableScience[DMScienceType.Anomaly.ToString()].ContainsKey(name))
-						DMUtils.availableScience[DMScienceType.Anomaly.ToString()].Add(name, DMscience);
-					if (!DMUtils.availableScience["All"].ContainsKey(name))
-						DMUtils.availableScience["All"].Add(name, DMscience);
-					DMUtils.DebugLog("New Experiment: [{0}] Available For Contracts", name);
+						DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent, transmit);
+
+						if (((DMScienceType)type & DMScienceType.Surface) == DMScienceType.Surface && !DMUtils.availableScience[DMScienceType.Surface.ToString()].ContainsKey(name))
+							DMUtils.availableScience[DMScienceType.Surface.ToString()].Add(name, DMscience);
+						if (((DMScienceType)type & DMScienceType.Aerial) == DMScienceType.Aerial && !DMUtils.availableScience[DMScienceType.Aerial.ToString()].ContainsKey(name))
+							DMUtils.availableScience[DMScienceType.Aerial.ToString()].Add(name, DMscience);
+						if (((DMScienceType)type & DMScienceType.Space) == DMScienceType.Space && !DMUtils.availableScience[DMScienceType.Space.ToString()].ContainsKey(name))
+							DMUtils.availableScience[DMScienceType.Space.ToString()].Add(name, DMscience);
+						if (((DMScienceType)type & DMScienceType.Biological) == DMScienceType.Biological && !DMUtils.availableScience[DMScienceType.Biological.ToString()].ContainsKey(name))
+							DMUtils.availableScience[DMScienceType.Biological.ToString()].Add(name, DMscience);
+						if (((DMScienceType)type & DMScienceType.Asteroid) == DMScienceType.Asteroid && !DMUtils.availableScience[DMScienceType.Asteroid.ToString()].ContainsKey(name))
+							DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Add(name, DMscience);
+						if (((DMScienceType)type & DMScienceType.Anomaly) == DMScienceType.Anomaly && !DMUtils.availableScience[DMScienceType.Anomaly.ToString()].ContainsKey(name))
+							DMUtils.availableScience[DMScienceType.Anomaly.ToString()].Add(name, DMscience);
+						if (!DMUtils.availableScience["All"].ContainsKey(name))
+							DMUtils.availableScience["All"].Add(name, DMscience);
+						DMUtils.DebugLog("New Experiment: [{0}] Available For Contracts", name);
+					}
 				}
 			}
 			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience["All"].Count);
@@ -150,60 +161,84 @@ namespace DMagic
 			//Load in custom contract descriptions
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_SCIENCE_STORY_DEF"))
 			{
-				foreach (ConfigNode storyNode in node.GetNodes("DM_SCIENCE_BACKSTORY"))
+				if (node != null)
 				{
-					foreach (string st in storyNode.GetValues("generic"))
+					foreach (ConfigNode storyNode in node.GetNodes("DM_SCIENCE_BACKSTORY"))
 					{
-						if (!string.IsNullOrEmpty(st))
+						if (storyNode != null)
 						{
-							string story = st.Replace("[", "{");
-							story = story.Replace("]", "}");
-							DMUtils.backStory["generic"].Add(story);
-						}
-					}
-					foreach (string so in storyNode.GetValues("survey"))
-					{
-						if (!string.IsNullOrEmpty(so))
-						{
-							string story_o = so.Replace("[", "{");
-							story_o = story_o.Replace("]", "}");
-							DMUtils.backStory["survey"].Add(story_o);
-						}
-					}
-					foreach (string sb in storyNode.GetValues("biological"))
-					{
-						if (!string.IsNullOrEmpty(sb))
-						{
-							string story_b = sb.Replace("[", "{");
-							story_b = story_b.Replace("]", "}");
-							DMUtils.backStory["biological"].Add(story_b);
-						}
-					}
-					foreach (string sb in storyNode.GetValues("asteroid"))
-					{
-						if (!string.IsNullOrEmpty(sb))
-						{
-							string story_b = sb.Replace("[", "{");
-							story_b = story_b.Replace("]", "}");
-							DMUtils.backStory["asteroid"].Add(story_b);
-						}
-					}
-					foreach (string sb in storyNode.GetValues("anomaly"))
-					{
-						if (!string.IsNullOrEmpty(sb))
-						{
-							string story_b = sb.Replace("[", "{");
-							story_b = story_b.Replace("]", "}");
-							DMUtils.backStory["anomaly"].Add(story_b);
-						}
-					}
-					foreach (string sb in storyNode.GetValues("magnetic"))
-					{
-						if (!string.IsNullOrEmpty(sb))
-						{
-							string story_b = sb.Replace("[", "{");
-							story_b = story_b.Replace("]", "}");
-							DMUtils.backStory["magnetic"].Add(story_b);
+							if (storyNode.HasValue("generic"))
+							{
+								foreach (string st in storyNode.GetValues("generic"))
+								{
+									if (!string.IsNullOrEmpty(st))
+									{
+										string story = st.Replace("[", "{");
+										story = story.Replace("]", "}");
+										DMUtils.backStory["generic"].Add(story);
+									}
+								}
+							}
+							if (storyNode.HasValue("survey"))
+							{
+								foreach (string so in storyNode.GetValues("survey"))
+								{
+									if (!string.IsNullOrEmpty(so))
+									{
+										string story_o = so.Replace("[", "{");
+										story_o = story_o.Replace("]", "}");
+										DMUtils.backStory["survey"].Add(story_o);
+									}
+								}
+							}
+							if (storyNode.HasValue("biological"))
+							{
+								foreach (string sb in storyNode.GetValues("biological"))
+								{
+									if (!string.IsNullOrEmpty(sb))
+									{
+										string story_b = sb.Replace("[", "{");
+										story_b = story_b.Replace("]", "}");
+										DMUtils.backStory["biological"].Add(story_b);
+									}
+								}
+							}
+							if (storyNode.HasValue("asteroid"))
+							{
+								foreach (string sb in storyNode.GetValues("asteroid"))
+								{
+									if (!string.IsNullOrEmpty(sb))
+									{
+										string story_b = sb.Replace("[", "{");
+										story_b = story_b.Replace("]", "}");
+										DMUtils.backStory["asteroid"].Add(story_b);
+									}
+								}
+							}
+							if (storyNode.HasValue("anomaly"))
+							{
+								foreach (string sb in storyNode.GetValues("anomaly"))
+								{
+									if (!string.IsNullOrEmpty(sb))
+									{
+										string story_b = sb.Replace("[", "{");
+										story_b = story_b.Replace("]", "}");
+										DMUtils.backStory["anomaly"].Add(story_b);
+									}
+								}
+							}
+							if (storyNode.HasValue("magnetic"))
+							{
+								foreach (string sb in storyNode.GetValues("magnetic"))
+								{
+									if (!string.IsNullOrEmpty(sb))
+									{
+										string story_b = sb.Replace("[", "{");
+										story_b = story_b.Replace("]", "}");
+										DMUtils.backStory["magnetic"].Add(story_b);
+									}
+								}
+							}
 						}
 					}
 				}
