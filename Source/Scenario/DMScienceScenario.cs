@@ -31,7 +31,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -84,6 +83,8 @@ namespace DMagic.Scenario
 		{
 			if (!recoveredDMScience.ContainsKey(data.Title))
 				recoveredDMScience.Add(data.Title, data);
+			else
+				UpdateDMScience(data);
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -122,10 +123,12 @@ namespace DMagic.Scenario
 				{
 					if (scienceResults_node != null)
 					{
-						float bsv;
-						float scv;
-						float sci;
-						float cap;
+						float bsv = 1;
+						float scv = 1;
+						float sci = 0;
+						float cap = 1;
+						if (!scienceResults_node.HasValue("title"))
+							continue;
 						string title = scienceResults_node.GetValue("title");
 						if (!float.TryParse(scienceResults_node.GetValue("bsv"), out bsv))
 							bsv = 1;
@@ -172,7 +175,7 @@ namespace DMagic.Scenario
 			addDMScience(DMData);
 		}
 
-		private void UpdateNewScience(DMScienceData DMData)
+		private void UpdateDMScience(DMScienceData DMData)
 		{
 			if (recoveredDMScience.ContainsKey(DMData.Title))
 			{
@@ -186,7 +189,7 @@ namespace DMagic.Scenario
 		{
 			DMData.Science = Math.Min(DMData.Science + science, DMData.Cap);
 			DMData.SciVal = ScienceValue(DMData.Science, DMData.Cap);
-			UpdateNewScience(DMData);
+			UpdateDMScience(DMData);
 			if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
 				updateRemainingData();
 		}
