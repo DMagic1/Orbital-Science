@@ -715,13 +715,15 @@ namespace DMagic
 			{
 				if (!body.atmosphere && DMScience.Exp.requireAtmosphere)
 					return null;
-				if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+				if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh && ((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
 				{
 					if (rand.Next(0, 2) == 0)
 						targetSituation = ExperimentSituations.InSpaceHigh;
 					else
 						targetSituation = ExperimentSituations.InSpaceLow;
 				}
+				else if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+					targetSituation = ExperimentSituations.InSpaceHigh;
 				else
 					targetSituation = ExperimentSituations.InSpaceLow;
 			}
@@ -819,13 +821,15 @@ namespace DMagic
 
 			if (!Body.atmosphere && DMScience.Exp.requireAtmosphere)
 				return null;
-			if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+			if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh && ((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
 			{
 				if (rand.Next(0, 2) == 0)
 					targetSituation = ExperimentSituations.InSpaceHigh;
 				else
 					targetSituation = ExperimentSituations.InSpaceLow;
 			}
+			else if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+				targetSituation = ExperimentSituations.InSpaceHigh;
 			else
 				targetSituation = ExperimentSituations.InSpaceLow;
 
