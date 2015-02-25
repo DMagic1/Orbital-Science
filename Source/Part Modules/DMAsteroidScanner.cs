@@ -822,7 +822,7 @@ namespace DMagic.Part_Modules
 			if (scienceReports.Count > 0)
 			{
 				Inoperable = !IsRerunnable();
-				Deployed = !Inoperable;
+				Deployed = Inoperable;
 				scienceReports.Remove(data);
 			}
 		}
