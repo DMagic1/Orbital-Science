@@ -200,7 +200,7 @@ namespace DMagic.Part_Modules
 					{
 						s = "Receiver Located";
 						targetDistance = (targetModule.part.transform.position - dishBase.position).magnitude;
-						if (targetDistance < 5000 && targetDistance > 2)
+						if (targetDistance < 2000 && targetDistance > 2)
 						{
 							s = "Receiver In Range";
 							receiverInRange = true;
@@ -326,7 +326,7 @@ namespace DMagic.Part_Modules
 			RaycastHit hit = new RaycastHit();
 
 			//Use the terrain collider Raycast layer; this is what is used by asteroids
-			Physics.Raycast(r, out hit, 5000, 1 << 28);
+			Physics.Raycast(r, out hit, 2000, 1 << 28);
 			if (hit.collider != null)
 			{
 				if (hit.collider.attachedRigidbody != null)
