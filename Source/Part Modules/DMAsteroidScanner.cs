@@ -695,11 +695,12 @@ namespace DMagic.Part_Modules
 			}
 
 			DMUtils.OnAsteroidScience.Fire(ast.aClass, exp.id);
-			sub.title = string.Format("{0} through {1:P0} of a {2} asteroid", exp.experimentTitle, multiplier, ast.aType);
+			sub.title = string.Format("{0} through a {2} asteroid", exp.experimentTitle, multiplier, ast.aType);
+			string dataTitle = string.Format("{0} through {1:P0} of a {2} asteroid", exp.experimentTitle, multiplier, ast.aType);
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
 
-			data = new ScienceData(multiplier * exp.baseValue * sub.dataScale, transmitValue, 0f, sub.id, sub.title);
+			data = new ScienceData(multiplier * exp.baseValue * sub.dataScale, transmitValue, 0f, sub.id, dataTitle);
 
 			return data;
 		}
