@@ -45,8 +45,15 @@ namespace DMagic
 		internal static System.Random rand;
 		internal static Dictionary<string, Dictionary<string, DMScienceContainer>> availableScience;
 		internal static Dictionary<string, List<string>> backStory;
-		internal static float science, reward, forward, penalty, deadline = 1f;
-		internal static int maxSurvey, maxAsteroid, maxAnomaly, maxMagnetic = 1;
+		internal static float science = 1f;
+		internal static float reward = 1f;
+		internal static float forward = 1f;
+		internal static float penalty = 1f;
+		internal static float deadline = 1f;
+		internal static int maxSurvey = 1;
+		internal static int maxAsteroid = 1;
+		internal static int maxAnomaly = 1;
+		internal static int maxMagnetic = 1;
 		internal static string version = "v0.84";
 		internal static EventData<CelestialBody, String, String> OnAnomalyScience;
 		internal static EventData<String, String> OnAsteroidScience;
@@ -137,36 +144,36 @@ namespace DMagic
 			return D;
 		}
 
-		internal static void resetContracts()
-		{
-			DMScienceScenario.SciScenario.contractsReload = false;
-			Debug.LogWarning("[DM] Version Change Detected: Reloading DMagic Contracts...");
+		//internal static void resetContracts()
+		//{
+		//	DMScienceScenario.SciScenario.contractsReload = false;
+		//	Debug.LogWarning("[DM] Version Change Detected: Reloading DMagic Contracts...");
 
-			List<Contract> resetList = new List<Contract>();
+		//	List<Contract> resetList = new List<Contract>();
 
-			foreach (Contract c in ContractSystem.Instance.Contracts)
-			{
-				DebugLog("Checking Contract For Reset");
-				Type cType = c.GetType();
+		//	foreach (Contract c in ContractSystem.Instance.Contracts)
+		//	{
+		//		DebugLog("Checking Contract For Reset");
+		//		Type cType = c.GetType();
 
-				if (cType is IDMagicContract)
-				{
-					DebugLog("Reset Contract Of Type: {}", cType);
-					if (c.ContractState == Contract.State.Active)
-					{
-						DebugLog("Cancelling Contract");
-						c.Unregister();
-					}
-					resetList.Add(c);
-				}
-			}
+		//		if (cType is IDMagicContract)
+		//		{
+		//			DebugLog("Reset Contract Of Type: {}", cType);
+		//			if (c.ContractState == Contract.State.Active)
+		//			{
+		//				DebugLog("Cancelling Contract");
+		//				c.Unregister();
+		//			}
+		//			resetList.Add(c);
+		//		}
+		//	}
 
-			foreach (Contract c in resetList)
-			{
-				DebugLog("Removing Contract From List");
-				ContractSystem.Instance.Contracts.Remove(c);
-			}
-		}
+		//	foreach (Contract c in resetList)
+		//	{
+		//		DebugLog("Removing Contract From List");
+		//		ContractSystem.Instance.Contracts.Remove(c);
+		//	}
+		//}
 
 		#region Debug Logging
 
@@ -647,14 +654,14 @@ namespace DMagic
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 			DMUtils.DebugLog("Checking Contract Requirements");
 
-			if (DMScience.exp == null)
+			if (DMScience.Exp == null)
 				return null;
 
 			//Determine if the science part is available if applicable
-			if (DMScience.sciPart != "None")
+			if (DMScience.SciPart != "None")
 			{
-				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.sciPart);
-				aPart = PartLoader.getPartInfoByName(DMScience.sciPart);
+				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
+				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
 				if (aPart == null)
 					return null;
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
@@ -684,10 +691,10 @@ namespace DMagic
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
 			//Determine if the science part is available if applicable
-			if (DMScience.sciPart != "None")
+			if (DMScience.SciPart != "None")
 			{
-				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.sciPart);
-				aPart = PartLoader.getPartInfoByName(DMScience.sciPart);
+				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
+				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
 				if (aPart == null)
 					return null;
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
@@ -701,20 +708,22 @@ namespace DMagic
 				return null;
 
 			//Make sure our experiment is OK
-			if (DMScience.exp == null)
+			if (DMScience.Exp == null)
 				return null;
 
 			if (surveyType == 0)
 			{
-				if (!body.atmosphere && DMScience.exp.requireAtmosphere)
+				if (!body.atmosphere && DMScience.Exp.requireAtmosphere)
 					return null;
-				if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+				if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh && ((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
 				{
 					if (rand.Next(0, 2) == 0)
 						targetSituation = ExperimentSituations.InSpaceHigh;
 					else
 						targetSituation = ExperimentSituations.InSpaceLow;
 				}
+				else if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+					targetSituation = ExperimentSituations.InSpaceHigh;
 				else
 					targetSituation = ExperimentSituations.InSpaceLow;
 			}
@@ -722,11 +731,11 @@ namespace DMagic
 			{
 				if (body.pqsController == null)
 					return null;
-				if (!body.atmosphere && DMScience.exp.requireAtmosphere)
+				if (!body.atmosphere && DMScience.Exp.requireAtmosphere)
 					return null;
-				if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
+				if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
 				{
-					if (DMScience.exp.id != "dmbiodrillscan")
+					if (DMScience.Exp.id != "dmbiodrillscan")
 						targetSituation = ExperimentSituations.SrfLanded;
 					else if (body.atmosphere)
 						targetSituation = ExperimentSituations.SrfLanded;
@@ -750,10 +759,10 @@ namespace DMagic
 
 			DMUtils.DebugLog("Experimental Situation: {0} Selected", targetSituation.ToString());
 
-			if (DMUtils.biomeRelevant(targetSituation, DMScience.bioMask) && targetSituation != ExperimentSituations.SrfSplashed)
+			if (DMUtils.biomeRelevant(targetSituation, DMScience.BioMask) && targetSituation != ExperimentSituations.SrfSplashed)
 			{
 				DMUtils.DebugLog("Checking For Biome Usage");
-				List<string> bList = DMUtils.fetchBiome(body, DMScience.exp, targetSituation);
+				List<string> bList = DMUtils.fetchBiome(body, DMScience.Exp, targetSituation);
 				if (bList.Count == 0)
 				{
 					DMUtils.DebugLog("Planet All Tapped Out; No Remaining Science Here");
@@ -768,7 +777,7 @@ namespace DMagic
 
 			DMUtils.DebugLog("Checking For Remaining Science");
 			//Make sure that our chosen science subject has science remaining to be gathered
-			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.exp.id, body.name, targetSituation, biome.Replace(" ", "")))) != null)
+			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.Exp.id, body.name, targetSituation, biome.Replace(" ", "")))) != null)
 			{
 				if (sub.scientificValue < 0.5f)
 					return null;
@@ -795,10 +804,10 @@ namespace DMagic
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
 			//Determine if the science part is available if applicable
-			if (DMScience.sciPart != "None")
+			if (DMScience.SciPart != "None")
 			{
-				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.sciPart);
-				aPart = PartLoader.getPartInfoByName(DMScience.sciPart);
+				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
+				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
 				if (aPart == null)
 					return null;
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
@@ -807,25 +816,27 @@ namespace DMagic
 			}
 
 			//Make sure our experiment is OK
-			if (DMScience.exp == null)
+			if (DMScience.Exp == null)
 				return null;
 
-			if (!Body.atmosphere && DMScience.exp.requireAtmosphere)
+			if (!Body.atmosphere && DMScience.Exp.requireAtmosphere)
 				return null;
-			if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+			if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh && ((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
 			{
 				if (rand.Next(0, 2) == 0)
 					targetSituation = ExperimentSituations.InSpaceHigh;
 				else
 					targetSituation = ExperimentSituations.InSpaceLow;
 			}
+			else if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh)
+				targetSituation = ExperimentSituations.InSpaceHigh;
 			else
 				targetSituation = ExperimentSituations.InSpaceLow;
 
-			if (DMUtils.biomeRelevant(targetSituation, DMScience.bioMask))
+			if (DMUtils.biomeRelevant(targetSituation, DMScience.BioMask))
 			{
 				DMUtils.DebugLog("Checking For Biome Usage");
-				List<string> bList = DMUtils.fetchBiome(Body, DMScience.exp, targetSituation);
+				List<string> bList = DMUtils.fetchBiome(Body, DMScience.Exp, targetSituation);
 				if (bList.Count == 0)
 				{
 					DMUtils.DebugLog("Planet All Tapped Out; No Remaining Science Here");
@@ -833,7 +844,7 @@ namespace DMagic
 				}
 			}
 
-			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}", DMScience.exp.id, Body.name, targetSituation))) != null)
+			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}", DMScience.Exp.id, Body.name, targetSituation))) != null)
 				if (sub.scientificValue < 0.5f)
 					return null;
 
@@ -851,10 +862,10 @@ namespace DMagic
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
 			//Determine if the science part is available if applicable
-			if (DMScience.sciPart != "None")
+			if (DMScience.SciPart != "None")
 			{
-				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.sciPart);
-				aPart = PartLoader.getPartInfoByName(DMScience.sciPart);
+				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
+				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
 				if (aPart == null)
 					return null;
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
@@ -863,21 +874,21 @@ namespace DMagic
 			}
 
 			//Make sure our experiment is OK
-			if (DMScience.exp == null)
+			if (DMScience.Exp == null)
 				return null;
 
-			if (!DMUtils.biomeRelevant(ExperimentSituations.SrfLanded, DMScience.bioMask))
+			if (!DMUtils.biomeRelevant(ExperimentSituations.SrfLanded, DMScience.BioMask))
 				Biome = "";
 
 			if (Body.pqsController == null)
 				return null;
-			if (!Body.atmosphere && DMScience.exp.requireAtmosphere)
+			if (!Body.atmosphere && DMScience.Exp.requireAtmosphere)
 				return null;
-			if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.SrfLanded) != ExperimentSituations.SrfLanded)
+			if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.SrfLanded) != ExperimentSituations.SrfLanded)
 				return null;
-			if (DMScience.exp.id == "dmbiodrillscan" && !Body.atmosphere)
+			if (DMScience.Exp.id == "dmbiodrillscan" && !Body.atmosphere)
 				return null;
-			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.exp.id, Body.name, ExperimentSituations.SrfLanded, Biome.Replace(" ", "")))) != null)
+			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.Exp.id, Body.name, ExperimentSituations.SrfLanded, Biome.Replace(" ", "")))) != null)
 				if (sub.scientificValue < 0.5f)
 					return null;
 
@@ -921,10 +932,10 @@ namespace DMagic
 			DMUtils.DebugLog("Checking Contract Requirements");
 
 			//Determine if the science part is available if applicable
-			if (DMScience.sciPart != "None")
+			if (DMScience.SciPart != "None")
 			{
-				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.sciPart);
-				aPart = PartLoader.getPartInfoByName(DMScience.sciPart);
+				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
+				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
 				if (aPart == null)
 					return null;
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
@@ -933,11 +944,11 @@ namespace DMagic
 			}
 
 			//Make sure our experiment is OK
-			if (DMScience.exp == null)
+			if (DMScience.Exp == null)
 				return null;
 
 			//Choose an acceptable experimental situation for a given science experiment
-			if ((situations = DMUtils.availableSituations(DMScience.exp, DMScience.sitMask, body)).Count == 0)
+			if ((situations = DMUtils.availableSituations(DMScience.Exp, DMScience.SitMask, body)).Count == 0)
 				return null;
 			else
 			{
@@ -966,10 +977,10 @@ namespace DMagic
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
 			//Determine if the science part is available if applicable
-			if (DMScience.sciPart != "None")
+			if (DMScience.SciPart != "None")
 			{
-				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.sciPart);
-				aPart = PartLoader.getPartInfoByName(DMScience.sciPart);
+				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
+				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
 				if (aPart == null)
 					return null;
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
@@ -977,18 +988,18 @@ namespace DMagic
 				DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
 			}
 
-			if (DMScience.exp == null)
+			if (DMScience.Exp == null)
 				return null;
 
-			if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
-				if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
+			if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
+				if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
 					if (rand.Next(0, 2) == 0)
 						targetSituation = ExperimentSituations.SrfLanded;
 					else
 						targetSituation = ExperimentSituations.InSpaceLow;
 				else
 					targetSituation = ExperimentSituations.InSpaceLow;
-			else if (((ExperimentSituations)DMScience.sitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
+			else if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
 				targetSituation = ExperimentSituations.SrfLanded;
 			else
 				return null;
@@ -1023,7 +1034,7 @@ namespace DMagic
 			else
 				targetSituation = ExperimentSituations.FlyingLow;
 
-			anomName = DMagic.Part_Modules.DMAnomalyScanner.anomalyCleanup(City.name);
+			anomName = DMagic.Part_Modules.DMAnomalyScanner.anomalyCleanup(City.Name);
 
 			subject = string.Format("AnomalyScan@{0}{1}{2}", Body.name, targetSituation, anomName);
 
@@ -1047,14 +1058,14 @@ namespace DMagic
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
-			if (DMScience.exp == null)
+			if (DMScience.Exp == null)
 				return null;
 
 			//Determine if the science part is available if applicable
-			if (DMScience.sciPart != "None")
+			if (DMScience.SciPart != "None")
 			{
-				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.sciPart);
-				aPart = PartLoader.getPartInfoByName(DMScience.sciPart);
+				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
+				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
 				if (aPart == null)
 					return null;
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
@@ -1062,7 +1073,7 @@ namespace DMagic
 				DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
 			}
 
-			if ((situations = DMUtils.availableSituationsLimited(DMScience.exp, DMScience.sitMask, Body)).Count == 0)
+			if ((situations = DMUtils.availableSituationsLimited(DMScience.Exp, DMScience.SitMask, Body)).Count == 0)
 				return null;
 			else
 			{

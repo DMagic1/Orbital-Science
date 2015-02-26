@@ -31,10 +31,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections;
 using System.Linq;
+using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Scenario
 {
 	[KSPScenario(ScenarioCreationOptions.AddToExistingCareerGames | ScenarioCreationOptions.AddToExistingScienceSandboxGames | ScenarioCreationOptions.AddToNewCareerGames | ScenarioCreationOptions.AddToNewScienceSandboxGames, GameScenes.FLIGHT, GameScenes.SPACECENTER, GameScenes.TRACKSTATION, GameScenes.EDITOR)]
 	public class DMScienceScenario : ScenarioModule
@@ -64,67 +64,98 @@ namespace DMagic
 			}
 		}
 
-		[KSPField(isPersistant = true)]
-		public string DMagicVersion = "v0.84";
-		[KSPField(isPersistant = true)]
-		public bool contractsReload = false;
+		//Recovery Watcher Objects
+		private DMTransmissionWatcher tranWatcher;
+		private DMRecoveryWatcher recoveryWatcher;
 
-		internal DMTransmissionWatcher tranWatcher;
-		internal DMRecoveryWatcher recoveryWatcher;
-		internal DMAnomalyList anomalyList;
+		//Anomaly tracking object
+		private DMAnomalyList anomalyList;
 
-		internal List<DMScienceData> recoveredScienceList = new List<DMScienceData>();
+		//Master List for saved asteroid science data
+		private Dictionary<string, DMScienceData> recoveredDMScience = new Dictionary<string,DMScienceData>();
+
+		public Dictionary<string, DMScienceData> RecoveredDMScience
+		{
+			get { return recoveredDMScience; }
+		}
+
+		private void addDMScience (DMScienceData data)
+		{
+			if (!recoveredDMScience.ContainsKey(data.Title))
+				recoveredDMScience.Add(data.Title, data);
+			else
+				UpdateDMScience(data);
+		}
 
 		public override void OnSave(ConfigNode node)
 		{
-			DMUtils.DebugLog("Saving Science Scenario");
 			ConfigNode results_node = new ConfigNode("Asteroid_Science");
-			foreach (DMScienceData data in recoveredScienceList)
+			foreach (DMScienceData data in recoveredDMScience.Values)
 			{
-				ConfigNode scienceResults_node = new ConfigNode("DM_Science");
-				scienceResults_node.AddValue("title", data.title);
-				scienceResults_node.AddValue("bsv", data.basevalue);
-				scienceResults_node.AddValue("scv", data.scival);
-				scienceResults_node.AddValue("sci", data.science);
-				scienceResults_node.AddValue("cap", data.cap);
-				results_node.AddNode(scienceResults_node);
+				if (data != null)
+				{
+					try
+					{
+						ConfigNode scienceResults_node = new ConfigNode("DM_Science");
+						scienceResults_node.AddValue("title", data.Title);
+						scienceResults_node.AddValue("bsv", data.BaseValue);
+						scienceResults_node.AddValue("scv", data.SciVal);
+						scienceResults_node.AddValue("sci", data.Science);
+						scienceResults_node.AddValue("cap", data.Cap);
+						results_node.AddNode(scienceResults_node);
+					}
+					catch (Exception e)
+					{
+						Debug.LogWarning("[DMagic] Error Saving Asteroid Science Data: " + e);
+					}
+				}
 			}
 			node.AddNode(results_node);
 		}
 
 		public override void OnLoad(ConfigNode node)
 		{
-			if (DMagicVersion != DMUtils.version)
-			{
-				DMUtils.DebugLog("[DM] New DMagic Version Detected; Resetting Contracts");
-				DMagicVersion = DMUtils.version;
-				contractsReload = true;
-			}
-			else
-				contractsReload = false;
-
-			DMUtils.DebugLog("Loading Science Scenario");
-			recoveredScienceList.Clear();
+			recoveredDMScience.Clear();
 			ConfigNode results_node = node.GetNode("Asteroid_Science");
 			if (results_node != null)
 			{
 				foreach (ConfigNode scienceResults_node in results_node.GetNodes("DM_Science"))
 				{
-					string title = scienceResults_node.GetValue("title");
-					float bsv = float.Parse(scienceResults_node.GetValue("bsv"));
-					float scv = float.Parse(scienceResults_node.GetValue("scv"));
-					float sci = float.Parse(scienceResults_node.GetValue("sci"));
-					float cap = float.Parse(scienceResults_node.GetValue("cap"));
-					RecordNewScience(title, bsv, scv, sci, cap);
+					if (scienceResults_node != null)
+					{
+						float bsv = 1;
+						float scv = 1;
+						float sci = 0;
+						float cap = 1;
+						if (!scienceResults_node.HasValue("title"))
+							continue;
+						string title = scienceResults_node.GetValue("title");
+						if (!float.TryParse(scienceResults_node.GetValue("bsv"), out bsv))
+							bsv = 1;
+						if (!float.TryParse(scienceResults_node.GetValue("scv"), out scv))
+							scv = 1;
+						if (!float.TryParse(scienceResults_node.GetValue("sci"), out sci))
+							sci = 0;
+						if (!float.TryParse(scienceResults_node.GetValue("cap"), out cap))
+							cap = 1;
+						RecordNewScience(title, bsv, scv, sci, cap);
+					}
 				}
 			}
-			if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
-				recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
-			if (HighLogic.LoadedSceneIsFlight)
+			try
 			{
-				tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
-				anomalyList = gameObject.AddComponent<DMAnomalyList>();
-				updateRemainingData();
+				if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
+					recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
+				if (HighLogic.LoadedSceneIsFlight)
+				{
+					tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
+					anomalyList = gameObject.AddComponent<DMAnomalyList>();
+					updateRemainingData();
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.LogWarning("[DMagic] Error While Initializing Science Recovery Watcher: " + e);
 			}
 		}
 
@@ -138,53 +169,35 @@ namespace DMagic
 				Destroy(recoveryWatcher);
 		}
 
-		internal class DMScienceData
-		{
-			internal string title;
-			internal float scival, science, cap, basevalue;
-
-			internal DMScienceData(string Title, float BaseVal, float Scv, float Sci, float Cap)
-			{
-				title = Title;
-				basevalue = BaseVal;
-				scival = Scv;
-				science = Sci;
-				cap = Cap;
-			}
-		}
-
 		internal void RecordNewScience(string title, float baseval, float scv, float sci, float cap)
 		{
 			DMScienceData DMData = new DMScienceData(title, baseval, scv, sci, cap);
-			recoveredScienceList.Add(DMData);
-			DMUtils.DebugLog("Adding new DMData to list");
+			addDMScience(DMData);
 		}
 
-		private void UpdateNewScience(DMScienceData DMData)
+		private void UpdateDMScience(DMScienceData DMData)
 		{
-			foreach (DMScienceData DMSci in recoveredScienceList)
+			if (recoveredDMScience.ContainsKey(DMData.Title))
 			{
-				if (DMSci.title == DMData.title)
-				{
-					DMSci.science = DMData.science;
-					DMSci.scival = DMData.scival;
-					break;
-				}
+				DMScienceData DMSci = recoveredDMScience[DMData.Title];
+				DMSci.Science = DMData.Science;
+				DMSci.SciVal = DMData.SciVal;
 			}
 		}
 
 		internal void submitDMScience(DMScienceData DMData, float science)
 		{
-			DMData.science = Math.Min(DMData.science + science, DMData.cap);
-			DMData.scival = ScienceValue(DMData.science, DMData.cap);
-			UpdateNewScience(DMData);
+			DMData.Science = Math.Min(DMData.Science + science, DMData.Cap);
+			DMData.SciVal = ScienceValue(DMData.Science, DMData.Cap);
+			UpdateDMScience(DMData);
 			if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
 				updateRemainingData();
 		}
 
-		internal void RemoveDMScience(DMScienceData DMdata)
+		private void RemoveDMScience(DMScienceData DMdata)
 		{
-			recoveredScienceList.Remove(DMdata);
+			if (recoveredDMScience.ContainsKey(DMdata.Title))
+				recoveredDMScience.Remove(DMdata.Title);
 		}
 
 		private float ScienceValue(float sci, float cap)
@@ -197,7 +210,7 @@ namespace DMagic
 			return sciVal;
 		}
 
-		internal void updateRemainingData()
+		private void updateRemainingData()
 		{
 			DMUtils.DebugLog("Updating Existing Data");
 			List<ScienceData> dataList = new List<ScienceData>();
@@ -211,12 +224,13 @@ namespace DMagic
 				{
 					foreach (ScienceData data in dataList)
 					{
-						foreach (DMScienceScenario.DMScienceData DMData in recoveredScienceList)
+						if (recoveredDMScience.ContainsKey(data.title))
 						{
-							if (DMData.title == data.title)
+							DMScienceData DMData = recoveredDMScience[data.title];
+							ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
+							if (sub != null)
 							{
-								ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
-								sub.scientificValue *= DMData.scival;
+								sub.scientificValue *= DMData.SciVal;
 								sub.science = Math.Max(0f, sub.scienceCap - (sub.scienceCap * sub.scientificValue));
 							}
 						}

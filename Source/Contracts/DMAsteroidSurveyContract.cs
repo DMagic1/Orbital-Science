@@ -94,7 +94,7 @@ namespace DMagic
 				{
 					this.AddParameter(DMAP, "collectDMScience");
 					float modifier = ((float)rand.Next(85, 116) / 100f);
-					DMAP.SetScience(DMAP.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
+					DMAP.SetScience(DMAP.Container.Exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
 					DMAP.SetFunds(8000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size) * modifier, 6000f * DMUtils.penalty * (size + 1) * modifier, null);
 					DMAP.SetReputation(15f * DMUtils.reward * (size + 1) * modifier, 10f * DMUtils.penalty * (size + 1) * modifier, null);
 					DMUtils.DebugLog("Asteroid Survey Parameter Added");

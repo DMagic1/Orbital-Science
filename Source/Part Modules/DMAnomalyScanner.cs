@@ -197,42 +197,46 @@ namespace DMagic.Part_Modules
 		{
 			bool anomInRange = false;
 
-			foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
+			foreach (DMAnomalyObject anom in DMAnomalyList.AnomObjects)
 			{
 				DMAnomalyList.updateAnomaly(vessel, anom);
-				if (anom.Vdistance < 50000)
+				if (anom.VDistance < 50000)
 				{
-					if (anom.Vhorizontal < (11000 * (1 - anom.Vheight / 6000)))
+					if (anom.VHorizontal < (11000 * (1 - anom.VHeight / 6000)))
 					{
 						anomInRange = true;
-						if (anom.Vhorizontal < (10000 * (1 - anom.Vheight / 5000)))
+						if (anom.VHorizontal < (10000 * (1 - anom.VHeight / 5000)))
 						{
 							if (!camDeployed)
 							{
 								newSecondaryAnimator(camAnimate, 1f, 0f, WrapMode.Default);
 								camDeployed = true;
-								if (anom.Vdistance < 250)
+								if (anom.VDistance < 250)
 								{
 									newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
 									closeRange = true;
+									break;
 								}
 								else
 								{
 									closeRange = false;
+									break;
 								}
 							}
 							if (camDeployed)
 							{
-								camRotate(anom.worldLocation);
-								if (anom.Vdistance < 250 && closeRange == false)
+								camRotate(anom.WorldLocation);
+								if (anom.VDistance < 250 && closeRange == false)
 								{
 									newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
 									closeRange = true;
+									break;
 								}
-								if (anom.Vdistance >= 275 && closeRange == true)
+								if (anom.VDistance >= 275 && closeRange == true)
 								{
 									animSecondary[foundAnimate].wrapMode = WrapMode.Default;
 									closeRange = false;
+									break;
 								}
 							}
 						}
@@ -253,28 +257,30 @@ namespace DMagic.Part_Modules
 			anomCloseRange = false;
 			anomInRange = false;
 			closestAnom = "";
-			foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
+			foreach (DMAnomalyObject anom in DMAnomalyList.AnomObjects)
 			{
-				if (anom.Vdistance < 100000)
+				DMAnomalyList.updateAnomaly(vessel, anom);
+				if (anom.VDistance < 100000)
 				{
-					if (anom.Vhorizontal < (30000 * (1 - anom.Vheight / 15000)))	//Determine cutoff distance on sliding scale based on altitude above the anomaly.
+					if (anom.VHorizontal < (30000 * (1 - anom.VHeight / 15000)))	//Determine cutoff distance on sliding scale based on altitude above the anomaly.
 					{
 						DMAnomalyList.bearing(vessel, anom);			//Calculate the bearing to the anomaly from the current vessel position.
-						string anomDirection = direction(anom.bearing);			//Get cardinal directions based on the bearing.
+						string anomDirection = direction(anom.Bearing);			//Get cardinal directions based on the bearing.
 						anomInRange = true;
-						DMUtils.Logging("Anomaly: {0} is at bearing: {1:N1} deg at a distance of {2:N1}m.", anom.name, anom.bearing, anom.Vdistance);
-						if (anom.Vdistance < 250)           //Scanning range distance for science experiment.
+						DMUtils.Logging("Anomaly: {0} is at bearing: {1:N1} deg at a distance of {2:N1}m.", anom.Name, anom.Bearing, anom.VDistance);
+						if (anom.VDistance < 250)           //Scanning range distance for science experiment.
 						{
-							closestAnom = anom.name;
+							closestAnom = anom.Name;
 							anomCloseRange = true;
+							break;
 						}
-						else if (anom.Vheight > 10000)				//Use alternate message when more than 10km above the anomaly.
+						else if (anom.VHeight > 10000)				//Use alternate message when more than 10km above the anomaly.
 						{
-							ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km below current position, get closer for a better signal", anom.Vdistance / 1000 + RandomDouble((2 * (anom.Vdistance / 1000) / 30), (4 * (anom.Vdistance / 1000) / 30))), 6f, ScreenMessageStyle.UPPER_CENTER);
+							ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km below current position, get closer for a better signal", anom.VDistance / 1000 + RandomDouble((2 * (anom.VDistance / 1000) / 30), (4 * (anom.VDistance / 1000) / 30))), 6f, ScreenMessageStyle.UPPER_CENTER);
 						}
 						else
 						{
-							ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km away to the {1}, get closer for a better signal.", anom.Vdistance / 1000 + RandomDouble((2 * (anom.Vdistance / 1000) / 30), (4 * (anom.Vdistance / 1000) / 30)), anomDirection), 6f, ScreenMessageStyle.UPPER_CENTER);
+							ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km away to the {1}, get closer for a better signal.", anom.VDistance / 1000 + RandomDouble((2 * (anom.VDistance / 1000) / 30), (4 * (anom.VDistance / 1000) / 30)), anomDirection), 6f, ScreenMessageStyle.UPPER_CENTER);
 						}
 					}
 				}
@@ -316,16 +322,11 @@ namespace DMagic.Part_Modules
 			else
 			{
 				if (!IsDeployed) deployEvent();
-				if (!DMAnomalyList.MagUpdating && !DMAnomalyList.ScannerUpdating)
-				{
-					foreach (DMAnomalyObject anom in DMAnomalyList.anomObjects)
-						DMAnomalyList.updateAnomaly(vessel, anom);
-				}
 				getAnomValues();
 				if (anomInRange)
 				{
 					if (anomCloseRange)
-						runExperiment();
+						runExperiment(getSituationAnom());
 				}
 				else
 					ScreenMessages.PostScreenMessage("No anomalous signals detected.", 4f, ScreenMessageStyle.UPPER_CENTER);
@@ -341,7 +342,13 @@ namespace DMagic.Part_Modules
 		{
 			switch (anomName)
 			{
+				case "UFO":
 				case "KSC":
+				case "Cave":
+				case "Face":
+				case "Pyramids":
+				case "Icehenge":
+				case "Pyramid":
 					return anomName;
 				case "IslandAirfield":
 					return "Island Airfield";
@@ -351,26 +358,14 @@ namespace DMagic.Part_Modules
 					return "Monolith 1";
 				case "Monolith01":
 					return "Monolith 2";
-				case "UFO":
-					return anomName;
-				case "Cave":
-					return anomName;
-				case "Face":
-					return anomName;
 				case "MSL":
 					return "Mast Camera";
-				case "Pyramid":
-					return anomName;
 				case "Monolith02":
 					return "Monolith 3";
-				case "Pyramids":
-					return anomName;
 				case "RockArch01":
 					return "Rock Arch 2";
 				case "ArmstrongMemorial":
 					return "Armstrong Memorial";
-				case "Icehenge":
-					return anomName;
 				case "RockArch00":
 					return "Rock Arch 1";
 				case "DeadKraken":
@@ -391,7 +386,7 @@ namespace DMagic.Part_Modules
 			return "Dummy";
 		}
 
-		protected override ExperimentSituations getSituation()
+		private ExperimentSituations getSituationAnom()
 		{
 			switch (vessel.situation)
 			{
@@ -399,13 +394,8 @@ namespace DMagic.Part_Modules
 				case Vessel.Situations.PRELAUNCH:
 				case Vessel.Situations.SPLASHED:
 					return ExperimentSituations.SrfLanded;
-				case Vessel.Situations.FLYING:
-				case Vessel.Situations.SUB_ORBITAL:
-				case Vessel.Situations.ORBITING:
-				case Vessel.Situations.ESCAPING:
-					return ExperimentSituations.FlyingLow;
 				default:
-					return ExperimentSituations.InSpaceHigh;
+					return ExperimentSituations.FlyingLow;
 			}
 		}
 

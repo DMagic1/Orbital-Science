@@ -33,6 +33,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using DMagic.Scenario;
 
 namespace DMagic.Part_Modules
 {
@@ -141,7 +142,15 @@ namespace DMagic.Part_Modules
 		public static bool conduct(ModuleScienceExperiment MSE)
 		{
 			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)MSE;
-			return DMMod.canConduct();
+			try
+			{
+				return DMMod.canConduct();
+			}
+			catch (Exception e)
+			{
+				Debug.LogWarning("[DM] Error in casting ModuleScienceExperiment to DMModuleScienceAnimate; Invalid Part Module... : " + e);
+				return false;
+			}
 		}
 
 		#endregion
@@ -535,16 +544,16 @@ namespace DMagic.Part_Modules
 								StartCoroutine("WaitForAnimation", waitForAnimationTime);
 							}
 							else
-								runExperiment();
+								runExperiment(getSituation());
 						}
 						else if (resourceExpCost > 0) {
 							resourceOn = true;
 							StartCoroutine("WaitForAnimation", waitForAnimationTime);
 						}
-						else runExperiment();
+						else runExperiment(getSituation());
 					}
 				}
-				else runExperiment();
+				else runExperiment(getSituation());
 			}
 			else
 				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
@@ -557,14 +566,15 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator WaitForAnimation(float waitTime)
 		{
+			ExperimentSituations vesselSit = getSituation();
 			yield return new WaitForSeconds(waitTime);
 			resourceOn = false;
-			runExperiment();
+			runExperiment(vesselSit);
 		}
 
-		protected void runExperiment()
+		protected void runExperiment(ExperimentSituations sit)
 		{
-			ScienceData data = makeScience(scienceBoost);
+			ScienceData data = makeScience(scienceBoost, sit);
 			if (data == null)
 				Debug.LogError("[DM] Something Went Wrong Here; Null Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
 			else
@@ -616,7 +626,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		protected virtual ExperimentSituations getSituation()
+		private ExperimentSituations getSituation()
 		{
 			if (asteroidReports && DMAsteroidScience.asteroidGrappled())
 				return ExperimentSituations.SrfLanded;
@@ -725,9 +735,8 @@ namespace DMagic.Part_Modules
 				return true;
 		}
 
-		private ScienceData makeScience(float boost)
+		private ScienceData makeScience(float boost, ExperimentSituations vesselSituation)
 		{
-			ExperimentSituations vesselSituation = getSituation();
 			string biome = getBiome(vesselSituation);
 			CelestialBody mainBody = vessel.mainBody;
 			bool asteroids = false;
@@ -781,17 +790,14 @@ namespace DMagic.Part_Modules
 
 		private void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub, ExperimentSituations expsit, string s)
 		{
-			DMScienceScenario.DMScienceData DMData = null;
-			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.recoveredScienceList.Count);
-			foreach (DMScienceScenario.DMScienceData DMScience in DMScienceScenario.SciScenario.recoveredScienceList)
+			DMScienceData DMData = null;
+			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.RecoveredDMScience.Count);
+			if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
 			{
-				if (DMScience.title == sub.title)
-				{
+				DMScienceData DMScience = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
 					DMUtils.DebugLog("found matching DM Data");
-					sub.scientificValue *= DMScience.scival;
+					sub.scientificValue *= DMScience.SciVal;
 					DMData = DMScience;
-					break;
-				}
 			}
 			if (DMData == null)
 			{

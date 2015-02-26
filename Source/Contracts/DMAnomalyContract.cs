@@ -111,14 +111,14 @@ namespace DMagic
 
 			//Select random anomaly
 			targetAnomaly = new DMAnomalyObject(cities[rand.Next(0, cities.Count)]);
-			hash = targetAnomaly.name;
-			lon = targetAnomaly.lon;
-			lat = targetAnomaly.lat;
+			hash = targetAnomaly.Name;
+			lon = targetAnomaly.Lon;
+			lat = targetAnomaly.Lat;
 			fudgedLat = fudgeLat(lat);
 			fudgedLon = fudgeLon(lon);
 			cardNS = NSDirection(lat);
 			cardEW = EWDirection(lon);
-			DMUtils.DebugLog("Anomaly [{0}] Selected On {1} at Latitude: {2:N1} and Longitude: {3:N1}", targetAnomaly.name, body.theName, lat, lon);
+			DMUtils.DebugLog("Anomaly [{0}] Selected On {1} at Latitude: {2:N1} and Longitude: {3:N1}", targetAnomaly.Name, body.theName, lat, lon);
 
 			//Assign primary anomaly contract parameter
 			if ((newParam = DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly)) == null)
@@ -154,7 +154,7 @@ namespace DMagic
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), aP.Body) * ((float)rand.Next(85, 116) / 100f);
 					aP.SetFunds(9000f * DMUtils.reward * locationMod, 6000f * DMUtils.penalty * locationMod, body);
 					aP.SetReputation(20f * DMUtils.reward * locationMod, 5f * DMUtils.penalty * locationMod, body);
-					aP.SetScience(aP.Container.exp.baseValue * 2f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
+					aP.SetScience(aP.Container.Exp.baseValue * 2f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
 				}
 			}
 
@@ -262,8 +262,8 @@ namespace DMagic
 				try
 				{
 					targetAnomaly = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash && c.transform.parent.name == body.name));
-					lat = targetAnomaly.lat;
-					lon = targetAnomaly.lon;
+					lat = targetAnomaly.Lat;
+					lon = targetAnomaly.Lon;
 				}
 				catch
 				{

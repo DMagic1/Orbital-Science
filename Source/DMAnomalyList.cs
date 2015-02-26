@@ -31,14 +31,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace DMagic
 {
-	internal class DMAnomalyList : MonoBehaviour
+	public class DMAnomalyList : MonoBehaviour
 	{
-		internal static List<DMAnomalyObject> anomObjects = new List<DMAnomalyObject>();
+		private static List<DMAnomalyObject> anomObjects = new List<DMAnomalyObject>();
 		private static bool scannerUpdating;
 		private static bool magUpdating;
 
@@ -53,16 +52,21 @@ namespace DMagic
 			GameEvents.onVesselSOIChanged.Remove(SOIChange);
 		}
 
-		internal static bool ScannerUpdating
+		public static List<DMAnomalyObject> AnomObjects
 		{
-			get { return scannerUpdating; }
-			set { scannerUpdating = value; }
+			get { return anomObjects; }
 		}
 
-		internal static bool MagUpdating
+		public static bool ScannerUpdating
+		{
+			get { return scannerUpdating; }
+			internal set { scannerUpdating = value; }
+		}
+
+		public static bool MagUpdating
 		{
 			get { return magUpdating; }
-			set { magUpdating = value; }
+			internal set { magUpdating = value; }
 		}
 
 		private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
@@ -86,20 +90,20 @@ namespace DMagic
 		internal static void updateAnomaly(Vessel v, DMAnomalyObject a)
 		{
 			Vector3d vPos = v.transform.position;
-			a.worldLocation = a.city.transform.position;
+			a.WorldLocation = a.City.transform.position;
+
 			//Calculate vectors from CBody position to object positions
-			Vector3d anomBody = v.mainBody.position - a.worldLocation;
+			Vector3d anomBody = v.mainBody.position - a.WorldLocation;
 			Vector3d vesselBody = v.mainBody.position - v.transform.position;
+
 			//Project vessel vector onto anomaly vector
 			Vector3d projectedV = Vector3d.Project(vesselBody, anomBody);
+
 			//Calculate height above or below anomaly by drawing a line between the projected vector and the anomaly vector
 			//Take the magnitude of that line, which equals the height
-			a.Vheight = (projectedV - anomBody).magnitude;
-			a.Vdistance = (a.worldLocation - vPos).magnitude;
-			if (Math.Abs(a.Vheight) <= a.Vdistance)
-				a.Vhorizontal = Math.Sqrt((a.Vdistance * a.Vdistance) - (a.Vheight * a.Vheight));
-			else
-				a.Vhorizontal = double.MaxValue; //This should never happen...
+			a.VHeight = (projectedV - anomBody).magnitude;
+			a.VDistance = (a.WorldLocation - vPos).magnitude;
+			a.VHorizontal = Math.Sqrt((a.VDistance * a.VDistance) - (a.VHeight * a.VHeight));
 			
 		}
 
@@ -107,11 +111,11 @@ namespace DMagic
 		{
 			double vlat = v.latitude;
 			double vlon = v.longitude;
-			double longdiff = (a.lon - vlon) * Mathf.Deg2Rad;
-			double y = Math.Sin(longdiff) * Math.Cos(Mathf.Deg2Rad * a.lat);
-			double x = Math.Cos(Mathf.Deg2Rad * vlat) * Math.Sin(Mathf.Deg2Rad * a.lat) - Math.Sin(Mathf.Deg2Rad * vlat) * Math.Cos(Mathf.Deg2Rad * a.lat) * Math.Cos(longdiff);
+			double longdiff = (a.Lon - vlon) * Mathf.Deg2Rad;
+			double y = Math.Sin(longdiff) * Math.Cos(Mathf.Deg2Rad * a.Lat);
+			double x = Math.Cos(Mathf.Deg2Rad * vlat) * Math.Sin(Mathf.Deg2Rad * a.Lat) - Math.Sin(Mathf.Deg2Rad * vlat) * Math.Cos(Mathf.Deg2Rad * a.Lat) * Math.Cos(longdiff);
 			double aBearing = (Math.Atan2(y, x) * Mathf.Rad2Deg + 360) % 360;
-			a.bearing = aBearing;
+			a.Bearing = aBearing;
 		}
 	}
 }

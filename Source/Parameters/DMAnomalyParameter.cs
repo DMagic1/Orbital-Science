@@ -58,9 +58,9 @@ namespace DMagic
 			name = Name;
 			city = City;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.sciPart;
-			subject = string.Format("{0}@{1}{2}", scienceContainer.exp.id, body.name, situation);
-			hash = city.name;
+			partName = scienceContainer.SciPart;
+			subject = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, body.name, situation);
+			hash = city.Name;
 		}
 
 		/// <summary>
@@ -124,9 +124,9 @@ namespace DMagic
 		protected override string GetTitle()
 		{
 			if (situation == ExperimentSituations.SrfLanded)
-				return string.Format("{0} data from the surface near the anomalous signal", scienceContainer.exp.experimentTitle, body.theName);
+				return string.Format("{0} data from the surface near the anomalous signal", scienceContainer.Exp.experimentTitle, body.theName);
 			else if (situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingLow)
-				return string.Format("{0} data from above near the anomalous signal", scienceContainer.exp.experimentTitle, body.theName);
+				return string.Format("{0} data from above near the anomalous signal", scienceContainer.Exp.experimentTitle, body.theName);
 			else
 				return "Fix Your Stupid Code Idiot";
 		}
@@ -175,7 +175,7 @@ namespace DMagic
 				return;
 			}
 			else
-				partName = scienceContainer.sciPart;
+				partName = scienceContainer.SciPart;
 			if (int.TryParse(anomalyString[3], out sitID))
 				situation = (ExperimentSituations)sitID;
 			else
@@ -204,28 +204,28 @@ namespace DMagic
 					return;
 				}
 			}
-			subject = string.Format("{0}@{1}{2}", scienceContainer.exp.id, body.name, situation);
+			subject = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, body.name, situation);
 		}
 
 		private void monitorAnomScience(CelestialBody B, string s, string name)
 		{
 			if (FlightGlobals.currentMainBody == B)
 			{
-				if (s == scienceContainer.exp.id)
+				if (s == scienceContainer.Exp.id)
 				{
 					DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
-					DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.Vdistance, city.Vheight, city.Vhorizontal);
+					DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.VDistance, city.VHeight, city.VHorizontal);
 
 					//Draw a cone above the anomaly position up to 100km with a diameter of 60km at its widest
-					if (city.Vdistance < 100000)
+					if (city.VDistance < 100000)
 					{
 						if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
 						{
-							if (city.Vheight > 625 && city.Vheight < 100000)
+							if (city.VHeight > 625 && city.VHeight < 100000)
 							{
-								double vHeight = city.Vheight;
+								double vHeight = city.VHeight;
 								if (vHeight > 50000) vHeight = 50000;
-								if (city.Vhorizontal < (60000 * (city.Vheight / 50000)))
+								if (city.VHorizontal < (60000 * (city.VHeight / 50000)))
 								{
 									ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
@@ -233,9 +233,9 @@ namespace DMagic
 								else
 									ScreenMessages.PostScreenMessage("Anomalous signal too weak, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
-							else if (city.Vheight < 625)
+							else if (city.VHeight < 625)
 							{
-								if (city.Vhorizontal < 750)
+								if (city.VHorizontal < 750)
 								{
 									ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
@@ -246,7 +246,7 @@ namespace DMagic
 						}
 						else if (situation == ExperimentSituations.SrfLanded)
 						{
-							if (city.Vhorizontal < 500)
+							if (city.VHorizontal < 500)
 							{
 								ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 								collected = true;

@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contracts\DMAnomalyContract.cs" />
+    <Compile Include="Part Modules\DMAsteroidScanner.cs" />
     <Compile Include="Part Modules\DMRoverGooMat.cs" />
     <Compile Include="Part Modules\DMSoilMoisture.cs" />
     <Compile Include="Parameters\DMAnomalyParameter.cs" />
@@ -82,6 +83,7 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scenario\DMRecoveryWatcher.cs" />
+    <Compile Include="Scenario\DMScienceData.cs" />
     <Compile Include="Scenario\DMScienceScenario.cs" />
     <Compile Include="Scenario\DMTransmissionWatcher.cs" />
   </ItemGroup>

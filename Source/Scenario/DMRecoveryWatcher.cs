@@ -30,11 +30,9 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Scenario
 {
 	internal class DMRecoveryWatcher : MonoBehaviour
 	{
@@ -57,17 +55,14 @@ namespace DMagic
 			{
 				float DMScience = sci;
 				DMUtils.DebugLog("Science Data Recovered For {0} Science", sci);
-				foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
+				if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
 				{
-					if (DMData.title == sub.title)
-					{
-						float oldSciVal = 0f;
-						if (sub.scienceCap != 0)
-							oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
-						DMScience = sub.subjectValue * DMData.basevalue * DMData.scival * oldSciVal;
-						DMScienceScenario.SciScenario.submitDMScience(DMData, DMScience);
-						break;
-					}
+					DMScienceData DMData = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
+					float oldSciVal = 0f;
+					if (sub.scienceCap != 0)
+						oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
+					DMScience = sub.subjectValue * DMData.BaseValue * DMData.SciVal * oldSciVal;
+					DMScienceScenario.SciScenario.submitDMScience(DMData, DMScience);
 				}
 				if (DMScience != sci)
 				{
