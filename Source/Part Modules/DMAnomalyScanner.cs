@@ -29,6 +29,7 @@
  */
 #endregion
 
+using DMagic.Scenario;
 using System.Collections;
 using UnityEngine;
 
@@ -71,7 +72,7 @@ namespace DMagic.Part_Modules
 			base.OnUpdate();
 			if (IsDeployed)
 			{
-				DMAnomalyList.ScannerUpdating = true;
+				DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
 				inRange();
 				if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
 				{
@@ -79,13 +80,13 @@ namespace DMagic.Part_Modules
 					part.RequestResource(resourceExperiment, cost);
 				}
 			}
-			else if (DMAnomalyList.ScannerUpdating)
-				DMAnomalyList.ScannerUpdating = false;
+			else if (DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
+				DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
 		}
 
 		new private void OnDestroy()
 		{
-			DMAnomalyList.ScannerUpdating = false;
+			DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
 		}
 
 		#region animators
@@ -197,7 +198,7 @@ namespace DMagic.Part_Modules
 		{
 			bool anomInRange = false;
 
-			foreach (DMAnomalyObject anom in DMAnomalyList.AnomObjects)
+			foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects(vessel.mainBody))
 			{
 				DMAnomalyList.updateAnomaly(vessel, anom);
 				if (anom.VDistance < 50000)
@@ -257,7 +258,7 @@ namespace DMagic.Part_Modules
 			anomCloseRange = false;
 			anomInRange = false;
 			closestAnom = "";
-			foreach (DMAnomalyObject anom in DMAnomalyList.AnomObjects)
+			foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects(vessel.mainBody))
 			{
 				DMAnomalyList.updateAnomaly(vessel, anom);
 				if (anom.VDistance < 100000)
