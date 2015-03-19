@@ -31,20 +31,21 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DMagic
 {
 	public class DMAnomalyList : MonoBehaviour
 	{
-		private static List<DMAnomalyObject> anomObjects = new List<DMAnomalyObject>();
-		private static bool scannerUpdating;
-		private static bool magUpdating;
+		private Dictionary<string, Dictionary<string, DMAnomalyObject>> anomalies = new Dictionary<string, Dictionary<string, DMAnomalyObject>>();
+		private bool scannerUpdating;
+		private bool magUpdating;
+		private bool loaded = false;
 
 		private void Start()
 		{
 			GameEvents.onVesselSOIChanged.Add(SOIChange);
-			pqsBuild(FlightGlobals.currentMainBody);
 		}
 
 		private void OnDestroy()
@@ -52,18 +53,30 @@ namespace DMagic
 			GameEvents.onVesselSOIChanged.Remove(SOIChange);
 		}
 
-		public static List<DMAnomalyObject> AnomObjects
+		private void Update()
 		{
-			get { return anomObjects; }
+			if (HighLogic.LoadedSceneIsFlight && !loaded)
+			{
+				pqsBuild();
+				loaded = true;
+			}
 		}
 
-		public static bool ScannerUpdating
+		public List<DMAnomalyObject> anomObjects(CelestialBody b)
+		{
+			if (anomalies.ContainsKey(b.name))
+				return anomalies[b.name].Values.ToList();
+			else
+				return new List<DMAnomalyObject>();
+		}
+
+		public bool ScannerUpdating
 		{
 			get { return scannerUpdating; }
 			internal set { scannerUpdating = value; }
 		}
 
-		public static bool MagUpdating
+		public bool MagUpdating
 		{
 			get { return magUpdating; }
 			internal set { magUpdating = value; }
@@ -71,19 +84,37 @@ namespace DMagic
 
 		private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
 		{
-			pqsBuild(VB.to);
+			updateCoordinates(VB.to);
 		}
 
-		private void pqsBuild(CelestialBody body)
+		private void updateCoordinates(CelestialBody b)
 		{
-			scannerUpdating = false;
-			magUpdating = false;
-			anomObjects.Clear();
+			if (anomalies.ContainsKey(b.name))
+			{
+				foreach (var anom in anomalies[b.name].Values)
+				{
+					anom.WorldLocation = anom.City.transform.position;
+					anom.Lat = b.GetLatitude(anom.WorldLocation);
+					anom.Lon = b.GetLongitude(anom.WorldLocation);
+				}
+			}
+		}
+
+		private void pqsBuild()
+		{
 			PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
 			foreach (PQSCity anomalyObject in Cities)
 			{
-				if (anomalyObject.transform.parent.name == FlightGlobals.currentMainBody.name)
-					anomObjects.Add(new DMAnomalyObject(anomalyObject));
+				if (!anomalies.ContainsKey(anomalyObject.transform.parent.name))
+				{
+					Dictionary<string, DMAnomalyObject> anomDict = new Dictionary<string, DMAnomalyObject>();
+					anomDict.Add(anomalyObject.name, new DMAnomalyObject(anomalyObject));
+					anomalies.Add(anomalyObject.transform.parent.name, anomDict);
+				}
+				else if (!anomalies[anomalyObject.transform.parent.name].ContainsKey(anomalyObject.name))
+				{
+					anomalies[anomalyObject.transform.parent.name].Add(anomalyObject.name, new DMAnomalyObject(anomalyObject));
+				}
 			}
 		}
 
