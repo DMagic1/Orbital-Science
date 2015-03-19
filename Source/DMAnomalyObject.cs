@@ -95,11 +95,19 @@ namespace DMagic
 		public double Lat
 		{
 			get { return lat; }
+			internal set
+			{
+				lat = clampLat(value);
+			}
 		}
 
 		public double Lon
 		{
 			get { return lon; }
+			internal set
+			{
+				lon = clampLon(value);
+			}
 		}
 
 		public double Alt
