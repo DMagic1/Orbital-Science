@@ -59,15 +59,24 @@ namespace DMagic
 					if (setNode.GetValue("name") == "Contract Settings")
 					{
 
-						float.TryParse(setNode.GetValue("Global_Science_Return"), out DMUtils.science);
-						float.TryParse(setNode.GetValue("Global_Fund_Reward"), out DMUtils.reward);
-						float.TryParse(setNode.GetValue("Global_Fund_Forward"), out DMUtils.forward);
-						float.TryParse(setNode.GetValue("Global_Fund_Penalty"), out DMUtils.penalty);
-						float.TryParse(setNode.GetValue("Global_Deadline"), out DMUtils.deadline);
-						int.TryParse(setNode.GetValue("Max_Survey"), out DMUtils.maxSurvey);
-						int.TryParse(setNode.GetValue("Max_Asteroid"), out DMUtils.maxAsteroid);
-						int.TryParse(setNode.GetValue("Max_Anomaly"), out DMUtils.maxAnomaly);
-						int.TryParse(setNode.GetValue("Max_Magnetic"), out DMUtils.maxMagnetic);
+						if (!float.TryParse(setNode.GetValue("Global_Science_Return"), out DMUtils.science))
+							DMUtils.science = 1;
+						if (!float.TryParse(setNode.GetValue("Global_Fund_Reward"), out DMUtils.reward))
+							DMUtils.reward = 1;
+						if (!float.TryParse(setNode.GetValue("Global_Fund_Forward"), out DMUtils.forward))
+							DMUtils.forward = 1;
+						if (!float.TryParse(setNode.GetValue("Global_Fund_Penalty"), out DMUtils.penalty))
+							DMUtils.penalty = 1;
+						if (!float.TryParse(setNode.GetValue("Global_Deadline"), out DMUtils.deadline))
+							DMUtils.deadline = 1;
+						if (!int.TryParse(setNode.GetValue("Max_Survey"), out DMUtils.maxSurvey))
+							DMUtils.maxSurvey = 2;
+						if (!int.TryParse(setNode.GetValue("Max_Asteroid"), out DMUtils.maxAsteroid))
+							DMUtils.maxAsteroid = 1;
+						if (!int.TryParse(setNode.GetValue("Max_Anomaly"), out DMUtils.maxAnomaly))
+							DMUtils.maxAnomaly = 1;
+						if (!int.TryParse(setNode.GetValue("Max_Magnetic"), out DMUtils.maxMagnetic))
+							DMUtils.maxMagnetic = 2;
 
 						DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3} ; Deadline Length: {4}",
 							DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty, DMUtils.deadline);
