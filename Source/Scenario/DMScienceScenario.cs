@@ -69,14 +69,24 @@ namespace DMagic.Scenario
 		private DMRecoveryWatcher recoveryWatcher;
 
 		//Anomaly tracking object
-		private DMAnomalyList anomalyList;
+		internal DMAnomalyList anomalyList;
 
 		//Master List for saved asteroid science data
 		private Dictionary<string, DMScienceData> recoveredDMScience = new Dictionary<string,DMScienceData>();
 
-		public Dictionary<string, DMScienceData> RecoveredDMScience
+		public DMScienceData getDMScience(string title)
 		{
-			get { return recoveredDMScience; }
+			if (recoveredDMScience.ContainsKey(title))
+				return recoveredDMScience[title];
+			else
+				DMUtils.Logging("Could not find DMScience of title [{0}]", title);
+
+			return null;
+		}
+
+		public int RecoveredDMScienceCount
+		{
+			get { return recoveredDMScience.Count; }
 		}
 
 		private void addDMScience (DMScienceData data)
