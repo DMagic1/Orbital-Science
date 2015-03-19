@@ -50,10 +50,10 @@ namespace DMagic
 		internal static float forward = 1f;
 		internal static float penalty = 1f;
 		internal static float deadline = 1f;
-		internal static int maxSurvey = 1;
+		internal static int maxSurvey = 2;
 		internal static int maxAsteroid = 1;
 		internal static int maxAnomaly = 1;
-		internal static int maxMagnetic = 1;
+		internal static int maxMagnetic = 2;
 		internal static string version = "v0.84";
 		internal static EventData<CelestialBody, String, String> OnAnomalyScience;
 		internal static EventData<String, String> OnAsteroidScience;
