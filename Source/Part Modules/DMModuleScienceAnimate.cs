@@ -791,14 +791,16 @@ namespace DMagic.Part_Modules
 		private void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub, ExperimentSituations expsit, string s)
 		{
 			DMScienceData DMData = null;
-			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.RecoveredDMScience.Count);
-			if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
+			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.RecoveredDMScienceCount);
+
+			DMScienceData DMScience = DMScienceScenario.SciScenario.getDMScience(sub.title);
+			if (DMScience != null)
 			{
-				DMScienceData DMScience = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
-					DMUtils.DebugLog("found matching DM Data");
-					sub.scientificValue *= DMScience.SciVal;
-					DMData = DMScience;
+				DMUtils.DebugLog("found matching DM Data");
+				sub.scientificValue *= DMScience.SciVal;
+				DMData = DMScience;
 			}
+
 			if (DMData == null)
 			{
 				float astSciCap = exp.scienceCap * 40f;

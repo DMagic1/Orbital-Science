@@ -52,9 +52,9 @@ namespace DMagic.Scenario
 		private void scienceReceived(float sci, ScienceSubject sub)
 		{
 			DMUtils.DebugLog("Science Data Transmitted For {0} Science", sci);
-			if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
+			DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);
+			if (DMData != null)
 			{
-				DMScienceData DMData = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
 				DMScienceScenario.SciScenario.submitDMScience(DMData, sci);
 			}
 		}

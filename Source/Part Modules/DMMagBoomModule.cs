@@ -29,6 +29,7 @@
  */
 #endregion
 
+using DMagic.Scenario;
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
@@ -284,10 +285,10 @@ namespace DMagic.Part_Modules
 
 					//Anomaly Detection
 					Cities.Clear();
-					if (!DMAnomalyList.ScannerUpdating)
+					if (!DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
 					{
-						DMAnomalyList.MagUpdating = true;
-						foreach (DMAnomalyObject anom in DMAnomalyList.AnomObjects)
+						DMScienceScenario.SciScenario.anomalyList.MagUpdating = true;
+						foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects(vessel.mainBody))
 						{
 							DMAnomalyList.updateAnomaly(vessel, anom);
 							if (anom.VDistance < 100000)
@@ -296,8 +297,8 @@ namespace DMagic.Part_Modules
 					}
 					else
 					{
-						DMAnomalyList.MagUpdating = false;
-						foreach (DMAnomalyObject anom in DMAnomalyList.AnomObjects)
+						DMScienceScenario.SciScenario.anomalyList.MagUpdating = false;
+						foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects(vessel.mainBody))
 						{
 							if (anom.VDistance < 100000)
 								Cities.Add(anom);
@@ -400,8 +401,8 @@ namespace DMagic.Part_Modules
 					//Fields["lons"].guiActive = primaryModule.IsDeployed;
 					//Fields["Bhold"].guiActive = primaryModule.IsDeployed;
 				}
-				else if (DMAnomalyList.MagUpdating)
-					DMAnomalyList.MagUpdating = false;
+				else if (DMScienceScenario.SciScenario.anomalyList.MagUpdating)
+					DMScienceScenario.SciScenario.anomalyList.MagUpdating = false;
 				else
 				{
 					Fields["Bt"].guiActive = false;

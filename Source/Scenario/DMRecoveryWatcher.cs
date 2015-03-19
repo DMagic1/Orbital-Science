@@ -55,9 +55,10 @@ namespace DMagic.Scenario
 			{
 				float DMScience = sci;
 				DMUtils.DebugLog("Science Data Recovered For {0} Science", sci);
-				if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
+
+				DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);
+				if (DMData != null)
 				{
-					DMScienceData DMData = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
 					float oldSciVal = 0f;
 					if (sub.scienceCap != 0)
 						oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));

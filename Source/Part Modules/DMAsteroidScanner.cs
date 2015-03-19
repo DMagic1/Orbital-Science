@@ -708,12 +708,13 @@ namespace DMagic.Part_Modules
 		private void registerDMScience(DMAsteroidScience newAst, ScienceSubject sub)
 		{
 			DMScienceData DMData = null;
-			if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
+			DMScienceData DMScience = DMScienceScenario.SciScenario.getDMScience(sub.title);
+			if (DMScience != null)
 			{
-				DMScienceData DMScience = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
 				sub.scientificValue *= DMScience.SciVal;
 				DMData = DMScience;
 			}
+
 			if (DMData == null)
 			{
 				float astSciCap = exp.scienceCap * 40f;
