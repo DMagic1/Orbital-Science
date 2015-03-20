@@ -36,10 +36,11 @@ using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
+using DMagic.Parameters;
 
-namespace DMagic
+namespace DMagic.Contracts
 {
-	public class DMAnomalyContract: Contract, IDMagicContract
+	public class DMAnomalyContract: Contract
 	{
 		private DMCollectScience newParam;
 		private DMScienceContainer DMScience;
@@ -242,9 +243,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			int targetBodyID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];

@@ -35,8 +35,10 @@ using System.Linq;
 using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
+using DMagic.Scenario;
+using DMagic.Contracts;
 
-namespace DMagic
+namespace DMagic.Parameters
 {
 	public class DMAnomalyParameter: ContractParameter
 	{
@@ -74,46 +76,34 @@ namespace DMagic
 			return aP.partName;
 		}
 
-		internal DMAnomalyObject City
+		public DMAnomalyObject City
 		{
-			get
-			{
-				if (city != null)
-					return city;
-				else
-					return null;
-			}
-			private set { }
+			get { return city; }
 		}
 
-		internal CelestialBody Body
+		public CelestialBody Body
 		{
 			get { return body; }
-			private set { }
 		}
 
-		internal ExperimentSituations Situation
+		public ExperimentSituations Situation
 		{
 			get { return situation; }
-			private set { }
 		}
 
-		internal string Name
+		public string Name
 		{
 			get { return name; }
-			private set { }
 		}
 
-		internal string Subject
+		public string Subject
 		{
 			get { return subject; }
-			private set { }
 		}
 
-		internal DMScienceContainer Container
+		public DMScienceContainer Container
 		{
 			get { return scienceContainer; }
-			private set { }
 		}
 
 		protected override string GetHashString()
@@ -150,9 +140,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			int bodyID, sitID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];
@@ -192,11 +179,8 @@ namespace DMagic
 			}
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				try
-				{
-					city = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash && c.transform.parent.name == body.name));
-				}
-				catch
+				city = DMScienceScenario.SciScenario.anomalyList.getAnomalyObject(body.name, hash);
+				if (city == null)
 				{
 					DMUtils.Logging("Failed To Load Anomaly Contract Object; Parameter Removed");
 					this.Unregister();

@@ -35,8 +35,9 @@ using System.Linq;
 using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
+using DMagic.Contracts;
 
-namespace DMagic
+namespace DMagic.Parameters
 {
 	class DMLongOrbitParameter: ContractParameter
 	{
@@ -54,22 +55,19 @@ namespace DMagic
 			timeNeeded = Time;
 		}
 
-		internal CelestialBody Body
+		public CelestialBody Body
 		{
 			get { return body; }
-			private set { }
 		}
 
-		internal double TimeNeeded
+		public double TimeNeeded
 		{
 			get { return timeNeeded; }
-			private set { }
 		}
 
-		internal double OrbitTime
+		public double OrbitTime
 		{
 			get { return orbitTime; }
-			private set { }
 		}
 
 		protected override string GetHashString()
@@ -94,9 +92,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			int target;
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
 			if (int.TryParse(orbitString[0], out target))

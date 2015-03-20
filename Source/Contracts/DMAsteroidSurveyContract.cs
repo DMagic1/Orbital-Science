@@ -36,12 +36,13 @@ using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
+using DMagic.Parameters;
 
-namespace DMagic
+namespace DMagic.Contracts
 {
-	public class DMAsteroidSurveyContract: Contract, IDMagicContract
+	public class DMAsteroidSurveyContract: Contract
 	{
-		internal DMAsteroidParameter[] newParams = new DMAsteroidParameter[4];
+		private DMAsteroidParameter[] newParams = new DMAsteroidParameter[4];
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
 		private string hash;
@@ -158,9 +159,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			hash = node.GetValue("Asteroid_Size_Class");
 			if (this.ParameterCount == 0)
 			{

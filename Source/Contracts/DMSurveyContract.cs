@@ -36,12 +36,13 @@ using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
+using DMagic.Parameters;
 
-namespace DMagic
+namespace DMagic.Contracts
 {
-	public class DMSurveyContract: Contract, IDMagicContract
+	public class DMSurveyContract: Contract
 	{
-		internal DMCollectScience[] newParams = new DMCollectScience[8];
+		private DMCollectScience[] newParams = new DMCollectScience[8];
 		private CelestialBody body;
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
@@ -301,9 +302,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			int target;
 			if (int.TryParse(node.GetValue("Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];
