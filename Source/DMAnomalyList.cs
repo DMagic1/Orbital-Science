@@ -55,7 +55,7 @@ namespace DMagic
 
 		private void Update()
 		{
-			if (HighLogic.LoadedSceneIsFlight && !loaded)
+			if ((HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION) && !loaded)
 			{
 				pqsBuild();
 				loaded = true;
@@ -68,6 +68,21 @@ namespace DMagic
 				return anomalies[b.name].Values.ToList();
 			else
 				return new List<DMAnomalyObject>();
+		}
+
+		public DMAnomalyObject getAnomalyObject(string body, string city)
+		{
+			if (anomalies.ContainsKey(body))
+			{
+				if (anomalies[body].ContainsKey(city))
+					return anomalies[body][city];
+				else
+					DMUtils.Logging("No anomaly of name [{0}] found for body [{1}]", city, body);
+			}
+			else
+				DMUtils.Logging("No anomalies found for body [{0}]", body);
+
+			return null;
 		}
 
 		public bool ScannerUpdating
