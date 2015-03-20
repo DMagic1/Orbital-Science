@@ -39,7 +39,8 @@ namespace DMagic.Scenario
 	[KSPScenario(ScenarioCreationOptions.AddToExistingCareerGames | ScenarioCreationOptions.AddToExistingScienceSandboxGames | ScenarioCreationOptions.AddToNewCareerGames | ScenarioCreationOptions.AddToNewScienceSandboxGames, GameScenes.FLIGHT, GameScenes.SPACECENTER, GameScenes.TRACKSTATION, GameScenes.EDITOR)]
 	public class DMScienceScenario : ScenarioModule
 	{
-		internal static DMScienceScenario SciScenario
+
+		public static DMScienceScenario SciScenario
 		{
 			get
 			{
