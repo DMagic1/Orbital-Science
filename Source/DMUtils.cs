@@ -34,6 +34,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Contracts;
+using DMagic.Contracts;
+using DMagic.Parameters;
 
 namespace DMagic
 {
@@ -54,7 +56,7 @@ namespace DMagic
 		internal static int maxAsteroid = 1;
 		internal static int maxAnomaly = 1;
 		internal static int maxMagnetic = 2;
-		internal static string version = "v0.84";
+		internal static string version = "v0.9.2";
 		internal static EventData<CelestialBody, String, String> OnAnomalyScience;
 		internal static EventData<String, String> OnAsteroidScience;
 		internal static bool whiteListed = false;
@@ -143,37 +145,6 @@ namespace DMagic
 				D /= KSPUtil.EarthDay;
 			return D;
 		}
-
-		//internal static void resetContracts()
-		//{
-		//	DMScienceScenario.SciScenario.contractsReload = false;
-		//	Debug.LogWarning("[DM] Version Change Detected: Reloading DMagic Contracts...");
-
-		//	List<Contract> resetList = new List<Contract>();
-
-		//	foreach (Contract c in ContractSystem.Instance.Contracts)
-		//	{
-		//		DebugLog("Checking Contract For Reset");
-		//		Type cType = c.GetType();
-
-		//		if (cType is IDMagicContract)
-		//		{
-		//			DebugLog("Reset Contract Of Type: {}", cType);
-		//			if (c.ContractState == Contract.State.Active)
-		//			{
-		//				DebugLog("Cancelling Contract");
-		//				c.Unregister();
-		//			}
-		//			resetList.Add(c);
-		//		}
-		//	}
-
-		//	foreach (Contract c in resetList)
-		//	{
-		//		DebugLog("Removing Contract From List");
-		//		ContractSystem.Instance.Contracts.Remove(c);
-		//	}
-		//}
 
 		#region Debug Logging
 
