@@ -46,7 +46,7 @@ namespace DMagic.Part_Modules
 		{
 			if (base.canConduct())
 			{
-				if (drillImpact(asteroidReports && DMAsteroidScience.asteroidGrappled()))
+				if (drillImpact(asteroidReports && DMAsteroidScience.AsteroidGrappled))
 					return true;
 				failMessage = "The drill cannot impact the surface from this distance";
 			}

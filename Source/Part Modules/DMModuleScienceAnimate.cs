@@ -628,9 +628,9 @@ namespace DMagic.Part_Modules
 
 		private ExperimentSituations getSituation()
 		{
-			if (asteroidReports && DMAsteroidScience.asteroidGrappled())
+			if (asteroidReports && DMAsteroidScience.AsteroidGrappled)
 				return ExperimentSituations.SrfLanded;
-			if (asteroidReports && DMAsteroidScience.asteroidNear())
+			if (asteroidReports && DMAsteroidScience.AsteroidNear)
 				return ExperimentSituations.InSpaceLow;
 			switch (vessel.situation) {
 				case Vessel.Situations.LANDED:
@@ -742,12 +742,12 @@ namespace DMagic.Part_Modules
 			bool asteroids = false;
 
 			//Check for asteroids and alter the biome and celestialbody values as necessary
-			if (asteroidReports && (DMAsteroidScience.asteroidGrappled() || DMAsteroidScience.asteroidNear()))
+			if (asteroidReports && (DMAsteroidScience.AsteroidGrappled || DMAsteroidScience.AsteroidNear))
 			{
 				newAsteroid = new DMAsteroidScience();
 				asteroids = true;
-				mainBody = newAsteroid.body;
-				biome = newAsteroid.aType + newAsteroid.aSeed.ToString();
+				mainBody = newAsteroid.Body;
+				biome = newAsteroid.AType + newAsteroid.ASeed.ToString();
 			}
 
 			ScienceData data = null;
@@ -770,8 +770,8 @@ namespace DMagic.Part_Modules
 
 			if (asteroids)
 			{
-				DMUtils.OnAsteroidScience.Fire(newAsteroid.aClass, experimentID);
-				sub.title = exp.experimentTitle + astCleanup(vesselSituation, newAsteroid.aType);
+				DMUtils.OnAsteroidScience.Fire(newAsteroid.AClass, experimentID);
+				sub.title = exp.experimentTitle + astCleanup(vesselSituation, newAsteroid.AType);
 				registerDMScience(newAsteroid, exp, sub, vesselSituation, biome);
 				mainBody.bodyName = bodyNameFixed;
 			}
@@ -807,7 +807,7 @@ namespace DMagic.Part_Modules
 				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, 1f, 0f, astSciCap);
 				sub.scientificValue= 1f;
 			}
-			sub.subjectValue = newAst.sciMult;
+			sub.subjectValue = newAst.SciMult;
 			sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
 		}

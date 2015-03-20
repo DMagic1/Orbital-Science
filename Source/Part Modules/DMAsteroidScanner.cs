@@ -676,9 +676,9 @@ namespace DMagic.Part_Modules
 			float multiplier = 1f;
 
 			ast = new DMAsteroidScience(m);
-			body = ast.body;
-			biome = ast.aType + ast.aSeed;
-			multiplier = Math.Min(1f, dist / astWidth[aClassInt(ast.aClass)]);
+			body = ast.Body;
+			biome = ast.AType + ast.ASeed;
+			multiplier = Math.Min(1f, dist / astWidth[aClassInt(ast.AClass)]);
 
 			if (exp == null)
 			{
@@ -694,9 +694,9 @@ namespace DMagic.Part_Modules
 				return null;
 			}
 
-			DMUtils.OnAsteroidScience.Fire(ast.aClass, exp.id);
-			sub.title = string.Format("{0} through a {2} asteroid", exp.experimentTitle, multiplier, ast.aType);
-			string dataTitle = string.Format("{0} through {1:P0} of a {2} asteroid", exp.experimentTitle, multiplier, ast.aType);
+			DMUtils.OnAsteroidScience.Fire(ast.AClass, exp.id);
+			sub.title = string.Format("{0} through a {2} asteroid", exp.experimentTitle, multiplier, ast.AType);
+			string dataTitle = string.Format("{0} through {1:P0} of a {2} asteroid", exp.experimentTitle, multiplier, ast.AType);
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
 
@@ -721,7 +721,7 @@ namespace DMagic.Part_Modules
 				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, 1f, 0f, astSciCap);
 				sub.scientificValue = 1f;
 			}
-			sub.subjectValue = newAst.sciMult;
+			sub.subjectValue = newAst.SciMult;
 			sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
 		}
