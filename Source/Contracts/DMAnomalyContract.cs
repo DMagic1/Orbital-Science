@@ -37,6 +37,7 @@ using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
 using DMagic.Parameters;
+using DMagic.Scenario;
 
 namespace DMagic.Contracts
 {
@@ -49,10 +50,12 @@ namespace DMagic.Contracts
 		private CelestialBody body;
 		private List<PQSCity> cities = new List<PQSCity>();
 		private DMAnomalyObject targetAnomaly;
-		private double lat, lon, fudgedLat, fudgedLon;
+		private double lat, lon;
 		private string cardNS, cardEW, hash;
 		private int i = 0;
 		private System.Random rand = DMUtils.rand;
+		private System.Random r;
+		private int latRand, lonRand;
 
 		protected override bool Generate()
 		{
@@ -110,13 +113,15 @@ namespace DMagic.Contracts
 					cities.Add(city);
 			}
 
+			r = new System.Random(this.MissionSeed);
+			latRand = r.Next(-5, 5);
+			lonRand = r.Next(-5, 5);
+
 			//Select random anomaly
 			targetAnomaly = new DMAnomalyObject(cities[rand.Next(0, cities.Count)]);
 			hash = targetAnomaly.Name;
 			lon = targetAnomaly.Lon;
 			lat = targetAnomaly.Lat;
-			fudgedLat = fudgeLat(lat);
-			fudgedLon = fudgeLon(lon);
 			cardNS = NSDirection(lat);
 			cardEW = EWDirection(lon);
 			DMUtils.DebugLog("Anomaly [{0}] Selected On {1} at Latitude: {2:N1} and Longitude: {3:N1}", targetAnomaly.Name, body.theName, lat, lon);
@@ -170,16 +175,24 @@ namespace DMagic.Contracts
 			return true;
 		}
 
-		private double fudgeLat(double Lat)
+		private double FudgedLat
 		{
-			double f = Math.Round(((double)rand.Next(-5, 5) + Lat) / 10d) * 10d;
-			return f;
+			get
+			{
+				if (HighLogic.LoadedSceneIsFlight)
+					lat = targetAnomaly.Lat;
+				return Math.Round(((double)latRand + lat) / 10d) * 10d;
+			}
 		}
 
-		private double fudgeLon(double Lon)
+		private double FudgedLon
 		{
-			double f = Math.Round(((double)rand.Next(-5, 5) + Lon) / 10d) * 10d;
-			return f;
+			get
+			{
+				if (HighLogic.LoadedSceneIsFlight)
+					lon = targetAnomaly.Lon;
+				return Math.Round(((double)lonRand + lon) / 10d) * 10d;
+			}
 		}
 
 		private string NSDirection(double Lat)
@@ -222,7 +235,7 @@ namespace DMagic.Contracts
 
 		protected override string GetNotes()
 		{
-			return string.Format("Locate the anomalous signal coming from roughly {0}° {1} and {2}° {3}. An on-screen message will indicate successful collection of results; data must be transmitted or returned to complete each parameter.\n", Math.Abs(fudgedLat), cardNS, Math.Abs(fudgedLon), cardEW);
+			return string.Format("Locate the anomalous signal coming from roughly {0}° {1} and {2}° {3}. An on-screen message will indicate successful collection of results; data must be transmitted or returned to complete each parameter.\n", Math.Abs(FudgedLat), cardNS, Math.Abs(FudgedLon), cardEW);
 		}
 
 		protected override string GetDescription()
@@ -243,6 +256,10 @@ namespace DMagic.Contracts
 
 		protected override void OnLoad(ConfigNode node)
 		{
+			r = new System.Random(this.MissionSeed);
+			latRand = r.Next(-5, 5);
+			lonRand = r.Next(-5, 5);
+
 			int targetBodyID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
 			hash = anomalyString[0];
@@ -259,7 +276,8 @@ namespace DMagic.Contracts
 			{
 				try
 				{
-					targetAnomaly = new DMAnomalyObject((UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[]).FirstOrDefault(c => c.name == hash && c.transform.parent.name == body.name));
+					DMUtils.DebugLog("Loading Anomaly Object");
+					targetAnomaly = DMScienceScenario.SciScenario.anomalyList.getAnomalyObject(body.name, hash);
 					lat = targetAnomaly.Lat;
 					lon = targetAnomaly.Lon;
 				}
@@ -274,18 +292,10 @@ namespace DMagic.Contracts
 			else
 			{
 				if (!double.TryParse(anomalyString[2], out lat))
-				{
-					DMUtils.Logging("Failed To Load Anomaly Lat Values");
 					lat = 0.000d;
-				}
 				if (!double.TryParse(anomalyString[3], out lon))
-				{
-					DMUtils.Logging("Failed To Load Anomaly Long Values");
 					lon = 0.000d;
-				}
 			}
-			fudgedLat = fudgeLat(lat);
-			fudgedLon = fudgeLon(lon);
 			cardNS = NSDirection(lat);
 			cardEW = EWDirection(lon);
 			if (this.ParameterCount == 0)
