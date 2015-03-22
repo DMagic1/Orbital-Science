@@ -165,7 +165,39 @@ namespace DMagic.Part_Modules
 					}
 					else if (targetObj != null)
 					{
-						targetModule = targetObj.GetOrbitDriver().vessel.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault();
+						var targets = targetObj.GetOrbitDriver().vessel.FindPartModulesImplementing<DMAsteroidScanner>();
+						if (targets.Count > 0)
+						{
+							if (targets.Count > 1)
+							{
+								foreach (DMAsteroidScanner t in targets)
+								{
+									if (t == this)
+										continue;
+
+									float d = (t.part.transform.position - dishBase.position).magnitude;
+									if (d > 2f)
+									{
+										targetModule = t;
+										break;
+									}
+									else
+									{
+										targetModule = null;
+										targetDistance = 0f;
+										receiverInRange = asteroidInSight = false;
+									}
+								}
+							}
+							else if (targets[0] != this)
+								targetModule = targets[0];
+						}
+						else
+						{
+							targetModule = null;
+							targetDistance = 0f;
+							receiverInRange = asteroidInSight = false;
+						}
 					}
 					else
 					{
@@ -174,6 +206,9 @@ namespace DMagic.Part_Modules
 						{
 							foreach (DMAsteroidScanner t in targets)
 							{
+								if (t == this)
+									continue;
+
 								float d = (t.part.transform.position - dishBase.position).magnitude;
 								if (d > 2f)
 								{
@@ -695,7 +730,7 @@ namespace DMagic.Part_Modules
 			}
 
 			DMUtils.OnAsteroidScience.Fire(ast.AClass, exp.id);
-			sub.title = string.Format("{0} through a {2} asteroid", exp.experimentTitle, multiplier, ast.AType);
+			sub.title = string.Format("{0} through a {1} asteroid", exp.experimentTitle, ast.AType);
 			string dataTitle = string.Format("{0} through {1:P0} of a {2} asteroid", exp.experimentTitle, multiplier, ast.AType);
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
@@ -723,7 +758,7 @@ namespace DMagic.Part_Modules
 			}
 			sub.subjectValue = newAst.SciMult;
 			sub.scienceCap = exp.scienceCap * sub.subjectValue;
-			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
+			sub.science = Math.Max(0f, Math.Min(sub.scienceCap, sub.scienceCap - (sub.scienceCap * sub.scientificValue)));
 		}
 
 		#endregion
