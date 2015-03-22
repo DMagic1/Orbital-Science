@@ -40,7 +40,7 @@ namespace DMagic
 		private PQSCity city;
 		private Vector3d worldLocation;
 		private CelestialBody body;
-		private double lat, lon, alt;
+		private double lat, lon;
 		private double Vdistance, Vheight, Vhorizontal;
 		private double bearing;
 		private string name;
@@ -62,8 +62,28 @@ namespace DMagic
 				worldLocation = city.transform.position;
 				lat = clampLat(body.GetLatitude(worldLocation));
 				lon = clampLon(body.GetLongitude(worldLocation));
-				alt = body.GetAltitude(worldLocation);
 			}
+		}
+
+		internal void logging()
+		{
+			DMUtils.DebugLog("Begin Anomaly Log.............");
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:---->{2}", name, "Body", body.name);
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:----->{2}", name, "Lat", lat);
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:---->{2}", name, "Long", lon);
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:>{2}", name, "Location", worldLocation);
+		}
+
+		internal void secondaryLogging()
+		{
+			DMUtils.DebugLog("Begin Additional Anomaly Log.............");
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:---------->{2}", name, "Lat", lat);
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:--------->{2}", name, "Long", lon);
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:----->{2}", name, "Location", worldLocation);
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:>{2}", name, "Vessel Distance", Vdistance);
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:->{2}", name, "Vessel Height", Vheight);
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:>{2}", name, "Vessel Horizontal", Vhorizontal);
+			DMUtils.DebugLog("Anomaly: {0}-->{1}:------->{2}", name, "Bearing", bearing);
 		}
 
 		private double clampLat(double l)
@@ -108,11 +128,6 @@ namespace DMagic
 			{
 				lon = clampLon(value);
 			}
-		}
-
-		public double Alt
-		{
-			get { return alt; }
 		}
 
 		public double VDistance
