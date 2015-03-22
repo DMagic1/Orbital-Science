@@ -141,6 +141,9 @@ namespace DMagic.Part_Modules
 		/// <returns>True if the experiment can be conducted under current conditions</returns>
 		public static bool conduct(ModuleScienceExperiment MSE)
 		{
+			if (MSE.GetType() != typeof(DMModuleScienceAnimate))
+				return false;
+
 			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)MSE;
 			try
 			{
@@ -238,6 +241,7 @@ namespace DMagic.Part_Modules
 				}
 				experimentNumber = 0;
 				experimentsReturned = 0;
+
 				if (keepDeployedMode == 0) retractEvent();
 			}
 			eventsCheck();
@@ -727,7 +731,8 @@ namespace DMagic.Part_Modules
 				failMessage = customFailMessage;
 				return false;
 			}
-			else if (scienceExp.requireAtmosphere && !vessel.mainBody.atmosphere) {
+			else if (scienceExp.requireAtmosphere && !vessel.mainBody.atmosphere && experimentID != "dmbiodrillscan")
+			{
 				failMessage = customFailMessage;
 				return false;
 			}
@@ -809,7 +814,7 @@ namespace DMagic.Part_Modules
 			}
 			sub.subjectValue = newAst.SciMult;
 			sub.scienceCap = exp.scienceCap * sub.subjectValue;
-			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
+			sub.science = Math.Max(0f, Math.Min(sub.scienceCap, sub.scienceCap - (sub.scienceCap * sub.scientificValue)));
 		}
 
 		#endregion

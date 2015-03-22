@@ -235,14 +235,14 @@ namespace DMagic.Scenario
 				{
 					foreach (ScienceData data in dataList)
 					{
-						if (recoveredDMScience.ContainsKey(data.title))
+						DMScienceData DMData = getDMScience(data.title);
+						if (DMData != null)
 						{
-							DMScienceData DMData = recoveredDMScience[data.title];
 							ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
 							if (sub != null)
 							{
 								sub.scientificValue *= DMData.SciVal;
-								sub.science = Math.Max(0f, sub.scienceCap - (sub.scienceCap * sub.scientificValue));
+								sub.science = Math.Max(0f, Math.Min(sub.scienceCap, sub.scienceCap - (sub.scienceCap * sub.scientificValue)));
 							}
 						}
 					}
