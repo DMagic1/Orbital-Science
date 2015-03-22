@@ -86,7 +86,11 @@ namespace DMagic.Part_Modules
 
 		new private void OnDestroy()
 		{
-			DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
+			if (DMScienceScenario.SciScenario != null)
+			{
+				if (DMScienceScenario.SciScenario.anomalyList != null)
+					DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
+			}
 		}
 
 		#region animators
