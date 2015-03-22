@@ -30,6 +30,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -55,7 +56,7 @@ namespace DMagic
 
 		private void Update()
 		{
-			if ((HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION) && !loaded)
+			if (HighLogic.LoadedSceneHasPlanetarium && !loaded)
 			{
 				pqsBuild();
 				loaded = true;
@@ -99,11 +100,13 @@ namespace DMagic
 
 		private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
 		{
-			updateCoordinates(VB.to);
+			StartCoroutine(updateCoordinates(VB.to));
 		}
 
-		private void updateCoordinates(CelestialBody b)
+		private IEnumerator updateCoordinates(CelestialBody b)
 		{
+			yield return new WaitForSeconds(3);
+
 			if (anomalies.ContainsKey(b.name))
 			{
 				foreach (var anom in anomalies[b.name].Values)
@@ -111,24 +114,32 @@ namespace DMagic
 					anom.WorldLocation = anom.City.transform.position;
 					anom.Lat = b.GetLatitude(anom.WorldLocation);
 					anom.Lon = b.GetLongitude(anom.WorldLocation);
+					//anom.logging();
 				}
 			}
 		}
 
 		private void pqsBuild()
 		{
+			DMUtils.DebugLog("Generating Anomaly List");
 			PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
 			foreach (PQSCity anomalyObject in Cities)
 			{
+				DMUtils.DebugLog("Anomaly [{0}] Found", anomalyObject.name);
 				if (!anomalies.ContainsKey(anomalyObject.transform.parent.name))
 				{
 					Dictionary<string, DMAnomalyObject> anomDict = new Dictionary<string, DMAnomalyObject>();
-					anomDict.Add(anomalyObject.name, new DMAnomalyObject(anomalyObject));
+					DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
+					anomDict.Add(anomalyObject.name, obj);
 					anomalies.Add(anomalyObject.transform.parent.name, anomDict);
+					//obj.logging();
+
 				}
 				else if (!anomalies[anomalyObject.transform.parent.name].ContainsKey(anomalyObject.name))
 				{
-					anomalies[anomalyObject.transform.parent.name].Add(anomalyObject.name, new DMAnomalyObject(anomalyObject));
+					DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
+					anomalies[anomalyObject.transform.parent.name].Add(anomalyObject.name, obj);
+					//obj.logging();
 				}
 			}
 		}
@@ -137,6 +148,9 @@ namespace DMagic
 		{
 			Vector3d vPos = v.transform.position;
 			a.WorldLocation = a.City.transform.position;
+
+			a.Lat = v.mainBody.GetLatitude(a.WorldLocation);
+			a.Lon = v.mainBody.GetLongitude(a.WorldLocation);
 
 			//Calculate vectors from CBody position to object positions
 			Vector3d anomBody = v.mainBody.position - a.WorldLocation;
@@ -147,10 +161,10 @@ namespace DMagic
 
 			//Calculate height above or below anomaly by drawing a line between the projected vector and the anomaly vector
 			//Take the magnitude of that line, which equals the height
-			a.VHeight = (projectedV - anomBody).magnitude;
+			a.VHeight = (anomBody - projectedV).magnitude;
 			a.VDistance = (a.WorldLocation - vPos).magnitude;
 			a.VHorizontal = Math.Sqrt((a.VDistance * a.VDistance) - (a.VHeight * a.VHeight));
-			
+			//a.secondaryLogging();
 		}
 
 		internal static void bearing(Vessel v, DMAnomalyObject a)
@@ -162,6 +176,7 @@ namespace DMagic
 			double x = Math.Cos(Mathf.Deg2Rad * vlat) * Math.Sin(Mathf.Deg2Rad * a.Lat) - Math.Sin(Mathf.Deg2Rad * vlat) * Math.Cos(Mathf.Deg2Rad * a.Lat) * Math.Cos(longdiff);
 			double aBearing = (Math.Atan2(y, x) * Mathf.Rad2Deg + 360) % 360;
 			a.Bearing = aBearing;
+			a.secondaryLogging();
 		}
 	}
 }
