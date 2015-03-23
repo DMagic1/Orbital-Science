@@ -41,12 +41,14 @@ namespace DMagic
 	internal class DMConfigLoader: MonoBehaviour
 	{
 		private string[] WhiteList = new string[1] { "ScienceAlert" };
+		private const string iconURL = "DMagicOrbitalScience/Icons/";
 
 		private void Start()
 		{
 			initializeUtils();
 			findAssemblies(WhiteList);
 			configLoad();
+			hackWaypointIcons();
 		}
 
 		private void configLoad()
@@ -327,6 +329,16 @@ namespace DMagic
 					DMUtils.Logging("Assembly: {0} Found; Reactivating Experiment Properties", assembly.assembly.GetName().Name);
 					DMUtils.whiteListed = true;
 				}
+			}
+		}
+
+		private void hackWaypointIcons()
+		{
+			foreach (GameDatabase.TextureInfo ti in GameDatabase.Instance.databaseTexture.Where(t => t.name.StartsWith(iconURL)))
+			{
+				string s = ti.name.Remove(0, iconURL.Length);
+				ti.name = "Squad/Contracts/Icons/" + s;
+				DMUtils.Logging("DMagic Icon [{0}] Inserted Into FinePrint Database", s);
 			}
 		}
 
