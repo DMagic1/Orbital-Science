@@ -38,8 +38,6 @@ namespace DMagic.Part_Modules
 	class DMAnomalyScanner : DMModuleScienceAnimate
 	{
 		[KSPField]
-		public string dishAnimate = null;
-		[KSPField]
 		public string camAnimate = null;
 		[KSPField]
 		public string foundAnimate = null;
@@ -47,23 +45,23 @@ namespace DMagic.Part_Modules
 		public float resourceCost = 0f;
 
 		private string closestAnom = null;
-		private bool anomCloseRange, anomInRange, camDeployed, closeRange, fullyDeployed = false;
+		private bool anomCloseRange, anomInRange, camDeployed, rotating, closeRange, fullyDeployed = false;
 		private Animation animSecondary;
-		private Transform cam = null;
+		private Transform cam, dish;
+		private const string camTransform = "camBase";
+		private const string dishTransform = "dishBase";
 
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
-			animSecondary = part.FindModelAnimators(dishAnimate)[0];
 			animSecondary = part.FindModelAnimators(camAnimate)[0];
 			animSecondary = part.FindModelAnimators(foundAnimate)[0];
-			if (IsDeployed && !string.IsNullOrEmpty(dishAnimate))
-				newSecondaryAnimator(dishAnimate, 1f, 0f, WrapMode.Loop);
 			base.labDataBoost = 0.45f;
 			base.Events["CollectDataExternalEvent"].active = false;
 			if (!HighLogic.LoadedSceneIsEditor)
 			{
-				cam = part.FindModelTransform("camBase");
+				cam = part.FindModelTransform(camTransform);
+				dish = part.FindModelTransform(dishTransform);
 			}
 		}
 
@@ -79,9 +77,17 @@ namespace DMagic.Part_Modules
 					float cost = resourceCost * Time.deltaTime;
 					part.RequestResource(resourceExperiment, cost);
 				}
+				if (fullyDeployed)
+				{
+					rotating = true;
+					dishRotate();
+				}
 			}
 			else if (DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
 				DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
+
+			if (!fullyDeployed && rotating)
+				spinDishDown();
 		}
 
 		new private void OnDestroy()
@@ -94,34 +100,6 @@ namespace DMagic.Part_Modules
 		}
 
 		#region animators
-
-		private void newPrimaryAnimator(string whichAnim, float speed, float time, float waitTime, Animation a)
-		{
-			if (a != null)
-			{
-				a[whichAnim].speed = speed;
-				if (!a.IsPlaying(whichAnim))
-				{
-					a[whichAnim].normalizedTime = time;
-					a.Blend(whichAnim, 1f);
-				}
-				else
-				{
-					StopCoroutine("WaitForAnim");
-				}
-				if (!IsDeployed)
-				{
-					StartCoroutine("WaitForAnim", (waitTime - (a[whichAnim].normalizedTime * a[whichAnim].length)));
-				}
-			}
-		}
-
-		IEnumerator WaitForAnim(float coWaitTime)
-		{
-			yield return new WaitForSeconds(coWaitTime);
-			newSecondaryAnimator(dishAnimate, 1f, 0f, WrapMode.Loop);
-			fullyDeployed = true;
-		}
 
 		public void newSecondaryAnimator(string animName, float dishSpeed, float dishTime, WrapMode wrap)
 		{
@@ -136,17 +114,28 @@ namespace DMagic.Part_Modules
 
 		public override void deployEvent()
 		{
-			newPrimaryAnimator(animationName, 1f, 0, anim[animationName].length, anim);
+			StartCoroutine(deployEnumerator());
+		}
+
+		private IEnumerator deployEnumerator()
+		{
+			primaryAnimator(1f, 0, WrapMode.Default, animationName, anim);
 			IsDeployed = true;
 
+			yield return new WaitForSeconds(anim[animationName].length);
+
+			fullyDeployed = true;
 		}
 
 		public override void retractEvent()
 		{
+			StartCoroutine(retractEnumerator());
+		}
+
+		private IEnumerator retractEnumerator()
+		{
 			if (fullyDeployed)
 			{
-				animSecondary[dishAnimate].normalizedTime = animSecondary[dishAnimate].normalizedTime % 1;
-				animSecondary[dishAnimate].wrapMode = WrapMode.Default;
 				if (camDeployed)
 				{
 					animSecondary[foundAnimate].wrapMode = WrapMode.Default;
@@ -155,9 +144,14 @@ namespace DMagic.Part_Modules
 					camDeployed = false;
 				}
 			}
-			newPrimaryAnimator(animationName, -1f, 1f, 0f, anim);
-			IsDeployed = false;
+
 			fullyDeployed = false;
+
+			while (dish.localEulerAngles.z > 1)
+				yield return null;
+
+			primaryAnimator(-1f, 1f, WrapMode.Default, animationName, anim);
+			IsDeployed = false;
 		}
 
 		new public void editorDeployEvent()
@@ -175,7 +169,6 @@ namespace DMagic.Part_Modules
 			retractEvent();
 			fullyDeployed = false;
 			IsDeployed = false;
-			newSecondaryAnimator(dishAnimate, 0f, 0f, WrapMode.Default);
 			newSecondaryAnimator(camAnimate, -1f, 0f, WrapMode.Default);
 			animSecondary[foundAnimate].wrapMode = WrapMode.Default;
 			Events["editorDeployEvent"].active = true;
@@ -194,6 +187,20 @@ namespace DMagic.Part_Modules
 			cam.localRotation = Quaternion.Slerp(cam.localRotation, lookToTarget, Time.deltaTime * 2f);
 		}
 
+		//Slowly rotate dish
+		private void dishRotate()
+		{
+			dish.Rotate(Vector3.forward * Time.deltaTime * 20f);
+		}
+
+		private void spinDishDown()
+		{
+			if (dish.localEulerAngles.z > 1)
+				dish.Rotate(Vector3.forward * Time.deltaTime * 30f);
+			else
+				rotating = false;
+		}
+
 		#endregion
 
 		#region anomaly detection
@@ -202,7 +209,7 @@ namespace DMagic.Part_Modules
 		{
 			bool anomInRange = false;
 
-			foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects(vessel.mainBody))
+			foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
 			{
 				DMAnomalyList.updateAnomaly(vessel, anom);
 				if (anom.VDistance < 50000)
@@ -225,7 +232,6 @@ namespace DMagic.Part_Modules
 								else
 								{
 									closeRange = false;
-									break;
 								}
 							}
 							if (camDeployed)
@@ -241,7 +247,6 @@ namespace DMagic.Part_Modules
 								{
 									animSecondary[foundAnimate].wrapMode = WrapMode.Default;
 									closeRange = false;
-									break;
 								}
 							}
 						}
@@ -262,7 +267,7 @@ namespace DMagic.Part_Modules
 			anomCloseRange = false;
 			anomInRange = false;
 			closestAnom = "";
-			foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects(vessel.mainBody))
+			foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
 			{
 				DMAnomalyList.updateAnomaly(vessel, anom);
 				if (anom.VDistance < 100000)
@@ -320,22 +325,22 @@ namespace DMagic.Part_Modules
 
 		public override void DeployExperiment()
 		{
-			if (Inoperable)
-				ScreenMessages.PostScreenMessage("Anomalous Signal Scanner is no longer functional; must be reset at a science lab or returned to Kerbin", 6f, ScreenMessageStyle.UPPER_CENTER);
-			else if (storedScienceReports.Count > 0)
-				ScreenMessages.PostScreenMessage(storageFullMessage, 6f, ScreenMessageStyle.UPPER_CENTER);
-			else
+			if (canConduct())
 			{
-				if (!IsDeployed) deployEvent();
+				if (!IsDeployed)
+					deployEvent();
+
 				getAnomValues();
 				if (anomInRange)
 				{
 					if (anomCloseRange)
-						runExperiment(getSituationAnom());
+						runExperiment(getSituation());
 				}
 				else
-					ScreenMessages.PostScreenMessage("No anomalous signals detected.", 4f, ScreenMessageStyle.UPPER_CENTER);
+					ScreenMessages.PostScreenMessage("No anomalous signals detected.", 5f, ScreenMessageStyle.UPPER_CENTER);
 			}
+			else
+				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		protected override string getBiome(ExperimentSituations s)
@@ -391,7 +396,7 @@ namespace DMagic.Part_Modules
 			return "Dummy";
 		}
 
-		private ExperimentSituations getSituationAnom()
+		protected override ExperimentSituations getSituation()
 		{
 			switch (vessel.situation)
 			{
