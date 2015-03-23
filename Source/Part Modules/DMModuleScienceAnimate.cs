@@ -630,7 +630,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private ExperimentSituations getSituation()
+		protected virtual ExperimentSituations getSituation()
 		{
 			if (asteroidReports && DMAsteroidScience.AsteroidGrappled)
 				return ExperimentSituations.SrfLanded;
