@@ -195,18 +195,6 @@ namespace DMagic
 					{
 						if (storyNode != null)
 						{
-							if (storyNode.HasValue("generic"))
-							{
-								foreach (string st in storyNode.GetValues("generic"))
-								{
-									if (!string.IsNullOrEmpty(st))
-									{
-										string story = st.Replace("[", "{");
-										story = story.Replace("]", "}");
-										DMUtils.backStory["generic"].Add(story);
-									}
-								}
-							}
 							if (storyNode.HasValue("survey"))
 							{
 								foreach (string so in storyNode.GetValues("survey"))
@@ -216,18 +204,6 @@ namespace DMagic
 										string story_o = so.Replace("[", "{");
 										story_o = story_o.Replace("]", "}");
 										DMUtils.backStory["survey"].Add(story_o);
-									}
-								}
-							}
-							if (storyNode.HasValue("biological"))
-							{
-								foreach (string sb in storyNode.GetValues("biological"))
-								{
-									if (!string.IsNullOrEmpty(sb))
-									{
-										string story_b = sb.Replace("[", "{");
-										story_b = story_b.Replace("]", "}");
-										DMUtils.backStory["biological"].Add(story_b);
 									}
 								}
 							}
@@ -272,7 +248,7 @@ namespace DMagic
 				}
 			}
 
-			DMUtils.Logging("Added {0} New Generic Backstories; {1} New Survey Backstories; {2} New Biological Backstories; {3} New Asteroid Backstories; {4} New Anomaly Backstories; {5} New Magnetic Backstories To The List", DMUtils.backStory["generic"].Count, DMUtils.backStory["survey"].Count, DMUtils.backStory["biological"].Count, DMUtils.backStory["asteroid"].Count, DMUtils.backStory["anomaly"].Count, DMUtils.backStory["magnetic"].Count);
+			DMUtils.Logging("Added {0} New Survey Backstories; {1} New Asteroid Backstories; {2} New Anomaly Backstories; {3} New Magnetic Backstories To The List", DMUtils.backStory["survey"].Count, DMUtils.backStory["asteroid"].Count, DMUtils.backStory["anomaly"].Count, DMUtils.backStory["magnetic"].Count);
 		}
 
 		private void initializeUtils()
@@ -311,9 +287,7 @@ namespace DMagic
 			}
 
 			DMUtils.backStory = new Dictionary<string, List<string>>();
-			DMUtils.backStory.Add("generic", new List<string>());
 			DMUtils.backStory.Add("survey", new List<string>());
-			DMUtils.backStory.Add("biological", new List<string>());
 			DMUtils.backStory.Add("asteroid", new List<string>());
 			DMUtils.backStory.Add("anomaly", new List<string>());
 			DMUtils.backStory.Add("magnetic", new List<string>());
@@ -328,6 +302,7 @@ namespace DMagic
 				{
 					DMUtils.Logging("Assembly: {0} Found; Reactivating Experiment Properties", assembly.assembly.GetName().Name);
 					DMUtils.whiteListed = true;
+					break;
 				}
 			}
 		}
