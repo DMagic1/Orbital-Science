@@ -75,7 +75,7 @@ namespace DMagic
 		private static System.Random rand = DMUtils.rand;
 
 		//Used for initial orbital and surface survey parameter
-		internal static DMCollectScience fetchSurveyScience(Contract.ContractPrestige c, List<CelestialBody> cR, List<CelestialBody> cUR, DMScienceContainer DMScience, int sT)
+		internal static DMCollectScience fetchSurveyScience(Contract.ContractPrestige c, List<CelestialBody> cR, List<CelestialBody> cUR, DMScienceContainer DMScience /*, int sT*/)
 		{
 			CelestialBody body;
 			ExperimentSituations targetSituation;
@@ -83,7 +83,7 @@ namespace DMagic
 			AvailablePart aPart;
 			string name;
 			string biome = "";
-			int surveyType = sT;
+			//int surveyType = sT;
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
@@ -108,8 +108,8 @@ namespace DMagic
 			if (DMScience.Exp == null)
 				return null;
 
-			if (surveyType == 0)
-			{
+			//if (surveyType == 0)
+			//{
 				if (!body.atmosphere && DMScience.Exp.requireAtmosphere)
 					return null;
 				if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceHigh) == ExperimentSituations.InSpaceHigh && ((ExperimentSituations)DMScience.SitMask & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
@@ -123,36 +123,36 @@ namespace DMagic
 					targetSituation = ExperimentSituations.InSpaceHigh;
 				else
 					targetSituation = ExperimentSituations.InSpaceLow;
-			}
-			else if (surveyType == 1)
-			{
-				if (body.pqsController == null)
-					return null;
-				if (!body.atmosphere && DMScience.Exp.requireAtmosphere)
-					return null;
-				if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
-				{
-					if (DMScience.Exp.id != "dmbiodrillscan")
-						targetSituation = ExperimentSituations.SrfLanded;
-					else if (body.atmosphere)
-						targetSituation = ExperimentSituations.SrfLanded;
-					else
-						return null;
-				}
-				else
-					return null;
-			}
-			else if (surveyType == 2)
-			{
-				if (!body.atmosphere)
-					return null;
-				if (rand.Next(0, 2) == 0)
-					targetSituation = ExperimentSituations.FlyingHigh;
-				else
-					targetSituation = ExperimentSituations.FlyingLow;
-			}
-			else
-				return null;
+			//}
+			//else if (surveyType == 1)
+			//{
+			//	if (body.pqsController == null)
+			//		return null;
+			//	if (!body.atmosphere && DMScience.Exp.requireAtmosphere)
+			//		return null;
+			//	if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.SrfLanded) == ExperimentSituations.SrfLanded)
+			//	{
+			//		if (DMScience.Exp.id != "dmbiodrillscan")
+			//			targetSituation = ExperimentSituations.SrfLanded;
+			//		else if (body.atmosphere)
+			//			targetSituation = ExperimentSituations.SrfLanded;
+			//		else
+			//			return null;
+			//	}
+			//	else
+			//		return null;
+			//}
+			//else if (surveyType == 2)
+			//{
+			//	if (!body.atmosphere)
+			//		return null;
+			//	if (rand.Next(0, 2) == 0)
+			//		targetSituation = ExperimentSituations.FlyingHigh;
+			//	else
+			//		targetSituation = ExperimentSituations.FlyingLow;
+			//}
+			//else
+			//	return null;
 
 			DMUtils.DebugLog("Experimental Situation: {0} Selected", targetSituation.ToString());
 
@@ -180,14 +180,14 @@ namespace DMagic
 					return null;
 			}
 
-			if (surveyType == 0)
+			//if (surveyType == 0)
 				return new DMCollectScience(body, targetSituation, "", name, 0);
-			else if (surveyType == 1)
-				return new DMCollectScience(body, targetSituation, biome, name, 0);
-			else if (surveyType == 2)
-				return new DMCollectScience(body, targetSituation, biome, name, 1);
-			else
-				return null;
+			//else if (surveyType == 1)
+			//	return new DMCollectScience(body, targetSituation, biome, name, 0);
+			//else if (surveyType == 2)
+			//	return new DMCollectScience(body, targetSituation, biome, name, 1);
+			//else
+			//	return null;
 		}
 
 		//Used for orbital survey
@@ -250,115 +250,115 @@ namespace DMagic
 
 
 		//Used for surface surveys
-		internal static DMCollectScience fetchSurveyScience(CelestialBody Body, DMScienceContainer DMScience, string Biome)
-		{
-			AvailablePart aPart;
-			ScienceSubject sub;
-			string name;
+		//internal static DMCollectScience fetchSurveyScience(CelestialBody Body, DMScienceContainer DMScience, string Biome)
+		//{
+		//	AvailablePart aPart;
+		//	ScienceSubject sub;
+		//	string name;
 
-			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
+		//	name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
-			//Determine if the science part is available if applicable
-			if (DMScience.SciPart != "None")
-			{
-				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
-				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
-				if (aPart == null)
-					return null;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
-					return null;
-				DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
-			}
+		//	//Determine if the science part is available if applicable
+		//	if (DMScience.SciPart != "None")
+		//	{
+		//		DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
+		//		aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
+		//		if (aPart == null)
+		//			return null;
+		//		if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+		//			return null;
+		//		DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
+		//	}
 
-			//Make sure our experiment is OK
-			if (DMScience.Exp == null)
-				return null;
+		//	//Make sure our experiment is OK
+		//	if (DMScience.Exp == null)
+		//		return null;
 
-			if (!DMUtils.biomeRelevant(ExperimentSituations.SrfLanded, DMScience.BioMask))
-				Biome = "";
+		//	if (!DMUtils.biomeRelevant(ExperimentSituations.SrfLanded, DMScience.BioMask))
+		//		Biome = "";
 
-			if (Body.pqsController == null)
-				return null;
-			if (!Body.atmosphere && DMScience.Exp.requireAtmosphere)
-				return null;
-			if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.SrfLanded) != ExperimentSituations.SrfLanded)
-				return null;
-			if (DMScience.Exp.id == "dmbiodrillscan" && !Body.atmosphere)
-				return null;
-			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.Exp.id, Body.name, ExperimentSituations.SrfLanded, Biome.Replace(" ", "")))) != null)
-				if (sub.scientificValue < 0.5f)
-					return null;
+		//	if (Body.pqsController == null)
+		//		return null;
+		//	if (!Body.atmosphere && DMScience.Exp.requireAtmosphere)
+		//		return null;
+		//	if (((ExperimentSituations)DMScience.SitMask & ExperimentSituations.SrfLanded) != ExperimentSituations.SrfLanded)
+		//		return null;
+		//	if (DMScience.Exp.id == "dmbiodrillscan" && !Body.atmosphere)
+		//		return null;
+		//	if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.Exp.id, Body.name, ExperimentSituations.SrfLanded, Biome.Replace(" ", "")))) != null)
+		//		if (sub.scientificValue < 0.5f)
+		//			return null;
 
-			return new DMCollectScience(Body, ExperimentSituations.SrfLanded, Biome, name, 0);
-		}
+		//	return new DMCollectScience(Body, ExperimentSituations.SrfLanded, Biome, name, 0);
+		//}
 
-		//Used for biological survey
-		internal static DMCollectScience fetchBioSurveyScience(CelestialBody body)
-		{
-			string biome = "";
+		////Used for biological survey
+		//internal static DMCollectScience fetchBioSurveyScience(CelestialBody body)
+		//{
+		//	string biome = "";
 
-			DMUtils.DebugLog("Checking Contract Requirements");
+		//	DMUtils.DebugLog("Checking Contract Requirements");
 
-			//Make sure our experiment is OK
-			if (ResearchAndDevelopment.GetExperiment("dmbiodrillscan") == null)
-				return null;
+		//	//Make sure our experiment is OK
+		//	if (ResearchAndDevelopment.GetExperiment("dmbiodrillscan") == null)
+		//		return null;
 
-			//Build a list of acceptable biomes if applicable, choose one with remaining science
-			DMUtils.DebugLog("Checking For Biome Usage");
-			List<string> bList = DMUtils.fetchBiome(body);
-			if (bList.Count == 0)
-				return null;
-			int i = rand.Next(0, 2);
-			if (i == 0)
-			{
-				biome = bList[rand.Next(0, bList.Count)];
-				DMUtils.DebugLog("Acceptable Biome Found: {0}", biome);
-			}
+		//	//Build a list of acceptable biomes if applicable, choose one with remaining science
+		//	DMUtils.DebugLog("Checking For Biome Usage");
+		//	List<string> bList = DMUtils.fetchBiome(body);
+		//	if (bList.Count == 0)
+		//		return null;
+		//	int i = rand.Next(0, 2);
+		//	if (i == 0)
+		//	{
+		//		biome = bList[rand.Next(0, bList.Count)];
+		//		DMUtils.DebugLog("Acceptable Biome Found: {0}", biome);
+		//	}
 
-			return new DMCollectScience(body, ExperimentSituations.SrfLanded, biome, "Bio Drill Scan", 1);
-		}
+		//	return new DMCollectScience(body, ExperimentSituations.SrfLanded, biome, "Bio Drill Scan", 1);
+		//}
 
-		internal static DMCollectScience fetchBioSurveyScience(CelestialBody body, DMScienceContainer DMScience, string Biome)
-		{
-			ExperimentSituations targetSituation;
-			List<ExperimentSituations> situations;
-			AvailablePart aPart;
-			string name;
+		//internal static DMCollectScience fetchBioSurveyScience(CelestialBody body, DMScienceContainer DMScience, string Biome)
+		//{
+		//	ExperimentSituations targetSituation;
+		//	List<ExperimentSituations> situations;
+		//	AvailablePart aPart;
+		//	string name;
 
-			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
-			DMUtils.DebugLog("Checking Contract Requirements");
+		//	name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
+		//	DMUtils.DebugLog("Checking Contract Requirements");
 
-			//Determine if the science part is available if applicable
-			if (DMScience.SciPart != "None")
-			{
-				DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
-				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
-				if (aPart == null)
-					return null;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
-					return null;
-				DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
-			}
+		//	//Determine if the science part is available if applicable
+		//	if (DMScience.SciPart != "None")
+		//	{
+		//		DMUtils.DebugLog("Checking For Part {0} Now", DMScience.SciPart);
+		//		aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
+		//		if (aPart == null)
+		//			return null;
+		//		if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+		//			return null;
+		//		DMUtils.DebugLog("Part: [{0}] Purchased; Contract Meets Requirements", aPart.name);
+		//	}
 
-			//Make sure our experiment is OK
-			if (DMScience.Exp == null)
-				return null;
+		//	//Make sure our experiment is OK
+		//	if (DMScience.Exp == null)
+		//		return null;
 
-			//Choose an acceptable experimental situation for a given science experiment
-			if ((situations = DMUtils.availableSituations(DMScience.Exp, DMScience.SitMask, body)).Count == 0)
-				return null;
-			else
-			{
-				DMUtils.DebugLog("Acceptable Situations Found");
-				targetSituation = situations[rand.Next(0, situations.Count)];
-				DMUtils.DebugLog("Experimental Situation: {0}", targetSituation);
-			}
+		//	//Choose an acceptable experimental situation for a given science experiment
+		//	if ((situations = DMUtils.availableSituations(DMScience.Exp, DMScience.SitMask, body)).Count == 0)
+		//		return null;
+		//	else
+		//	{
+		//		DMUtils.DebugLog("Acceptable Situations Found");
+		//		targetSituation = situations[rand.Next(0, situations.Count)];
+		//		DMUtils.DebugLog("Experimental Situation: {0}", targetSituation);
+		//	}
 
-			if (targetSituation != ExperimentSituations.SrfLanded)
-				Biome = "";
+		//	if (targetSituation != ExperimentSituations.SrfLanded)
+		//		Biome = "";
 
-			return new DMCollectScience(body, targetSituation, Biome, name, 1);
-		}
+		//	return new DMCollectScience(body, targetSituation, Biome, name, 1);
+		//}
 	}
 
 	static class DMAsteroidGenerator
