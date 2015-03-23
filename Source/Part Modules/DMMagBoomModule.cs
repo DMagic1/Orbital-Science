@@ -284,14 +284,11 @@ namespace DMagic.Part_Modules
 							}
 						}
 
-
-
 						//Anomaly Detection
 						Cities.Clear();
 						if (!DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
 						{
-							DMScienceScenario.SciScenario.anomalyList.MagUpdating = true;
-							foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects(vessel.mainBody))
+							foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
 							{
 								DMAnomalyList.updateAnomaly(vessel, anom);
 								if (anom.VDistance < 100000)
@@ -300,8 +297,7 @@ namespace DMagic.Part_Modules
 						}
 						else
 						{
-							DMScienceScenario.SciScenario.anomalyList.MagUpdating = false;
-							foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects(vessel.mainBody))
+							foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
 							{
 								if (anom.VDistance < 100000)
 									Cities.Add(anom);
@@ -403,11 +399,6 @@ namespace DMagic.Part_Modules
 						//Fields["nDays"].guiActive = primaryModule.IsDeployed;
 						//Fields["lons"].guiActive = primaryModule.IsDeployed;
 						//Fields["Bhold"].guiActive = primaryModule.IsDeployed;
-					}
-					else if (DMScienceScenario.SciScenario != null)
-					{
-						if (DMScienceScenario.SciScenario.anomalyList.MagUpdating)
-							DMScienceScenario.SciScenario.anomalyList.MagUpdating = false;
 					}
 					else
 					{
