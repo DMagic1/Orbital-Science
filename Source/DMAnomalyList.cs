@@ -40,8 +40,8 @@ namespace DMagic
 	public class DMAnomalyList : MonoBehaviour
 	{
 		private Dictionary<string, Dictionary<string, DMAnomalyObject>> anomalies = new Dictionary<string, Dictionary<string, DMAnomalyObject>>();
+		private List<DMAnomalyObject> currentBodyAnomalies = new List<DMAnomalyObject>();
 		private bool scannerUpdating;
-		private bool magUpdating;
 		private bool loaded = false;
 
 		private void Start()
@@ -58,17 +58,14 @@ namespace DMagic
 		{
 			if (HighLogic.LoadedSceneHasPlanetarium && !loaded)
 			{
-				pqsBuild();
+				pqsBuild(FlightGlobals.currentMainBody);
 				loaded = true;
 			}
 		}
 
-		public List<DMAnomalyObject> anomObjects(CelestialBody b)
+		public List<DMAnomalyObject> anomObjects()
 		{
-			if (anomalies.ContainsKey(b.name))
-				return anomalies[b.name].Values.ToList();
-			else
-				return new List<DMAnomalyObject>();
+			return currentBodyAnomalies;
 		}
 
 		public DMAnomalyObject getAnomalyObject(string body, string city)
@@ -92,12 +89,6 @@ namespace DMagic
 			internal set { scannerUpdating = value; }
 		}
 
-		public bool MagUpdating
-		{
-			get { return magUpdating; }
-			internal set { magUpdating = value; }
-		}
-
 		private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
 		{
 			StartCoroutine(updateCoordinates(VB.to));
@@ -106,6 +97,8 @@ namespace DMagic
 		private IEnumerator updateCoordinates(CelestialBody b)
 		{
 			yield return new WaitForSeconds(3);
+
+			currentBodyAnomalies.Clear();
 
 			if (anomalies.ContainsKey(b.name))
 			{
@@ -116,16 +109,18 @@ namespace DMagic
 					anom.Lon = b.GetLongitude(anom.WorldLocation);
 					//anom.logging();
 				}
+
+				currentBodyAnomalies = anomalies[b.name].Values.ToList();
 			}
+			else
+				currentBodyAnomalies = new List<DMAnomalyObject>();
 		}
 
-		private void pqsBuild()
+		private void pqsBuild(CelestialBody b)
 		{
-			DMUtils.DebugLog("Generating Anomaly List");
 			PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
 			foreach (PQSCity anomalyObject in Cities)
 			{
-				DMUtils.DebugLog("Anomaly [{0}] Found", anomalyObject.name);
 				if (!anomalies.ContainsKey(anomalyObject.transform.parent.name))
 				{
 					Dictionary<string, DMAnomalyObject> anomDict = new Dictionary<string, DMAnomalyObject>();
@@ -142,6 +137,13 @@ namespace DMagic
 					//obj.logging();
 				}
 			}
+
+			currentBodyAnomalies.Clear();
+
+			if (anomalies.ContainsKey(b.name))
+				currentBodyAnomalies = anomalies[b.name].Values.ToList();
+			else
+				currentBodyAnomalies = new List<DMAnomalyObject>();
 		}
 
 		internal static void updateAnomaly(Vessel v, DMAnomalyObject a)
