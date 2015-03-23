@@ -90,14 +90,6 @@ namespace DMagic.Scenario
 			get { return recoveredDMScience.Count; }
 		}
 
-		private void addDMScience (DMScienceData data)
-		{
-			if (!recoveredDMScience.ContainsKey(data.Title))
-				recoveredDMScience.Add(data.Title, data);
-			else
-				UpdateDMScience(data);
-		}
-
 		public override void OnSave(ConfigNode node)
 		{
 			ConfigNode results_node = new ConfigNode("Asteroid_Science");
@@ -153,20 +145,32 @@ namespace DMagic.Scenario
 					}
 				}
 			}
-			try
+			//try
+			//{
+			//	if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
+			//		recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
+			//	if (HighLogic.LoadedSceneIsFlight)
+			//	{
+			//		tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
+			//		anomalyList = gameObject.AddComponent<DMAnomalyList>();
+			//		updateRemainingData();
+			//	}
+			//}
+			//catch (Exception e)
+			//{
+			//	Debug.LogWarning("[DMagic] Error While Initializing Science Recovery Watcher: " + e);
+			//}
+		}
+
+		private void Start()
+		{
+			if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
+				recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
+			if (HighLogic.LoadedSceneIsFlight)
 			{
-				if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
-					recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
-				if (HighLogic.LoadedSceneIsFlight)
-				{
-					tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
-					anomalyList = gameObject.AddComponent<DMAnomalyList>();
-					updateRemainingData();
-				}
-			}
-			catch (Exception e)
-			{
-				Debug.LogWarning("[DMagic] Error While Initializing Science Recovery Watcher: " + e);
+				tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
+				anomalyList = gameObject.AddComponent<DMAnomalyList>();
+				updateRemainingData();
 			}
 		}
 
@@ -178,6 +182,14 @@ namespace DMagic.Scenario
 				Destroy(anomalyList);
 			if (recoveryWatcher != null)
 				Destroy(recoveryWatcher);
+		}
+
+		private void addDMScience(DMScienceData data)
+		{
+			if (!recoveredDMScience.ContainsKey(data.Title))
+				recoveredDMScience.Add(data.Title, data);
+			else
+				UpdateDMScience(data);
 		}
 
 		internal void RecordNewScience(string title, float baseval, float scv, float sci, float cap)
