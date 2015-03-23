@@ -29,6 +29,7 @@
  */
 #endregion
 
+using System.Collections;
 using UnityEngine;
 
 namespace DMagic.Part_Modules
@@ -36,33 +37,74 @@ namespace DMagic.Part_Modules
 	class DMSoilMoisture: DMModuleScienceAnimate
 	{
 
-		[KSPField]
-		public string loopingAnim = null;
+		private bool fullyDeployed = false;
+		private bool rotating = false;
+
+		private Transform dish;
+		private const string dishTransform = "dishBase";
 
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
-			if (string.IsNullOrEmpty(loopingAnim))
-				anim = part.FindModelAnimators(loopingAnim)[0];
-			if (IsDeployed)
-				primaryAnimator(1f, 0f, WrapMode.Loop, loopingAnim, anim);
+			dish = part.FindModelTransform(dishTransform);
+		}
+
+		private void Update()
+		{
+			if (HighLogic.LoadedSceneIsFlight)
+			{
+				if (IsDeployed && fullyDeployed)
+				{
+					rotating = true;
+					dishRotate();
+				}
+
+				if (!fullyDeployed && rotating)
+					spinDishDown();
+			}
 		}
 
 		public override void deployEvent()
 		{
-			primaryAnimator(1f, 0f, WrapMode.Loop, loopingAnim, anim);
+			StartCoroutine(deployEnumerator());
+		}
+
+		private IEnumerator deployEnumerator()
+		{
 			base.deployEvent();
+
+			yield return new WaitForSeconds(anim[animationName].length);
+
+			fullyDeployed = true;
 		}
 
 		public override void retractEvent()
 		{
-			if (anim != null && !string.IsNullOrEmpty(loopingAnim))
-			{
-				anim[loopingAnim].normalizedTime = anim[loopingAnim].normalizedTime % 1;
-				anim[loopingAnim].speed = 4f * animSpeed;
-				anim[loopingAnim].wrapMode = WrapMode.Clamp;
-			}
-			base.retractEvent();
+			StartCoroutine(retractEnumerator());
+		}
+
+		private IEnumerator retractEnumerator()
+		{
+			fullyDeployed = false;
+
+			while (dish.localEulerAngles.z > 1)
+				yield return null;
+
+			base.deployEvent();
+		}
+
+		//Slowly rotate dish
+		private void dishRotate()
+		{
+			dish.Rotate(Vector3.forward * Time.deltaTime * 20f);
+		}
+
+		private void spinDishDown()
+		{
+			if (dish.localEulerAngles.z > 1)
+				dish.Rotate(Vector3.forward * Time.deltaTime * 30f);
+			else
+				rotating = false;
 		}
 
 	}
