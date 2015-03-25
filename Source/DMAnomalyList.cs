@@ -114,6 +114,8 @@ namespace DMagic
 			}
 			else
 				currentBodyAnomalies = new List<DMAnomalyObject>();
+
+			DMUtils.DebugLog("{0} Anomalies Added To Current Body List", currentBodyAnomalies.Count);
 		}
 
 		private void pqsBuild(CelestialBody b)
@@ -144,6 +146,8 @@ namespace DMagic
 				currentBodyAnomalies = anomalies[b.name].Values.ToList();
 			else
 				currentBodyAnomalies = new List<DMAnomalyObject>();
+
+			DMUtils.DebugLog("{0} Anomalies Added To Current Body List", currentBodyAnomalies.Count);
 		}
 
 		internal static void updateAnomaly(Vessel v, DMAnomalyObject a)
