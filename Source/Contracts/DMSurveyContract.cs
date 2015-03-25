@@ -40,151 +40,67 @@ using DMagic.Parameters;
 
 namespace DMagic.Contracts
 {
-	public class DMSurveyContract: Contract
+	public class DMSurveyContract : Contract
 	{
 		private DMCollectScience[] newParams = new DMCollectScience[8];
 		private CelestialBody body;
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
-		//private string biome = "";
 		private int i, j = 0;
-		//private int surveyType;
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
 		{
-			int total = ContractSystem.Instance.GetCurrentContracts<DMSurveyContract>().Count();
-			if (total >= DMUtils.maxSurvey)
+			DMSurveyContract[] surveyContracts = ContractSystem.Instance.GetCurrentContracts<DMSurveyContract>();
+			int offers = 0;
+			int active = 0;
+			int maxOffers = DMUtils.maxSurveyOffered;
+			int maxActive = DMUtils.maxSurveyActive;
+
+			for (int i = 0; i < surveyContracts.Length; i++)
+			{
+				DMSurveyContract s = surveyContracts[i];
+				if (s.ContractState == State.Offered)
+					offers++;
+				else if (s.ContractState == State.Active)
+					active++;
+			}
+
+			if (offers >= maxOffers)
+				return false;
+			if (active >= maxActive)
 				return false;
 
-			//surveyType = rand.Next(0, 3);
-			//if (surveyType == 0)
-			//{
-				//Make sure that the magnetometer is at least available
-				AvailablePart aPart = PartLoader.getPartInfoByName("dmmagBoom");
-				if (aPart == null)
-					return false;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
-					return false;
+			AvailablePart aPart = PartLoader.getPartInfoByName("dmmagBoom");
+			if (aPart == null)
+				return false;
+			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+				return false;
 
-				sciList.AddRange(DMUtils.availableScience[DMScienceType.Space.ToString()].Values);
+			sciList.AddRange(DMUtils.availableScience[DMScienceType.Space.ToString()].Values);
 
-				if (sciList.Count > 0)
-				{
-					DMScience = sciList[rand.Next(0, sciList.Count)];
-					sciList.Remove(DMScience);
-				}
-				else
-					return false;
+			if (sciList.Count > 0)
+			{
+				DMScience = sciList[rand.Next(0, sciList.Count)];
+				sciList.Remove(DMScience);
+			}
+			else
+				return false;
 
-				//Generates the science experiment, returns null if experiment fails any check
-				if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null), DMScience /*, 0*/)) == null)
-					return false;
+			//Generates the science experiment, returns null if experiment fails any check
+			if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null), DMScience)) == null)
+				return false;
 
-				body = newParams[0].Body;
-				//Add an orbital parameter
-				this.AddParameter(new EnterOrbit(body), null);
-			//}
-			//else if (surveyType == 1)
-			//{
-			//	//Make sure that the laser is at least available
-			//	AvailablePart aPart = PartLoader.getPartInfoByName("dmsurfacelaser");
-			//	if (aPart == null)
-			//		return false;
-			//	if (!ResearchAndDevelopment.PartModelPurchased(aPart))
-			//		return false;
-
-			//	sciList.AddRange(DMUtils.availableScience[DMScienceType.Surface.ToString()].Values);
-
-			//	if (sciList.Count > 0)
-			//	{
-			//		DMScience = sciList[rand.Next(0, sciList.Count)];
-			//		sciList.Remove(DMScience);
-			//	}
-			//	else
-			//		return false;
-
-			//	if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null), DMScience, 1)) == null)
-			//		return false;
-
-			//	body = newParams[0].Body;
-			//	biome = newParams[0].Biome;
-
-			//	if (biome == "")
-			//	{
-			//		List<string> biomes = DMUtils.fetchBiome(body);
-			//		biome = biomes[rand.Next(0, biomes.Count)];
-			//	}
-			//	this.AddParameter(new LandOnBody(body), null);
-			//}
-			//else if (surveyType == 2)
-			//{
-			//	if (this.Prestige == ContractPrestige.Trivial)
-			//		return false;
-			//	//Make sure that drill is at least available
-			//	AvailablePart aPart = PartLoader.getPartInfoByName("dmbioDrill");
-			//	if (aPart == null)
-			//		return false;
-			//	if (!ResearchAndDevelopment.PartModelPurchased(aPart))
-			//		return false;
-
-			//	//Duna and Eve are the easy targets
-			//	if (this.Prestige == ContractPrestige.Significant)
-			//	{
-			//		if (!ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" }))
-			//			return false;
-			//		if (rand.Next(0, 2) == 0)
-			//			body = FlightGlobals.Bodies[5];
-			//		else
-			//			body = FlightGlobals.Bodies[6];
-			//	}
-			//	else if (this.Prestige == ContractPrestige.Exceptional)
-			//	{
-			//		//Account for mod planets and Laythe
-			//		if (!ProgressTracking.Instance.NodeComplete(new string[] { "Jool", "Flyby" }))
-			//			return false;
-			//		List<CelestialBody> bList = new List<CelestialBody>();
-			//		foreach (CelestialBody b in FlightGlobals.Bodies)
-			//		{
-			//			if (b.flightGlobalsIndex != 1 && b.flightGlobalsIndex != 5 && b.flightGlobalsIndex != 6 && b.flightGlobalsIndex != 8)
-			//				if (b.atmosphere && b.pqsController != null)
-			//					bList.Add(b);
-			//		}
-			//		body = bList[rand.Next(0, bList.Count)];
-			//	}
-			//	else
-			//		return false;
-
-			//	sciList.AddRange(DMUtils.availableScience[DMScienceType.Biological.ToString()].Values);
-
-			//	if ((newParams[0] = DMSurveyGenerator.fetchBioSurveyScience(body)) == null)
-			//		return false;
-
-			//	biome = newParams[0].Biome;
-
-			//	if (biome == "")
-			//	{
-			//		List<string> biomes = DMUtils.fetchBiome(body);
-			//		biome = biomes[rand.Next(0, biomes.Count)];
-			//	}
-
-			//	this.AddParameter(new LandOnBody(body), null);
-			//	this.AddParameter(new EnterOrbit(body), null);
-			//}
-			//else
-			//	return false;
+			body = newParams[0].Body;
+			//Add an orbital parameter
+			this.AddParameter(new EnterOrbit(body), null);
 
 			for (j = 1; j < 7; j++)
 			{
 				if (sciList.Count > 0)
 				{
 					DMScience = sciList[rand.Next(0, sciList.Count)];
-					//if (surveyType == 0)
-						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience);
-					//else if (surveyType == 1)
-					//	newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, biome);
-					//else if (surveyType == 2)
-					//	newParams[j] = DMSurveyGenerator.fetchBioSurveyScience(body, DMScience, biome);
+					newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience);
 					sciList.Remove(DMScience);
 				}
 				else
@@ -207,14 +123,8 @@ namespace DMagic.Contracts
 				}
 			}
 
-			//if (surveyType == 0 || surveyType == 1)
-			//{
-				if (this.ParameterCount < 4)
-					return false;
-			//}
-			//else if (surveyType == 2)
-			//	if (this.ParameterCount < 5)
-			//		return false;
+			if (this.ParameterCount < 4)
+				return false;
 
 			int a = rand.Next(0, 4);
 			if (a == 0)
@@ -244,55 +154,28 @@ namespace DMagic.Contracts
 
 		protected override string GetHashString()
 		{
-			return string.Format("{0}"/*{1}*/ + "{2}", body.name, /*surveyType,*/ this.ParameterCount);
+			return string.Format("{0}{1}", body.name, this.ParameterCount);
 		}
 
 		protected override string GetTitle()
 		{
-			//if (surveyType == 0)
-				return string.Format("Conduct orbital survey of {0}; return or transmit multiple scienctific observations", body.theName);
-			//else if (surveyType == 1)
-			//	return string.Format("Conduct surface survey of {0}; return or transmit multiple scienctific observations", body.theName);
-			//else if (surveyType == 2)
-			//	return string.Format("Conduct a search for on-going or past biological activity on {0}; return or transmit multiple scienctific observations", body.theName);
-			//else
-			//	return "Durrr";
+			return string.Format("Conduct orbital survey of {0}; return or transmit multiple scienctific observations", body.theName);
 		}
 
 		protected override string GetNotes()
 		{
-			//if (surveyType == 0 || surveyType == 1)
-				return "Science experiments with little to no transmission value remaining may need to be returned to Kerbin to complete each parameter.";
-			//else
-			//	return "Science experiments for biological activity surveys are not required to yield any science value.";
+			return "Science experiments with little to no transmission value remaining may need to be returned to Kerbin to complete each parameter.";
 		}
 
 		protected override string GetDescription()
 		{
 			string story = DMUtils.backStory["survey"][rand.Next(0, DMUtils.backStory["survey"].Count)];
-			//if (surveyType == 0)
-				return string.Format(story, this.agent.Name, "orbital", body.theName);
-			//else if (surveyType == 1)
-			//	return string.Format(story, this.agent.Name, "surface", body.theName);
-			//else if (surveyType == 2)
-			//{
-			//	story = DMUtils.backStory["biological"][rand.Next(0, DMUtils.backStory["biological"].Count)];
-			//	return string.Format(story, this.agent.Name, body.theName);
-			//}
-			//else
-			//	return "Dumb Code";
+			return string.Format(story, this.agent.Name, "orbital", body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
-			//if (surveyType == 0)
-				return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit multiple science observations.", body.theName);
-			//else if (surveyType == 1)
-			//	return string.Format("We would like you to study a region on the surface of {0}. Collect and return or transmit multiple science observations.", body.theName);
-			//else if (surveyType == 2)
-			//	return string.Format("We would like you to study {0} for signs of on-going or past biological activity. Collect and return or transmit multiple science observations.", body.theName);
-			//else
-			//	return "Fix me :(";
+			return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit multiple science observations.", body.theName);
 		}
 
 		protected override string MessageCompleted()
@@ -311,12 +194,6 @@ namespace DMagic.Contracts
 				ContractSystem.Instance.Contracts.Remove(this);
 				return;
 			}
-			//if (!int.TryParse(node.GetValue("Survey_Type"), out surveyType))
-			//{
-			//	this.Unregister();
-			//	ContractSystem.Instance.Contracts.Remove(this);
-			//	return;
-			//}
 			if (this.ParameterCount == 0)
 			{
 				DMUtils.Logging("No Parameters Loaded For This Survey Contract; Removing Now...");
@@ -329,7 +206,6 @@ namespace DMagic.Contracts
 		protected override void OnSave(ConfigNode node)
 		{
 			node.AddValue("Survey_Target", body.flightGlobalsIndex);
-			//node.AddValue("Survey_Type", surveyType);
 		}
 
 		public override bool MeetRequirements()
