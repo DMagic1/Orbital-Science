@@ -172,13 +172,12 @@ namespace DMagic
 							}
 						}
 
-						if (!DMUtils.availableScience["All"].ContainsKey(name))
-							DMUtils.availableScience["All"].Add(name, DMscience);
-
 						DMUtils.DebugLog("New Experiment: [{0}] Available For Contracts", name);
 					}
 				}
 			}
+
+			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience["All"].Count);
 
 			foreach (var sciType in Enum.GetValues(typeof(DMScienceType)))
 			{
@@ -187,9 +186,7 @@ namespace DMagic
 				{
 					if (DMUtils.availableScience.ContainsKey(type))
 					{
-						if (type == "All")
-							DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience[type].Count);
-						else
+						if (type != "All")
 							DMUtils.DebugLog("Successfully Added {0} New {1} Experiments To Contract List", DMUtils.availableScience[type].Count, type);
 					}
 				}
@@ -320,9 +317,12 @@ namespace DMagic
 		{
 			foreach (GameDatabase.TextureInfo ti in GameDatabase.Instance.databaseTexture.Where(t => t.name.StartsWith(iconURL)))
 			{
-				string s = ti.name.Remove(0, iconURL.Length);
-				ti.name = "Squad/Contracts/Icons/" + s;
-				DMUtils.Logging("DMagic Icon [{0}] Inserted Into FinePrint Database", s);
+				if (ti != null)
+				{
+					string s = ti.name.Remove(0, iconURL.Length);
+					ti.name = "Squad/Contracts/Icons/" + s;
+					DMUtils.Logging("DMagic Icon [{0}] Inserted Into FinePrint Database", s);
+				}
 			}
 		}
 
