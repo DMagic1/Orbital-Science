@@ -731,7 +731,7 @@ namespace DMagic.Part_Modules
 				failMessage = customFailMessage;
 				return false;
 			}
-			else if (scienceExp.requireAtmosphere && !vessel.mainBody.atmosphere && experimentID != "dmbiodrillscan")
+			else if (scienceExp.requireAtmosphere && !vessel.mainBody.atmosphere)
 			{
 				failMessage = customFailMessage;
 				return false;
