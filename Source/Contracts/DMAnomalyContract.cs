@@ -161,7 +161,7 @@ namespace DMagic.Contracts
 			}
 
 			this.AddParameter(newParam);
-			DMUtils.DebugLog("Added Primary Anomaly Parameter");
+
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParam.Situation), newParam.Body) * ((float)rand.Next(85, 116) / 100f);
 			newParam.SetFunds(20000f * DMUtils.reward * primaryLocationMod, 10000f * DMUtils.penalty * primaryLocationMod, body);
 			newParam.SetReputation(80f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
@@ -172,7 +172,6 @@ namespace DMagic.Contracts
 				if (aP != null)
 				{
 					this.AddParameter(aP, "collectDMAnomaly");
-					DMUtils.DebugLog("Added Secondary Anomaly Parameter");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), aP.Body) * ((float)rand.Next(85, 116) / 100f);
 					aP.SetFunds(9000f * DMUtils.reward * locationMod, 6000f * DMUtils.penalty * locationMod, body);
 					aP.SetReputation(20f * DMUtils.reward * locationMod, 5f * DMUtils.penalty * locationMod, body);
@@ -292,7 +291,6 @@ namespace DMagic.Contracts
 			{
 				try
 				{
-					DMUtils.DebugLog("Loading Anomaly Object");
 					targetAnomaly = DMScienceScenario.SciScenario.anomalyList.getAnomalyObject(body.name, hash);
 					lat = targetAnomaly.Lat;
 					lon = targetAnomaly.Lon;
