@@ -88,6 +88,7 @@ namespace DMagic.Part_Modules
 		private bool asteroidInSight = false;
 		private bool rotating = false;
 		private bool resourceOn = false;
+		private bool fullyDeployed = false;
 		private DMAsteroidScanner targetModule = null;
 		private Transform dishBase;
 		private Transform dish;
@@ -113,6 +114,7 @@ namespace DMagic.Part_Modules
 				exp = ResearchAndDevelopment.GetExperiment(experimentID);
 			if (IsDeployed)
 			{
+				fullyDeployed = true;
 				animator(0f, 1f, Anim, animationName);
 				if (USScience)
 					animator(0f, 1f, USAnim, USBayAnimation);
@@ -153,7 +155,7 @@ namespace DMagic.Part_Modules
 			{
 				EventsCheck();
 				string s = "Deactivated";
-				if (IsDeployed && resourceOn)
+				if (fullyDeployed && resourceOn)
 				{
 					s = "Searching...";
 					Vessel target = FlightGlobals.fetch.VesselTarget as Vessel;
@@ -265,7 +267,7 @@ namespace DMagic.Part_Modules
 						searchForTarget();
 					rotating = true;
 				}
-				else if (IsDeployed && !resourceOn && resourceCost > 0f)
+				else if (fullyDeployed && !resourceOn && resourceCost > 0f)
 				{
 					s = "No Power";
 					targetDistance = 0f;
@@ -474,21 +476,25 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator deployEvent()
 		{
+			IsDeployed = true;
+
 			animator(1f, 0f, Anim, animationName);
 			if (USScience)
 				animator(1f, 0f, USAnim, USBayAnimation);
 
 			yield return new WaitForSeconds(Anim[animationName].length);
 
-			IsDeployed = true;
+			fullyDeployed = true;
 		}
 
 		private IEnumerator retractEvent()
 		{
-			IsDeployed = false;
+			fullyDeployed = false;
 
 			while (dishArm.localEulerAngles.z > 1 || dish.localEulerAngles.y > 1)
 				yield return null;
+
+			IsDeployed = false;
 
 			animator(-1f, 1f, Anim, animationName);
 			if (USScience)
@@ -507,8 +513,18 @@ namespace DMagic.Part_Modules
 		[KSPEvent(guiActive = true, guiName = "Toggle Asteroid Scanner", active = true)]
 		public void toggleEvent()
 		{
-			if (IsDeployed) StartCoroutine(retractEvent());
-			else StartCoroutine(deployEvent());
+			if (IsDeployed)
+			{
+				if (!fullyDeployed)
+					StopCoroutine("deployEvent");
+				StartCoroutine("retractEvent");
+			}
+			else
+			{
+				if (fullyDeployed)
+					StopCoroutine("retractEvent");
+				StartCoroutine("deployEvent");
+			}
 		}
 
 		[KSPAction("Toggle Asteroid Scanner")]

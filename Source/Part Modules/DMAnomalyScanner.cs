@@ -49,13 +49,15 @@ namespace DMagic.Part_Modules
 		private Animation animSecondary;
 		private Transform cam, dish;
 		private const string camTransform = "camBase";
-		private const string dishTransform = "dishBase";
+		private const string dishTransform = "radarBaseArmNode0";
 
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
 			animSecondary = part.FindModelAnimators(camAnimate)[0];
 			animSecondary = part.FindModelAnimators(foundAnimate)[0];
+			if (IsDeployed)
+				fullyDeployed = true;
 			base.labDataBoost = 0.45f;
 			base.Events["CollectDataExternalEvent"].active = false;
 			if (!HighLogic.LoadedSceneIsEditor)
@@ -71,7 +73,7 @@ namespace DMagic.Part_Modules
 			if (IsDeployed)
 			{
 				DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
-				inRange();
+
 				if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
 				{
 					float cost = resourceCost * Time.deltaTime;
@@ -79,6 +81,7 @@ namespace DMagic.Part_Modules
 				}
 				if (fullyDeployed)
 				{
+					inRange();
 					rotating = true;
 					dishRotate();
 				}
@@ -114,7 +117,9 @@ namespace DMagic.Part_Modules
 
 		public override void deployEvent()
 		{
-			StartCoroutine(deployEnumerator());
+			if (!IsDeployed && fullyDeployed)
+				StopCoroutine("retractEnumerator");
+			StartCoroutine("deployEnumerator");
 		}
 
 		private IEnumerator deployEnumerator()
@@ -129,7 +134,9 @@ namespace DMagic.Part_Modules
 
 		public override void retractEvent()
 		{
-			StartCoroutine(retractEnumerator());
+			if (IsDeployed && !fullyDeployed)
+				StopCoroutine("deployEnumerator");
+			StartCoroutine("retractEnumerator");
 		}
 
 		private IEnumerator retractEnumerator()
@@ -147,8 +154,11 @@ namespace DMagic.Part_Modules
 
 			fullyDeployed = false;
 
-			while (dish.localEulerAngles.z > 1)
-				yield return null;
+			if (dish != null)
+			{
+				while (dish.localEulerAngles.y > 1)
+					yield return null;
+			}
 
 			primaryAnimator(-1f, 1f, WrapMode.Default, animationName, anim);
 			IsDeployed = false;
@@ -190,15 +200,19 @@ namespace DMagic.Part_Modules
 		//Slowly rotate dish
 		private void dishRotate()
 		{
-			dish.Rotate(Vector3.forward * Time.deltaTime * 20f);
+			if (dish != null)
+				dish.Rotate(Vector3.up * Time.deltaTime * 40f);
 		}
 
 		private void spinDishDown()
 		{
-			if (dish.localEulerAngles.z > 1)
-				dish.Rotate(Vector3.forward * Time.deltaTime * 30f);
-			else
-				rotating = false;
+			if (dish != null)
+			{
+				if (dish.localEulerAngles.y > 1)
+					dish.Rotate(Vector3.up * Time.deltaTime * 60f);
+				else
+					rotating = false;
+			}
 		}
 
 		#endregion
@@ -341,6 +355,28 @@ namespace DMagic.Part_Modules
 			}
 			else
 				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+		}
+
+		protected override bool canConduct()
+		{
+			failMessage = "";
+			if (Inoperable)
+			{
+				failMessage = "Experiment is no longer functional; must be reset at a science lab or returned to Kerbin";
+				return false;
+			}
+			else if (Deployed)
+			{
+				failMessage = storageFullMessage;
+				return false;
+			}
+			else if (storedScienceReports.Count > 0 && experimentLimit <= 1)
+			{
+				failMessage = storageFullMessage;
+				return false;
+			}
+
+			return true;
 		}
 
 		protected override string getBiome(ExperimentSituations s)

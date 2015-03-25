@@ -41,12 +41,14 @@ namespace DMagic.Part_Modules
 		private bool rotating = false;
 
 		private Transform dish;
-		private const string dishTransform = "dishBase";
+		private const string dishTransform = "armBase";
 
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
 			dish = part.FindModelTransform(dishTransform);
+			if (IsDeployed)
+				fullyDeployed = true;
 		}
 
 		private void Update()
@@ -66,7 +68,9 @@ namespace DMagic.Part_Modules
 
 		public override void deployEvent()
 		{
-			StartCoroutine(deployEnumerator());
+			if (!IsDeployed && fullyDeployed)
+				StopCoroutine("retractEnumerator");
+			StartCoroutine("deployEnumerator");
 		}
 
 		private IEnumerator deployEnumerator()
@@ -80,31 +84,40 @@ namespace DMagic.Part_Modules
 
 		public override void retractEvent()
 		{
-			StartCoroutine(retractEnumerator());
+			if (IsDeployed && !fullyDeployed)
+				StopCoroutine("deployEnumerator");
+			StartCoroutine("retractEnumerator");
 		}
 
 		private IEnumerator retractEnumerator()
 		{
 			fullyDeployed = false;
 
-			while (dish.localEulerAngles.z > 1)
-				yield return null;
+			if (dish != null)
+			{
+				while (dish.localEulerAngles.z > 1)
+					yield return null;
+			}
 
-			base.deployEvent();
+			base.retractEvent();
 		}
 
 		//Slowly rotate dish
 		private void dishRotate()
 		{
-			dish.Rotate(Vector3.forward * Time.deltaTime * 20f);
+			if (dish != null)
+				dish.Rotate(Vector3.forward * Time.deltaTime * 20f);
 		}
 
 		private void spinDishDown()
 		{
-			if (dish.localEulerAngles.z > 1)
-				dish.Rotate(Vector3.forward * Time.deltaTime * 30f);
-			else
-				rotating = false;
+			if (dish != null)
+			{
+				if (dish.localEulerAngles.z > 1)
+					dish.Rotate(Vector3.forward * Time.deltaTime * 50f);
+				else
+					rotating = false;
+			}
 		}
 
 	}
