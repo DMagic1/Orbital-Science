@@ -51,11 +51,26 @@ namespace DMagic.Contracts
 
 		protected override bool Generate()
 		{
-			if (!GetBodies_Reached(true, true).Contains(FlightGlobals.Bodies[1]))
+			DMAsteroidSurveyContract[] astContracts = ContractSystem.Instance.GetCurrentContracts<DMAsteroidSurveyContract>();
+			int offers = 0;
+			int active = 0;
+			int maxOffers = DMUtils.maxAsteroidOffered;
+			int maxActive = DMUtils.maxAsteroidActive;
+
+			for (int i = 0; i < astContracts.Length; i++)
+			{
+				DMAsteroidSurveyContract a = astContracts[i];
+				if (a.ContractState == State.Offered)
+					offers++;
+				else if (a.ContractState == State.Active)
+					active++;
+			}
+
+			if (offers >= maxOffers)
 				return false;
-			int total = ContractSystem.Instance.GetCurrentContracts<DMAsteroidSurveyContract>().Count();
-			if (total >= DMUtils.maxAsteroid)
+			if (active >= maxActive)
 				return false;
+
 			if (this.Prestige == ContractPrestige.Trivial)
 				return false;
 			else if (this.Prestige == ContractPrestige.Significant)

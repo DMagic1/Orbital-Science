@@ -59,8 +59,24 @@ namespace DMagic.Contracts
 
 		protected override bool Generate()
 		{
-			int total = ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>().Count();
-			if (total >= DMUtils.maxAnomaly)
+			DMAnomalyContract[] anomContracts = ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>();
+			int offers = 0;
+			int active = 0;
+			int maxOffers = DMUtils.maxAnomalyOffered;
+			int maxActive = DMUtils.maxAnomalyActive;
+
+			for (int i = 0; i < anomContracts.Length; i++ )
+			{
+				DMAnomalyContract a = anomContracts[i];
+				if (a.ContractState == State.Offered)
+					offers++;
+				else if (a.ContractState == State.Active)
+					active++;
+			}
+
+			if (offers >= maxOffers)
+				return false;
+			if (active >= maxActive)
 				return false;
 
 			//Make sure that the anomaly scanner is available

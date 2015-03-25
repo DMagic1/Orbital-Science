@@ -48,8 +48,24 @@ namespace DMagic.Contracts
 
 		protected override bool Generate()
 		{
-			int total = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>().Count();
-			if (total >= DMUtils.maxMagnetic)
+			DMMagneticSurveyContract[] magContracts = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>();
+			int offers = 0;
+			int active = 0;
+			int maxOffers = DMUtils.maxMagneticOffered;
+			int maxActive = DMUtils.maxMagneticActive;
+
+			for (int i = 0; i < magContracts.Length; i++)
+			{
+				DMMagneticSurveyContract m = magContracts[i];
+				if (m.ContractState == State.Offered)
+					offers++;
+				else if (m.ContractState == State.Active)
+					active++;
+			}
+
+			if (offers >= maxOffers)
+				return false;
+			if (active >= maxActive)
 				return false;
 
 			//Make sure that the RPWS is available

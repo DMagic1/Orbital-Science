@@ -68,19 +68,28 @@ namespace DMagic
 						DMUtils.penalty = 1;
 					if (!float.TryParse(setNode.GetValue("Global_Deadline"), out DMUtils.deadline))
 						DMUtils.deadline = 1;
-					if (!int.TryParse(setNode.GetValue("Max_Survey"), out DMUtils.maxSurvey))
-						DMUtils.maxSurvey = 2;
-					if (!int.TryParse(setNode.GetValue("Max_Asteroid"), out DMUtils.maxAsteroid))
-						DMUtils.maxAsteroid = 1;
-					if (!int.TryParse(setNode.GetValue("Max_Anomaly"), out DMUtils.maxAnomaly))
-						DMUtils.maxAnomaly = 1;
-					if (!int.TryParse(setNode.GetValue("Max_Magnetic"), out DMUtils.maxMagnetic))
-						DMUtils.maxMagnetic = 2;
+					if (!int.TryParse(setNode.GetValue("Max_Survey_Offered"), out DMUtils.maxSurveyOffered))
+						DMUtils.maxSurveyOffered = 2;
+					if (!int.TryParse(setNode.GetValue("Max_Survey_Active"), out DMUtils.maxSurveyActive))
+						DMUtils.maxSurveyActive = 4;
+					if (!int.TryParse(setNode.GetValue("Max_Asteroid_Offered"), out DMUtils.maxAsteroidOffered))
+						DMUtils.maxAsteroidOffered = 1;
+					if (!int.TryParse(setNode.GetValue("Max_Asteroid_Active"), out DMUtils.maxAsteroidActive))
+						DMUtils.maxAsteroidActive = 3;
+					if (!int.TryParse(setNode.GetValue("Max_Anomaly_Offered"), out DMUtils.maxAnomalyOffered))
+						DMUtils.maxAnomalyOffered = 1;
+					if (!int.TryParse(setNode.GetValue("Max_Anomaly_Active"), out DMUtils.maxAnomalyActive))
+						DMUtils.maxAnomalyActive = 3;
+					if (!int.TryParse(setNode.GetValue("Max_Magnetic_Offered"), out DMUtils.maxMagneticOffered))
+						DMUtils.maxMagneticOffered = 2;
+					if (!int.TryParse(setNode.GetValue("Max_Magnetic_Active"), out DMUtils.maxMagneticActive))
+						DMUtils.maxMagneticActive = 4;
+
 
 					DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3} ; Deadline Length: {4}",
 						DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty, DMUtils.deadline);
-					DMUtils.Logging("Max Contract Variables Set: Survey: {0} ; Asteroid: {1} ; Anomaly: {2} ; Magnetic: {3}",
-						DMUtils.maxSurvey, DMUtils.maxAsteroid, DMUtils.maxAnomaly, DMUtils.maxMagnetic);
+					DMUtils.Logging("Max Contract Variables Set: Survey Offers: {0}; Active: {1} -- Asteroid Offers: {2}; Active: {3} -- Anomaly Offers: {4}; Active: {5} -- Magnetic Offers: {6}; Active: {7}",
+						DMUtils.maxSurveyOffered, DMUtils.maxSurveyActive, DMUtils.maxAsteroidOffered, DMUtils.maxAsteroidActive, DMUtils.maxAnomalyOffered, DMUtils.maxAnomalyActive, DMUtils.maxMagneticOffered, DMUtils.maxMagneticActive);
 
 					break;
 				}
