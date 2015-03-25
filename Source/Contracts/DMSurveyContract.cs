@@ -46,7 +46,6 @@ namespace DMagic.Contracts
 		private CelestialBody body;
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
-		private int i, j = 0;
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
@@ -95,7 +94,7 @@ namespace DMagic.Contracts
 			//Add an orbital parameter
 			this.AddParameter(new EnterOrbit(body), null);
 
-			for (j = 1; j < 7; j++)
+			for (int j = 1; j < 8; j++)
 			{
 				if (sciList.Count > 0)
 				{
@@ -107,10 +106,13 @@ namespace DMagic.Contracts
 					newParams[j] = null;
 			}
 
+			int limit = 1;
+
 			//Add in all acceptable paramaters to the contract
 			foreach (DMCollectScience DMC in newParams)
 			{
-				if (i > (3 + (int)this.prestige)) break;
+				if (limit > (3 + (int)this.prestige))
+					break;
 				if (DMC != null)
 				{
 					this.AddParameter(DMC, "collectDMScience");
@@ -118,8 +120,7 @@ namespace DMagic.Contracts
 					DMC.SetScience(DMC.Container.Exp.baseValue * 0.7f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
 					DMC.SetFunds(4000f * DMUtils.reward * locationMod, 1500f * DMUtils.penalty * locationMod, body);
 					DMC.SetReputation(15f * DMUtils.reward * locationMod, 10f * DMUtils.penalty * locationMod, body);
-					i++;
-					DMUtils.DebugLog("Survey Parameter Added");
+					limit++;
 				}
 			}
 

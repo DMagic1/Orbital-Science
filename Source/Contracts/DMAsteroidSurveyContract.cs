@@ -91,7 +91,7 @@ namespace DMagic.Contracts
 			sciList.AddRange(DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Values);
 
 			//Generates new asteroid science experiments
-			for (i = 0; i < 4; i++)
+			for (i = 0; i < 5; i++)
 			{
 				if (sciList.Count > 0)
 				{
@@ -103,9 +103,13 @@ namespace DMagic.Contracts
 					newParams[i] = null;
 			}
 
+			int limit = 0;
+
 			//Add in all acceptable paramaters to the contract
 			foreach (DMAsteroidParameter DMAP in newParams)
 			{
+				if (limit > 3 + (int)this.prestige)
+					break;
 				if (DMAP != null)
 				{
 					this.AddParameter(DMAP, "collectDMScience");
@@ -113,7 +117,7 @@ namespace DMagic.Contracts
 					DMAP.SetScience(DMAP.Container.Exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
 					DMAP.SetFunds(8000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size) * modifier, 6000f * DMUtils.penalty * (size + 1) * modifier, null);
 					DMAP.SetReputation(15f * DMUtils.reward * (size + 1) * modifier, 10f * DMUtils.penalty * (size + 1) * modifier, null);
-					DMUtils.DebugLog("Asteroid Survey Parameter Added");
+					limit++;
 				}
 			}
 
