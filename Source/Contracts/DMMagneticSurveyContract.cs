@@ -101,10 +101,6 @@ namespace DMagic.Contracts
 			longParam.AddParameter(eccentricParam);
 			longParam.AddParameter(inclinedParam);
 
-			longParam.SetFunds(50000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-			longParam.SetReputation(50f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-			longParam.SetScience(60f * DMUtils.science  * ((float)rand.Next(85, 116) / 100f), body);
-
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
 
@@ -115,7 +111,6 @@ namespace DMagic.Contracts
 				else
 				{
 					this.AddParameter(DMCS, "collectDMScience");
-					DMUtils.DebugLog("Added Mag Survey Param");
 					DMCS.SetFunds(8000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
 					DMCS.SetReputation(25f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
 					DMCS.SetScience(25f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
