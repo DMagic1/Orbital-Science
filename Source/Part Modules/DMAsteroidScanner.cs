@@ -43,23 +43,23 @@ namespace DMagic.Part_Modules
 		#region Fields
 
 		[KSPField]
-		public string experimentID;
+		public string experimentID = "";
 		[KSPField]
-		public string animationName;
+		public string animationName = "";
 		[KSPField]
-		public string greenLight;
+		public string greenLight = "";
 		[KSPField]
-		public string yellowLight;
+		public string yellowLight = "";
 		[KSPField]
-		public string USBayAnimation;
+		public string USBayAnimation = "";
 		[KSPField]
-		public bool USScience;
+		public bool USScience = false;
 		[KSPField]
-		public string experimentResource;
+		public string experimentResource = "ElectricCharge";
 		[KSPField]
-		public bool rerunnable;
+		public bool rerunnable = true;
 		[KSPField]
-		public bool dataIsCollectable;
+		public bool dataIsCollectable = true;
 		[KSPField]
 		public float resourceCost = 0f;
 		[KSPField]
