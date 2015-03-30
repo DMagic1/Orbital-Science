@@ -258,15 +258,11 @@ namespace DMagic.Parameters
 		private void dockCheck(GameEvents.FromToAction<Part, Part> Parts)
 		{
 			DMUtils.DebugLog("Dock Event");
-			if (suitableVessels.Count > 0)
+			if (Parts.from.vessel.mainBody == body)
 			{
-				DMUtils.DebugLog("Docking To Mag Surveyor");
-				if (Parts.from.vessel.mainBody == body)
-				{
-					DMUtils.DebugLog("Mainbody Matches");
-					modifiedByDocking = true;
-					timer = 0;
-				}
+				DMUtils.DebugLog("Mainbody Matches");
+				modifiedByDocking = true;
+				timer = 0;
 			}
 		}
 
