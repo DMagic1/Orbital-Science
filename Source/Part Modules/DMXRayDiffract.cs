@@ -60,24 +60,43 @@ namespace DMagic.Part_Modules
 			Vector3 p = t.position;
 			Ray r = new Ray(p, -1f * t.forward);
 			float scale = part.rescaleFactor;
+
+			//This section handles any changes in the part's size by TweakScale
+			//If the TweakScale module uses the free scale resize option the value will be
+			//reported as a percentage, rather than an multiplier
 			if (part.Modules.Contains("TweakScale"))
 			{
 				PartModule pM = part.Modules["TweakScale"];
 				if (pM.Fields.GetValue("currentScale") != null)
 				{
+					bool free = false;
+					if (pM.Fields.GetValue("isFreeScale") != null)
+					{
+						try
+						{
+							free = pM.Fields.GetValue<bool>("isFreeScale");
+						}
+						catch (Exception e)
+						{
+							Debug.LogError("[DMagic] Error in detecting TweakScale type; asuming not freeScale : " + e);
+						}
+					}
 					float tweakedScale = 1f;
 					try
 					{
 						tweakedScale = pM.Fields.GetValue<float>("currentScale");
-						DMUtils.Logging("TweakScale Value Detected On XRay Instrument; Drill Length Set To 8.8m * {0}", tweakedScale);
+						//Divide by 100 if the tweakscale value returns a percentage
+						if (free)
+							tweakedScale /= 100;
 					}
-					catch
+					catch (Exception e)
 					{
-						DMUtils.Logging("Error in TweakScale PartModule Field; Resetting TweakScale Factor to 1");
+						Debug.LogError("[DMagic] Error in detecting TweakScale component; reset distance scale to 1 : " + e);
 					}
 					scale *= tweakedScale;
 				}
 			}
+
 			float drillLength = 4f * scale;
 			Physics.Raycast(r, out hit, drillLength);
 			if (hit.collider != null)
