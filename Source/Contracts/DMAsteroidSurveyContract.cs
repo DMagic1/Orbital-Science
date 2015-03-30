@@ -195,7 +195,7 @@ namespace DMagic.Contracts
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { "Minmus", "ReturnFromOrbit" });
+			return ProgressTracking.Instance.NodeComplete(new string[] { "Minmus", "ReturnFromOrbit" }) && GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
 		}
 
 	}
