@@ -34,13 +34,24 @@ using UnityEngine;
 
 namespace DMagic.Scenario
 {
+	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
 	internal class DMRecoveryWatcher : MonoBehaviour
 	{
+		private static bool loaded = false;
+
+		private void Awake()
+		{
+			DMUtils.DebugLog("Starting Recovery Watcher");
+			if (!loaded)
+			{
+				GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
+				loaded = true;
+			}
+		}
 
 		private void Start()
 		{
-			DMUtils.DebugLog("Starting Recovery Watcher");
-			GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
+			DontDestroyOnLoad(this);
 		}
 
 		private void OnDestroy()
