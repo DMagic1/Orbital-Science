@@ -153,7 +153,7 @@ namespace DMagic.Contracts
 				if (sciList.Count > 0)
 				{
 					DMScience = sciList[rand.Next(0, sciList.Count)];
-					anomParams[i] = (DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly, DMScience));
+					anomParams[i] = (DMAnomalyGenerator.fetchAnomalyParameter(body, DMScience));
 					sciList.Remove(DMScience);
 				}
 				else
@@ -172,7 +172,7 @@ namespace DMagic.Contracts
 				if (aP != null)
 				{
 					this.AddParameter(aP, "collectDMAnomaly");
-					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), aP.Body) * ((float)rand.Next(85, 116) / 100f);
+					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), body) * ((float)rand.Next(85, 116) / 100f);
 					aP.SetFunds(9000f * DMUtils.reward * locationMod, 6000f * DMUtils.penalty * locationMod, body);
 					aP.SetReputation(20f * DMUtils.reward * locationMod, 5f * DMUtils.penalty * locationMod, body);
 					aP.SetScience(aP.Container.Exp.baseValue * 2f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
@@ -289,13 +289,17 @@ namespace DMagic.Contracts
 			}
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				try
+				if (DMScienceScenario.SciScenario != null)
 				{
-					targetAnomaly = DMScienceScenario.SciScenario.anomalyList.getAnomalyObject(body.name, hash);
+					if (DMScienceScenario.SciScenario.anomalyList != null)
+						targetAnomaly = DMScienceScenario.SciScenario.anomalyList.getAnomalyObject(body.name, hash);
+				}
+				if (targetAnomaly != null)
+				{
 					lat = targetAnomaly.Lat;
 					lon = targetAnomaly.Lon;
 				}
-				catch
+				else
 				{
 					DMUtils.Logging("Failed To Load Anomaly Contract Object");
 					this.Unregister();
@@ -329,6 +333,30 @@ namespace DMagic.Contracts
 		public override bool MeetRequirements()
 		{
 			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Orbit" });
+		}
+
+		/// <summary>
+		/// Used externally to return the target Celestial Body
+		/// </summary>
+		/// <param name="cP">Instance of the requested Contract</param>
+		/// <returns>Celestial Body object</returns>
+		public static CelestialBody TargetBody(Contract c)
+		{
+			if (c == null || c.GetType() != typeof(DMAnomalyContract))
+				return null;
+
+			DMAnomalyContract Instance = (DMAnomalyContract)c;
+			return Instance.body;
+		}
+
+		public CelestialBody Body
+		{
+			get { return body; }
+		}
+
+		public DMAnomalyObject TargetAnomaly
+		{
+			get { return targetAnomaly; }
 		}
 
 	}

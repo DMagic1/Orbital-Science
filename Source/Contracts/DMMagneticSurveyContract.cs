@@ -93,9 +93,9 @@ namespace DMagic.Contracts
 			double inclination = 20d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 			if (inclination > 75) inclination = 75;
 
-			DMLongOrbitParameter longParam = new DMLongOrbitParameter(body, time);
-			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(body, eccen, 0);
-			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(body, inclination, 1);
+			DMLongOrbitParameter longParam = new DMLongOrbitParameter(time);
+			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(eccen, 0);
+			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(inclination, 1);
 
 			this.AddParameter(longParam);
 			longParam.AddParameter(eccentricParam);
@@ -202,6 +202,25 @@ namespace DMagic.Contracts
 		public override bool MeetRequirements()
 		{
 			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" });
+		}
+
+		/// <summary>
+		/// Used externally to return the target Celestial Body
+		/// </summary>
+		/// <param name="cP">Instance of the requested Contract</param>
+		/// <returns>Celestial Body object</returns>
+		public static CelestialBody TargetBody(Contract c)
+		{
+			if (c == null || c.GetType() != typeof(DMMagneticSurveyContract))
+				return null;
+
+			DMMagneticSurveyContract Instance = (DMMagneticSurveyContract)c;
+			return Instance.body;
+		}
+
+		public CelestialBody Body
+		{
+			get { return body; }
 		}
 	}
 }

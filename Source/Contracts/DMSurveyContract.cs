@@ -214,5 +214,19 @@ namespace DMagic.Contracts
 			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Orbit" });
 		}
 
+		/// <summary>
+		/// Used externally to return the target Celestial Body
+		/// </summary>
+		/// <param name="cP">Instance of the requested Contract</param>
+		/// <returns>Celestial Body object</returns>
+		public static CelestialBody TargetBody(Contract c)
+		{
+			if (c == null || c.GetType() != typeof(DMSurveyContract))
+				return null;
+
+			DMSurveyContract Instance = (DMSurveyContract)c;
+			return Instance.body;
+		}
+
 	}
 }

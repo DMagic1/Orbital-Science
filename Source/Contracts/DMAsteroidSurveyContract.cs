@@ -96,7 +96,7 @@ namespace DMagic.Contracts
 				if (sciList.Count > 0)
 				{
 					DMScience = sciList[rand.Next(0, sciList.Count)];
-					newParams[i] = DMAsteroidGenerator.fetchAsteroidParameter(size, DMScience);
+					newParams[i] = DMAsteroidGenerator.fetchAsteroidParameter(DMScience);
 					sciList.Remove(DMScience);
 				}
 				else
@@ -195,8 +195,12 @@ namespace DMagic.Contracts
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { "Minmus", "ReturnFromOrbit" }) && GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
+			return ProgressTracking.Instance.NodeComplete(new string[] { "Minmus", "Orbit" }) && GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
 		}
 
+		public string AsteroidSize
+		{
+			get { return hash; }
+		}
 	}
 }
