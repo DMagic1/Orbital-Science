@@ -41,7 +41,7 @@ namespace DMagic.Parameters
 {
 	public class DMOrbitalParameters: ContractParameter
 	{
-		private CelestialBody body;
+		private DMMagneticSurveyContract root;
 		private Vessel newV;
 		private Dictionary<Guid, Vessel> suitableVessels = new Dictionary<Guid, Vessel>();
 		private List<Vessel> removeV = new List<Vessel>();
@@ -54,28 +54,18 @@ namespace DMagic.Parameters
 		{
 		}
 
-		internal DMOrbitalParameters(CelestialBody Body, double Param, int Type)
+		internal DMOrbitalParameters(double Param, int Type)
 		{
-			body = Body;
 			orbitalParameter = Param;
 			type = Type;
 			this.disableOnStateChange = false;
 		}
 
 		//Properties to be accessed by parent contract
-		public CelestialBody Body
-		{
-			get { return body; }
-		}
 
 		public double OrbitalParameter
 		{
 			get { return orbitalParameter; }
-		}
-
-		protected override string GetHashString()
-		{
-			return body.name;
 		}
 
 		protected override string GetTitle()
@@ -105,15 +95,15 @@ namespace DMagic.Parameters
 		protected override void OnSave(ConfigNode node)
 		{
 			if (HighLogic.LoadedSceneIsEditor)
-				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3:N3}", type, body.flightGlobalsIndex, vName, orbitalParameter));
+				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", type, vName, orbitalParameter));
 			else if (suitableVessels.Count > 0)
 			{
 				List<Vessel> suitableV = suitableVessels.Values.ToList();
 				vName = stringConcat(suitableV);
-				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3:N3}", type, body.flightGlobalsIndex, vName, orbitalParameter));
+				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", type, vName, orbitalParameter));
 			}
 			else
-				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2}|{3:N3}", type, body.flightGlobalsIndex, vName, orbitalParameter));
+				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", type, vName, orbitalParameter));
 		}
 
 		private string stringConcat(List<Vessel> source)
@@ -153,7 +143,6 @@ namespace DMagic.Parameters
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int target;
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
 			if (!int.TryParse(orbitString[0], out type))
 			{
@@ -162,17 +151,8 @@ namespace DMagic.Parameters
 				this.Root.RemoveParameter(this);
 				return;
 			}
-			if (int.TryParse(orbitString[1], out target))
-				body = FlightGlobals.Bodies[target];
-			else
-			{
-				DMUtils.Logging("Failed To Load Target Body Variables; Mag Orbital Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
-				return;
-			}
-			vName = orbitString[2];
-			if (!double.TryParse(orbitString[3], out orbitalParameter))
+			vName = orbitString[1];
+			if (!double.TryParse(orbitString[2], out orbitalParameter))
 			{
 				DMUtils.Logging("Failed To Load Orbital Variables; Mag Orbital Parameter Removed");
 				this.Unregister();
@@ -208,6 +188,8 @@ namespace DMagic.Parameters
 				}
 			}
 			this.disableOnStateChange = false;
+
+			root = (DMMagneticSurveyContract)this.Root;
 		}
 
 		private void addVessel(Vessel v)
@@ -229,9 +211,9 @@ namespace DMagic.Parameters
 			if (v == FlightGlobals.ActiveVessel)
 			{
 				//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
-				if (b == body && v.situation == Vessel.Situations.ORBITING)
+				if (b == root.Body && v.situation == Vessel.Situations.ORBITING)
 				{
-					DMUtils.DebugLog("Vessel Mainbody {0} Matches {1}, Checking For Instruments On: ", v.mainBody.name, body.name, v.vesselName);
+					DMUtils.DebugLog("Vessel Mainbody {0} Matches {1}, Checking For Instruments On: ", v.mainBody.name, root.Body.name, v.vesselName);
 					if (VesselEquipped(v))
 					{
 						addVessel(v);
@@ -239,7 +221,7 @@ namespace DMagic.Parameters
 					}
 				}
 				else
-					DMUtils.DebugLog("Vessel Mainbody {0} Does Not Match: {1}", v.mainBody.name, body.name);
+					DMUtils.DebugLog("Vessel Mainbody {0} Does Not Match: {1}", v.mainBody.name, root.Body.name);
 			}
 		}
 
@@ -258,7 +240,7 @@ namespace DMagic.Parameters
 		private void dockCheck(GameEvents.FromToAction<Part, Part> Parts)
 		{
 			DMUtils.DebugLog("Dock Event");
-			if (Parts.from.vessel.mainBody == body)
+			if (Parts.from.vessel.mainBody == root.Body)
 			{
 				DMUtils.DebugLog("Mainbody Matches");
 				modifiedByDocking = true;
@@ -274,7 +256,7 @@ namespace DMagic.Parameters
 				Vessel V = v;
 				if (V.Parts.Count <= 1)
 					return;
-				if (V.mainBody == body)
+				if (V.mainBody == root.Body)
 				{
 					DMUtils.DebugLog("Mainbody Matches");
 					newV = V;
@@ -297,7 +279,7 @@ namespace DMagic.Parameters
 						removeV.Clear();
 						foreach (Vessel v in suitableVessels.Values)
 						{
-							if (v.mainBody != body)
+							if (v.mainBody != root.Body)
 							{
 								DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
 								removeV.Add(v);

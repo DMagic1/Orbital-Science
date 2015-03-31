@@ -41,23 +41,16 @@ namespace DMagic.Parameters
 {
 	class DMLongOrbitParameter: ContractParameter
 	{
-		private CelestialBody body;
 		private double orbitTime, timeNeeded;
 
 		public DMLongOrbitParameter()
 		{
 		}
 
-		internal DMLongOrbitParameter(CelestialBody Body, double Time)
+		internal DMLongOrbitParameter(double Time)
 		{
-			body = Body;
 			orbitTime = 0;
 			timeNeeded = Time;
-		}
-
-		public CelestialBody Body
-		{
-			get { return body; }
 		}
 
 		public double TimeNeeded
@@ -70,14 +63,9 @@ namespace DMagic.Parameters
 			get { return orbitTime; }
 		}
 
-		protected override string GetHashString()
-		{
-			return body.name;
-		}
-
 		protected override string GetTitle()
 		{
-			return string.Format("Enter and maintain proper orbit around {0} for {1:N0} days", body.theName, DMUtils.timeInDays(timeNeeded));
+			return string.Format("Enter and maintain proper orbit for {0:N0} days", DMUtils.timeInDays(timeNeeded));
 		}
 
 		protected override string GetNotes()
@@ -87,28 +75,18 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Orbital_Parameter", string.Format("{0}|{1:N1}|{2:N1}", body.flightGlobalsIndex, orbitTime, timeNeeded));
+			node.AddValue("Orbital_Parameter", string.Format("{0:N1}|{1:N1}", orbitTime, timeNeeded));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int target;
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
-			if (int.TryParse(orbitString[0], out target))
-				body = FlightGlobals.Bodies[target];
-			else
-			{
-				DMUtils.Logging("Failed To Load Target Body Variables; Mag Long Orbit Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
-				return;
-			}
-			if (!double.TryParse(orbitString[1], out orbitTime))
+			if (!double.TryParse(orbitString[0], out orbitTime))
 			{
 				DMUtils.Logging("Failed To Load Orbit Time Variables; Mag Long Orbit Parameter Reset");
 				orbitTime = 0;
 			}
-			if (!double.TryParse(orbitString[2], out timeNeeded))
+			if (!double.TryParse(orbitString[1], out timeNeeded))
 			{
 				DMUtils.Logging("Failed To Load Time Needed Variables; Mag Long Orbit Parameter Reset to Default Value Of 100 Days");
 				timeNeeded = 2160000;

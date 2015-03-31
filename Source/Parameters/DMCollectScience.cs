@@ -71,6 +71,9 @@ namespace DMagic.Parameters
 		/// <returns>Available Part name string</returns>
 		public static string PartName(ContractParameter cP)
 		{
+			if (cP == null || cP.GetType() != typeof(DMCollectScience))
+				return "";
+
 			DMCollectScience Instance = (DMCollectScience)cP;
 			return Instance.partName;
 		}

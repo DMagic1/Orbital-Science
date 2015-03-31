@@ -42,27 +42,22 @@ namespace DMagic.Parameters
 {
 	public class DMAnomalyParameter: ContractParameter
 	{
-		private CelestialBody body;
-		private DMAnomalyObject city;
 		private ExperimentSituations situation;
 		private DMScienceContainer scienceContainer;
-		private string name, subject, hash, partName;
+		private DMAnomalyContract root;
+		private string name, partName;
 		private bool collected = false;
 
 		public DMAnomalyParameter()
 		{
 		}
 
-		internal DMAnomalyParameter(CelestialBody Body, DMAnomalyObject City, ExperimentSituations Situation, string Name)
+		internal DMAnomalyParameter(ExperimentSituations Situation, string Name)
 		{
-			body = Body;
 			situation = Situation;
 			name = Name;
-			city = City;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			partName = scienceContainer.SciPart;
-			subject = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, body.name, situation);
-			hash = city.Name;
 		}
 
 		/// <summary>
@@ -72,18 +67,11 @@ namespace DMagic.Parameters
 		/// <returns>Available Part name string</returns>
 		public static string PartName(ContractParameter cP)
 		{
+			if (cP == null || cP.GetType() != typeof(DMAnomalyParameter))
+				return "";
+
 			DMAnomalyParameter aP = (DMAnomalyParameter)cP;
 			return aP.partName;
-		}
-
-		public DMAnomalyObject City
-		{
-			get { return city; }
-		}
-
-		public CelestialBody Body
-		{
-			get { return body; }
 		}
 
 		public ExperimentSituations Situation
@@ -96,11 +84,6 @@ namespace DMagic.Parameters
 			get { return name; }
 		}
 
-		public string Subject
-		{
-			get { return subject; }
-		}
-
 		public DMScienceContainer Container
 		{
 			get { return scienceContainer; }
@@ -108,15 +91,15 @@ namespace DMagic.Parameters
 
 		protected override string GetHashString()
 		{
-			return hash;
+			return name;
 		}
 
 		protected override string GetTitle()
 		{
 			if (situation == ExperimentSituations.SrfLanded)
-				return string.Format("{0} data from the surface near the anomalous signal", scienceContainer.Exp.experimentTitle, body.theName);
+				return string.Format("{0} data from the surface near the anomalous signal", scienceContainer.Exp.experimentTitle);
 			else if (situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingLow)
-				return string.Format("{0} data from above near the anomalous signal", scienceContainer.Exp.experimentTitle, body.theName);
+				return string.Format("{0} data from above near the anomalous signal", scienceContainer.Exp.experimentTitle);
 			else
 				return "Fix Your Stupid Code Idiot";
 		}
@@ -135,24 +118,14 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2}|{3}|{4}", hash, body.flightGlobalsIndex, name, (int)situation, collected));
+			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2}", name, (int)situation, collected));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int bodyID, sitID;
+			int sitID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
-			hash = anomalyString[0];
-			if (int.TryParse(anomalyString[1], out bodyID))
-				body = FlightGlobals.Bodies[bodyID];
-			else
-			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Target Body Value; Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
-				return;
-			}
-			name = anomalyString[2];
+			name = anomalyString[0];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
@@ -163,7 +136,7 @@ namespace DMagic.Parameters
 			}
 			else
 				partName = scienceContainer.SciPart;
-			if (int.TryParse(anomalyString[3], out sitID))
+			if (int.TryParse(anomalyString[1], out sitID))
 				situation = (ExperimentSituations)sitID;
 			else
 			{
@@ -172,23 +145,13 @@ namespace DMagic.Parameters
 				this.Root.RemoveParameter(this);
 				return;
 			}
-			if (!bool.TryParse(anomalyString[4], out collected))
+			if (!bool.TryParse(anomalyString[2], out collected))
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract Collected State; Reset Parameter");
 				collected = false;
 			}
-			if (HighLogic.LoadedSceneIsFlight)
-			{
-				city = DMScienceScenario.SciScenario.anomalyList.getAnomalyObject(body.name, hash);
-				if (city == null)
-				{
-					DMUtils.Logging("Failed To Load Anomaly Contract Object; Parameter Removed");
-					this.Unregister();
-					this.Root.RemoveParameter(this);
-					return;
-				}
-			}
-			subject = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, body.name, situation);
+
+			root = (DMAnomalyContract)this.Root;
 		}
 
 		private void monitorAnomScience(CelestialBody B, string s, string name)
@@ -197,19 +160,19 @@ namespace DMagic.Parameters
 			{
 				if (s == scienceContainer.Exp.id)
 				{
-					DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, city);
-					DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", city.VDistance, city.VHeight, city.VHorizontal);
+					DMAnomalyList.updateAnomaly(FlightGlobals.ActiveVessel, root.TargetAnomaly);
+					DMUtils.Logging("Distance To Anomaly: {0} ; Altitude Above Anomaly: {1} ; Horizontal Distance To Anomaly: {2}", root.TargetAnomaly.VDistance, root.TargetAnomaly.VHeight, root.TargetAnomaly.VHorizontal);
 
 					//Draw a cone above the anomaly position up to 100km with a diameter of 60km at its widest
-					if (city.VDistance < 100000)
+					if (root.TargetAnomaly.VDistance < 100000)
 					{
 						if (situation == ExperimentSituations.FlyingLow || situation == ExperimentSituations.InSpaceLow || situation == ExperimentSituations.FlyingHigh)
 						{
-							if (city.VHeight > 625 && city.VHeight < 100000)
+							if (root.TargetAnomaly.VHeight > 625 && root.TargetAnomaly.VHeight < 100000)
 							{
-								double vHeight = city.VHeight;
+								double vHeight = root.TargetAnomaly.VHeight;
 								if (vHeight > 50000) vHeight = 50000;
-								if (city.VHorizontal < (60000 * (city.VHeight / 50000)))
+								if (root.TargetAnomaly.VHorizontal < (60000 * (root.TargetAnomaly.VHeight / 50000)))
 								{
 									ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
@@ -217,9 +180,9 @@ namespace DMagic.Parameters
 								else
 									ScreenMessages.PostScreenMessage("Anomalous signal too weak, try again when closer", 6f, ScreenMessageStyle.UPPER_CENTER);
 							}
-							else if (city.VHeight < 625)
+							else if (root.TargetAnomaly.VHeight < 625)
 							{
-								if (city.VHorizontal < 750)
+								if (root.TargetAnomaly.VHorizontal < 750)
 								{
 									ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 									collected = true;
@@ -230,7 +193,7 @@ namespace DMagic.Parameters
 						}
 						else if (situation == ExperimentSituations.SrfLanded)
 						{
-							if (city.VHorizontal < 500)
+							if (root.TargetAnomaly.VHorizontal < 500)
 							{
 								ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 								collected = true;
@@ -245,7 +208,7 @@ namespace DMagic.Parameters
 
 		private void anomalyScience(float sci, ScienceSubject sub)
 		{
-			if (sub.id.Contains(subject))
+			if (sub.id.Contains(string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.Body.name, situation)))
 			{
 				if (collected)
 					base.SetComplete();
