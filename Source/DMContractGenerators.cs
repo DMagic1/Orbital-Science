@@ -213,7 +213,7 @@ namespace DMagic
 	{
 		private static System.Random rand = DMUtils.rand;
 
-		internal static DMAsteroidParameter fetchAsteroidParameter(int Size, DMScienceContainer DMScience)
+		internal static DMAsteroidParameter fetchAsteroidParameter(DMScienceContainer DMScience)
 		{
 			ExperimentSituations targetSituation;
 			AvailablePart aPart;
@@ -250,7 +250,7 @@ namespace DMagic
 				return null;
 
 			DMUtils.DebugLog("Successfully Generated Asteroid Survey Parameter");
-			return new DMAsteroidParameter(Size, targetSituation, name);
+			return new DMAsteroidParameter(targetSituation, name);
 		}
 
 	}
@@ -294,7 +294,7 @@ namespace DMagic
 			return new DMCollectScience(Body, targetSituation, anomName, "Anomaly Scan", 2);
 		}
 
-		internal static DMAnomalyParameter fetchAnomalyParameter(CelestialBody Body, DMAnomalyObject City, DMScienceContainer DMScience)
+		internal static DMAnomalyParameter fetchAnomalyParameter(CelestialBody Body, DMScienceContainer DMScience)
 		{
 			AvailablePart aPart;
 			ExperimentSituations targetSituation;
@@ -327,7 +327,7 @@ namespace DMagic
 				DMUtils.DebugLog("Experimental Situation: {0}", targetSituation);
 			}
 
-			return new DMAnomalyParameter(Body, City, targetSituation, name);
+			return new DMAnomalyParameter(targetSituation, name);
 		}
 	}
 }
