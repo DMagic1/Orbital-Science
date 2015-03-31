@@ -66,8 +66,8 @@ namespace DMagic.Scenario
 		}
 
 		//Recovery Watcher Objects
-		private DMTransmissionWatcher tranWatcher;
-		private DMRecoveryWatcher recoveryWatcher;
+		//private static DMTransmissionWatcher tranWatcher = null;
+		//private static DMRecoveryWatcher recoveryWatcher = null;
 
 		//Anomaly tracking object
 		internal DMAnomalyList anomalyList;
@@ -145,30 +145,16 @@ namespace DMagic.Scenario
 					}
 				}
 			}
-			//try
-			//{
-			//	if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
-			//		recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
-			//	if (HighLogic.LoadedSceneIsFlight)
-			//	{
-			//		tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
-			//		anomalyList = gameObject.AddComponent<DMAnomalyList>();
-			//		updateRemainingData();
-			//	}
-			//}
-			//catch (Exception e)
-			//{
-			//	Debug.LogWarning("[DMagic] Error While Initializing Science Recovery Watcher: " + e);
-			//}
 		}
 
 		private void Start()
 		{
-			if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
-				recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
+			//if (recoveryWatcher == null)
+			//	recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
+			//if (tranWatcher == null)
+			//	tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
 				anomalyList = gameObject.AddComponent<DMAnomalyList>();
 				updateRemainingData();
 			}
@@ -176,12 +162,12 @@ namespace DMagic.Scenario
 
 		private void OnDestroy()
 		{
-			if (tranWatcher != null)
-				Destroy(tranWatcher);
+			//if (tranWatcher != null)
+			//	Destroy(tranWatcher);
 			if (anomalyList != null)
 				Destroy(anomalyList);
-			if (recoveryWatcher != null)
-				Destroy(recoveryWatcher);
+			//if (recoveryWatcher != null)
+			//	Destroy(recoveryWatcher);
 		}
 
 		private void addDMScience(DMScienceData data)
