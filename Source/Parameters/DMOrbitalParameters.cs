@@ -103,7 +103,7 @@ namespace DMagic.Parameters
 				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", type, vName, orbitalParameter));
 			}
 			else
-				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", type, vName, orbitalParameter));
+				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", type, "", orbitalParameter));
 		}
 
 		private string stringConcat(List<Vessel> source)
@@ -154,10 +154,11 @@ namespace DMagic.Parameters
 			vName = orbitString[1];
 			if (!double.TryParse(orbitString[2], out orbitalParameter))
 			{
-				DMUtils.Logging("Failed To Load Orbital Variables; Mag Orbital Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
-				return;
+				DMUtils.Logging("Failed To Load Orbital Variables; Mag Orbital Parameter Reset");
+				if (type == 0)
+					orbitalParameter = 0.2;
+				else
+					orbitalParameter = 20;
 			}
 			if (!HighLogic.LoadedSceneIsEditor)
 			{
