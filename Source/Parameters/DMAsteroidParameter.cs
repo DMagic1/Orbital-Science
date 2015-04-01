@@ -113,7 +113,7 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}", name, (int)scienceLocation, collected));
+			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}", name, collected, (int)scienceLocation));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -131,19 +131,17 @@ namespace DMagic.Parameters
 			}
 			else
 				partName = scienceContainer.SciPart;
-			if (int.TryParse(scienceString[1], out targetLocation))
+			if (!bool.TryParse(scienceString[1], out collected))
+			{
+				DMUtils.Logging("Failed To Load Collecte State; Asteroid Parameter Set To Complete");
+				collected = true;
+			}
+			if (int.TryParse(scienceString[2], out targetLocation))
 				scienceLocation = (ExperimentSituations)targetLocation;
 			else
 			{
-				DMUtils.Logging("Failed To Load Situation Variables; Asteroid Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
-				return;
-			}
-			if (!bool.TryParse(scienceString[2], out collected))
-			{
-				DMUtils.Logging("Failed To Load Collecte State; Asteroid Parameter Reset");
-				collected = false;
+				DMUtils.Logging("Failed To Load Situation Variables; Asteroid Parameter Set To Complete");
+				collected = true;
 			}
 
 			root = (DMAsteroidSurveyContract)this.Root;

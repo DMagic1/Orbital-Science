@@ -118,14 +118,26 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2}", name, (int)situation, collected));
+			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2}", (int)situation, collected, name));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
 			int sitID;
 			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
-			name = anomalyString[0];
+			if (int.TryParse(anomalyString[0], out sitID))
+				situation = (ExperimentSituations)sitID;
+			else
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract Situation Value; Parameter Set To Complete");
+				collected = true;
+			}
+			if (!bool.TryParse(anomalyString[1], out collected))
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract Collected State; Parameter Set To Complete");
+				collected = true;
+			}
+			name = anomalyString[2];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
@@ -136,20 +148,6 @@ namespace DMagic.Parameters
 			}
 			else
 				partName = scienceContainer.SciPart;
-			if (int.TryParse(anomalyString[1], out sitID))
-				situation = (ExperimentSituations)sitID;
-			else
-			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Situation Value; Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
-				return;
-			}
-			if (!bool.TryParse(anomalyString[2], out collected))
-			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Collected State; Reset Parameter");
-				collected = false;
-			}
 
 			root = (DMAnomalyContract)this.Root;
 		}
