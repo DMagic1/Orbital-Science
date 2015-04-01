@@ -130,21 +130,19 @@ namespace DMagic.Parameters
 			else
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract Situation Value; Parameter Set To Complete");
-				collected = true;
+				this.SetComplete();
 			}
 			if (!bool.TryParse(anomalyString[1], out collected))
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract Collected State; Parameter Set To Complete");
-				collected = true;
+				this.SetComplete();
 			}
 			name = anomalyString[2];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
-				return;
+				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Set To Complete");
+				this.SetComplete();
 			}
 			else
 				partName = scienceContainer.SciPart;

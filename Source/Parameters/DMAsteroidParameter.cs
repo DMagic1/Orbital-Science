@@ -124,16 +124,14 @@ namespace DMagic.Parameters
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
-				return;
+				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Set To Complete");
+				this.SetComplete();
 			}
 			else
 				partName = scienceContainer.SciPart;
 			if (!bool.TryParse(scienceString[1], out collected))
 			{
-				DMUtils.Logging("Failed To Load Collecte State; Asteroid Parameter Set To Complete");
+				DMUtils.Logging("Failed To Load Collecte State; Asteroid Parameter Assuming Experiment Already Collected");
 				collected = true;
 			}
 			if (int.TryParse(scienceString[2], out targetLocation))
@@ -141,7 +139,7 @@ namespace DMagic.Parameters
 			else
 			{
 				DMUtils.Logging("Failed To Load Situation Variables; Asteroid Parameter Set To Complete");
-				collected = true;
+				this.SetComplete();
 			}
 
 			root = (DMAsteroidSurveyContract)this.Root;
