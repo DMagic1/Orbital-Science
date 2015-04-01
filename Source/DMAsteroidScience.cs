@@ -179,7 +179,7 @@ namespace DMagic
 		}
 
 		//Are we near the asteroid, cycle through existing vessels, only target asteroids within 2km
-		internal static bool AsteroidNear
+		public static bool AsteroidNear
 		{
 			get
 			{
