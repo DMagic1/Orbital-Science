@@ -65,10 +65,6 @@ namespace DMagic.Scenario
 			}
 		}
 
-		//Recovery Watcher Objects
-		//private static DMTransmissionWatcher tranWatcher = null;
-		//private static DMRecoveryWatcher recoveryWatcher = null;
-
 		//Anomaly tracking object
 		internal DMAnomalyList anomalyList;
 
@@ -149,10 +145,6 @@ namespace DMagic.Scenario
 
 		private void Start()
 		{
-			//if (recoveryWatcher == null)
-			//	recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
-			//if (tranWatcher == null)
-			//	tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
 			if (HighLogic.LoadedSceneIsFlight)
 			{
 				anomalyList = gameObject.AddComponent<DMAnomalyList>();
@@ -162,12 +154,8 @@ namespace DMagic.Scenario
 
 		private void OnDestroy()
 		{
-			//if (tranWatcher != null)
-			//	Destroy(tranWatcher);
 			if (anomalyList != null)
 				Destroy(anomalyList);
-			//if (recoveryWatcher != null)
-			//	Destroy(recoveryWatcher);
 		}
 
 		private void addDMScience(DMScienceData data)
