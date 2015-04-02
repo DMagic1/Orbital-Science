@@ -42,7 +42,7 @@ namespace DMagic.Contracts
 {
 	public class DMAsteroidSurveyContract: Contract
 	{
-		private DMAsteroidParameter[] newParams = new DMAsteroidParameter[4];
+		private DMAsteroidParameter[] newParams = new DMAsteroidParameter[6];
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
 		private string hash;
@@ -91,7 +91,7 @@ namespace DMagic.Contracts
 			sciList.AddRange(DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Values);
 
 			//Generates new asteroid science experiments
-			for (i = 0; i < 5; i++)
+			for (i = 0; i < 6; i++)
 			{
 				if (sciList.Count > 0)
 				{
