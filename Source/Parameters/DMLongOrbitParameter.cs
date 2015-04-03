@@ -65,7 +65,10 @@ namespace DMagic.Parameters
 
 		protected override string GetTitle()
 		{
-			return string.Format("Enter and maintain proper orbit for {0:N0} days", DMUtils.timeInDays(timeNeeded));
+			if (orbitTime <= 0)
+				return string.Format("Enter and maintain proper orbit for {0:N0} days", DMUtils.timeInDays(timeNeeded));
+			else
+				return string.Format("Maintain proper orbit for {0:N0} more days", DMUtils.timeInDays(timeNeeded - (Planetarium.GetUniversalTime() - orbitTime)));
 		}
 
 		protected override string GetNotes()
@@ -105,7 +108,7 @@ namespace DMagic.Parameters
 			{
 				if (AllChildParametersComplete())
 				{
-					if (orbitTime == 0)
+					if (orbitTime <= 0)
 					{
 						DMUtils.DebugLog("Setting time to {0:N2}", Planetarium.GetUniversalTime());
 						orbitTime = Planetarium.GetUniversalTime();
