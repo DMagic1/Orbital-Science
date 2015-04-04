@@ -219,7 +219,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private void Update()
+		protected virtual void Update()
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
