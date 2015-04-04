@@ -34,28 +34,37 @@ using UnityEngine;
 
 namespace DMagic.Scenario
 {
+	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
 	internal class DMTransmissionWatcher : MonoBehaviour
 	{
+		private static bool loaded = false;
+
+		private void Awake()
+		{
+			if (!loaded)
+			{
+				GameEvents.OnScienceRecieved.Add(scienceReceived);
+				loaded = true;
+			}
+		}
 
 		private void Start()
 		{
-			DMUtils.DebugLog("Starting Transmission Watcher");
-			GameEvents.OnScienceRecieved.Add(scienceReceived);
+			DontDestroyOnLoad(this);
 		}
 
 		private void OnDestroy()
 		{
-			DMUtils.DebugLog("Stopping Transmission Watcher");
 			GameEvents.OnScienceRecieved.Remove(scienceReceived);
 		}
 
 		private void scienceReceived(float sci, ScienceSubject sub)
 		{
-			DMUtils.DebugLog("Science Data Transmitted For {0} Science", sci);
-			if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
+			if (HighLogic.LoadedSceneIsFlight)
 			{
-				DMScienceData DMData = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
-				DMScienceScenario.SciScenario.submitDMScience(DMData, sci);
+				DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);
+				if (DMData != null)
+					DMScienceScenario.SciScenario.submitDMScience(DMData, sci);
 			}
 		}
 	}

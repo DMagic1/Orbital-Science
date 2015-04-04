@@ -39,7 +39,8 @@ namespace DMagic.Scenario
 	[KSPScenario(ScenarioCreationOptions.AddToExistingCareerGames | ScenarioCreationOptions.AddToExistingScienceSandboxGames | ScenarioCreationOptions.AddToNewCareerGames | ScenarioCreationOptions.AddToNewScienceSandboxGames, GameScenes.FLIGHT, GameScenes.SPACECENTER, GameScenes.TRACKSTATION, GameScenes.EDITOR)]
 	public class DMScienceScenario : ScenarioModule
 	{
-		internal static DMScienceScenario SciScenario
+
+		public static DMScienceScenario SciScenario
 		{
 			get
 			{
@@ -64,27 +65,25 @@ namespace DMagic.Scenario
 			}
 		}
 
-		//Recovery Watcher Objects
-		private DMTransmissionWatcher tranWatcher;
-		private DMRecoveryWatcher recoveryWatcher;
-
 		//Anomaly tracking object
-		private DMAnomalyList anomalyList;
+		internal DMAnomalyList anomalyList;
 
 		//Master List for saved asteroid science data
 		private Dictionary<string, DMScienceData> recoveredDMScience = new Dictionary<string,DMScienceData>();
 
-		public Dictionary<string, DMScienceData> RecoveredDMScience
+		public DMScienceData getDMScience(string title)
 		{
-			get { return recoveredDMScience; }
+			if (recoveredDMScience.ContainsKey(title))
+				return recoveredDMScience[title];
+			else
+				DMUtils.Logging("Could not find DMScience of title [{0}]", title);
+
+			return null;
 		}
 
-		private void addDMScience (DMScienceData data)
+		public int RecoveredDMScienceCount
 		{
-			if (!recoveredDMScience.ContainsKey(data.Title))
-				recoveredDMScience.Add(data.Title, data);
-			else
-				UpdateDMScience(data);
+			get { return recoveredDMScience.Count; }
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -142,31 +141,29 @@ namespace DMagic.Scenario
 					}
 				}
 			}
-			try
+		}
+
+		private void Start()
+		{
+			if (HighLogic.LoadedSceneIsFlight)
 			{
-				if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
-					recoveryWatcher = gameObject.AddComponent<DMRecoveryWatcher>();
-				if (HighLogic.LoadedSceneIsFlight)
-				{
-					tranWatcher = gameObject.AddComponent<DMTransmissionWatcher>();
-					anomalyList = gameObject.AddComponent<DMAnomalyList>();
-					updateRemainingData();
-				}
-			}
-			catch (Exception e)
-			{
-				Debug.LogWarning("[DMagic] Error While Initializing Science Recovery Watcher: " + e);
+				anomalyList = gameObject.AddComponent<DMAnomalyList>();
+				updateRemainingData();
 			}
 		}
 
 		private void OnDestroy()
 		{
-			if (tranWatcher != null)
-				Destroy(tranWatcher);
 			if (anomalyList != null)
 				Destroy(anomalyList);
-			if (recoveryWatcher != null)
-				Destroy(recoveryWatcher);
+		}
+
+		private void addDMScience(DMScienceData data)
+		{
+			if (!recoveredDMScience.ContainsKey(data.Title))
+				recoveredDMScience.Add(data.Title, data);
+			else
+				UpdateDMScience(data);
 		}
 
 		internal void RecordNewScience(string title, float baseval, float scv, float sci, float cap)
@@ -212,7 +209,6 @@ namespace DMagic.Scenario
 
 		private void updateRemainingData()
 		{
-			DMUtils.DebugLog("Updating Existing Data");
 			List<ScienceData> dataList = new List<ScienceData>();
 			if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
 			{
@@ -224,14 +220,14 @@ namespace DMagic.Scenario
 				{
 					foreach (ScienceData data in dataList)
 					{
-						if (recoveredDMScience.ContainsKey(data.title))
+						DMScienceData DMData = getDMScience(data.title);
+						if (DMData != null)
 						{
-							DMScienceData DMData = recoveredDMScience[data.title];
 							ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
 							if (sub != null)
 							{
 								sub.scientificValue *= DMData.SciVal;
-								sub.science = Math.Max(0f, sub.scienceCap - (sub.scienceCap * sub.scientificValue));
+								sub.science = Math.Max(0f, Math.Min(sub.scienceCap, sub.scienceCap - (sub.scienceCap * sub.scientificValue)));
 							}
 						}
 					}

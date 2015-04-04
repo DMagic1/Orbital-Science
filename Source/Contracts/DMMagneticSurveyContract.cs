@@ -36,10 +36,11 @@ using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
+using DMagic.Parameters;
 
-namespace DMagic
+namespace DMagic.Contracts
 {
-	public class DMMagneticSurveyContract: Contract, IDMagicContract
+	public class DMMagneticSurveyContract: Contract
 	{
 		private CelestialBody body;
 		private DMCollectScience[] magParams = new DMCollectScience[4];
@@ -47,8 +48,24 @@ namespace DMagic
 
 		protected override bool Generate()
 		{
-			int total = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>().Count();
-			if (total >= DMUtils.maxMagnetic)
+			DMMagneticSurveyContract[] magContracts = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>();
+			int offers = 0;
+			int active = 0;
+			int maxOffers = DMUtils.maxMagneticOffered;
+			int maxActive = DMUtils.maxMagneticActive;
+
+			for (int i = 0; i < magContracts.Length; i++)
+			{
+				DMMagneticSurveyContract m = magContracts[i];
+				if (m.ContractState == State.Offered)
+					offers++;
+				else if (m.ContractState == State.Active)
+					active++;
+			}
+
+			if (offers >= maxOffers)
+				return false;
+			if (active >= maxActive)
 				return false;
 
 			//Make sure that the RPWS is available
@@ -76,17 +93,13 @@ namespace DMagic
 			double inclination = 20d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 			if (inclination > 75) inclination = 75;
 
-			DMLongOrbitParameter longParam = new DMLongOrbitParameter(body, time);
-			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(body, eccen, 0);
-			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(body, inclination, 1);
+			DMLongOrbitParameter longParam = new DMLongOrbitParameter(time);
+			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(eccen, 0);
+			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(inclination, 1);
 
 			this.AddParameter(longParam);
 			longParam.AddParameter(eccentricParam);
 			longParam.AddParameter(inclinedParam);
-
-			longParam.SetFunds(50000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-			longParam.SetReputation(50f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-			longParam.SetScience(60f * DMUtils.science  * ((float)rand.Next(85, 116) / 100f), body);
 
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
@@ -98,7 +111,6 @@ namespace DMagic
 				else
 				{
 					this.AddParameter(DMCS, "collectDMScience");
-					DMUtils.DebugLog("Added Mag Survey Param");
 					DMCS.SetFunds(8000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
 					DMCS.SetReputation(25f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
 					DMCS.SetScience(25f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
@@ -156,9 +168,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			int target;
 			if (int.TryParse(node.GetValue("Mag_Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];
@@ -193,6 +202,25 @@ namespace DMagic
 		public override bool MeetRequirements()
 		{
 			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" });
+		}
+
+		/// <summary>
+		/// Used externally to return the target Celestial Body
+		/// </summary>
+		/// <param name="cP">Instance of the requested Contract</param>
+		/// <returns>Celestial Body object</returns>
+		public static CelestialBody TargetBody(Contract c)
+		{
+			if (c == null || c.GetType() != typeof(DMMagneticSurveyContract))
+				return null;
+
+			DMMagneticSurveyContract Instance = (DMMagneticSurveyContract)c;
+			return Instance.body;
+		}
+
+		public CelestialBody Body
+		{
+			get { return body; }
 		}
 	}
 }

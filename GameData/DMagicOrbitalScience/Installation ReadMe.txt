@@ -1,12 +1,12 @@
-Version 0.9
+Version 1.0
 KSP Forum thread: http://forum.kerbalspaceprogram.com/threads/64972
 
 Installation:
 
 Place the GameData folder in the main KSP folder. Folder structure should be:
-Kerbal Space Program/GameData/DMagic Orbital Science/...
+Kerbal Space Program/GameData/DMagicOrbitalScience/...
 
-Module Manager* required for some custom science reports - *Not included
+Module Manager* required for some contracts and additional functions - *Not included
 http://forum.kerbalspaceprogram.com/threads/55219
 
 Universal Storage* recommended for full part compatibility - *Not included

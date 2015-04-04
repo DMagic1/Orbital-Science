@@ -34,8 +34,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Contracts;
 using Contracts.Parameters;
+using DMagic.Contracts;
 
-namespace DMagic
+namespace DMagic.Parameters
 {
 	public class DMCollectScience : ContractParameter
 	{
@@ -70,51 +71,47 @@ namespace DMagic
 		/// <returns>Available Part name string</returns>
 		public static string PartName(ContractParameter cP)
 		{
+			if (cP == null || cP.GetType() != typeof(DMCollectScience))
+				return "";
+
 			DMCollectScience Instance = (DMCollectScience)cP;
 			return Instance.partName;
 		}
 
 		//Properties to be accessed by parent contract
-		internal CelestialBody Body
+		public CelestialBody Body
 		{
 			get { return body; }
-			private set { }
 		}
 
-		internal ExperimentSituations Situation
+		public ExperimentSituations Situation
 		{
 			get { return scienceLocation; }
-			private set { }
 		}
 
-		internal string Biome
+		public string Biome
 		{
 			get { return biomeName; }
-			private set { }
 		}
 
-		internal string Subject
+		public string Subject
 		{
 			get { return subject; }
-			private set { }
 		}
 
-		internal DMScienceContainer Container
+		public DMScienceContainer Container
 		{
 			get { return scienceContainer; }
-			private set { }
 		}
 
-		internal string Name
+		public string Name
 		{
 			get { return name; }
-			private set { }
 		}
 
-		internal float ReturnedScience
+		public float ReturnedScience
 		{
 			get { return returnedScience; }
-			private set { }
 		}
 
 		protected override string GetHashString()
@@ -190,9 +187,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			int targetBodyID, targetSituation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			if (!int.TryParse(scienceString[0], out type))

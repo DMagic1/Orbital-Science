@@ -30,21 +30,23 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DMagic
 {
 	public class DMAnomalyList : MonoBehaviour
 	{
-		private static List<DMAnomalyObject> anomObjects = new List<DMAnomalyObject>();
-		private static bool scannerUpdating;
-		private static bool magUpdating;
+		private Dictionary<string, Dictionary<string, DMAnomalyObject>> anomalies = new Dictionary<string, Dictionary<string, DMAnomalyObject>>();
+		private List<DMAnomalyObject> currentBodyAnomalies = new List<DMAnomalyObject>();
+		private bool scannerUpdating;
+		private bool loaded = false;
 
 		private void Start()
 		{
 			GameEvents.onVesselSOIChanged.Add(SOIChange);
-			pqsBuild(FlightGlobals.currentMainBody);
 		}
 
 		private void OnDestroy()
@@ -52,45 +54,102 @@ namespace DMagic
 			GameEvents.onVesselSOIChanged.Remove(SOIChange);
 		}
 
-		public static List<DMAnomalyObject> AnomObjects
+		private void Update()
 		{
-			get { return anomObjects; }
+			if (HighLogic.LoadedSceneHasPlanetarium && !loaded)
+			{
+				pqsBuild(FlightGlobals.currentMainBody);
+				loaded = true;
+			}
 		}
 
-		public static bool ScannerUpdating
+		public List<DMAnomalyObject> anomObjects()
+		{
+			return currentBodyAnomalies;
+		}
+
+		public DMAnomalyObject getAnomalyObject(string body, string city)
+		{
+			if (anomalies.ContainsKey(body))
+			{
+				if (anomalies[body].ContainsKey(city))
+					return anomalies[body][city];
+				else
+					DMUtils.Logging("No anomaly of name [{0}] found for body [{1}]", city, body);
+			}
+			else
+				DMUtils.Logging("No anomalies found for body [{0}]", body);
+
+			return null;
+		}
+
+		public bool ScannerUpdating
 		{
 			get { return scannerUpdating; }
 			internal set { scannerUpdating = value; }
 		}
 
-		public static bool MagUpdating
-		{
-			get { return magUpdating; }
-			internal set { magUpdating = value; }
-		}
-
 		private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
 		{
-			pqsBuild(VB.to);
+			StartCoroutine(updateCoordinates(VB.to));
 		}
 
-		private void pqsBuild(CelestialBody body)
+		private IEnumerator updateCoordinates(CelestialBody b)
 		{
-			scannerUpdating = false;
-			magUpdating = false;
-			anomObjects.Clear();
+			yield return new WaitForSeconds(3);
+
+			currentBodyAnomalies.Clear();
+
+			if (anomalies.ContainsKey(b.name))
+			{
+				foreach (var anom in anomalies[b.name].Values)
+				{
+					anom.WorldLocation = anom.City.transform.position;
+					anom.Lat = b.GetLatitude(anom.WorldLocation);
+					anom.Lon = b.GetLongitude(anom.WorldLocation);
+				}
+
+				currentBodyAnomalies = anomalies[b.name].Values.ToList();
+			}
+			else
+				currentBodyAnomalies = new List<DMAnomalyObject>();
+		}
+
+		private void pqsBuild(CelestialBody b)
+		{
 			PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
 			foreach (PQSCity anomalyObject in Cities)
 			{
-				if (anomalyObject.transform.parent.name == FlightGlobals.currentMainBody.name)
-					anomObjects.Add(new DMAnomalyObject(anomalyObject));
+				if (!anomalies.ContainsKey(anomalyObject.transform.parent.name))
+				{
+					Dictionary<string, DMAnomalyObject> anomDict = new Dictionary<string, DMAnomalyObject>();
+					DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
+					anomDict.Add(anomalyObject.name, obj);
+					anomalies.Add(anomalyObject.transform.parent.name, anomDict);
+
+				}
+				else if (!anomalies[anomalyObject.transform.parent.name].ContainsKey(anomalyObject.name))
+				{
+					DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
+					anomalies[anomalyObject.transform.parent.name].Add(anomalyObject.name, obj);
+				}
 			}
+
+			currentBodyAnomalies.Clear();
+
+			if (anomalies.ContainsKey(b.name))
+				currentBodyAnomalies = anomalies[b.name].Values.ToList();
+			else
+				currentBodyAnomalies = new List<DMAnomalyObject>();
 		}
 
 		internal static void updateAnomaly(Vessel v, DMAnomalyObject a)
 		{
 			Vector3d vPos = v.transform.position;
 			a.WorldLocation = a.City.transform.position;
+
+			a.Lat = v.mainBody.GetLatitude(a.WorldLocation);
+			a.Lon = v.mainBody.GetLongitude(a.WorldLocation);
 
 			//Calculate vectors from CBody position to object positions
 			Vector3d anomBody = v.mainBody.position - a.WorldLocation;
@@ -101,10 +160,9 @@ namespace DMagic
 
 			//Calculate height above or below anomaly by drawing a line between the projected vector and the anomaly vector
 			//Take the magnitude of that line, which equals the height
-			a.VHeight = (projectedV - anomBody).magnitude;
+			a.VHeight = (anomBody - projectedV).magnitude;
 			a.VDistance = (a.WorldLocation - vPos).magnitude;
 			a.VHorizontal = Math.Sqrt((a.VDistance * a.VDistance) - (a.VHeight * a.VHeight));
-			
 		}
 
 		internal static void bearing(Vessel v, DMAnomalyObject a)

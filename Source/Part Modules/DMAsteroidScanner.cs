@@ -43,23 +43,23 @@ namespace DMagic.Part_Modules
 		#region Fields
 
 		[KSPField]
-		public string experimentID;
+		public string experimentID = "";
 		[KSPField]
-		public string animationName;
+		public string animationName = "";
 		[KSPField]
-		public string greenLight;
+		public string greenLight = "";
 		[KSPField]
-		public string yellowLight;
+		public string yellowLight = "";
 		[KSPField]
-		public string USBayAnimation;
+		public string USBayAnimation = "";
 		[KSPField]
-		public bool USScience;
+		public bool USScience = false;
 		[KSPField]
-		public string experimentResource;
+		public string experimentResource = "ElectricCharge";
 		[KSPField]
-		public bool rerunnable;
+		public bool rerunnable = true;
 		[KSPField]
-		public bool dataIsCollectable;
+		public bool dataIsCollectable = true;
 		[KSPField]
 		public float resourceCost = 0f;
 		[KSPField]
@@ -88,6 +88,7 @@ namespace DMagic.Part_Modules
 		private bool asteroidInSight = false;
 		private bool rotating = false;
 		private bool resourceOn = false;
+		private bool fullyDeployed = false;
 		private DMAsteroidScanner targetModule = null;
 		private Transform dishBase;
 		private Transform dish;
@@ -113,6 +114,7 @@ namespace DMagic.Part_Modules
 				exp = ResearchAndDevelopment.GetExperiment(experimentID);
 			if (IsDeployed)
 			{
+				fullyDeployed = true;
 				animator(0f, 1f, Anim, animationName);
 				if (USScience)
 					animator(0f, 1f, USAnim, USBayAnimation);
@@ -153,7 +155,7 @@ namespace DMagic.Part_Modules
 			{
 				EventsCheck();
 				string s = "Deactivated";
-				if (IsDeployed && resourceOn)
+				if (fullyDeployed && resourceOn)
 				{
 					s = "Searching...";
 					Vessel target = FlightGlobals.fetch.VesselTarget as Vessel;
@@ -165,7 +167,39 @@ namespace DMagic.Part_Modules
 					}
 					else if (targetObj != null)
 					{
-						targetModule = targetObj.GetOrbitDriver().vessel.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault();
+						var targets = targetObj.GetOrbitDriver().vessel.FindPartModulesImplementing<DMAsteroidScanner>();
+						if (targets.Count > 0)
+						{
+							if (targets.Count > 1)
+							{
+								foreach (DMAsteroidScanner t in targets)
+								{
+									if (t == this)
+										continue;
+
+									float d = (t.part.transform.position - dishBase.position).magnitude;
+									if (d > 2f)
+									{
+										targetModule = t;
+										break;
+									}
+									else
+									{
+										targetModule = null;
+										targetDistance = 0f;
+										receiverInRange = asteroidInSight = false;
+									}
+								}
+							}
+							else if (targets[0] != this)
+								targetModule = targets[0];
+						}
+						else
+						{
+							targetModule = null;
+							targetDistance = 0f;
+							receiverInRange = asteroidInSight = false;
+						}
 					}
 					else
 					{
@@ -174,6 +208,9 @@ namespace DMagic.Part_Modules
 						{
 							foreach (DMAsteroidScanner t in targets)
 							{
+								if (t == this)
+									continue;
+
 								float d = (t.part.transform.position - dishBase.position).magnitude;
 								if (d > 2f)
 								{
@@ -230,7 +267,7 @@ namespace DMagic.Part_Modules
 						searchForTarget();
 					rotating = true;
 				}
-				else if (IsDeployed && !resourceOn && resourceCost > 0f)
+				else if (fullyDeployed && !resourceOn && resourceCost > 0f)
 				{
 					s = "No Power";
 					targetDistance = 0f;
@@ -439,21 +476,25 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator deployEvent()
 		{
+			IsDeployed = true;
+
 			animator(1f, 0f, Anim, animationName);
 			if (USScience)
 				animator(1f, 0f, USAnim, USBayAnimation);
 
 			yield return new WaitForSeconds(Anim[animationName].length);
 
-			IsDeployed = true;
+			fullyDeployed = true;
 		}
 
 		private IEnumerator retractEvent()
 		{
-			IsDeployed = false;
+			fullyDeployed = false;
 
 			while (dishArm.localEulerAngles.z > 1 || dish.localEulerAngles.y > 1)
 				yield return null;
+
+			IsDeployed = false;
 
 			animator(-1f, 1f, Anim, animationName);
 			if (USScience)
@@ -472,8 +513,18 @@ namespace DMagic.Part_Modules
 		[KSPEvent(guiActive = true, guiName = "Toggle Asteroid Scanner", active = true)]
 		public void toggleEvent()
 		{
-			if (IsDeployed) StartCoroutine(retractEvent());
-			else StartCoroutine(deployEvent());
+			if (IsDeployed)
+			{
+				if (!fullyDeployed)
+					StopCoroutine("deployEvent");
+				StartCoroutine("retractEvent");
+			}
+			else
+			{
+				if (fullyDeployed)
+					StopCoroutine("retractEvent");
+				StartCoroutine("deployEvent");
+			}
 		}
 
 		[KSPAction("Toggle Asteroid Scanner")]
@@ -676,9 +727,9 @@ namespace DMagic.Part_Modules
 			float multiplier = 1f;
 
 			ast = new DMAsteroidScience(m);
-			body = ast.body;
-			biome = ast.aType + ast.aSeed;
-			multiplier = Math.Min(1f, dist / astWidth[aClassInt(ast.aClass)]);
+			body = ast.Body;
+			biome = ast.AType + ast.ASeed;
+			multiplier = Math.Min(1f, dist / astWidth[aClassInt(ast.AClass)]);
 
 			if (exp == null)
 			{
@@ -694,9 +745,9 @@ namespace DMagic.Part_Modules
 				return null;
 			}
 
-			DMUtils.OnAsteroidScience.Fire(ast.aClass, exp.id);
-			sub.title = string.Format("{0} through a {2} asteroid", exp.experimentTitle, multiplier, ast.aType);
-			string dataTitle = string.Format("{0} through {1:P0} of a {2} asteroid", exp.experimentTitle, multiplier, ast.aType);
+			DMUtils.OnAsteroidScience.Fire(ast.AClass, exp.id);
+			sub.title = string.Format("{0} through a {1} asteroid", exp.experimentTitle, ast.AType);
+			string dataTitle = string.Format("{0} through {1:P0} of a {2} asteroid", exp.experimentTitle, multiplier, ast.AType);
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
 
@@ -708,21 +759,22 @@ namespace DMagic.Part_Modules
 		private void registerDMScience(DMAsteroidScience newAst, ScienceSubject sub)
 		{
 			DMScienceData DMData = null;
-			if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
+			DMScienceData DMScience = DMScienceScenario.SciScenario.getDMScience(sub.title);
+			if (DMScience != null)
 			{
-				DMScienceData DMScience = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
 				sub.scientificValue *= DMScience.SciVal;
 				DMData = DMScience;
 			}
+
 			if (DMData == null)
 			{
 				float astSciCap = exp.scienceCap * 40f;
 				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, 1f, 0f, astSciCap);
 				sub.scientificValue = 1f;
 			}
-			sub.subjectValue = newAst.sciMult;
+			sub.subjectValue = newAst.SciMult;
 			sub.scienceCap = exp.scienceCap * sub.subjectValue;
-			sub.science = sub.scienceCap - (sub.scienceCap * sub.scientificValue);
+			sub.science = Math.Max(0f, Math.Min(sub.scienceCap, sub.scienceCap - (sub.scienceCap * sub.scientificValue)));
 		}
 
 		#endregion

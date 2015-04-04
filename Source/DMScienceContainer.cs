@@ -88,12 +88,9 @@ namespace DMagic
 
 	public enum DMScienceType
 	{
-		None = 0,
-		Surface = 1,
-		Aerial = 2,
-		Space = 4,
-		Biological = 8,
-		Asteroid = 16,
-		Anomaly = 32,
+		All = 0,
+		Space = 1,
+		Asteroid = 2,
+		Anomaly = 4,
 	}
 }

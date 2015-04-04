@@ -34,18 +34,27 @@ using UnityEngine;
 
 namespace DMagic.Scenario
 {
+	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
 	internal class DMRecoveryWatcher : MonoBehaviour
 	{
+		private static bool loaded = false;
+
+		private void Awake()
+		{
+			if (!loaded)
+			{
+				GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
+				loaded = true;
+			}
+		}
 
 		private void Start()
 		{
-			DMUtils.DebugLog("Starting Recovery Watcher");
-			GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
+			DontDestroyOnLoad(this);
 		}
 
 		private void OnDestroy()
 		{
-			DMUtils.DebugLog("Destroying Recovery Watcher");
 			GameEvents.OnScienceRecieved.Remove(RecoveryWatcher);
 		}
 
@@ -55,9 +64,10 @@ namespace DMagic.Scenario
 			{
 				float DMScience = sci;
 				DMUtils.DebugLog("Science Data Recovered For {0} Science", sci);
-				if (DMScienceScenario.SciScenario.RecoveredDMScience.ContainsKey(sub.title))
+
+				DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);
+				if (DMData != null)
 				{
-					DMScienceData DMData = DMScienceScenario.SciScenario.RecoveredDMScience[sub.title];
 					float oldSciVal = 0f;
 					if (sub.scienceCap != 0)
 						oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));

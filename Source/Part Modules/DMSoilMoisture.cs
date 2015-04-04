@@ -29,6 +29,7 @@
  */
 #endregion
 
+using System.Collections;
 using UnityEngine;
 
 namespace DMagic.Part_Modules
@@ -36,33 +37,89 @@ namespace DMagic.Part_Modules
 	class DMSoilMoisture: DMModuleScienceAnimate
 	{
 
-		[KSPField]
-		public string loopingAnim = null;
+		private bool fullyDeployed = false;
+		private bool rotating = false;
+
+		private Transform dish;
+		private const string dishTransform = "armBase";
 
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
-			if (string.IsNullOrEmpty(loopingAnim))
-				anim = part.FindModelAnimators(loopingAnim)[0];
+			dish = part.FindModelTransform(dishTransform);
 			if (IsDeployed)
-				primaryAnimator(1f, 0f, WrapMode.Loop, loopingAnim, anim);
+				fullyDeployed = true;
+		}
+
+		protected override void Update()
+		{
+			base.Update();
+
+			if (HighLogic.LoadedSceneIsFlight)
+			{
+				if (IsDeployed && fullyDeployed)
+				{
+					rotating = true;
+					dishRotate();
+				}
+
+				if (!fullyDeployed && rotating)
+					spinDishDown();
+			}
 		}
 
 		public override void deployEvent()
 		{
-			primaryAnimator(1f, 0f, WrapMode.Loop, loopingAnim, anim);
+			if (!IsDeployed && fullyDeployed)
+				StopCoroutine("retractEnumerator");
+			StartCoroutine("deployEnumerator");
+		}
+
+		private IEnumerator deployEnumerator()
+		{
 			base.deployEvent();
+
+			yield return new WaitForSeconds(anim[animationName].length);
+
+			fullyDeployed = true;
 		}
 
 		public override void retractEvent()
 		{
-			if (anim != null && !string.IsNullOrEmpty(loopingAnim))
+			if (IsDeployed && !fullyDeployed)
+				StopCoroutine("deployEnumerator");
+			StartCoroutine("retractEnumerator");
+		}
+
+		private IEnumerator retractEnumerator()
+		{
+			fullyDeployed = false;
+
+			if (dish != null)
 			{
-				anim[loopingAnim].normalizedTime = anim[loopingAnim].normalizedTime % 1;
-				anim[loopingAnim].speed = 4f * animSpeed;
-				anim[loopingAnim].wrapMode = WrapMode.Clamp;
+				while (dish.localEulerAngles.z > 1)
+					yield return null;
 			}
+
 			base.retractEvent();
+		}
+
+		//Slowly rotate dish
+		private void dishRotate()
+		{
+			if (dish != null)
+				dish.Rotate(Vector3.forward * Time.deltaTime * 20f);
+		}
+
+		private void spinDishDown()
+		{
+			if (dish != null)
+			{
+				if (dish.localEulerAngles.z > 1)
+					dish.Rotate(Vector3.forward * Time.deltaTime * 50f);
+				else
+					rotating = false;
+			}
 		}
 
 	}

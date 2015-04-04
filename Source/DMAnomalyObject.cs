@@ -40,7 +40,7 @@ namespace DMagic
 		private PQSCity city;
 		private Vector3d worldLocation;
 		private CelestialBody body;
-		private double lat, lon, alt;
+		private double lat, lon;
 		private double Vdistance, Vheight, Vhorizontal;
 		private double bearing;
 		private string name;
@@ -62,7 +62,6 @@ namespace DMagic
 				worldLocation = city.transform.position;
 				lat = clampLat(body.GetLatitude(worldLocation));
 				lon = clampLon(body.GetLongitude(worldLocation));
-				alt = body.GetAltitude(worldLocation);
 			}
 		}
 
@@ -95,16 +94,19 @@ namespace DMagic
 		public double Lat
 		{
 			get { return lat; }
+			internal set
+			{
+				lat = clampLat(value);
+			}
 		}
 
 		public double Lon
 		{
 			get { return lon; }
-		}
-
-		public double Alt
-		{
-			get { return alt; }
+			internal set
+			{
+				lon = clampLon(value);
+			}
 		}
 
 		public double VDistance

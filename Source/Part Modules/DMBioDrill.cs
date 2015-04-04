@@ -50,7 +50,7 @@ namespace DMagic.Part_Modules
 
 		public override void DeployExperiment()
 		{
-			if (vessel.mainBody.name == "Eve" || vessel.mainBody.name == "Kerbin" || vessel.mainBody.name == "Duna" || vessel.mainBody.name == "Laythe" || vessel.mainBody.name == "Bop" || vessel.mainBody.name == "Vall" || vessel.mainBody.atmosphere) {
+			if (vessel.mainBody.name == "Eve" || vessel.mainBody.name == "Kerbin" || vessel.mainBody.name == "Duna" || vessel.mainBody.name == "Laythe" || vessel.mainBody.name == "Bop" || vessel.mainBody.name == "Vall" || vessel.mainBody.name == "Slate" || vessel.mainBody.atmosphere) {
 				if (vessel.mainBody.name == "Eve")
 					base.scienceBoost = 2f;
 				else 
