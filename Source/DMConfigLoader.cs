@@ -41,7 +41,7 @@ namespace DMagic
 	internal class DMConfigLoader: MonoBehaviour
 	{
 		private string[] WhiteList = new string[1] { "ScienceAlert" };
-		private const string iconURL = "DMagicOrbitalScience/Icons/";
+		private const string iconURL = "DMagicOrbitalScience/Icons/Waypoints/";
 
 		private void Start()
 		{
