@@ -51,8 +51,10 @@ namespace DMagic.Part_Modules
 				fullyDeployed = true;
 		}
 
-		private void Update()
+		protected override void Update()
 		{
+			base.Update();
+
 			if (HighLogic.LoadedSceneIsFlight)
 			{
 				if (IsDeployed && fullyDeployed)

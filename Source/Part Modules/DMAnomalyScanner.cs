@@ -67,9 +67,9 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		public override void OnUpdate()
+		protected override void Update()
 		{
-			base.OnUpdate();
+			base.Update();
 			if (IsDeployed)
 			{
 				DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
