@@ -172,25 +172,25 @@ namespace DMagic
 							}
 						}
 
-						DMUtils.DebugLog("New Experiment: [{0}] Available For Contracts", name);
+						//DMUtils.DebugLog("New Experiment: [{0}] Available For Contracts", name);
 					}
 				}
 			}
 
 			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience["All"].Count);
 
-			foreach (var sciType in Enum.GetValues(typeof(DMScienceType)))
-			{
-				string type = ((DMScienceType)sciType).ToString();
-				if (!string.IsNullOrEmpty(type))
-				{
-					if (DMUtils.availableScience.ContainsKey(type))
-					{
-						if (type != "All")
-							DMUtils.DebugLog("Successfully Added {0} New {1} Experiments To Contract List", DMUtils.availableScience[type].Count, type);
-					}
-				}
-			}
+			//foreach (var sciType in Enum.GetValues(typeof(DMScienceType)))
+			//{
+			//	string type = ((DMScienceType)sciType).ToString();
+			//	if (!string.IsNullOrEmpty(type))
+			//	{
+			//		if (DMUtils.availableScience.ContainsKey(type))
+			//		{
+			//			if (type != "All")
+			//				DMUtils.DebugLog("Successfully Added {0} New {1} Experiments To Contract List", DMUtils.availableScience[type].Count, type);
+			//		}
+			//	}
+			//}
 
 			//Load in custom contract descriptions
 			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_SCIENCE_STORY_DEF"))

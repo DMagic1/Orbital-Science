@@ -107,15 +107,12 @@ namespace DMagic
 					anom.WorldLocation = anom.City.transform.position;
 					anom.Lat = b.GetLatitude(anom.WorldLocation);
 					anom.Lon = b.GetLongitude(anom.WorldLocation);
-					//anom.logging();
 				}
 
 				currentBodyAnomalies = anomalies[b.name].Values.ToList();
 			}
 			else
 				currentBodyAnomalies = new List<DMAnomalyObject>();
-
-			DMUtils.DebugLog("{0} Anomalies Added To Current Body List", currentBodyAnomalies.Count);
 		}
 
 		private void pqsBuild(CelestialBody b)
@@ -129,14 +126,12 @@ namespace DMagic
 					DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
 					anomDict.Add(anomalyObject.name, obj);
 					anomalies.Add(anomalyObject.transform.parent.name, anomDict);
-					//obj.logging();
 
 				}
 				else if (!anomalies[anomalyObject.transform.parent.name].ContainsKey(anomalyObject.name))
 				{
 					DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
 					anomalies[anomalyObject.transform.parent.name].Add(anomalyObject.name, obj);
-					//obj.logging();
 				}
 			}
 
@@ -146,8 +141,6 @@ namespace DMagic
 				currentBodyAnomalies = anomalies[b.name].Values.ToList();
 			else
 				currentBodyAnomalies = new List<DMAnomalyObject>();
-
-			DMUtils.DebugLog("{0} Anomalies Added To Current Body List", currentBodyAnomalies.Count);
 		}
 
 		internal static void updateAnomaly(Vessel v, DMAnomalyObject a)
@@ -170,7 +163,6 @@ namespace DMagic
 			a.VHeight = (anomBody - projectedV).magnitude;
 			a.VDistance = (a.WorldLocation - vPos).magnitude;
 			a.VHorizontal = Math.Sqrt((a.VDistance * a.VDistance) - (a.VHeight * a.VHeight));
-			//a.secondaryLogging();
 		}
 
 		internal static void bearing(Vessel v, DMAnomalyObject a)
@@ -182,7 +174,6 @@ namespace DMagic
 			double x = Math.Cos(Mathf.Deg2Rad * vlat) * Math.Sin(Mathf.Deg2Rad * a.Lat) - Math.Sin(Mathf.Deg2Rad * vlat) * Math.Cos(Mathf.Deg2Rad * a.Lat) * Math.Cos(longdiff);
 			double aBearing = (Math.Atan2(y, x) * Mathf.Rad2Deg + 360) % 360;
 			a.Bearing = aBearing;
-			a.secondaryLogging();
 		}
 	}
 }

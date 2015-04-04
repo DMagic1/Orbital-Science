@@ -103,7 +103,6 @@ namespace DMagic.Part_Modules
 			{
 				if (b)
 				{
-					DMUtils.DebugLog("Checking Asteroid Surface");
 					string obj = hit.collider.attachedRigidbody.gameObject.name;
 					return (obj.StartsWith(potato));
 				}
@@ -113,7 +112,6 @@ namespace DMagic.Part_Modules
 					int i = 0; //Just to prevent this from getting stuck in a loop
 					while (hitT != null && i < 200)
 					{
-						DMUtils.DebugLog("Transform: {0} Hit", hitT.name);
 						if (hitT.name.Contains(vessel.mainBody.name))
 							return true;
 						hitT = hitT.parent;

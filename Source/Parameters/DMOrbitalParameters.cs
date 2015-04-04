@@ -214,15 +214,11 @@ namespace DMagic.Parameters
 				//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
 				if (b == root.Body && v.situation == Vessel.Situations.ORBITING)
 				{
-					DMUtils.DebugLog("Vessel Mainbody {0} Matches {1}, Checking For Instruments On: ", v.mainBody.name, root.Body.name, v.vesselName);
 					if (VesselEquipped(v))
 					{
 						addVessel(v);
-						DMUtils.DebugLog("OP Successfully Entered Orbit");
 					}
 				}
-				else
-					DMUtils.DebugLog("Vessel Mainbody {0} Does Not Match: {1}", v.mainBody.name, root.Body.name);
 			}
 		}
 
@@ -240,10 +236,8 @@ namespace DMagic.Parameters
 
 		private void dockCheck(GameEvents.FromToAction<Part, Part> Parts)
 		{
-			DMUtils.DebugLog("Dock Event");
 			if (Parts.from.vessel.mainBody == root.Body)
 			{
-				DMUtils.DebugLog("Mainbody Matches");
 				modifiedByDocking = true;
 				timer = 0;
 			}
@@ -253,13 +247,11 @@ namespace DMagic.Parameters
 		{
 			if (suitableVessels.Count > 0)
 			{
-				DMUtils.DebugLog("New Vessel Created");
 				Vessel V = v;
 				if (V.Parts.Count <= 1)
 					return;
 				if (V.mainBody == root.Body)
 				{
-					DMUtils.DebugLog("Mainbody Matches");
 					newV = V;
 					modifiedByUnDocking = true;
 					timer = 0;
@@ -282,7 +274,6 @@ namespace DMagic.Parameters
 						{
 							if (v.mainBody != root.Body)
 							{
-								DMUtils.DebugLog("Vessel Orbiting Wrong Celestial Body");
 								removeV.Add(v);
 							}
 							else if (type == 0)
@@ -325,16 +316,13 @@ namespace DMagic.Parameters
 					{
 						if (modifiedByDocking)
 						{
-							DMUtils.DebugLog("Vessel Modified By Docking");
 							if (VesselEquipped(FlightGlobals.ActiveVessel))
 							{
 								addVessel(FlightGlobals.ActiveVessel);
-								DMUtils.DebugLog("Docked Vessel Assigned: {0}", FlightGlobals.ActiveVessel.vesselName);
 							}
 							else
 							{
 								removeVessel(FlightGlobals.ActiveVessel);
-								DMUtils.DebugLog("Vessel No Longer Properly Equipped");
 							}
 						}
 						if (modifiedByUnDocking)
@@ -343,19 +331,16 @@ namespace DMagic.Parameters
 							if (VesselEquipped(newV))
 							{
 								addVessel(newV);
-								DMUtils.DebugLog("New Vessel Assigned");
 							}
 							//If the currently active, hopefully old, vessel retains the proper instruments
 							else if (VesselEquipped(FlightGlobals.ActiveVessel))
 							{
 								addVessel(FlightGlobals.ActiveVessel);
-								DMUtils.DebugLog("Old Vessel Assigned");
 							}
 							//If the proper instruments are spread across the two vessels
 							else
 							{
 								removeVessel(FlightGlobals.ActiveVessel);
-								DMUtils.DebugLog("No Vessels Assigned");
 							}
 						}
 						modifiedByUnDocking = false;

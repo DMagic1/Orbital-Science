@@ -110,14 +110,12 @@ namespace DMagic.Parameters
 				{
 					if (orbitTime <= 0)
 					{
-						DMUtils.DebugLog("Setting time to {0:N2}", Planetarium.GetUniversalTime());
 						orbitTime = Planetarium.GetUniversalTime();
 					}
 					else
 					{
 						if ((Planetarium.GetUniversalTime() - orbitTime) >= timeNeeded)
 						{
-							DMUtils.DebugLog("Survey Complete Ater {0:N2} Amount of Time", Planetarium.GetUniversalTime() - orbitTime);
 							this.DisableOnStateChange = true;
 							foreach (ContractParameter cP in this.AllParameters)
 								cP.DisableOnStateChange = true;

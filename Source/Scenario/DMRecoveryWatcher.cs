@@ -41,7 +41,6 @@ namespace DMagic.Scenario
 
 		private void Awake()
 		{
-			DMUtils.DebugLog("Starting Recovery Watcher");
 			if (!loaded)
 			{
 				GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
@@ -56,7 +55,6 @@ namespace DMagic.Scenario
 
 		private void OnDestroy()
 		{
-			DMUtils.DebugLog("Destroying Recovery Watcher");
 			GameEvents.OnScienceRecieved.Remove(RecoveryWatcher);
 		}
 

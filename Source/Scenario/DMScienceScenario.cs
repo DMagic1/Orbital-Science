@@ -209,7 +209,6 @@ namespace DMagic.Scenario
 
 		private void updateRemainingData()
 		{
-			DMUtils.DebugLog("Updating Existing Data");
 			List<ScienceData> dataList = new List<ScienceData>();
 			if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
 			{

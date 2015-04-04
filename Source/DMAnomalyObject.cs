@@ -65,27 +65,6 @@ namespace DMagic
 			}
 		}
 
-		internal void logging()
-		{
-			DMUtils.DebugLog("Begin Anomaly Log.............");
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:---->{2}", name, "Body", body.name);
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:----->{2}", name, "Lat", lat);
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:---->{2}", name, "Long", lon);
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:>{2}", name, "Location", worldLocation);
-		}
-
-		internal void secondaryLogging()
-		{
-			DMUtils.DebugLog("Begin Additional Anomaly Log.............");
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:---------->{2}", name, "Lat", lat);
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:--------->{2}", name, "Long", lon);
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:----->{2}", name, "Location", worldLocation);
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:>{2}", name, "Vessel Distance", Vdistance);
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:->{2}", name, "Vessel Height", Vheight);
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:>{2}", name, "Vessel Horizontal", Vhorizontal);
-			DMUtils.DebugLog("Anomaly: {0}-->{1}:------->{2}", name, "Bearing", bearing);
-		}
-
 		private double clampLat(double l)
 		{
 			return (l + 180 + 90) % 180 - 90;

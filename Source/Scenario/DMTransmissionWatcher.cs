@@ -41,7 +41,6 @@ namespace DMagic.Scenario
 
 		private void Awake()
 		{
-			DMUtils.DebugLog("Starting Transmission Watcher");
 			if (!loaded)
 			{
 				GameEvents.OnScienceRecieved.Add(scienceReceived);
@@ -56,7 +55,6 @@ namespace DMagic.Scenario
 
 		private void OnDestroy()
 		{
-			DMUtils.DebugLog("Stopping Transmission Watcher");
 			GameEvents.OnScienceRecieved.Remove(scienceReceived);
 		}
 
@@ -64,7 +62,6 @@ namespace DMagic.Scenario
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				DMUtils.DebugLog("Science Data Transmitted For {0} Science", sci);
 				DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);
 				if (DMData != null)
 					DMScienceScenario.SciScenario.submitDMScience(DMData, sci);
