@@ -127,7 +127,6 @@ namespace DMagic.Part_Modules
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
-		private DMAsteroidScience newAsteroid;
 		private const string bodyNameFixed = "Eeloo";
 		private bool lastInOperableState = false;
 		protected float scienceBoost = 1f;
@@ -794,6 +793,7 @@ namespace DMagic.Part_Modules
 			string biome = getBiome(vesselSituation);
 			CelestialBody mainBody = vessel.mainBody;
 			bool asteroids = false;
+			DMAsteroidScience newAsteroid = null;
 
 			//Check for asteroids and alter the biome and celestialbody values as necessary
 			if (asteroidReports && (DMAsteroidScience.AsteroidGrappled || DMAsteroidScience.AsteroidNear))
