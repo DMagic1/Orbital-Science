@@ -70,27 +70,38 @@ namespace DMagic.Part_Modules
 		protected override void Update()
 		{
 			base.Update();
-			if (IsDeployed)
+
+			if (HighLogic.LoadedSceneIsFlight)
 			{
-				DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
+				if (IsDeployed)
+				{
+					if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
+					{
+						float cost = resourceCost * Time.deltaTime;
+						part.RequestResource(resourceExperiment, cost);
+					}
+					if (fullyDeployed)
+					{
+						inRange();
+						rotating = true;
+						dishRotate();
+					}
+				}
 
-				if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
+				if (DMScienceScenario.SciScenario != null)
 				{
-					float cost = resourceCost * Time.deltaTime;
-					part.RequestResource(resourceExperiment, cost);
+					if (DMScienceScenario.SciScenario.anomalyList != null)
+					{
+						if (IsDeployed)
+							DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
+						else if (DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
+							DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
+					}
 				}
-				if (fullyDeployed)
-				{
-					inRange();
-					rotating = true;
-					dishRotate();
-				}
+
+				if (!fullyDeployed && rotating)
+					spinDishDown();
 			}
-			else if (DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
-				DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
-
-			if (!fullyDeployed && rotating)
-				spinDishDown();
 		}
 
 		new private void OnDestroy()

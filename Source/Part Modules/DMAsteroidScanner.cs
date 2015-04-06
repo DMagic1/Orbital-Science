@@ -678,6 +678,7 @@ namespace DMagic.Part_Modules
 				Debug.LogError("[DM] Something Went Wrong Here; Null Asteroid Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
 			else
 			{
+				GameEvents.OnExperimentDeployed.Fire(data);
 				scienceReports.Add(data);
 				Deployed = true;
 				ReviewData();

@@ -619,6 +619,7 @@ namespace DMagic.Part_Modules
 				Debug.LogError("[DM] Something Went Wrong Here; Null Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
 			else
 			{
+				GameEvents.OnExperimentDeployed.Fire(data);
 				if (experimentLimit <= 1)
 				{
 					dataIndex = 0;
