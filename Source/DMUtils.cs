@@ -162,7 +162,6 @@ namespace DMagic
 		//Select target celestial body based on contract prestige
 		internal static CelestialBody nextTargetBody(Contract.ContractPrestige c, List<CelestialBody> cR, List<CelestialBody> cUR)
 		{
-			DMUtils.DebugLog("Searching For Acceptable Body");
 			//Select Kerbin system for trivial
 			if (c == Contract.ContractPrestige.Trivial)
 				return FlightGlobals.Bodies[rand.Next(1, 4)];
@@ -196,7 +195,6 @@ namespace DMagic
 		//Return a list of valid experiment situations based on the experiment parameters
 		internal static List<ExperimentSituations> availableSituations(ScienceExperiment exp, int i, CelestialBody b)
 		{
-			DMUtils.DebugLog("Finding Situations");
 			List<ExperimentSituations> expSitList = new List<ExperimentSituations>();
 			if (((ExperimentSituations)i & ExperimentSituations.FlyingHigh) == ExperimentSituations.FlyingHigh && b.atmosphere)
 				expSitList.Add(ExperimentSituations.FlyingHigh);
@@ -230,16 +228,12 @@ namespace DMagic
 				else if (b.atmosphere)
 					expSitList.Add(ExperimentSituations.SrfSplashed);
 			}
-			DMUtils.DebugLog("Found {0} Valid Experimental Situations", expSitList.Count);
 			return expSitList;
 		}
 
 		internal static List<ExperimentSituations> availableSituationsLimited(ScienceExperiment exp, int i, CelestialBody b)
 		{
-			DMUtils.DebugLog("Finding Situations");
 			List<ExperimentSituations> expSitList = new List<ExperimentSituations>();
-			if (((ExperimentSituations)i & ExperimentSituations.FlyingHigh) == ExperimentSituations.FlyingHigh && b.atmosphere)
-				expSitList.Add(ExperimentSituations.FlyingHigh);
 			if (((ExperimentSituations)i & ExperimentSituations.FlyingLow) == ExperimentSituations.FlyingLow && b.atmosphere)
 				expSitList.Add(ExperimentSituations.FlyingLow);
 			if (((ExperimentSituations)i & ExperimentSituations.InSpaceLow) == ExperimentSituations.InSpaceLow)
@@ -256,7 +250,6 @@ namespace DMagic
 				else if (b.atmosphere)
 					expSitList.Add(ExperimentSituations.SrfLanded);
 			}
-			DMUtils.DebugLog("Found {0} Valid Experimental Situations", expSitList.Count);
 			return expSitList;
 		}
 
@@ -270,11 +263,9 @@ namespace DMagic
 
 		internal static List<string> fetchBiome(CelestialBody b, ScienceExperiment exp, ExperimentSituations sit)
 		{
-			DMUtils.DebugLog("Searching For Biomes: Value Sensitive");
 			List<string> s = new List<string>();
 			if (b.BiomeMap == null)
 			{
-				DMUtils.DebugLog("No Biomes Present For Target Planet");
 				s.Add("");
 				return s;
 			}
@@ -296,17 +287,14 @@ namespace DMagic
 					}
 				}
 			}
-			DMUtils.DebugLog("Found Acceptable Biomes");
 			return s;
 		}
 
 		internal static List<string> fetchBiome(CelestialBody b)
 		{
-			DMUtils.DebugLog("Searching For Biomes: Value InSensitive");
 			List<string> s = new List<string>();
 			if (b.BiomeMap == null)
 			{
-				DMUtils.DebugLog("No Biomes Present For Target Planet");
 				s.Add("");
 				return s;
 			}
