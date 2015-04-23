@@ -842,13 +842,14 @@ namespace DMagic.Part_Modules
 
 		private void registerDMScience(DMAsteroidScience newAst, ScienceSubject sub)
 		{
+			if (HighLogic.CurrentGame.Mode == Game.Modes.SANDBOX)
+				return;
+
 			DMScienceData DMData = null;
-			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.RecoveredDMScienceCount);
 
 			DMScienceData DMScience = DMScienceScenario.SciScenario.getDMScience(sub.title);
 			if (DMScience != null)
 			{
-				DMUtils.DebugLog("found matching DM Data");
 				sub.scientificValue *= DMScience.SciVal;
 				DMData = DMScience;
 			}

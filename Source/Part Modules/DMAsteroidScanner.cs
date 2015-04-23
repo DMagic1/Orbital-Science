@@ -759,6 +759,9 @@ namespace DMagic.Part_Modules
 
 		private void registerDMScience(DMAsteroidScience newAst, ScienceSubject sub)
 		{
+			if (HighLogic.CurrentGame.Mode == Game.Modes.SANDBOX)
+				return;
+
 			DMScienceData DMData = null;
 			DMScienceData DMScience = DMScienceScenario.SciScenario.getDMScience(sub.title);
 			if (DMScience != null)
