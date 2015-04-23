@@ -140,7 +140,6 @@ namespace DMagic.Contracts
 			lat = targetAnomaly.Lat;
 			cardNS = NSDirection(lat);
 			cardEW = EWDirection(lon);
-			DMUtils.DebugLog("Anomaly [{0}] Selected On {1} at Latitude: {2:N1} and Longitude: {3:N1}", targetAnomaly.Name, body.theName, lat, lon);
 
 			//Assign primary anomaly contract parameter
 			if ((newParam = DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly)) == null)
@@ -261,7 +260,7 @@ namespace DMagic.Contracts
 
 		protected override string GetSynopsys()
 		{
-			return string.Format("We would like you to travel to a specific location on {0}. Once there attempt to locate and study the source of the anomalous signal detected from that region.", body.theName);
+			return string.Format("We would like you to travel to a specific location on {0}. Once there attempt to locate and study the source of the anomalous signal.", body.theName);
 		}
 
 		protected override string MessageCompleted()

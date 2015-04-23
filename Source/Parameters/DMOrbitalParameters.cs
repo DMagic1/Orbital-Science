@@ -146,7 +146,7 @@ namespace DMagic.Parameters
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
 			if (!int.TryParse(orbitString[0], out type))
 			{
-				DMUtils.Logging("Failed To Load Type Variables; Mag Orbital Parameter Removed");
+				DMUtils.Logging("Failed To Load Type-Variables; Mag Orbital Parameter Removed");
 				this.Unregister();
 				this.Root.RemoveParameter(this);
 				return;
@@ -154,7 +154,7 @@ namespace DMagic.Parameters
 			vName = orbitString[1];
 			if (!double.TryParse(orbitString[2], out orbitalParameter))
 			{
-				DMUtils.Logging("Failed To Load Orbital Variables; Mag Orbital Parameter Reset");
+				DMUtils.Logging("Failed To Load Orbital-Variables; Mag Orbital Parameter Reset");
 				if (type == 0)
 					orbitalParameter = 0.2;
 				else
