@@ -160,7 +160,7 @@ namespace DMagic.Contracts
 
 		protected override string GetTitle()
 		{
-			return string.Format("Conduct orbital survey of {0}; return or transmit multiple scienctific observations", body.theName);
+			return string.Format("Conduct an orbital survey of {0}", body.theName);
 		}
 
 		protected override string GetNotes()

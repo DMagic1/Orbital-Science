@@ -151,7 +151,7 @@ namespace DMagic.Contracts
 
 		protected override string GetTitle()
 		{
-			return string.Format("Conduct a survey of a {0} asteroid; return or transmit multiple scienctific observations", hash);
+			return string.Format("Conduct a scientific survey of a {0} asteroid", hash);
 		}
 
 		protected override string GetNotes()
