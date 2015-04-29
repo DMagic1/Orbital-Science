@@ -114,6 +114,8 @@ namespace DMagic.Part_Modules
 		public int experimentLimit = 1;
 		[KSPField]
 		public bool externalDeploy = false;
+		[KSPField]
+		public int resetLevel = 0;
 
 		protected Animation anim;
 		protected Animation anim2;
@@ -342,6 +344,7 @@ namespace DMagic.Part_Modules
 			Events["ReviewDataEvent"].active = storedScienceReports.Count > 0;
 			Events["ReviewInitialData"].active = scienceReports.Count > 0;
 			Events["DeployExperimentExternal"].guiActiveUnfocused = false;
+			Events["CleanUpExperimentExternal"].active = !Inoperable;
 		}
 
 		#endregion
@@ -493,17 +496,14 @@ namespace DMagic.Part_Modules
 
 		new public void ResetExperiment()
 		{
-			if (storedScienceReports.Count > 0)
+			if (experimentLimit > 1)
+				ResetExperimentExternal();
+			else
 			{
-				if (experimentLimit > 1)
-					ResetExperimentExternal();
-				else
-				{
-					if (keepDeployedMode == 0) retractEvent();
-					storedScienceReports.Clear();
-				}
-				Deployed = false;
+				if (keepDeployedMode == 0) retractEvent();
+				storedScienceReports.Clear();
 			}
+			Deployed = false;
 		}
 
 		new public void ResetAction(KSPActionParam param)
@@ -515,27 +515,24 @@ namespace DMagic.Part_Modules
 		{
 			if (experimentLimit > 1)
 			{
-				if (storedScienceReports.Count > 0)
+				if (experimentLimit != 0)
 				{
-					if (experimentLimit != 0)
-					{
-						if (!string.IsNullOrEmpty(sampleEmptyAnim))
-							secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-						else if (!string.IsNullOrEmpty(sampleAnim))
-							secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-						if (!string.IsNullOrEmpty(indicatorAnim))
-							secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
-					}
-					foreach (ScienceData data in storedScienceReports)
-					{
-						storedScienceReports.Remove(data);
-						experimentNumber--;
-					}
-					if (experimentNumber < 0)
-						experimentNumber = 0;
-					if (keepDeployedMode == 0) retractEvent();
-					Deployed = false;
+					if (!string.IsNullOrEmpty(sampleEmptyAnim))
+						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+					else if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
 				}
+				foreach (ScienceData data in storedScienceReports)
+				{
+					storedScienceReports.Remove(data);
+					experimentNumber--;
+				}
+				if (experimentNumber < 0)
+					experimentNumber = 0;
+				if (keepDeployedMode == 0) retractEvent();
+				Deployed = false;
 			}
 			else
 				ResetExperiment();
@@ -549,6 +546,31 @@ namespace DMagic.Part_Modules
 				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false))
 					foreach (ScienceData data in storedScienceReports)
 						DumpData(data);
+			}
+		}
+
+		new public void DeployExperimentExternal()
+		{
+			DeployExperiment();
+		}
+
+		new public void CleanUpExperimentExternal()
+		{
+			if (FlightGlobals.ActiveVessel.isEVA)
+			{
+				if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].experienceTrait.TypeName == "Scientist")
+				{
+					if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].experienceLevel >= resetLevel)
+					{
+						ResetExperiment();
+						Inoperable = false;
+						ScreenMessages.PostScreenMessage("Experiment Reset", 6f, ScreenMessageStyle.UPPER_LEFT);
+					}
+					else
+						ScreenMessages.PostScreenMessage("Need Higher Level", 6f, ScreenMessageStyle.UPPER_LEFT);
+				}
+				else
+					ScreenMessages.PostScreenMessage("Need Scientist", 6f, ScreenMessageStyle.UPPER_LEFT);
 			}
 		}
 
