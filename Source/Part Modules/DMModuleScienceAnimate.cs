@@ -264,13 +264,13 @@ namespace DMagic.Part_Modules
 		{
 			string info = base.GetInfo();
 			if (!rerunnable)
-				info += string.Format("Max Samples: {0}\n", experimentLimit);
+				info += string.Format("\nMax Samples: {0}\n", experimentLimit);
 			if (resourceExpCost > 0)
 			{
 				float time = waitForAnimationTime;
 				if (time == -1 && anim != null && !string.IsNullOrEmpty(animationName))
 					time = anim[animationName].length;
-				info += string.Format("Requires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
+				info += string.Format("\nRequires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
 			}
 			return info;
 		}
@@ -341,6 +341,7 @@ namespace DMagic.Part_Modules
 			Events["DeployExperiment"].guiActiveUnfocused = !Inoperable && externalDeploy;
 			Events["ReviewDataEvent"].active = storedScienceReports.Count > 0;
 			Events["ReviewInitialData"].active = scienceReports.Count > 0;
+			Events["DeployExperimentExternal"].guiActiveUnfocused = false;
 		}
 
 		#endregion
@@ -783,6 +784,16 @@ namespace DMagic.Part_Modules
 			{
 				failMessage = customFailMessage;
 				return false;
+			}
+			else if (FlightGlobals.ActiveVessel.isEVA)
+			{
+				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, scienceExp, ref usageReqMessage))
+				{
+					failMessage = usageReqMessage;
+					return false;
+				}
+				else
+					return true;
 			}
 			else
 				return true;

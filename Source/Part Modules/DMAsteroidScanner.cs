@@ -72,6 +72,10 @@ namespace DMagic.Part_Modules
 		public bool Deployed = false;
 		[KSPField(guiActive = true, guiName = "Status")]
 		public string status;
+		[KSPField]
+		public int usageReqMaskExternal = -1;
+		[KSPField]
+		public string usageReqMessage = "";
 
 		private const string asteroidBodyNameFixed = "Eeloo";
 		private const string baseTransformName = "DishBaseTransform";
@@ -592,6 +596,15 @@ namespace DMagic.Part_Modules
 		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Scan Asteroid Interior", active = false)]
 		public void DeployExperiment()
 		{
+			if (FlightGlobals.ActiveVessel.isEVA)
+			{
+				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
+				{
+					ScreenMessages.PostScreenMessage(usageReqMessage, 6f, ScreenMessageStyle.UPPER_LEFT);
+					return;
+				}
+			}
+
 			if (receiverInRange && asteroidInSight)
 			{
 				ModuleAsteroid modAst = null;
