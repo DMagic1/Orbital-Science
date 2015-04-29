@@ -58,7 +58,7 @@ namespace DMagic.Scenario
 			GameEvents.OnScienceRecieved.Remove(scienceReceived);
 		}
 
-		private void scienceReceived(float sci, ScienceSubject sub)
+		private void scienceReceived(float sci, ScienceSubject sub, ProtoVessel pv)
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{

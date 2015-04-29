@@ -202,7 +202,7 @@ namespace DMagic.Parameters
 			}
 		}
 
-		private void anomalyScience(float sci, ScienceSubject sub)
+		private void anomalyScience(float sci, ScienceSubject sub, ProtoVessel pv)
 		{
 			if (sub.id.Contains(string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.Body.name, situation)))
 			{
