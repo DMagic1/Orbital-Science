@@ -682,7 +682,7 @@ namespace DMagic.Part_Modules
 				case Vessel.Situations.SPLASHED:
 					return ExperimentSituations.SrfSplashed;
 				default:
-					if (vessel.altitude < (vessel.mainBody.atmosphereScaleHeight * 1000 * Math.Log(1e6)) && vessel.mainBody.atmosphere)
+					if (vessel.altitude < vessel.mainBody.atmosphereDepth && vessel.mainBody.atmosphere)
 					{
 						if (vessel.altitude < vessel.mainBody.scienceValues.flyingAltitudeThreshold)
 							return ExperimentSituations.FlyingLow;
