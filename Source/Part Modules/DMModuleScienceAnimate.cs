@@ -266,7 +266,10 @@ namespace DMagic.Part_Modules
 		{
 			string info = base.GetInfo();
 			if (!rerunnable)
+			{
 				info += string.Format("\nMax Samples: {0}\n", experimentLimit);
+				info += string.Format("Scientist Level For Reset: {0}", resetLevel);
+			}
 			if (resourceExpCost > 0)
 			{
 				float time = waitForAnimationTime;
@@ -344,7 +347,7 @@ namespace DMagic.Part_Modules
 			Events["ReviewDataEvent"].active = storedScienceReports.Count > 0;
 			Events["ReviewInitialData"].active = scienceReports.Count > 0;
 			Events["DeployExperimentExternal"].guiActiveUnfocused = false;
-			Events["CleanUpExperimentExternal"].active = !Inoperable;
+			Events["CleanUpExperimentExternal"].active = Inoperable;
 		}
 
 		#endregion
@@ -564,13 +567,13 @@ namespace DMagic.Part_Modules
 					{
 						ResetExperiment();
 						Inoperable = false;
-						ScreenMessages.PostScreenMessage("Experiment Reset", 6f, ScreenMessageStyle.UPPER_LEFT);
+						ScreenMessages.PostScreenMessage(string.Format("[0]: Media Restored. Module is operational again.", experiment.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
 					}
 					else
-						ScreenMessages.PostScreenMessage("Need Higher Level", 6f, ScreenMessageStyle.UPPER_LEFT);
+						ScreenMessages.PostScreenMessage(string.Format("[0]: A level " + resetLevel +  " scientist is required to reset this experiment.", experiment.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
 				}
 				else
-					ScreenMessages.PostScreenMessage("Need Scientist", 6f, ScreenMessageStyle.UPPER_LEFT);
+					ScreenMessages.PostScreenMessage(string.Format("[0]: A scientist is needed to reset this experiment.", experiment.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
 			}
 		}
 
