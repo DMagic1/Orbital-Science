@@ -58,7 +58,7 @@ namespace DMagic.Scenario
 			GameEvents.OnScienceRecieved.Remove(RecoveryWatcher);
 		}
 
-		private void RecoveryWatcher(float sci, ScienceSubject sub)
+		private void RecoveryWatcher(float sci, ScienceSubject sub, ProtoVessel pv)
 		{
 			if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
 			{

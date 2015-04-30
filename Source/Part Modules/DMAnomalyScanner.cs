@@ -73,6 +73,9 @@ namespace DMagic.Part_Modules
 
 			if (HighLogic.LoadedSceneIsFlight)
 			{
+				if (DMScienceScenario.SciScenario == null)
+					return;
+
 				if (IsDeployed)
 				{
 					if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
@@ -88,15 +91,12 @@ namespace DMagic.Part_Modules
 					}
 				}
 
-				if (DMScienceScenario.SciScenario != null)
+				if (DMScienceScenario.SciScenario.anomalyList != null)
 				{
-					if (DMScienceScenario.SciScenario.anomalyList != null)
-					{
-						if (IsDeployed)
-							DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
-						else if (DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
-							DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
-					}
+					if (IsDeployed)
+						DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
+					else if (DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
+						DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
 				}
 
 				if (!fullyDeployed && rotating)

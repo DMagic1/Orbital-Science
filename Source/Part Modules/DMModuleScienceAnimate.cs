@@ -114,6 +114,8 @@ namespace DMagic.Part_Modules
 		public int experimentLimit = 1;
 		[KSPField]
 		public bool externalDeploy = false;
+		[KSPField]
+		public int resetLevel = 0;
 
 		protected Animation anim;
 		protected Animation anim2;
@@ -127,7 +129,6 @@ namespace DMagic.Part_Modules
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
-		private DMAsteroidScience newAsteroid;
 		private const string bodyNameFixed = "Eeloo";
 		private bool lastInOperableState = false;
 		protected float scienceBoost = 1f;
@@ -265,13 +266,16 @@ namespace DMagic.Part_Modules
 		{
 			string info = base.GetInfo();
 			if (!rerunnable)
-				info += string.Format("Max Samples: {0}\n", experimentLimit);
+			{
+				info += string.Format("\nMax Samples: {0}\n", experimentLimit);
+				info += string.Format("Scientist Level For Reset: {0}", resetLevel);
+			}
 			if (resourceExpCost > 0)
 			{
 				float time = waitForAnimationTime;
 				if (time == -1 && anim != null && !string.IsNullOrEmpty(animationName))
 					time = anim[animationName].length;
-				info += string.Format("Requires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
+				info += string.Format("\nRequires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
 			}
 			return info;
 		}
@@ -342,6 +346,8 @@ namespace DMagic.Part_Modules
 			Events["DeployExperiment"].guiActiveUnfocused = !Inoperable && externalDeploy;
 			Events["ReviewDataEvent"].active = storedScienceReports.Count > 0;
 			Events["ReviewInitialData"].active = scienceReports.Count > 0;
+			Events["DeployExperimentExternal"].guiActiveUnfocused = false;
+			Events["CleanUpExperimentExternal"].active = Inoperable;
 		}
 
 		#endregion
@@ -493,17 +499,14 @@ namespace DMagic.Part_Modules
 
 		new public void ResetExperiment()
 		{
-			if (storedScienceReports.Count > 0)
+			if (experimentLimit > 1)
+				ResetExperimentExternal();
+			else
 			{
-				if (experimentLimit > 1)
-					ResetExperimentExternal();
-				else
-				{
-					if (keepDeployedMode == 0) retractEvent();
-					storedScienceReports.Clear();
-				}
-				Deployed = false;
+				if (keepDeployedMode == 0) retractEvent();
+				storedScienceReports.Clear();
 			}
+			Deployed = false;
 		}
 
 		new public void ResetAction(KSPActionParam param)
@@ -515,27 +518,24 @@ namespace DMagic.Part_Modules
 		{
 			if (experimentLimit > 1)
 			{
-				if (storedScienceReports.Count > 0)
+				if (experimentLimit != 0)
 				{
-					if (experimentLimit != 0)
-					{
-						if (!string.IsNullOrEmpty(sampleEmptyAnim))
-							secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-						else if (!string.IsNullOrEmpty(sampleAnim))
-							secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-						if (!string.IsNullOrEmpty(indicatorAnim))
-							secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
-					}
-					foreach (ScienceData data in storedScienceReports)
-					{
-						storedScienceReports.Remove(data);
-						experimentNumber--;
-					}
-					if (experimentNumber < 0)
-						experimentNumber = 0;
-					if (keepDeployedMode == 0) retractEvent();
-					Deployed = false;
+					if (!string.IsNullOrEmpty(sampleEmptyAnim))
+						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+					else if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
 				}
+				foreach (ScienceData data in storedScienceReports)
+				{
+					storedScienceReports.Remove(data);
+					experimentNumber--;
+				}
+				if (experimentNumber < 0)
+					experimentNumber = 0;
+				if (keepDeployedMode == 0) retractEvent();
+				Deployed = false;
 			}
 			else
 				ResetExperiment();
@@ -549,6 +549,31 @@ namespace DMagic.Part_Modules
 				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false))
 					foreach (ScienceData data in storedScienceReports)
 						DumpData(data);
+			}
+		}
+
+		new public void DeployExperimentExternal()
+		{
+			DeployExperiment();
+		}
+
+		new public void CleanUpExperimentExternal()
+		{
+			if (FlightGlobals.ActiveVessel.isEVA)
+			{
+				if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].experienceTrait.TypeName == "Scientist")
+				{
+					if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].experienceLevel >= resetLevel)
+					{
+						ResetExperiment();
+						Inoperable = false;
+						ScreenMessages.PostScreenMessage(string.Format("[0]: Media Restored. Module is operational again.", experiment.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
+					}
+					else
+						ScreenMessages.PostScreenMessage(string.Format("[0]: A level " + resetLevel +  " scientist is required to reset this experiment.", experiment.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
+				}
+				else
+					ScreenMessages.PostScreenMessage(string.Format("[0]: A scientist is needed to reset this experiment.", experiment.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
 			}
 		}
 
@@ -683,7 +708,7 @@ namespace DMagic.Part_Modules
 				case Vessel.Situations.SPLASHED:
 					return ExperimentSituations.SrfSplashed;
 				default:
-					if (vessel.altitude < (vessel.mainBody.atmosphereScaleHeight * 1000 * Math.Log(1e6)) && vessel.mainBody.atmosphere)
+					if (vessel.altitude < vessel.mainBody.atmosphereDepth && vessel.mainBody.atmosphere)
 					{
 						if (vessel.altitude < vessel.mainBody.scienceValues.flyingAltitudeThreshold)
 							return ExperimentSituations.FlyingLow;
@@ -785,6 +810,16 @@ namespace DMagic.Part_Modules
 				failMessage = customFailMessage;
 				return false;
 			}
+			else if (FlightGlobals.ActiveVessel.isEVA)
+			{
+				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, scienceExp, ref usageReqMessage))
+				{
+					failMessage = usageReqMessage;
+					return false;
+				}
+				else
+					return true;
+			}
 			else
 				return true;
 		}
@@ -794,6 +829,7 @@ namespace DMagic.Part_Modules
 			string biome = getBiome(vesselSituation);
 			CelestialBody mainBody = vessel.mainBody;
 			bool asteroids = false;
+			DMAsteroidScience newAsteroid = null;
 
 			//Check for asteroids and alter the biome and celestialbody values as necessary
 			if (asteroidReports && (DMAsteroidScience.AsteroidGrappled || DMAsteroidScience.AsteroidNear))
@@ -842,13 +878,14 @@ namespace DMagic.Part_Modules
 
 		private void registerDMScience(DMAsteroidScience newAst, ScienceSubject sub)
 		{
+			if (HighLogic.CurrentGame.Mode == Game.Modes.SANDBOX)
+				return;
+
 			DMScienceData DMData = null;
-			DMUtils.DebugLog("Checking for DM Data in list length: {0}", DMScienceScenario.SciScenario.RecoveredDMScienceCount);
 
 			DMScienceData DMScience = DMScienceScenario.SciScenario.getDMScience(sub.title);
 			if (DMScience != null)
 			{
-				DMUtils.DebugLog("found matching DM Data");
 				sub.scientificValue *= DMScience.SciVal;
 				DMData = DMScience;
 			}

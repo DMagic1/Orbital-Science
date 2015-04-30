@@ -131,7 +131,7 @@ namespace DMagic.Parameters
 				partName = scienceContainer.SciPart;
 			if (!bool.TryParse(scienceString[1], out collected))
 			{
-				DMUtils.Logging("Failed To Load Collecte State; Asteroid Parameter Assuming Experiment Already Collected");
+				DMUtils.Logging("Failed To Load Collected State; Asteroid Parameter Assuming Experiment Already Collected");
 				collected = true;
 			}
 			if (int.TryParse(scienceString[2], out targetLocation))
@@ -157,7 +157,7 @@ namespace DMagic.Parameters
 			}
 		}
 
-		private void scienceRecieve(float sci, ScienceSubject sub)
+		private void scienceRecieve(float sci, ScienceSubject sub, ProtoVessel pv)
 		{
 			if (sub.id.Contains(string.Format("{0}@Asteroid{1}{2}", scienceContainer.Exp.id, scienceLocation, "")))
 			{

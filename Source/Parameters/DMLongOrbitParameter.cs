@@ -86,17 +86,17 @@ namespace DMagic.Parameters
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
 			if (!double.TryParse(orbitString[0], out timeNeeded))
 			{
-				DMUtils.Logging("Failed To Load Time Needed Variables; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
+				DMUtils.Logging("Failed To Load Time-Needed Variables; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
 				timeNeeded = 2160000;
 			}
 			if (timeNeeded < 1000)
 			{
-				DMUtils.Logging("Time Needed Value Not Set Correctly; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
+				DMUtils.Logging("Time-Needed Value Not Set Correctly; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
 				timeNeeded = 2160000;
 			}
 			if (!double.TryParse(orbitString[1], out orbitTime))
 			{
-				DMUtils.Logging("Failed To Load Orbit Time Variables; Mag Long Orbit Parameter Reset");
+				DMUtils.Logging("Failed To Load Orbit-Time Variables; Mag Long Orbit Parameter Reset");
 				orbitTime = 0;
 			}
 		}

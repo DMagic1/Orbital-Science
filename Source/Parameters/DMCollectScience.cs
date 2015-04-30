@@ -238,7 +238,7 @@ namespace DMagic.Parameters
 				ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		private void scienceReceive(float sci, ScienceSubject sub)
+		private void scienceReceive(float sci, ScienceSubject sub, ProtoVessel pv)
 		{
 			if (type == 0 || type == 2)
 			{
