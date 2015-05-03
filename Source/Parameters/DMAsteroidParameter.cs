@@ -157,7 +157,7 @@ namespace DMagic.Parameters
 			}
 		}
 
-		private void scienceRecieve(float sci, ScienceSubject sub, ProtoVessel pv)
+		private void scienceRecieve(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
 			if (sub.id.Contains(string.Format("{0}@Asteroid{1}{2}", scienceContainer.Exp.id, scienceLocation, "")))
 			{
