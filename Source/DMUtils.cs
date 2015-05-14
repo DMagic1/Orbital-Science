@@ -274,17 +274,16 @@ namespace DMagic
 				for (int j = 0; j < b.BiomeMap.Attributes.Length; j++)
 				{
 					string bName = b.BiomeMap.Attributes[j].name;
-					ScienceSubject subB = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", exp.id, b.name, sit, bName.Replace(" ", "")));
-					if (subB == null)
+					string subId = string.Format("{0}@{1}{2}{3}", exp.id, b.name, sit, bName.Replace(" ", ""));
+
+					if (ResearchAndDevelopment.GetSubjects().Any(a => a.id == subId))
 					{
-						s.Add(bName);
-						continue;
-					}
-					else
-					{
+						ScienceSubject subB = ResearchAndDevelopment.GetSubjectByID(subId);
 						if (subB.scientificValue > 0.5f)
 							s.Add(bName);
 					}
+					else
+						s.Add(bName);
 				}
 			}
 			return s;
