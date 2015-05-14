@@ -117,6 +117,9 @@ namespace DMagic.Part_Modules
 		{
 			if (HighLogic.LoadedSceneIsFlight && primaryModule != null)
 			{
+				if (!FlightGlobals.ready)
+					return;
+
 				float deltaTime = 1f;
 				if (Time.deltaTime != 0)
 					deltaTime = TimeWarp.deltaTime / Time.deltaTime;
