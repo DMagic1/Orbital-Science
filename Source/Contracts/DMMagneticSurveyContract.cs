@@ -111,9 +111,8 @@ namespace DMagic.Contracts
 				else
 				{
 					this.AddParameter(DMCS, "collectDMScience");
-					DMCS.SetFunds(8000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-					DMCS.SetReputation(25f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-					DMCS.SetScience(25f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
+					DMCS.SetFunds(5000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
+					DMCS.SetScience(4f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
 				}
 			}
 
@@ -125,8 +124,9 @@ namespace DMagic.Contracts
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
 			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
-			base.SetReputation(50f * DMUtils.reward * primaryModifier, 10f * DMUtils.penalty * primaryModifier, body);
-			base.SetFunds(50000 * DMUtils.forward * primaryModifier, 55000 * DMUtils.reward * primaryModifier, 20000 * DMUtils.penalty * primaryModifier, body);
+			base.SetReputation(35f * DMUtils.reward * primaryModifier, 15f * DMUtils.penalty * primaryModifier, body);
+			base.SetFunds(40000 * DMUtils.forward * primaryModifier, 25000 * DMUtils.reward * primaryModifier, 20000 * DMUtils.penalty * primaryModifier, body);
+			base.SetScience(15f * DMUtils.science * primaryModifier, body);
 			return true;
 		}
 

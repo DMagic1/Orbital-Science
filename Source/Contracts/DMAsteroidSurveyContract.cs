@@ -114,9 +114,9 @@ namespace DMagic.Contracts
 				{
 					this.AddParameter(DMAP, "collectDMScience");
 					float modifier = ((float)rand.Next(85, 116) / 100f);
-					DMAP.SetScience(DMAP.Container.Exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
-					DMAP.SetFunds(8000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size) * modifier, 6000f * DMUtils.penalty * (size + 1) * modifier, null);
-					DMAP.SetReputation(15f * DMUtils.reward * (size + 1) * modifier, 10f * DMUtils.penalty * (size + 1) * modifier, null);
+					DMAP.SetScience(DMAP.Container.Exp.baseValue * 0.7f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
+					DMAP.SetFunds(7000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size) * modifier, null);
+					DMAP.SetReputation(15f * DMUtils.reward * (size + 1) * modifier, null);
 					limit++;
 				}
 			}
@@ -130,7 +130,7 @@ namespace DMagic.Contracts
 			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
 			base.SetDeadlineYears(2.8f * DMUtils.deadline * primaryModifier, null);
 			base.SetReputation(newParams.Length * 5f * DMUtils.reward * (size + 1) * primaryModifier, newParams.Length * 3f * DMUtils.penalty * primaryModifier, null);
-			base.SetFunds(12000 * newParams.Length * DMUtils.forward * (size + 1) * primaryModifier, 11000 * newParams.Length * DMUtils.reward * (size + 1) * primaryModifier, 9000 * newParams.Length * DMUtils.penalty * (size + 1) * primaryModifier, null);
+			base.SetFunds(10000 * newParams.Length * DMUtils.forward * (size + 1) * primaryModifier, 8000 * newParams.Length * DMUtils.reward * (size + 1) * primaryModifier, 9000 * newParams.Length * DMUtils.penalty * (size + 1) * primaryModifier, null);
 			return true;
 		}
 

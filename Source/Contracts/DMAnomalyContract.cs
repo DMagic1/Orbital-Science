@@ -162,9 +162,9 @@ namespace DMagic.Contracts
 			this.AddParameter(newParam);
 
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParam.Situation), newParam.Body) * ((float)rand.Next(85, 116) / 100f);
-			newParam.SetFunds(20000f * DMUtils.reward * primaryLocationMod, 10000f * DMUtils.penalty * primaryLocationMod, body);
-			newParam.SetReputation(80f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
-			newParam.SetScience(35f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
+			newParam.SetFunds(15000f * DMUtils.reward * primaryLocationMod, body);
+			newParam.SetReputation(40f * DMUtils.reward * primaryLocationMod, body);
+			newParam.SetScience(8f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
 
 			foreach (DMAnomalyParameter aP in anomParams)
 			{
@@ -172,9 +172,9 @@ namespace DMagic.Contracts
 				{
 					this.AddParameter(aP, "collectDMAnomaly");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), body) * ((float)rand.Next(85, 116) / 100f);
-					aP.SetFunds(9000f * DMUtils.reward * locationMod, 6000f * DMUtils.penalty * locationMod, body);
-					aP.SetReputation(20f * DMUtils.reward * locationMod, 5f * DMUtils.penalty * locationMod, body);
-					aP.SetScience(aP.Container.Exp.baseValue * 2f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
+					aP.SetFunds(8000f * DMUtils.reward * locationMod, body);
+					aP.SetReputation(10f * DMUtils.reward * locationMod, body);
+					aP.SetScience(aP.Container.Exp.baseValue * 0.8f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
 				}
 			}
 
