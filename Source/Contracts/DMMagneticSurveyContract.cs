@@ -150,6 +150,11 @@ namespace DMagic.Contracts
 			return string.Format("Conduct a survey of the magnetic field environment around {0}", body.theName);
 		}
 
+		protected override string GetNotes()
+		{
+			return "Science results can be collected and transmitted or returned at any time during the contract.\n";
+		}
+
 		protected override string GetDescription()
 		{
 			string story = DMUtils.backStory["magnetic"][rand.Next(0, DMUtils.backStory["magnetic"].Count)];

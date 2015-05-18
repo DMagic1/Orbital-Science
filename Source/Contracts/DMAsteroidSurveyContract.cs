@@ -168,7 +168,7 @@ namespace DMagic.Contracts
 
 		protected override string GetSynopsys()
 		{
-			return string.Format("We want you to find a {0} asteroid and study it by collecting multiple scientific observations.", hash);
+			return string.Format("We want you to find a {0} asteroid and study it by collecting and returning or transmitting multiple scientific observations.", hash);
 		}
 
 		protected override string MessageCompleted()

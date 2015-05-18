@@ -165,7 +165,7 @@ namespace DMagic.Contracts
 
 		protected override string GetNotes()
 		{
-			return "Science experiments with little to no transmission value remaining may need to be returned to Kerbin to complete each parameter.";
+			return "Results must be transmitted or returned; science experiments with little to no transmission value remaining may need to be returned to Kerbin to complete each parameter.";
 		}
 
 		protected override string GetDescription()
