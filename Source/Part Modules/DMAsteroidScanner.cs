@@ -802,7 +802,7 @@ namespace DMagic.Part_Modules
 		{
 			if (scienceReports.Count > 0)
 			{
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, transmitValue, 0f, false, "", true, data.labBoost < 1 && checkLabOps() && transmitValue < 1f, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, transmitValue, 0f, false, "", true, ModuleScienceLab.IsLabData(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
