@@ -117,7 +117,7 @@ namespace DMagic.Part_Modules
 		{
 			if (HighLogic.LoadedSceneIsFlight && primaryModule != null)
 			{
-				if (!FlightGlobals.ready)
+				if (!FlightGlobals.ready || DMScienceScenario.SciScenario == null)
 					return;
 
 				float deltaTime = 1f;
