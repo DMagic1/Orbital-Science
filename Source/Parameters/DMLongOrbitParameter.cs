@@ -29,17 +29,13 @@
  */
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 using DMagic.Contracts;
 
 namespace DMagic.Parameters
 {
-	class DMLongOrbitParameter: ContractParameter
+	public class DMLongOrbitParameter: ContractParameter
 	{
 		private double orbitTime, timeNeeded;
 
