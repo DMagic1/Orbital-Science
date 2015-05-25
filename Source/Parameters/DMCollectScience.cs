@@ -200,7 +200,7 @@ namespace DMagic.Parameters
 			{
 				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Removed");
 				this.Unregister();
-				this.Root.RemoveParameter(this);
+				this.Parent.RemoveParameter(this);
 				return;
 			}
 			else
@@ -211,7 +211,7 @@ namespace DMagic.Parameters
 			{
 				DMUtils.Logging("Failed To Load Target Body Variables; Collect Science Parameter Removed");
 				this.Unregister();
-				this.Root.RemoveParameter(this);
+				this.Parent.RemoveParameter(this);
 				return;
 			}
 			if (int.TryParse(scienceString[3], out targetSituation))
@@ -220,7 +220,7 @@ namespace DMagic.Parameters
 			{
 				DMUtils.Logging("Failed To Load Situation Variables; Collect Science Parameter Removed");
 				this.Unregister();
-				this.Root.RemoveParameter(this);
+				this.Parent.RemoveParameter(this);
 				return;
 			}
 			biomeName = scienceString[4];
