@@ -37,7 +37,7 @@ using DMagic.Scenario;
 
 namespace DMagic.Part_Modules
 {
-	class DMModuleScienceAnimate : ModuleScienceExperiment, IScienceDataContainer
+	public class DMModuleScienceAnimate : ModuleScienceExperiment, IScienceDataContainer
 	{
 		#region Fields
 
@@ -194,7 +194,10 @@ namespace DMagic.Part_Modules
 						primaryAnimator(1f, 1f, WrapMode.Default, bayAnimation, anim4);
 					if (anim3 != null)
 						primaryAnimator(2.5f * animSpeed, 0f, WrapMode.Loop, looperAnimation, anim3);
+					enableIAnimators();
 				}
+				else
+					disableIAnimators();
 			}
 		}
 
@@ -412,8 +415,26 @@ namespace DMagic.Part_Modules
 					}
 				}
 			}
+			enableIAnimators();
 			Events["deployEvent"].active = oneWayAnimation;
 			Events["retractEvent"].active = showEndEvent;
+		}
+
+		private void enableIAnimators()
+		{
+			foreach (IAnimatedModule m in part.FindModulesImplementing<IAnimatedModule>())
+			{
+				if (m.IsSituationValid())
+					m.EnableModule();
+			}
+		}
+
+		private void disableIAnimators()
+		{
+			foreach (IAnimatedModule m in part.FindModulesImplementing<IAnimatedModule>())
+			{
+				m.DisableModule();
+			}
 		}
 
 		[KSPAction("Deploy")]
@@ -453,6 +474,7 @@ namespace DMagic.Part_Modules
 					}
 				}
 			}
+			disableIAnimators();
 			Events["deployEvent"].active = showStartEvent;
 			Events["retractEvent"].active = false;
 		}
