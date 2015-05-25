@@ -159,7 +159,11 @@ namespace DMagic.Contracts
 					anomParams[i] = null;
 			}
 
-			this.AddParameter(newParam);
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(3, 1);
+			this.AddParameter(DMcp);
+
+			DMcp.addToSubParams(newParam, "AnomalyScience");
 
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParam.Situation), newParam.Body) * ((float)rand.Next(85, 116) / 100f);
 			newParam.SetFunds(15000f * DMUtils.reward * primaryLocationMod, body);
@@ -170,15 +174,15 @@ namespace DMagic.Contracts
 			{
 				if (aP != null)
 				{
-					this.AddParameter(aP, "collectDMAnomaly");
+					DMcp.addToSubParams(aP, "CollectAnomalyScience");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), body) * ((float)rand.Next(85, 116) / 100f);
 					aP.SetFunds(8000f * DMUtils.reward * locationMod, body);
 					aP.SetReputation(10f * DMUtils.reward * locationMod, body);
-					aP.SetScience(aP.Container.Exp.baseValue * 0.8f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
+					aP.SetScience(aP.Container.Exp.baseValue * 0.3f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
 				}
 			}
 
-			if (this.ParameterCount == 0)
+			if (DMcp.ParameterCount < 2)
 				return false;
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
@@ -249,7 +253,7 @@ namespace DMagic.Contracts
 
 		protected override string GetNotes()
 		{
-			return string.Format("Locate the anomalous signal coming from roughly {0}° {1} and {2}° {3}. An on-screen message will indicate successful collection of results; data must be transmitted or returned to complete each parameter.", Math.Abs(FudgedLat), cardNS, Math.Abs(FudgedLon), cardEW);
+			return string.Format("Locate the anomalous signal coming from roughly {0}° {1} and {2}° {3}.", Math.Abs(FudgedLat), cardNS, Math.Abs(FudgedLon), cardEW);
 		}
 
 		protected override string GetDescription()

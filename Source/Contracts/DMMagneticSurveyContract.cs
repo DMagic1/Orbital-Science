@@ -75,7 +75,7 @@ namespace DMagic.Contracts
 			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 				return false;
 
-			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null));
+			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, false), GetBodies_NextUnreached(4, null));
 			if (body == null)
 				return false;
 
@@ -104,13 +104,17 @@ namespace DMagic.Contracts
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
 
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(1, 0);
+			this.AddParameter(DMcp);
+
 			foreach (DMCollectScience DMCS in magParams)
 			{
 				if (DMCS == null)
 					return false;
 				else
 				{
-					this.AddParameter(DMCS, "collectDMScience");
+					DMcp.addToSubParams(DMCS, "MagFieldScience");
 					DMCS.SetFunds(5000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
 					DMCS.SetScience(4f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
 				}
@@ -148,11 +152,6 @@ namespace DMagic.Contracts
 		protected override string GetTitle()
 		{
 			return string.Format("Conduct a survey of the magnetic field environment around {0}", body.theName);
-		}
-
-		protected override string GetNotes()
-		{
-			return "Science results can be collected and transmitted or returned at any time during the contract.\n";
 		}
 
 		protected override string GetDescription()

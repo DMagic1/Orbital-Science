@@ -103,6 +103,10 @@ namespace DMagic.Contracts
 					newParams[i] = null;
 			}
 
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(2, 1);
+			this.AddParameter(DMcp);
+
 			int limit = 0;
 
 			//Add in all acceptable paramaters to the contract
@@ -112,16 +116,16 @@ namespace DMagic.Contracts
 					break;
 				if (DMAP != null)
 				{
-					this.AddParameter(DMAP, "collectDMScience");
+					DMcp.addToSubParams(DMAP, "CollectAsteroidScience");
 					float modifier = ((float)rand.Next(85, 116) / 100f);
-					DMAP.SetScience(DMAP.Container.Exp.baseValue * 0.7f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
+					DMAP.SetScience(DMAP.Container.Exp.baseValue * 0.3f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
 					DMAP.SetFunds(7000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size) * modifier, null);
 					DMAP.SetReputation(15f * DMUtils.reward * (size + 1) * modifier, null);
 					limit++;
 				}
 			}
 
-			if (this.ParameterCount < 3)
+			if (DMcp.ParameterCount < 3)
 				return false;
 
 			float primaryModifier = ((float)rand.Next(85, 116) / 100f);
@@ -156,7 +160,7 @@ namespace DMagic.Contracts
 
 		protected override string GetNotes()
 		{
-			return "Only DMagic brand science parts can be used for this contract. Data must be collected while near to, or grappled to an asteroid of the specified class. An on-screen message will indicate successful collection of data; return or transmit data to complete each parameter.";
+			return "Only DMagic brand science parts can be used for this contract. Data must be collected while near to, or grappled to an asteroid of the specified class.";
 		}
 
 		protected override string GetDescription()

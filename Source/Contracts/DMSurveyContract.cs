@@ -87,12 +87,14 @@ namespace DMagic.Contracts
 				return false;
 
 			//Generates the science experiment, returns null if experiment fails any check
-			if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null), DMScience)) == null)
+			if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, false), GetBodies_NextUnreached(4, null), DMScience)) == null)
 				return false;
 
 			body = newParams[0].Body;
-			//Add an orbital parameter
-			this.AddParameter(new EnterOrbit(body), null);
+
+			//Add an orbital parameter to difficult contracts
+			if (this.Prestige == ContractPrestige.Exceptional)
+				this.AddParameter(new EnterOrbit(body));
 
 			for (int j = 1; j < 8; j++)
 			{
@@ -106,25 +108,29 @@ namespace DMagic.Contracts
 					newParams[j] = null;
 			}
 
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(0, 1);
+			this.AddParameter(DMcp);
+
 			int limit = 1;
 
 			//Add in all acceptable paramaters to the contract
 			foreach (DMCollectScience DMC in newParams)
 			{
-				if (limit > (3 + (int)this.prestige))
+				if (limit > (3 + (int)this.Prestige))
 					break;
 				if (DMC != null)
 				{
-					this.AddParameter(DMC, "collectDMScience");
+					DMcp.addToSubParams(DMC, "CollectScience");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(DMC.Situation), DMC.Body) * ((float)rand.Next(85, 116) / 100f);
-					DMC.SetScience(DMC.Container.Exp.baseValue * 0.3f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
+					DMC.SetScience(DMC.Container.Exp.baseValue * 0.2f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
 					DMC.SetFunds(4000f * DMUtils.reward * locationMod, body);
 					DMC.SetReputation(8f * DMUtils.reward * locationMod, body);
 					limit++;
 				}
 			}
 
-			if (this.ParameterCount < 4)
+			if (DMcp.ParameterCount < 3)
 				return false;
 
 			int a = rand.Next(0, 4);
@@ -161,11 +167,6 @@ namespace DMagic.Contracts
 		protected override string GetTitle()
 		{
 			return string.Format("Conduct an orbital survey of {0}", body.theName);
-		}
-
-		protected override string GetNotes()
-		{
-			return "Results must be transmitted or returned; science experiments with little to no transmission value remaining may need to be returned to Kerbin to complete each parameter.";
 		}
 
 		protected override string GetDescription()
