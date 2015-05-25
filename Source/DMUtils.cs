@@ -176,7 +176,7 @@ namespace DMagic
 					return null;
 				return cR[rand.Next(0, cR.Count)];
 			}
-			//Select unreached body for; remove Kerbin system, return already reached bodies if all have been visited
+			//Select unreached body; remove Kerbin system, return already reached bodies if all have been visited
 			else if (c == Contract.ContractPrestige.Exceptional)
 			{
 				if (cUR.Count == 0)
