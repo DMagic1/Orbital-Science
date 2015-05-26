@@ -64,9 +64,9 @@ namespace DMagic.Parameters
 		protected override string GetTitle()
 		{
 			if (ParameterCount == subParamCountToComplete)
-				return "Return or transmit the following experiments:";
+				return "Return or transmit data from the following experiments:";
 			else
-				return string.Format("Return or transmit at least {0} of the following experiments:", subParamCountToComplete);
+				return string.Format("Return or transmit data from at least {0} of the following experiments:", subParamCountToComplete);
 		}
 
 		protected override string GetNotes()
@@ -74,11 +74,11 @@ namespace DMagic.Parameters
 			switch(type)
 			{
 				case 0:
-					return "The following experiments must be returned or transmitted with some science value; if no transmission value is remaining the results must be returned home.";
+					return "The following experiments must be returned or transmitted with some science value; if no science value is remaining the results must be returned home.";
 				case 1:
 					return "The following experiments can be conducted at any time during the contract.";
 				case 2:
-					return "An on-screen message will indicate successful collection of data from the following experiments; return or transmit the results to complete each objective.";
+					return "An on-screen message will indicate successful collection of asteroid data from the following experiments; return or transmit the results to complete each objective.";
 				case 3:
 					return "An on-screen message will indicate successful collection of data while near to, or above, the target; return or transmit the results to complete each objective.";
 			}
@@ -108,7 +108,7 @@ namespace DMagic.Parameters
 			{
 				DMUtils.Logging("Failed To Load Parent Parameter Variables; Parent Parameter Removed");
 				this.Unregister();
-				this.Root.RemoveParameter(this);
+				this.Parent.RemoveParameter(this);
 				return;
 			}
 			if (!int.TryParse(values[1], out subParamCountToComplete))
