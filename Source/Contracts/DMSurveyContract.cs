@@ -125,7 +125,6 @@ namespace DMagic.Contracts
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(DMC.Situation), DMC.Body) * ((float)rand.Next(85, 116) / 100f);
 					DMC.SetScience(DMC.Container.Exp.baseValue * 0.2f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
 					DMC.SetFunds(4000f * DMUtils.reward * locationMod, body);
-					DMC.SetReputation(8f * DMUtils.reward * locationMod, body);
 					limit++;
 				}
 			}
@@ -143,8 +142,8 @@ namespace DMagic.Contracts
 
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParams[0].Situation), newParams[0].Body) * ((float)rand.Next(85, 116) / 100f);
 			base.SetExpiry(10f * DMUtils.deadline, 20f * DMUtils.deadline);
-			base.SetDeadlineYears(1.9f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
-			base.SetReputation(newParams.Length * 7f * DMUtils.reward * primaryLocationMod, newParams.Length * 5f * DMUtils.penalty * primaryLocationMod, body);
+			base.SetDeadlineYears(1.7f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
+			base.SetReputation(newParams.Length * 3f * DMUtils.reward * primaryLocationMod, newParams.Length * 2f * DMUtils.penalty * primaryLocationMod, body);
 			base.SetFunds(3000 * newParams.Length * DMUtils.forward * primaryLocationMod, 2500 * newParams.Length * DMUtils.reward * primaryLocationMod, 2000 * newParams.Length * DMUtils.penalty * primaryLocationMod, body);
 			return true;
 		}
