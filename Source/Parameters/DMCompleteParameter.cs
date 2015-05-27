@@ -88,12 +88,12 @@ namespace DMagic.Parameters
 
 		protected override void OnRegister()
 		{
-			OnStateChange.Add(onParamChange);
+			GameEvents.Contract.onParameterChange.Add(onParamChange);
 		}
 
 		protected override void OnUnregister()
 		{
-			OnStateChange.Remove(onParamChange);
+			GameEvents.Contract.onParameterChange.Remove(onParamChange);
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -123,8 +123,11 @@ namespace DMagic.Parameters
 			return AllParameters.Where(p => p.State == ParameterState.Complete).Count();
 		}
 
-		private void onParamChange(ContractParameter p, ParameterState state)
+		private void onParamChange(Contract c, ContractParameter p)
 		{
+			if (c != this.Root)
+				return;
+	
 			if (SubParamCompleted() >= subParamCountToComplete)
 				this.SetComplete();
 		}
