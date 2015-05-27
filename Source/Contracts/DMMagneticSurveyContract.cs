@@ -130,7 +130,6 @@ namespace DMagic.Contracts
 			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
 			base.SetReputation(15f * DMUtils.reward * primaryModifier, 15f * DMUtils.penalty * primaryModifier, body);
 			base.SetFunds(30000 * DMUtils.forward * primaryModifier, 25000 * DMUtils.reward * primaryModifier, 20000 * DMUtils.penalty * primaryModifier, body);
-			base.SetScience(12f * DMUtils.science * primaryModifier, body);
 			return true;
 		}
 
