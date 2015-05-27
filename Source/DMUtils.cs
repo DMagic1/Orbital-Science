@@ -107,13 +107,13 @@ namespace DMagic
 				case 0:
 					return 2f;
 				case 1:
-					return 4f;
+					return 3f;
 				case 2:
-					return 6f;
+					return 5f;
 				case 3:
-					return 8f;
+					return 7f;
 				case 4:
-					return 10f;
+					return 9f;
 				default:
 					return 1f;
 			}

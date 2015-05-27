@@ -100,7 +100,7 @@ namespace DMagic
 				asteroidValues(modAsteroid, 1f);
 			else if (AsteroidGrappled) {
 				ModuleAsteroid asteroidM = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleAsteroid>().First();
-				asteroidValues(asteroidM, 1.5f);
+				asteroidValues(asteroidM, 1.25f);
 			}
 		}
 
@@ -137,15 +137,15 @@ namespace DMagic
 				case "Class A":
 					return 2f;
 				case "Class B":
-					return 4f;
+					return 3f;
 				case "Class C":
-					return 6f;
+					return 5f;
 				case "Class D":
-					return 8f;
+					return 7f;
 				case "Class E":
-					return 10f;
+					return 9f;
 				case "Class Unholy":
-					return 15f;
+					return 12f;
 				default:
 					return 1f;
 			}
