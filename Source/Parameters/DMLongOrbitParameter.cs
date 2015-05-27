@@ -61,7 +61,7 @@ namespace DMagic.Parameters
 
 		protected override string GetTitle()
 		{
-			if (orbitTime <= 0)
+			if (orbitTime <= 0 || this.State != ParameterState.Incomplete)
 				return string.Format("Enter and maintain proper orbit for {0:N0} days", DMUtils.timeInDays(timeNeeded));
 			else
 				return string.Format("Maintain proper orbit for {0:N0} more days", DMUtils.timeInDays(timeNeeded - (Planetarium.GetUniversalTime() - orbitTime)));
