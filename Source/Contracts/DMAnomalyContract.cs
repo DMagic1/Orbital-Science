@@ -159,15 +159,15 @@ namespace DMagic.Contracts
 					anomParams[i] = null;
 			}
 
-			//Add the science collection parent parameter
-			DMCompleteParameter DMcp = new DMCompleteParameter(3, 1);
-			this.AddParameter(DMcp);
-
-			DMcp.addToSubParams(newParam, "AnomalyScience");
+			this.AddParameter(newParam, "AnomalyScience");
 
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParam.Situation), newParam.Body) * ((float)rand.Next(85, 116) / 100f);
 			newParam.SetFunds(12000f * DMUtils.reward * primaryLocationMod, body);
-			newParam.SetScience(8f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
+			newParam.SetScience(6f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
+
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(3, 1);
+			this.AddParameter(DMcp);
 
 			foreach (DMAnomalyParameter aP in anomParams)
 			{
@@ -176,7 +176,7 @@ namespace DMagic.Contracts
 					DMcp.addToSubParams(aP, "CollectAnomalyScience");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), body) * ((float)rand.Next(85, 116) / 100f);
 					aP.SetFunds(7000f * DMUtils.reward * locationMod, body);
-					aP.SetScience(aP.Container.Exp.baseValue * 0.3f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
+					aP.SetScience(aP.Container.Exp.baseValue * 0.25f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
 				}
 			}
 
@@ -186,8 +186,8 @@ namespace DMagic.Contracts
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
 			base.SetDeadlineYears(1.5f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
-			base.SetReputation(10f * DMUtils.reward * primaryLocationMod, 8f * DMUtils.penalty * primaryLocationMod, body);
-			base.SetFunds(18000f * DMUtils.forward * primaryLocationMod, 20000f * DMUtils.reward * primaryLocationMod, 16000f * DMUtils.penalty * primaryLocationMod, body);
+			base.SetReputation(8f * DMUtils.reward * primaryLocationMod, 9f * DMUtils.penalty * primaryLocationMod, null);
+			base.SetFunds(25000f * DMUtils.forward * primaryLocationMod, 28000f * DMUtils.reward * primaryLocationMod, 23000f * DMUtils.penalty * primaryLocationMod, body);
 			return true;
 		}
 

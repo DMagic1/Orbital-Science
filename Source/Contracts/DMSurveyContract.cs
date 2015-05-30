@@ -143,7 +143,7 @@ namespace DMagic.Contracts
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParams[0].Situation), newParams[0].Body) * ((float)rand.Next(85, 116) / 100f);
 			base.SetExpiry(10f * DMUtils.deadline, 20f * DMUtils.deadline);
 			base.SetDeadlineYears(1.7f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
-			base.SetReputation(newParams.Length * 2.4f * DMUtils.reward * primaryLocationMod, newParams.Length * 2f * DMUtils.penalty * primaryLocationMod, body);
+			base.SetReputation(newParams.Length * 1.9f * DMUtils.reward * primaryLocationMod, newParams.Length * 1.5f * DMUtils.penalty * primaryLocationMod, null);
 			base.SetFunds(5500 * newParams.Length * DMUtils.forward * primaryLocationMod, 7000 * newParams.Length * DMUtils.reward * primaryLocationMod, 5000 * newParams.Length * DMUtils.penalty * primaryLocationMod, body);
 			return true;
 		}
