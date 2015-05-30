@@ -103,6 +103,10 @@ namespace DMagic.Contracts
 					newParams[i] = null;
 			}
 
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(2, 1);
+			this.AddParameter(DMcp);
+
 			int limit = 0;
 
 			//Add in all acceptable paramaters to the contract
@@ -112,25 +116,24 @@ namespace DMagic.Contracts
 					break;
 				if (DMAP != null)
 				{
-					this.AddParameter(DMAP, "collectDMScience");
+					DMcp.addToSubParams(DMAP, "CollectAsteroidScience");
 					float modifier = ((float)rand.Next(85, 116) / 100f);
-					DMAP.SetScience(DMAP.Container.Exp.baseValue * 2f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
-					DMAP.SetFunds(8000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size) * modifier, 6000f * DMUtils.penalty * (size + 1) * modifier, null);
-					DMAP.SetReputation(15f * DMUtils.reward * (size + 1) * modifier, 10f * DMUtils.penalty * (size + 1) * modifier, null);
+					DMAP.SetScience(DMAP.Container.Exp.baseValue * 0.3f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
+					DMAP.SetFunds(5000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size) * modifier, null);
 					limit++;
 				}
 			}
 
-			if (this.ParameterCount < 3)
+			if (DMcp.ParameterCount < 3)
 				return false;
 
 			float primaryModifier = ((float)rand.Next(85, 116) / 100f);
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
-			base.SetDeadlineYears(2.8f * DMUtils.deadline * primaryModifier, null);
-			base.SetReputation(newParams.Length * 5f * DMUtils.reward * (size + 1) * primaryModifier, newParams.Length * 3f * DMUtils.penalty * primaryModifier, null);
-			base.SetFunds(12000 * newParams.Length * DMUtils.forward * (size + 1) * primaryModifier, 11000 * newParams.Length * DMUtils.reward * (size + 1) * primaryModifier, 9000 * newParams.Length * DMUtils.penalty * (size + 1) * primaryModifier, null);
+			base.SetDeadlineYears(3.8f * DMUtils.deadline * primaryModifier, null);
+			base.SetReputation(newParams.Length * 1.5f * DMUtils.reward * (size + 1) * primaryModifier, newParams.Length * 1.2f * DMUtils.penalty * primaryModifier, null);
+			base.SetFunds(8000 * newParams.Length * DMUtils.forward * (size + 1) * primaryModifier, 7000 * newParams.Length * DMUtils.reward * (size + 1) * primaryModifier, 7000 * newParams.Length * DMUtils.penalty * (size + 1) * primaryModifier, null);
 			return true;
 		}
 
@@ -156,7 +159,7 @@ namespace DMagic.Contracts
 
 		protected override string GetNotes()
 		{
-			return "Only DMagic brand science parts can be used for this contract. Data must be collected while near to, or grappled to an asteroid of the specified class. An on-screen message will indicate successful collection of data; return or transmit data to complete each parameter.";
+			return "Only DMagic brand science parts can be used for this contract. Data must be collected while near to, or grappled to an asteroid of the specified class.";
 		}
 
 		protected override string GetDescription()
@@ -168,7 +171,7 @@ namespace DMagic.Contracts
 
 		protected override string GetSynopsys()
 		{
-			return string.Format("We want you to find a {0} asteroid and study it by collecting multiple scientific observations.", hash);
+			return string.Format("We want you to find a {0} asteroid and study it by collecting and returning or transmitting multiple scientific observations.", hash);
 		}
 
 		protected override string MessageCompleted()

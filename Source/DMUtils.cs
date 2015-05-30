@@ -107,13 +107,13 @@ namespace DMagic
 				case 0:
 					return 2f;
 				case 1:
-					return 4f;
+					return 3f;
 				case 2:
-					return 6f;
+					return 5f;
 				case 3:
-					return 8f;
+					return 7f;
 				case 4:
-					return 10f;
+					return 9f;
 				default:
 					return 1f;
 			}
@@ -176,7 +176,7 @@ namespace DMagic
 					return null;
 				return cR[rand.Next(0, cR.Count)];
 			}
-			//Select unreached body for; remove Kerbin system, return already reached bodies if all have been visited
+			//Select unreached body; remove Kerbin system, return already reached bodies if all have been visited
 			else if (c == Contract.ContractPrestige.Exceptional)
 			{
 				if (cUR.Count == 0)
@@ -274,17 +274,16 @@ namespace DMagic
 				for (int j = 0; j < b.BiomeMap.Attributes.Length; j++)
 				{
 					string bName = b.BiomeMap.Attributes[j].name;
-					ScienceSubject subB = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", exp.id, b.name, sit, bName.Replace(" ", "")));
-					if (subB == null)
+					string subId = string.Format("{0}@{1}{2}{3}", exp.id, b.name, sit, bName.Replace(" ", ""));
+
+					if (ResearchAndDevelopment.GetSubjects().Any(a => a.id == subId))
 					{
-						s.Add(bName);
-						continue;
-					}
-					else
-					{
+						ScienceSubject subB = ResearchAndDevelopment.GetSubjectByID(subId);
 						if (subB.scientificValue > 0.5f)
 							s.Add(bName);
 					}
+					else
+						s.Add(bName);
 				}
 			}
 			return s;

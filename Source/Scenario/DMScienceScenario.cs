@@ -70,11 +70,11 @@ namespace DMagic.Scenario
 		//Master List for saved asteroid science data
 		private Dictionary<string, DMScienceData> recoveredDMScience = new Dictionary<string,DMScienceData>();
 
-		public DMScienceData getDMScience(string title)
+		public DMScienceData getDMScience(string title, bool warn = false)
 		{
 			if (recoveredDMScience.ContainsKey(title))
 				return recoveredDMScience[title];
-			else
+			else if (warn)
 				DMUtils.Logging("Could not find DMScience of title [{0}]", title);
 
 			return null;
@@ -219,7 +219,7 @@ namespace DMagic.Scenario
 				{
 					foreach (ScienceData data in dataList)
 					{
-						DMScienceData DMData = getDMScience(data.title);
+						DMScienceData DMData = getDMScience(data.title, true);
 						if (DMData != null)
 						{
 							ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);

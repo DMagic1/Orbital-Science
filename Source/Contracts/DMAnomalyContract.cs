@@ -159,33 +159,35 @@ namespace DMagic.Contracts
 					anomParams[i] = null;
 			}
 
-			this.AddParameter(newParam);
+			this.AddParameter(newParam, "AnomalyScience");
 
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParam.Situation), newParam.Body) * ((float)rand.Next(85, 116) / 100f);
-			newParam.SetFunds(20000f * DMUtils.reward * primaryLocationMod, 10000f * DMUtils.penalty * primaryLocationMod, body);
-			newParam.SetReputation(80f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
-			newParam.SetScience(35f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
+			newParam.SetFunds(12000f * DMUtils.reward * primaryLocationMod, body);
+			newParam.SetScience(6f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
+
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(3, 1);
+			this.AddParameter(DMcp);
 
 			foreach (DMAnomalyParameter aP in anomParams)
 			{
 				if (aP != null)
 				{
-					this.AddParameter(aP, "collectDMAnomaly");
+					DMcp.addToSubParams(aP, "CollectAnomalyScience");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), body) * ((float)rand.Next(85, 116) / 100f);
-					aP.SetFunds(9000f * DMUtils.reward * locationMod, 6000f * DMUtils.penalty * locationMod, body);
-					aP.SetReputation(20f * DMUtils.reward * locationMod, 5f * DMUtils.penalty * locationMod, body);
-					aP.SetScience(aP.Container.Exp.baseValue * 2f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
+					aP.SetFunds(7000f * DMUtils.reward * locationMod, body);
+					aP.SetScience(aP.Container.Exp.baseValue * 0.25f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
 				}
 			}
 
-			if (this.ParameterCount == 0)
+			if (DMcp.ParameterCount < 2)
 				return false;
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
-			base.SetDeadlineYears(1.8f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
-			base.SetReputation(20f * DMUtils.reward * primaryLocationMod, 10f * DMUtils.penalty * primaryLocationMod, body);
-			base.SetFunds(25000f * DMUtils.forward * primaryLocationMod, 22000f * DMUtils.reward * primaryLocationMod, 16000f * DMUtils.penalty * primaryLocationMod, body);
+			base.SetDeadlineYears(1.5f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
+			base.SetReputation(8f * DMUtils.reward * primaryLocationMod, 9f * DMUtils.penalty * primaryLocationMod, null);
+			base.SetFunds(25000f * DMUtils.forward * primaryLocationMod, 28000f * DMUtils.reward * primaryLocationMod, 23000f * DMUtils.penalty * primaryLocationMod, body);
 			return true;
 		}
 
@@ -249,7 +251,7 @@ namespace DMagic.Contracts
 
 		protected override string GetNotes()
 		{
-			return string.Format("Locate the anomalous signal coming from roughly {0}° {1} and {2}° {3}. An on-screen message will indicate successful collection of results; data must be transmitted or returned to complete each parameter.\n", Math.Abs(FudgedLat), cardNS, Math.Abs(FudgedLon), cardEW);
+			return string.Format("Locate the anomalous signal coming from roughly {0}° {1} and {2}° {3}.", Math.Abs(FudgedLat), cardNS, Math.Abs(FudgedLon), cardEW);
 		}
 
 		protected override string GetDescription()

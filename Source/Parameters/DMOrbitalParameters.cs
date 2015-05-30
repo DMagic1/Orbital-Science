@@ -148,7 +148,7 @@ namespace DMagic.Parameters
 			{
 				DMUtils.Logging("Failed To Load Type-Variables; Mag Orbital Parameter Removed");
 				this.Unregister();
-				this.Root.RemoveParameter(this);
+				this.Parent.RemoveParameter(this);
 				return;
 			}
 			vName = orbitString[1];

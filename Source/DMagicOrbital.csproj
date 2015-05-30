@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Contracts\DMAnomalyContract.cs" />
     <Compile Include="DMContractGenerators.cs" />
+    <Compile Include="Parameters\DMCompleteParameter.cs" />
     <Compile Include="Part Modules\DMAsteroidScanner.cs" />
     <Compile Include="Part Modules\DMRoverGooMat.cs" />
     <Compile Include="Part Modules\DMSoilMoisture.cs" />

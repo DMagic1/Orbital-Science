@@ -75,7 +75,7 @@ namespace DMagic.Contracts
 			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 				return false;
 
-			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null));
+			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, false), GetBodies_NextUnreached(4, null));
 			if (body == null)
 				return false;
 
@@ -87,7 +87,7 @@ namespace DMagic.Contracts
 			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, rpwsContainer);
 			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, rpwsContainer);
 
-			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 21) / 10d);
+			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 17) / 10d);
 			double eccen = 0.15d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
 			if (eccen > 0.7) eccen = 0.7;
 			double inclination = 20d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
@@ -104,16 +104,19 @@ namespace DMagic.Contracts
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
 
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(1, 0);
+			this.AddParameter(DMcp);
+
 			foreach (DMCollectScience DMCS in magParams)
 			{
 				if (DMCS == null)
 					return false;
 				else
 				{
-					this.AddParameter(DMCS, "collectDMScience");
-					DMCS.SetFunds(8000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-					DMCS.SetReputation(25f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-					DMCS.SetScience(25f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
+					DMcp.addToSubParams(DMCS, "MagFieldScience");
+					DMCS.SetFunds(5000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
+					DMCS.SetScience(2.4f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
 				}
 			}
 
@@ -121,12 +124,14 @@ namespace DMagic.Contracts
 				return false;
 
 			float primaryModifier = ((float)rand.Next(80, 121) / 100f);
+			float diffModifier = 1 + ((float)this.Prestige * 0.5f);
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
 			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
-			base.SetReputation(50f * DMUtils.reward * primaryModifier, 10f * DMUtils.penalty * primaryModifier, body);
-			base.SetFunds(50000 * DMUtils.forward * primaryModifier, 55000 * DMUtils.reward * primaryModifier, 20000 * DMUtils.penalty * primaryModifier, body);
+			base.SetReputation(8f * diffModifier * DMUtils.reward * primaryModifier, 7f * diffModifier * DMUtils.penalty * primaryModifier, null);
+			base.SetFunds(27000 * diffModifier * DMUtils.forward * primaryModifier, 32000 * diffModifier * DMUtils.reward * primaryModifier, 28000 * diffModifier * DMUtils.penalty * primaryModifier, body);
+			base.SetScience(7f * diffModifier * DMUtils.science * primaryModifier, body);
 			return true;
 		}
 

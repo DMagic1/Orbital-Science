@@ -37,7 +37,7 @@ using DMagic.Scenario;
 
 namespace DMagic.Part_Modules
 {
-	class DMModuleScienceAnimate : ModuleScienceExperiment, IScienceDataContainer
+	public class DMModuleScienceAnimate : ModuleScienceExperiment, IScienceDataContainer
 	{
 		#region Fields
 
@@ -194,7 +194,10 @@ namespace DMagic.Part_Modules
 						primaryAnimator(1f, 1f, WrapMode.Default, bayAnimation, anim4);
 					if (anim3 != null)
 						primaryAnimator(2.5f * animSpeed, 0f, WrapMode.Loop, looperAnimation, anim3);
+					enableIAnimators();
 				}
+				else
+					disableIAnimators();
 			}
 		}
 
@@ -412,8 +415,26 @@ namespace DMagic.Part_Modules
 					}
 				}
 			}
+			enableIAnimators();
 			Events["deployEvent"].active = oneWayAnimation;
 			Events["retractEvent"].active = showEndEvent;
+		}
+
+		private void enableIAnimators()
+		{
+			foreach (IAnimatedModule m in part.FindModulesImplementing<IAnimatedModule>())
+			{
+				if (m.IsSituationValid())
+					m.EnableModule();
+			}
+		}
+
+		private void disableIAnimators()
+		{
+			foreach (IAnimatedModule m in part.FindModulesImplementing<IAnimatedModule>())
+			{
+				m.DisableModule();
+			}
 		}
 
 		[KSPAction("Deploy")]
@@ -453,6 +474,7 @@ namespace DMagic.Part_Modules
 					}
 				}
 			}
+			disableIAnimators();
 			Events["deployEvent"].active = showStartEvent;
 			Events["retractEvent"].active = false;
 		}
@@ -911,7 +933,7 @@ namespace DMagic.Part_Modules
 			if (storedScienceReports.Count > 0)
 			{
 				ScienceData data = storedScienceReports[dataIndex];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, labDataBoost, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, labDataBoost, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, ModuleScienceLab.IsLabData(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
@@ -943,7 +965,7 @@ namespace DMagic.Part_Modules
 			if (scienceReports.Count > 0)
 			{
 				ScienceData data = scienceReports[0];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, labDataBoost, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, data.labBoost < 1 && checkLabOps() && xmitDataScalar < 1, new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, labDataBoost, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, ModuleScienceLab.IsLabData(vessel, data), new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}

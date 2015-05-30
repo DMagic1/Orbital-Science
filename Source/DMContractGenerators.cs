@@ -129,8 +129,11 @@ namespace DMagic
 			}
 
 			//Make sure that our chosen science subject has science remaining to be gathered
-			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}{3}", DMScience.Exp.id, body.name, targetSituation, biome.Replace(" ", "")))) != null)
+			string subId = string.Format("{0}@{1}{2}{3}", DMScience.Exp.id, body.name, targetSituation, biome.Replace(" ", ""));
+
+			if (ResearchAndDevelopment.GetSubjects().Any(s => s.id == subId))
 			{
+				sub = ResearchAndDevelopment.GetSubjectByID(subId);
 				if (sub.scientificValue < 0.5f)
 					return null;
 			}
@@ -184,10 +187,17 @@ namespace DMagic
 					return null;
 				}
 			}
+			else
+			{
+				string subId = string.Format("{0}@{1}{2}", DMScience.Exp.id, Body.name, targetSituation);
 
-			if ((sub = ResearchAndDevelopment.GetSubjectByID(string.Format("{0}@{1}{2}", DMScience.Exp.id, Body.name, targetSituation))) != null)
-				if (sub.scientificValue < 0.5f)
-					return null;
+				if (ResearchAndDevelopment.GetSubjects().Any(s => s.id == subId))
+				{
+					sub = ResearchAndDevelopment.GetSubjectByID(subId);
+					if (sub.scientificValue < 0.5f)
+						return null;
+				}
+			}
 
 			return new DMCollectScience(Body, targetSituation, "", name, 0);
 		}
@@ -262,11 +272,11 @@ namespace DMagic
 
 			anomName = DMagic.Part_Modules.DMAnomalyScanner.anomalyCleanup(City.Name);
 
-			subject = string.Format("AnomalyScan@{0}{1}{2}", Body.name, targetSituation, anomName);
+			string subId = string.Format("AnomalyScan@{0}{1}{2}", Body.name, targetSituation, anomName);
 
-			//Make sure that our chosen science subject has science remaining to be gathered
-			if ((sub = ResearchAndDevelopment.GetSubjectByID(subject)) != null)
+			if (ResearchAndDevelopment.GetSubjects().Any(s => s.id == subId))
 			{
+				sub = ResearchAndDevelopment.GetSubjectByID(subId);
 				if (sub.scientificValue < 0.4f)
 					return null;
 			}
