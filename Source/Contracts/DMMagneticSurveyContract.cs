@@ -116,7 +116,7 @@ namespace DMagic.Contracts
 				{
 					DMcp.addToSubParams(DMCS, "MagFieldScience");
 					DMCS.SetFunds(5000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-					DMCS.SetScience(2.4f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
+					DMCS.SetScience(2f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
 				}
 			}
 
@@ -130,8 +130,8 @@ namespace DMagic.Contracts
 			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
 			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
 			base.SetReputation(8f * diffModifier * DMUtils.reward * primaryModifier, 7f * diffModifier * DMUtils.penalty * primaryModifier, null);
-			base.SetFunds(27000 * diffModifier * DMUtils.forward * primaryModifier, 32000 * diffModifier * DMUtils.reward * primaryModifier, 28000 * diffModifier * DMUtils.penalty * primaryModifier, body);
-			base.SetScience(7f * diffModifier * DMUtils.science * primaryModifier, body);
+			base.SetFunds(35000 * diffModifier * DMUtils.forward * primaryModifier, 40000 * diffModifier * DMUtils.reward * primaryModifier, 28000 * diffModifier * DMUtils.penalty * primaryModifier, body);
+			base.SetScience(10f * diffModifier * DMUtils.science * primaryModifier, body);
 			return true;
 		}
 

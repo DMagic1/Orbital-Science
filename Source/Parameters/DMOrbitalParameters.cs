@@ -30,6 +30,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -42,13 +43,12 @@ namespace DMagic.Parameters
 	public class DMOrbitalParameters: ContractParameter
 	{
 		private DMMagneticSurveyContract root;
-		private Vessel newV;
 		private Dictionary<Guid, Vessel> suitableVessels = new Dictionary<Guid, Vessel>();
 		private List<Vessel> removeV = new List<Vessel>();
 		private string vName;
 		private double orbitalParameter;
-		private int type, timer; //type 0 is eccentricity tracker; type 1 is inclination tracker
-		private bool modifiedByDocking, modifiedByUnDocking;
+		private bool updatingVesselState;
+		private int type; //type 0 is eccentricity tracker; type 1 is inclination tracker
 
 		public DMOrbitalParameters()
 		{
@@ -226,8 +226,10 @@ namespace DMagic.Parameters
 		{
 			if (v == null)
 				return false;
+
 			Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
 			Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
+
 			if (magPart != null && rpwsPart != null)
 				return true;
 			else
@@ -238,8 +240,30 @@ namespace DMagic.Parameters
 		{
 			if (Parts.from.vessel.mainBody == root.Body)
 			{
-				modifiedByDocking = true;
-				timer = 0;
+				ContractSystem.Instance.StartCoroutine(waitForDockCheck());
+			}
+		}
+
+		IEnumerator waitForDockCheck()
+		{
+			int timer = 0;
+			updatingVesselState = true;
+
+			while (timer < 45)
+			{
+				timer++;
+				yield return null;
+			}
+
+			updatingVesselState = false;
+
+			if (VesselEquipped(FlightGlobals.ActiveVessel))
+			{
+				addVessel(FlightGlobals.ActiveVessel);
+			}
+			else
+			{
+				removeVessel(FlightGlobals.ActiveVessel);
 			}
 		}
 
@@ -248,14 +272,44 @@ namespace DMagic.Parameters
 			if (suitableVessels.Count > 0)
 			{
 				Vessel V = v;
+
 				if (V.Parts.Count <= 1)
 					return;
+
 				if (V.mainBody == root.Body)
 				{
-					newV = V;
-					modifiedByUnDocking = true;
-					timer = 0;
+					ContractSystem.Instance.StartCoroutine(waitForNewVesselCheck(V));
 				}
+			}
+		}
+
+		IEnumerator waitForNewVesselCheck(Vessel newV)
+		{
+			int timer = 0;
+			updatingVesselState = true;
+
+			while (timer < 45)
+			{
+				timer++;
+				yield return null;
+			}
+
+			updatingVesselState = false;
+
+			//If the new vessel retains the proper instruments
+			if (VesselEquipped(newV))
+			{
+				addVessel(newV);
+			}
+			//If the currently active, hopefully old, vessel retains the proper instruments
+			else if (VesselEquipped(FlightGlobals.ActiveVessel))
+			{
+				addVessel(FlightGlobals.ActiveVessel);
+			}
+			//If the proper instruments are spread across the two vessels
+			else
+			{
+				removeVessel(FlightGlobals.ActiveVessel);
 			}
 		}
 
@@ -264,90 +318,48 @@ namespace DMagic.Parameters
 		{
 			if (this.Root.ContractState == Contract.State.Active && !HighLogic.LoadedSceneIsEditor)
 			{
-				if (!modifiedByUnDocking && !modifiedByDocking)
+				if (updatingVesselState)
+					return;
+
+				if (suitableVessels.Count > 0)
 				{
-					if (suitableVessels.Count > 0)
+					bool complete = false;
+					removeV.Clear();
+					foreach (Vessel v in suitableVessels.Values)
 					{
-						bool complete = false;
-						removeV.Clear();
-						foreach (Vessel v in suitableVessels.Values)
+						if (v.mainBody != root.Body)
 						{
-							if (v.mainBody != root.Body)
-							{
+							removeV.Add(v);
+						}
+						else if (type == 0)
+						{
+							if (v.orbit.eccentricity > orbitalParameter && v.situation == Vessel.Situations.ORBITING)
+								complete = true;
+							else if (v.situation != Vessel.Situations.ORBITING)
 								removeV.Add(v);
-							}
-							else if (type == 0)
-							{
-								if (v.orbit.eccentricity > orbitalParameter && v.situation == Vessel.Situations.ORBITING)
-									complete = true;
-								else if (v.situation != Vessel.Situations.ORBITING)
-									removeV.Add(v);
-							}
-							else if (type == 1)
-							{
-								if (Math.Abs(v.orbit.inclination) > orbitalParameter && Math.Abs(v.orbit.inclination) < (180 - orbitalParameter) && v.situation == Vessel.Situations.ORBITING)
-									complete = true;
-								else if (v.situation != Vessel.Situations.ORBITING)
-									removeV.Add(v);
-							}
 						}
-						if (removeV.Count > 0)
+						else if (type == 1)
 						{
-							foreach (Vessel V in removeV)
-							{
-								removeVessel(V);
-							}
+							if (Math.Abs(v.orbit.inclination) > orbitalParameter && Math.Abs(v.orbit.inclination) < (180 - orbitalParameter) && v.situation == Vessel.Situations.ORBITING)
+								complete = true;
+							else if (v.situation != Vessel.Situations.ORBITING)
+								removeV.Add(v);
 						}
-						if (complete)
-							this.SetComplete();
-						else
-							this.SetIncomplete();
 					}
+					if (removeV.Count > 0)
+					{
+						foreach (Vessel V in removeV)
+						{
+							removeVessel(V);
+						}
+					}
+					if (complete)
+						this.SetComplete();
 					else
 						this.SetIncomplete();
 				}
 				else
-				{
-					if (timer < 30)
-					{
-						timer++;
-					}
-					else
-					{
-						if (modifiedByDocking)
-						{
-							if (VesselEquipped(FlightGlobals.ActiveVessel))
-							{
-								addVessel(FlightGlobals.ActiveVessel);
-							}
-							else
-							{
-								removeVessel(FlightGlobals.ActiveVessel);
-							}
-						}
-						if (modifiedByUnDocking)
-						{
-							//If the new vessel retains the proper instruments
-							if (VesselEquipped(newV))
-							{
-								addVessel(newV);
-							}
-							//If the currently active, hopefully old, vessel retains the proper instruments
-							else if (VesselEquipped(FlightGlobals.ActiveVessel))
-							{
-								addVessel(FlightGlobals.ActiveVessel);
-							}
-							//If the proper instruments are spread across the two vessels
-							else
-							{
-								removeVessel(FlightGlobals.ActiveVessel);
-							}
-						}
-						modifiedByUnDocking = false;
-						modifiedByDocking = false;
-						timer = 0;
-					}
-				}
+					this.SetIncomplete();
 			}
 		}
 
