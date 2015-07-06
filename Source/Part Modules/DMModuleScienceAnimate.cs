@@ -422,6 +422,9 @@ namespace DMagic.Part_Modules
 
 		private void enableIAnimators()
 		{
+			if (!HighLogic.LoadedSceneIsFlight)
+				return;
+
 			foreach (IAnimatedModule m in part.FindModulesImplementing<IAnimatedModule>())
 			{
 				if (m.IsSituationValid())
@@ -431,6 +434,9 @@ namespace DMagic.Part_Modules
 
 		private void disableIAnimators()
 		{
+			if (!HighLogic.LoadedSceneIsFlight)
+				return;
+
 			foreach (IAnimatedModule m in part.FindModulesImplementing<IAnimatedModule>())
 			{
 				m.DisableModule();
