@@ -187,7 +187,7 @@ namespace DMagic.Contracts
 			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
 			base.SetDeadlineYears(1.5f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
 			base.SetReputation(8f * DMUtils.reward * primaryLocationMod, 9f * DMUtils.penalty * primaryLocationMod, null);
-			base.SetFunds(25000f * DMUtils.forward * primaryLocationMod, 28000f * DMUtils.reward * primaryLocationMod, 23000f * DMUtils.penalty * primaryLocationMod, body);
+			base.SetFunds(20000f * DMUtils.forward * primaryLocationMod, 24000f * DMUtils.reward * primaryLocationMod, 20000f * DMUtils.penalty * primaryLocationMod, body);
 			return true;
 		}
 

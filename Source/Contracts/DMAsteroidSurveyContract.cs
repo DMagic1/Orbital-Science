@@ -132,8 +132,8 @@ namespace DMagic.Contracts
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
 			base.SetDeadlineYears(3.8f * DMUtils.deadline * primaryModifier, null);
-			base.SetReputation(newParams.Length * 1.5f * DMUtils.reward * (size + 1) * primaryModifier, newParams.Length * 1.2f * DMUtils.penalty * primaryModifier, null);
-			base.SetFunds(8000 * newParams.Length * DMUtils.forward * (size + 1) * primaryModifier, 7000 * newParams.Length * DMUtils.reward * (size + 1) * primaryModifier, 7000 * newParams.Length * DMUtils.penalty * (size + 1) * primaryModifier, null);
+			base.SetReputation(1.5f * DMcp.ParameterCount * DMUtils.reward * (size + 1) * primaryModifier, 1.2f * DMcp.ParameterCount * DMUtils.penalty * primaryModifier, null);
+			base.SetFunds(8000 * DMcp.ParameterCount * DMUtils.forward * (size + 1) * primaryModifier, 9500 * DMcp.ParameterCount * DMUtils.reward * (size + 1) * primaryModifier, 7000 * DMcp.ParameterCount * DMUtils.penalty * (size + 1) * primaryModifier, null);
 			return true;
 		}
 
