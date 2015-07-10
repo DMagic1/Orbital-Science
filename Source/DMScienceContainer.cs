@@ -31,13 +31,13 @@
 
 namespace DMagic
 {
-	internal class DMScienceContainer
+	public class DMScienceContainer
 	{
-		internal int sitMask, bioMask;
-		internal float transmit;
-		internal DMScienceType type;
-		internal ScienceExperiment exp;
-		internal string sciPart, agent;
+		private int sitMask, bioMask;
+		private float transmit;
+		private DMScienceType type;
+		private ScienceExperiment exp;
+		private string sciPart, agent;
 
 		internal DMScienceContainer(ScienceExperiment sciExp, int sciSitMask, int sciBioMask, DMScienceType Type,  string sciPartID, string agentName, float Transmit)
 		{
@@ -49,16 +49,48 @@ namespace DMagic
 			type = Type;
 			transmit = Transmit;
 		}
+
+		public int SitMask
+		{
+			get { return sitMask; }
+		}
+
+		public int BioMask
+		{
+			get { return bioMask; }
+		}
+
+		public float Transmit
+		{
+			get { return transmit; }
+		}
+
+		public DMScienceType DMType
+		{
+			get { return type; }
+		}
+
+		public ScienceExperiment Exp
+		{
+			get { return exp; }
+		}
+
+		public string SciPart
+		{
+			get { return sciPart; }
+		}
+
+		public string Agent
+		{
+			get { return agent; }
+		}
 	}
 
-	internal enum DMScienceType
+	public enum DMScienceType
 	{
-		None = 0,
-		Surface = 1,
-		Aerial = 2,
-		Space = 4,
-		Biological = 8,
-		Asteroid = 16,
-		Anomaly = 32,
+		All = 0,
+		Space = 1,
+		Asteroid = 2,
+		Anomaly = 4,
 	}
 }

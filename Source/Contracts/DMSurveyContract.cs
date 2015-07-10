@@ -36,198 +36,115 @@ using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
+using DMagic.Parameters;
 
-namespace DMagic
+namespace DMagic.Contracts
 {
-	public class DMSurveyContract: Contract, IDMagicContract
+	public class DMSurveyContract : Contract
 	{
-		internal DMCollectScience[] newParams = new DMCollectScience[8];
+		private DMCollectScience[] newParams = new DMCollectScience[8];
 		private CelestialBody body;
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
-		private string biome = "";
-		private int i, j = 0;
-		private int surveyType;
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
 		{
-			int total = ContractSystem.Instance.GetCurrentContracts<DMSurveyContract>().Count();
-			if (total >= DMUtils.maxSurvey)
+			DMSurveyContract[] surveyContracts = ContractSystem.Instance.GetCurrentContracts<DMSurveyContract>();
+			int offers = 0;
+			int active = 0;
+			int maxOffers = DMUtils.maxSurveyOffered;
+			int maxActive = DMUtils.maxSurveyActive;
+
+			for (int i = 0; i < surveyContracts.Length; i++)
+			{
+				DMSurveyContract s = surveyContracts[i];
+				if (s.ContractState == State.Offered)
+					offers++;
+				else if (s.ContractState == State.Active)
+					active++;
+			}
+
+			if (offers >= maxOffers)
+				return false;
+			if (active >= maxActive)
 				return false;
 
-			surveyType = rand.Next(0, 3);
-			if (surveyType == 0)
+			AvailablePart aPart = PartLoader.getPartInfoByName("dmmagBoom");
+			if (aPart == null)
+				return false;
+			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+				return false;
+
+			sciList.AddRange(DMUtils.availableScience[DMScienceType.Space.ToString()].Values);
+
+			if (sciList.Count > 0)
 			{
-				//Make sure that the magnetometer is at least available
-				AvailablePart aPart = PartLoader.getPartInfoByName("dmmagBoom");
-				if (aPart == null)
-					return false;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
-					return false;
-
-				sciList.AddRange(DMUtils.availableScience[DMScienceType.Space.ToString()].Values);
-
-				if (sciList.Count > 0)
-				{
-					DMScience = sciList[rand.Next(0, sciList.Count)];
-					sciList.Remove(DMScience);
-				}
-				else
-					return false;
-
-				//Generates the science experiment, returns null if experiment fails any check
-				if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null), DMScience, 0)) == null)
-					return false;
-
-				body = newParams[0].Body;
-				//Add an orbital parameter
-				this.AddParameter(new EnterOrbit(body), null);
-			}
-			else if (surveyType == 1)
-			{
-				//Make sure that the laser is at least available
-				AvailablePart aPart = PartLoader.getPartInfoByName("dmsurfacelaser");
-				if (aPart == null)
-					return false;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
-					return false;
-
-				sciList.AddRange(DMUtils.availableScience[DMScienceType.Surface.ToString()].Values);
-
-				if (sciList.Count > 0)
-				{
-					DMScience = sciList[rand.Next(0, sciList.Count)];
-					sciList.Remove(DMScience);
-				}
-				else
-					return false;
-
-				if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null), DMScience, 1)) == null)
-					return false;
-
-				body = newParams[0].Body;
-				biome = newParams[0].Biome;
-
-				if (biome == "")
-				{
-					List<string> biomes = DMUtils.fetchBiome(body);
-					biome = biomes[rand.Next(0, biomes.Count)];
-				}
-				this.AddParameter(new LandOnBody(body), null);
-			}
-			else if (surveyType == 2)
-			{
-				if (this.Prestige == ContractPrestige.Trivial)
-					return false;
-				//Make sure that drill is at least available
-				AvailablePart aPart = PartLoader.getPartInfoByName("dmbioDrill");
-				if (aPart == null)
-					return false;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
-					return false;
-
-				//Duna and Eve are the easy targets
-				if (this.Prestige == ContractPrestige.Significant)
-				{
-					if (!ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" }))
-						return false;
-					if (rand.Next(0, 2) == 0)
-						body = FlightGlobals.Bodies[5];
-					else
-						body = FlightGlobals.Bodies[6];
-				}
-				else if (this.Prestige == ContractPrestige.Exceptional)
-				{
-					//Account for mod planets and Laythe
-					if (!ProgressTracking.Instance.NodeComplete(new string[] { "Jool", "Flyby" }))
-						return false;
-					List<CelestialBody> bList = new List<CelestialBody>();
-					foreach (CelestialBody b in FlightGlobals.Bodies)
-					{
-						if (b.flightGlobalsIndex != 1 && b.flightGlobalsIndex != 5 && b.flightGlobalsIndex != 6 && b.flightGlobalsIndex != 8)
-							if (b.atmosphere && b.pqsController != null)
-								bList.Add(b);
-					}
-					body = bList[rand.Next(0, bList.Count)];
-				}
-				else
-					return false;
-
-				sciList.AddRange(DMUtils.availableScience[DMScienceType.Biological.ToString()].Values);
-
-				if ((newParams[0] = DMSurveyGenerator.fetchBioSurveyScience(body)) == null)
-					return false;
-
-				biome = newParams[0].Biome;
-
-				if (biome == "")
-				{
-					List<string> biomes = DMUtils.fetchBiome(body);
-					biome = biomes[rand.Next(0, biomes.Count)];
-				}
-
-				this.AddParameter(new LandOnBody(body), null);
-				this.AddParameter(new EnterOrbit(body), null);
+				DMScience = sciList[rand.Next(0, sciList.Count)];
+				sciList.Remove(DMScience);
 			}
 			else
 				return false;
 
-			for (j = 1; j < 7; j++)
+			//Generates the science experiment, returns null if experiment fails any check
+			if ((newParams[0] = DMSurveyGenerator.fetchSurveyScience(this.Prestige, GetBodies_Reached(false, false), GetBodies_NextUnreached(4, null), DMScience)) == null)
+				return false;
+
+			body = newParams[0].Body;
+
+			//Add an orbital parameter to difficult contracts
+			if (this.Prestige == ContractPrestige.Exceptional)
+				this.AddParameter(new EnterOrbit(body));
+
+			for (int j = 1; j < 8; j++)
 			{
 				if (sciList.Count > 0)
 				{
 					DMScience = sciList[rand.Next(0, sciList.Count)];
-					if (surveyType == 0)
-						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience);
-					else if (surveyType == 1)
-						newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience, biome);
-					else if (surveyType == 2)
-						newParams[j] = DMSurveyGenerator.fetchBioSurveyScience(body, DMScience, biome);
+					newParams[j] = DMSurveyGenerator.fetchSurveyScience(body, DMScience);
 					sciList.Remove(DMScience);
 				}
 				else
 					newParams[j] = null;
 			}
 
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(0, 1);
+			this.AddParameter(DMcp);
+
+			int limit = 1;
+
 			//Add in all acceptable paramaters to the contract
 			foreach (DMCollectScience DMC in newParams)
 			{
-				if (i > (3 + (int)this.prestige)) break;
+				if (limit > (3 + (int)this.Prestige))
+					break;
 				if (DMC != null)
 				{
-					this.AddParameter(DMC, "collectDMScience");
+					DMcp.addToSubParams(DMC, "CollectScience");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(DMC.Situation), DMC.Body) * ((float)rand.Next(85, 116) / 100f);
-					DMC.SetScience(DMC.Container.exp.baseValue * 0.7f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
-					DMC.SetFunds(4000f * DMUtils.reward * locationMod, 1500f * DMUtils.penalty * locationMod, body);
-					DMC.SetReputation(15f * DMUtils.reward * locationMod, 10f * DMUtils.penalty * locationMod, body);
-					i++;
-					DMUtils.DebugLog("Survey Parameter Added");
+					DMC.SetScience(DMC.Container.Exp.baseValue * 0.2f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
+					DMC.SetFunds(3500f * DMUtils.reward * locationMod, body);
+					limit++;
 				}
 			}
 
-			if (surveyType == 0 || surveyType == 1)
-			{
-				if (this.ParameterCount < 4)
-					return false;
-			}
-			else if (surveyType == 2)
-				if (this.ParameterCount < 5)
-					return false;
+			if (DMcp.ParameterCount < 3)
+				return false;
 
 			int a = rand.Next(0, 4);
 			if (a == 0)
 				this.agent = AgentList.Instance.GetAgent("DMagic");
 			else if (a == 1)
-				this.agent = AgentList.Instance.GetAgent(newParams[0].Container.agent);
+				this.agent = AgentList.Instance.GetAgent(newParams[0].Container.Agent);
 			else
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParams[0].Situation), newParams[0].Body) * ((float)rand.Next(85, 116) / 100f);
 			base.SetExpiry(10f * DMUtils.deadline, 20f * DMUtils.deadline);
-			base.SetDeadlineYears(1.9f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
-			base.SetReputation(newParams.Length * 8f * DMUtils.reward * primaryLocationMod, newParams.Length * 5f * DMUtils.penalty * primaryLocationMod, body);
-			base.SetFunds(3000 * newParams.Length * DMUtils.forward * primaryLocationMod, 2500 * newParams.Length * DMUtils.reward * primaryLocationMod, 2000 * newParams.Length * DMUtils.penalty * primaryLocationMod, body);
+			base.SetDeadlineYears(1.7f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
+			base.SetReputation(1.9f * DMcp.ParameterCount * DMUtils.reward * primaryLocationMod, 1.5f * DMcp.ParameterCount * DMUtils.penalty * primaryLocationMod, null);
+			base.SetFunds(8500 * DMcp.ParameterCount * DMUtils.forward * primaryLocationMod, 10500 * DMcp.ParameterCount * DMUtils.reward * primaryLocationMod, 7500 * DMcp.ParameterCount * DMUtils.penalty * primaryLocationMod, body);
 			return true;
 		}
 
@@ -243,55 +160,23 @@ namespace DMagic
 
 		protected override string GetHashString()
 		{
-			return string.Format("{0}{1}{2}", body.name, surveyType, this.ParameterCount);
+			return string.Format("{0}{1}", body.name, this.ParameterCount);
 		}
 
 		protected override string GetTitle()
 		{
-			if (surveyType == 0)
-				return string.Format("Conduct orbital survey of {0}; return or transmit multiple scienctific observations", body.theName);
-			else if (surveyType == 1)
-				return string.Format("Conduct surface survey of {0}; return or transmit multiple scienctific observations", body.theName);
-			else if (surveyType == 2)
-				return string.Format("Conduct a search for on-going or past biological activity on {0}; return or transmit multiple scienctific observations", body.theName);
-			else
-				return "Durrr";
-		}
-
-		protected override string GetNotes()
-		{
-			if (surveyType == 0 || surveyType == 1)
-				return "Science experiments with little to no transmission value remaining may need to be returned to Kerbin to complete each parameter.";
-			else
-				return "Science experiments for biological activity surveys are not required to yield any science value.";
+			return string.Format("Conduct an orbital survey of {0}", body.theName);
 		}
 
 		protected override string GetDescription()
 		{
 			string story = DMUtils.backStory["survey"][rand.Next(0, DMUtils.backStory["survey"].Count)];
-			if (surveyType == 0)
-				return string.Format(story, this.agent.Name, "orbital", body.theName);
-			else if (surveyType == 1)
-				return string.Format(story, this.agent.Name, "surface", body.theName);
-			else if (surveyType == 2)
-			{
-				story = DMUtils.backStory["biological"][rand.Next(0, DMUtils.backStory["biological"].Count)];
-				return string.Format(story, this.agent.Name, body.theName);
-			}
-			else
-				return "Dumb Code";
+			return string.Format(story, this.agent.Name, "orbital", body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
-			if (surveyType == 0)
-				return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit multiple science observations.", body.theName);
-			else if (surveyType == 1)
-				return string.Format("We would like you to study a region on the surface of {0}. Collect and return or transmit multiple science observations.", body.theName);
-			else if (surveyType == 2)
-				return string.Format("We would like you to study {0} for signs of on-going or past biological activity. Collect and return or transmit multiple science observations.", body.theName);
-			else
-				return "Fix me :(";
+			return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit multiple scientific observations.", body.theName);
 		}
 
 		protected override string MessageCompleted()
@@ -301,9 +186,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			int target;
 			if (int.TryParse(node.GetValue("Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];
@@ -311,28 +193,39 @@ namespace DMagic
 			{
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
-			}
-			if (!int.TryParse(node.GetValue("Survey_Type"), out surveyType))
-			{
-				this.Unregister();
-				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 			if (this.ParameterCount == 0)
 			{
+				DMUtils.Logging("No Parameters Loaded For This Survey Contract; Removing Now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
 			node.AddValue("Survey_Target", body.flightGlobalsIndex);
-			node.AddValue("Survey_Type", surveyType);
 		}
 
 		public override bool MeetRequirements()
 		{
 			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Orbit" });
+		}
+
+		/// <summary>
+		/// Used externally to return the target Celestial Body
+		/// </summary>
+		/// <param name="cP">Instance of the requested Contract</param>
+		/// <returns>Celestial Body object</returns>
+		public static CelestialBody TargetBody(Contract c)
+		{
+			if (c == null || c.GetType() != typeof(DMSurveyContract))
+				return null;
+
+			DMSurveyContract Instance = (DMSurveyContract)c;
+			return Instance.body;
 		}
 
 	}

@@ -29,57 +29,42 @@
  */
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
+using DMagic.Contracts;
 
-namespace DMagic
+namespace DMagic.Parameters
 {
-	class DMLongOrbitParameter: ContractParameter
+	public class DMLongOrbitParameter: ContractParameter
 	{
-		private CelestialBody body;
 		private double orbitTime, timeNeeded;
 
 		public DMLongOrbitParameter()
 		{
 		}
 
-		internal DMLongOrbitParameter(CelestialBody Body, double Time)
+		internal DMLongOrbitParameter(double Time)
 		{
-			body = Body;
 			orbitTime = 0;
 			timeNeeded = Time;
 		}
 
-		internal CelestialBody Body
-		{
-			get { return body; }
-			private set { }
-		}
-
-		internal double TimeNeeded
+		public double TimeNeeded
 		{
 			get { return timeNeeded; }
-			private set { }
 		}
 
-		internal double OrbitTime
+		public double OrbitTime
 		{
 			get { return orbitTime; }
-			private set { }
-		}
-
-		protected override string GetHashString()
-		{
-			return body.name;
 		}
 
 		protected override string GetTitle()
 		{
-			return string.Format("Enter and maintain proper orbit around {0} for {1:N0} days", body.theName, DMUtils.timeInDays(timeNeeded));
+			if (orbitTime <= 0 || this.State != ParameterState.Incomplete)
+				return string.Format("Enter and maintain proper orbit for {0:N0} days", DMUtils.timeInDays(timeNeeded));
+			else
+				return string.Format("Maintain proper orbit for {0:N0} more days", DMUtils.timeInDays(timeNeeded - (Planetarium.GetUniversalTime() - orbitTime)));
 		}
 
 		protected override string GetNotes()
@@ -89,33 +74,26 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Orbital_Parameter", string.Format("{0}|{1:N1}|{2:N1}", body.flightGlobalsIndex, orbitTime, timeNeeded));
+			node.AddValue("Orbital_Parameter", string.Format("{0:N1}|{1:N1}", timeNeeded, orbitTime));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
-			int target;
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
-			if (int.TryParse(orbitString[0], out target))
-				body = FlightGlobals.Bodies[target];
-			else
+			if (!double.TryParse(orbitString[0], out timeNeeded))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Time-Needed Variables; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
+				timeNeeded = 2160000;
+			}
+			if (timeNeeded < 1000)
+			{
+				DMUtils.Logging("Time-Needed Value Not Set Correctly; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
+				timeNeeded = 2160000;
 			}
 			if (!double.TryParse(orbitString[1], out orbitTime))
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
+				DMUtils.Logging("Failed To Load Orbit-Time Variables; Mag Long Orbit Parameter Reset");
 				orbitTime = 0;
-			}
-			if (!double.TryParse(orbitString[2], out timeNeeded))
-			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Reset to Default Value Of 100 Days");
-				timeNeeded = 2160000;
 			}
 		}
 
@@ -126,16 +104,14 @@ namespace DMagic
 			{
 				if (AllChildParametersComplete())
 				{
-					if (orbitTime == 0)
+					if (orbitTime <= 0)
 					{
-						DMUtils.DebugLog("Setting time to {0:N2}", Planetarium.GetUniversalTime());
 						orbitTime = Planetarium.GetUniversalTime();
 					}
 					else
 					{
 						if ((Planetarium.GetUniversalTime() - orbitTime) >= timeNeeded)
 						{
-							DMUtils.DebugLog("Survey Complete Ater {0:N2} Amount of Time", Planetarium.GetUniversalTime() - orbitTime);
 							this.DisableOnStateChange = true;
 							foreach (ContractParameter cP in this.AllParameters)
 								cP.DisableOnStateChange = true;

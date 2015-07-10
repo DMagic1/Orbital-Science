@@ -36,10 +36,11 @@ using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
+using DMagic.Parameters;
 
-namespace DMagic
+namespace DMagic.Contracts
 {
-	public class DMMagneticSurveyContract: Contract, IDMagicContract
+	public class DMMagneticSurveyContract: Contract
 	{
 		private CelestialBody body;
 		private DMCollectScience[] magParams = new DMCollectScience[4];
@@ -47,8 +48,24 @@ namespace DMagic
 
 		protected override bool Generate()
 		{
-			int total = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>().Count();
-			if (total >= DMUtils.maxMagnetic)
+			DMMagneticSurveyContract[] magContracts = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>();
+			int offers = 0;
+			int active = 0;
+			int maxOffers = DMUtils.maxMagneticOffered;
+			int maxActive = DMUtils.maxMagneticActive;
+
+			for (int i = 0; i < magContracts.Length; i++)
+			{
+				DMMagneticSurveyContract m = magContracts[i];
+				if (m.ContractState == State.Offered)
+					offers++;
+				else if (m.ContractState == State.Active)
+					active++;
+			}
+
+			if (offers >= maxOffers)
+				return false;
+			if (active >= maxActive)
 				return false;
 
 			//Make sure that the RPWS is available
@@ -58,7 +75,7 @@ namespace DMagic
 			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
 				return false;
 
-			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, true), GetBodies_NextUnreached(4, null));
+			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, false), GetBodies_NextUnreached(4, null));
 			if (body == null)
 				return false;
 
@@ -70,26 +87,26 @@ namespace DMagic
 			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, rpwsContainer);
 			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, rpwsContainer);
 
-			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 21) / 10d);
+			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 17) / 10d);
 			double eccen = 0.15d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
 			if (eccen > 0.7) eccen = 0.7;
 			double inclination = 20d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 			if (inclination > 75) inclination = 75;
 
-			DMLongOrbitParameter longParam = new DMLongOrbitParameter(body, time);
-			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(body, eccen, 0);
-			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(body, inclination, 1);
+			DMLongOrbitParameter longParam = new DMLongOrbitParameter(time);
+			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(eccen, 0);
+			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(inclination, 1);
 
 			this.AddParameter(longParam);
 			longParam.AddParameter(eccentricParam);
 			longParam.AddParameter(inclinedParam);
 
-			longParam.SetFunds(50000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-			longParam.SetReputation(50f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-			longParam.SetScience(60f * DMUtils.science  * ((float)rand.Next(85, 116) / 100f), body);
-
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
+
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(1, 0);
+			this.AddParameter(DMcp);
 
 			foreach (DMCollectScience DMCS in magParams)
 			{
@@ -97,11 +114,9 @@ namespace DMagic
 					return false;
 				else
 				{
-					this.AddParameter(DMCS, "collectDMScience");
-					DMUtils.DebugLog("Added Mag Survey Param");
-					DMCS.SetFunds(8000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-					DMCS.SetReputation(25f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-					DMCS.SetScience(25f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
+					DMcp.addToSubParams(DMCS, "MagFieldScience");
+					DMCS.SetFunds(5000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
+					DMCS.SetScience(2f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
 				}
 			}
 
@@ -109,12 +124,14 @@ namespace DMagic
 				return false;
 
 			float primaryModifier = ((float)rand.Next(80, 121) / 100f);
+			float diffModifier = 1 + ((float)this.Prestige * 0.5f);
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
-			base.SetDeadlineDays((float)DMUtils.timeInDays(time) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
-			base.SetReputation(50f * DMUtils.reward * primaryModifier, 10f * DMUtils.penalty * primaryModifier, body);
-			base.SetFunds(50000 * DMUtils.forward * primaryModifier, 55000 * DMUtils.reward * primaryModifier, 20000 * DMUtils.penalty * primaryModifier, body);
+			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
+			base.SetReputation(8f * diffModifier * DMUtils.reward * primaryModifier, 7f * diffModifier * DMUtils.penalty * primaryModifier, null);
+			base.SetFunds(35000 * diffModifier * DMUtils.forward * primaryModifier, 40000 * diffModifier * DMUtils.reward * primaryModifier, 28000 * diffModifier * DMUtils.penalty * primaryModifier, body);
+			base.SetScience(10f * diffModifier * DMUtils.science * primaryModifier, body);
 			return true;
 		}
 
@@ -156,9 +173,6 @@ namespace DMagic
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			int target;
 			if (int.TryParse(node.GetValue("Mag_Survey_Target"), out target))
 				body = FlightGlobals.Bodies[target];
@@ -167,11 +181,21 @@ namespace DMagic
 				DMUtils.Logging("Failed To Load Mag Contract");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
+			}
+			if (this.GetParameter<DMLongOrbitParameter>() == null)
+			{
+				DMUtils.Logging("Magnetic Field Long Orbit Parameter Not Found; Removing This Contract");
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 			if (this.ParameterCount == 0)
 			{
+				DMUtils.Logging("No Parameters Loaded For Mag Contract; Removing Now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
 		}
 
@@ -183,6 +207,25 @@ namespace DMagic
 		public override bool MeetRequirements()
 		{
 			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" });
+		}
+
+		/// <summary>
+		/// Used externally to return the target Celestial Body
+		/// </summary>
+		/// <param name="cP">Instance of the requested Contract</param>
+		/// <returns>Celestial Body object</returns>
+		public static CelestialBody TargetBody(Contract c)
+		{
+			if (c == null || c.GetType() != typeof(DMMagneticSurveyContract))
+				return null;
+
+			DMMagneticSurveyContract Instance = (DMMagneticSurveyContract)c;
+			return Instance.body;
+		}
+
+		public CelestialBody Body
+		{
+			get { return body; }
 		}
 	}
 }

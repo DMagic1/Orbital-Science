@@ -34,31 +34,29 @@ using System.Collections.Generic;
 using System.Linq;
 using Contracts;
 using Contracts.Parameters;
+using DMagic.Contracts;
 
-namespace DMagic
+namespace DMagic.Parameters
 {
 	public class DMAsteroidParameter : ContractParameter
 	{
+		private DMAsteroidSurveyContract root;
 		private ExperimentSituations scienceLocation;
 		private DMScienceContainer scienceContainer;
-		private string subject, name, aSize, partName;
+		private string name, partName;
 		private bool collected;
-		private int size;
 
 		public DMAsteroidParameter()
 		{
 		}
 
-		internal DMAsteroidParameter(int Size, ExperimentSituations Location, string Name)
+		internal DMAsteroidParameter(ExperimentSituations Location, string Name)
 		{
 			scienceLocation = Location;
 			name = Name;
-			size = Size;
-			aSize = DMUtils.sizeHash(size);
 			collected = false;
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.sciPart;
-			subject = string.Format("{0}@Asteroid{1}{2}", scienceContainer.exp.id, scienceLocation, "");
+			partName = scienceContainer.SciPart;
 		}
 
 		/// <summary>
@@ -68,46 +66,35 @@ namespace DMagic
 		/// <returns>Available Part name string</returns>
 		public static string PartName(ContractParameter cP)
 		{
+			if (cP == null || cP.GetType() != typeof(DMAsteroidParameter))
+				return "";
+
 			DMAsteroidParameter Instance = (DMAsteroidParameter)cP;
 			return Instance.partName;
 		}
 
 		//Properties to be accessed by parent contract
-		internal ExperimentSituations Situation
+		public ExperimentSituations Situation
 		{
 			get { return scienceLocation; }
-			private set { }
 		}
 
-		internal string Subject
-		{
-			get { return subject; }
-			private set { }
-		}
-
-		internal DMScienceContainer Container
+		public DMScienceContainer Container
 		{
 			get { return scienceContainer; }
-			private set { }
 		}
 
-		internal string Name
+		public string Name
 		{
 			get { return name; }
-			private set { }
-		}
-
-		protected override string GetHashString()
-		{
-			return aSize;
 		}
 
 		protected override string GetTitle()
 		{
 			if (scienceLocation == ExperimentSituations.InSpaceLow)
-				return string.Format("{0} data from in space near a {1} asteroid", scienceContainer.exp.experimentTitle, aSize);
+				return string.Format("{0} data from in space near the asteroid", scienceContainer.Exp.experimentTitle);
 			else if (scienceLocation == ExperimentSituations.SrfLanded)
-				return string.Format("{0} data while grappled to a {1} asteroid", scienceContainer.exp.experimentTitle, aSize);
+				return string.Format("{0} data while grappled to the asteroid", scienceContainer.Exp.experimentTitle);
 			else
 				return "Stupid Code Is Stupid";
 		}
@@ -126,55 +113,43 @@ namespace DMagic
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}", name, size, (int)scienceLocation, collected));
+			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}", name, collected, (int)scienceLocation));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			//if (DMScienceScenario.SciScenario != null)
-			//	if (DMScienceScenario.SciScenario.contractsReload)
-			//		DMUtils.resetContracts();
 			int targetLocation;
 			string[] scienceString = node.GetValue("Science_Subject").Split('|');
 			name = scienceString[0];
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Set To Complete");
+				this.SetComplete();
 			}
 			else
-				partName = scienceContainer.sciPart;
-			if (int.TryParse(scienceString[1], out size))
-				aSize = DMUtils.sizeHash(size);
-			else
+				partName = scienceContainer.SciPart;
+			if (!bool.TryParse(scienceString[1], out collected))
 			{
-				DMUtils.Logging("Failed To Load Contract Parameter; Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Collected State; Asteroid Parameter Assuming Experiment Already Collected");
+				collected = true;
 			}
 			if (int.TryParse(scienceString[2], out targetLocation))
 				scienceLocation = (ExperimentSituations)targetLocation;
 			else
 			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Removed");
-				this.Unregister();
-				this.Root.RemoveParameter(this);
+				DMUtils.Logging("Failed To Load Situation Variables; Asteroid Parameter Set To Complete");
+				this.SetComplete();
 			}
-			if (!bool.TryParse(scienceString[3], out collected))
-			{
-				DMUtils.Logging("Failed To Load Variables; Parameter Reset");
-				collected = false;
-			}
-			subject = string.Format("{0}@Asteroid{1}", scienceContainer.exp.id, scienceLocation);
+
+			root = (DMAsteroidSurveyContract)this.Root;
 		}
 
 		private void asteroidMonitor(string size, string exp)
 		{
 			if (!collected)
 			{
-				if (size == aSize && exp == scienceContainer.exp.id)
+				if (size == root.AsteroidSize && exp == scienceContainer.Exp.id)
 				{
 					ScreenMessages.PostScreenMessage("Asteroid Science Results Collected", 6f, ScreenMessageStyle.UPPER_CENTER);
 					collected = true;
@@ -182,9 +157,9 @@ namespace DMagic
 			}
 		}
 
-		private void scienceRecieve(float sci, ScienceSubject sub)
+		private void scienceRecieve(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
-			if (sub.id.Contains(subject))
+			if (sub.id.Contains(string.Format("{0}@Asteroid{1}{2}", scienceContainer.Exp.id, scienceLocation, "")))
 			{
 				if (collected)
 					base.SetComplete();

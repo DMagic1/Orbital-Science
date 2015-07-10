@@ -37,40 +37,80 @@ namespace DMagic
 {
 	internal class DMAsteroidScience
 	{
-		private static Vessel asteroidVessel;
-		internal string aClass = null;
-		internal string aType = null;
-		internal int aSeed = 0;
-		internal float sciMult = 1f;
-		internal CelestialBody body = null;
-		internal int ID = 0;
+		private static ModuleAsteroid modAsteroid;
+		private string aClass = null;
+		private string aType = null;
+		private int aSeed = 0;
+		private float sciMult = 1f;
+		private CelestialBody body = null;
+		private int id = 0;
 
 		internal DMAsteroidScience()
 		{
 			body = FlightGlobals.Bodies[16];
 			body.bodyName = "Asteroid";
-			asteroidValues();
+			asteroidValues(false);
 		}
 
-		//Alter some of the values to give us asteroid specific results based on asteroid class and current situation
-		private void asteroidValues()
+		internal DMAsteroidScience(ModuleAsteroid mAst)
 		{
-			if (asteroidNear()) {
-				ModuleAsteroid asteroidM = asteroidVessel.FindPartModulesImplementing<ModuleAsteroid>().First();
-				aClass = asteroidClass(asteroidM.prefabBaseURL);
-				aSeed = Math.Abs(asteroidM.seed);
-				aType = asteroidSpectral(aSeed);
-				ID = asteroidM.seed;
-				sciMult = asteroidValue(aClass);
-			}
-			else if (asteroidGrappled()) {
+			body = FlightGlobals.Bodies[16];
+			body.bodyName = "Asteroid";
+			modAsteroid = mAst;
+			asteroidValues(true);
+		}
+
+		public string AClass
+		{
+			get { return aClass; }
+		}
+
+		public string AType
+		{
+			get { return aType; }
+		}
+
+		public int ASeed
+		{
+			get { return aSeed; }
+		}
+
+		public float SciMult
+		{
+			get { return sciMult; }
+		}
+
+		public CelestialBody Body
+		{
+			get { return body; }
+		}
+
+		public int ID
+		{
+			get { return id; }
+		}
+
+
+		//Alter some of the values to give us asteroid specific results based on asteroid class and current situation
+		private void asteroidValues(bool scanner)
+		{
+			if (scanner)
+				asteroidValues(modAsteroid, 1f);
+			else if (AsteroidNear)
+				asteroidValues(modAsteroid, 1f);
+			else if (AsteroidGrappled) {
 				ModuleAsteroid asteroidM = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleAsteroid>().First();
-				aClass = asteroidClass(asteroidM.prefabBaseURL);
-				aSeed = Math.Abs(asteroidM.seed);
-				aType = asteroidSpectral(aSeed);
-				ID = asteroidM.seed;
-				sciMult = asteroidValue(aClass) * 1.5f;
+				asteroidValues(asteroidM, 1.25f);
 			}
+		}
+
+		private void asteroidValues(ModuleAsteroid m, float mult)
+		{
+			aClass = asteroidClass(m.prefabBaseURL);
+			aSeed = Math.Abs(m.seed);
+			aType = asteroidSpectral(aSeed);
+			id = m.seed;
+			sciMult = asteroidValue(aClass) * mult;
 		}
 
 		private string asteroidClass(string s)
@@ -97,15 +137,15 @@ namespace DMagic
 				case "Class A":
 					return 2f;
 				case "Class B":
-					return 4f;
+					return 3f;
 				case "Class C":
-					return 6f;
+					return 5f;
 				case "Class D":
-					return 8f;
+					return 7f;
 				case "Class E":
-					return 10f;
+					return 9f;
 				case "Class Unholy":
-					return 15f;
+					return 12f;
 				default:
 					return 1f;
 			}
@@ -127,32 +167,43 @@ namespace DMagic
 		}
 
 		//Are we attached to the asteroid, check if an asteroid part is on our vessel
-		internal static bool asteroidGrappled()
+		public static bool AsteroidGrappled
 		{
-			if (FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleAsteroid>().Count > 0) return true;
-			else return false;
+			get
+			{
+				if (FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleAsteroid>().Count > 0)
+					return true;
+				else
+					return false;
+			}
 		}
 
 		//Are we near the asteroid, cycle through existing vessels, only target asteroids within 2km
-		internal static bool asteroidNear()
+		public static bool AsteroidNear
 		{
-			List<Vessel> vesselList = FlightGlobals.fetch.vessels;
-			foreach (Vessel v in vesselList) {
-				if (v != FlightGlobals.ActiveVessel) {
-					if (v.FindPartModulesImplementing<ModuleAsteroid>().Count > 0) {
-						Part asteroidPart = v.FindPartModulesImplementing<ModuleAsteroid>().First().part;
-						Vector3 asteroidPosition = asteroidPart.transform.position;
-						Vector3 vesselPosition = FlightGlobals.ActiveVessel.transform.position;
-						double distance = (asteroidPosition - vesselPosition).magnitude;
-						if (distance < 2000) {
-							asteroidVessel = v;
-							return true;
+			get
+			{
+				List<Vessel> vesselList = FlightGlobals.fetch.vessels;
+				foreach (Vessel v in vesselList)
+				{
+					if (v != FlightGlobals.ActiveVessel)
+					{
+						ModuleAsteroid m = v.FindPartModulesImplementing<ModuleAsteroid>().FirstOrDefault();
+						if (m != null)
+						{
+							Vector3 asteroidPosition = m.part.transform.position;
+							Vector3 vesselPosition = FlightGlobals.ActiveVessel.transform.position;
+							double distance = (asteroidPosition - vesselPosition).magnitude;
+							if (distance < 2000)
+							{
+								modAsteroid = m;
+								return true;
+							}
 						}
-						else continue;
 					}
 				}
+				return false;
 			}
-			return false;
 		}
 
 	}

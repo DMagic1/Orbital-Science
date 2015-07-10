@@ -30,44 +30,49 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Scenario
 {
+	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
 	internal class DMRecoveryWatcher : MonoBehaviour
 	{
+		private static bool loaded = false;
+
+		private void Awake()
+		{
+			if (!loaded)
+			{
+				GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
+				loaded = true;
+			}
+		}
 
 		private void Start()
 		{
-			DMUtils.DebugLog("Starting Recovery Watcher");
-			GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
+			DontDestroyOnLoad(this);
 		}
 
 		private void OnDestroy()
 		{
-			DMUtils.DebugLog("Destroying Recovery Watcher");
 			GameEvents.OnScienceRecieved.Remove(RecoveryWatcher);
 		}
 
-		private void RecoveryWatcher(float sci, ScienceSubject sub)
+		private void RecoveryWatcher(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
 			if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
 			{
 				float DMScience = sci;
 				DMUtils.DebugLog("Science Data Recovered For {0} Science", sci);
-				foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
+
+				DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);
+				if (DMData != null)
 				{
-					if (DMData.title == sub.title)
-					{
-						float oldSciVal = 0f;
-						if (sub.scienceCap != 0)
-							oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
-						DMScience = sub.subjectValue * DMData.basevalue * DMData.scival * oldSciVal;
-						DMScienceScenario.SciScenario.submitDMScience(DMData, DMScience);
-						break;
-					}
+					float oldSciVal = 0f;
+					if (sub.scienceCap != 0)
+						oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
+					DMScience = sub.subjectValue * DMData.BaseValue * DMData.SciVal * oldSciVal;
+					DMScienceScenario.SciScenario.submitDMScience(DMData, DMScience);
 				}
 				if (DMScience != sci)
 				{

@@ -30,38 +30,41 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
-namespace DMagic
+namespace DMagic.Scenario
 {
+	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
 	internal class DMTransmissionWatcher : MonoBehaviour
 	{
+		private static bool loaded = false;
+
+		private void Awake()
+		{
+			if (!loaded)
+			{
+				GameEvents.OnScienceRecieved.Add(scienceReceived);
+				loaded = true;
+			}
+		}
 
 		private void Start()
 		{
-			DMUtils.DebugLog("Starting Transmission Watcher");
-			GameEvents.OnScienceRecieved.Add(scienceReceived);
+			DontDestroyOnLoad(this);
 		}
 
 		private void OnDestroy()
 		{
-			DMUtils.DebugLog("Stopping Transmission Watcher");
 			GameEvents.OnScienceRecieved.Remove(scienceReceived);
 		}
 
-		private void scienceReceived(float sci, ScienceSubject sub)
+		private void scienceReceived(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
-			DMUtils.DebugLog("Science Data Transmitted For {0} Science", sci);
-			foreach (DMScienceScenario.DMScienceData DMData in DMScienceScenario.SciScenario.recoveredScienceList)
+			if (HighLogic.LoadedSceneIsFlight)
 			{
-				if (DMData.title == sub.title)
-				{
+				DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);
+				if (DMData != null)
 					DMScienceScenario.SciScenario.submitDMScience(DMData, sci);
-					break;
-				}
 			}
 		}
 	}
