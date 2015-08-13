@@ -41,27 +41,7 @@ namespace DMagic.Scenario
 	{
 		public static DMScienceScenario SciScenario
 		{
-			get
-			{
-				Game g = HighLogic.CurrentGame;
-				if (g == null)
-				{
-					return null;
-				}
-				try
-				{
-					var DMmod = g.scenarios.FirstOrDefault(m => m.moduleName == typeof(DMScienceScenario).Name);
-					if (DMmod != null)
-						return (DMScienceScenario)DMmod.moduleRef;
-					else
-						return null;
-				}
-				catch (Exception e)
-				{
-					DMUtils.Logging("Could Not Load DMScienceScenario: {0}", e);
-					return null;
-				}
-			}
+			get { return instance; }
 		}
 
 		//Anomaly tracking object
@@ -69,6 +49,8 @@ namespace DMagic.Scenario
 
 		//Master List for saved asteroid science data
 		private Dictionary<string, DMScienceData> recoveredDMScience = new Dictionary<string,DMScienceData>();
+
+		private static DMScienceScenario instance;
 
 		public DMScienceData getDMScience(string title, bool warn = false)
 		{
@@ -113,6 +95,8 @@ namespace DMagic.Scenario
 
 		public override void OnLoad(ConfigNode node)
 		{
+			instance = this;
+
 			recoveredDMScience.Clear();
 			ConfigNode results_node = node.GetNode("Asteroid_Science");
 			if (results_node != null)

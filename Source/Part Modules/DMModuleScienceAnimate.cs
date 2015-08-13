@@ -556,13 +556,12 @@ namespace DMagic.Part_Modules
 						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
 				}
 				foreach (ScienceData data in storedScienceReports)
-				{
-					storedScienceReports.Remove(data);
 					experimentNumber--;
-				}
+				storedScienceReports.Clear();
 				if (experimentNumber < 0)
 					experimentNumber = 0;
-				if (keepDeployedMode == 0) retractEvent();
+				if (keepDeployedMode == 0)
+					retractEvent();
 				Deployed = false;
 			}
 			else
@@ -575,8 +574,7 @@ namespace DMagic.Part_Modules
 			if (storedScienceReports.Count > 0)
 			{
 				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false))
-					foreach (ScienceData data in storedScienceReports)
-						DumpData(data);
+					DumpAllData(storedScienceReports);
 			}
 		}
 
@@ -899,7 +897,7 @@ namespace DMagic.Part_Modules
 				sub.scienceCap = scienceExp.scienceCap * sub.subjectValue;
 			}
 
-			data = new ScienceData(scienceExp.baseValue * sub.dataScale, xmitDataScalar, 0f, sub.id, sub.title);
+			data = new ScienceData(scienceExp.baseValue * sub.dataScale, xmitDataScalar, 1f, sub.id, sub.title);
 
 			return data;
 		}
@@ -1137,6 +1135,15 @@ namespace DMagic.Part_Modules
 		void IScienceDataContainer.DumpData(ScienceData data)
 		{
 			DumpData(data);
+		}
+
+		private void DumpAllData(List<ScienceData> data)
+		{
+			foreach(ScienceData d in data)
+				experimentsReturned++;
+			Inoperable = !IsRerunnable();
+			Deployed = Inoperable;
+			data.Clear();
 		}
 
 		new protected void DumpData(ScienceData data)
