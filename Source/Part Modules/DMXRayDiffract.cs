@@ -42,6 +42,9 @@ namespace DMagic.Part_Modules
 		private const string drillTransform = "SampleDrill";
 		private const string potato = "PotatoRoid";
 
+		[KSPField]
+		public float drillLength = 4f;
+
 		protected override bool canConduct()
 		{
 			if (base.canConduct())
@@ -61,44 +64,7 @@ namespace DMagic.Part_Modules
 			Ray r = new Ray(p, -1f * t.forward);
 			float scale = part.rescaleFactor;
 
-			//This section handles any changes in the part's size by TweakScale
-			//If the TweakScale module uses the free scale resize option the value will be
-			//reported as a percentage, rather than an multiplier
-			if (part.Modules.Contains("TweakScale"))
-			{
-				PartModule pM = part.Modules["TweakScale"];
-				if (pM.Fields.GetValue("currentScale") != null)
-				{
-					bool free = false;
-					if (pM.Fields.GetValue("isFreeScale") != null)
-					{
-						try
-						{
-							free = pM.Fields.GetValue<bool>("isFreeScale");
-						}
-						catch (Exception e)
-						{
-							Debug.LogError("[DMagic] Error in detecting TweakScale type; asuming not freeScale : " + e);
-						}
-					}
-					float tweakedScale = 1f;
-					try
-					{
-						tweakedScale = pM.Fields.GetValue<float>("currentScale");
-						//Divide by 100 if the tweakscale value returns a percentage
-						if (free)
-							tweakedScale /= 100;
-					}
-					catch (Exception e)
-					{
-						Debug.LogError("[DMagic] Error in detecting TweakScale component; reset distance scale to 1 : " + e);
-					}
-					scale *= tweakedScale;
-				}
-			}
-
-			float drillLength = 4f * scale;
-			Physics.Raycast(r, out hit, drillLength);
+			Physics.Raycast(r, out hit, drillLength * scale);
 			if (hit.collider != null)
 			{
 				if (b)
