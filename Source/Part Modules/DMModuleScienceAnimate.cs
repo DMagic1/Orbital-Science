@@ -233,22 +233,27 @@ namespace DMagic.Part_Modules
 				else if (lastInOperableState)
 				{
 					lastInOperableState = false;
-					if (experimentLimit != 0)
-					{
-						if (!string.IsNullOrEmpty(sampleEmptyAnim))
-							secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-						else if (!string.IsNullOrEmpty(sampleAnim))
-							secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-						if (!string.IsNullOrEmpty(indicatorAnim))
-							secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
-					}
-					experimentNumber = 0;
-					experimentsReturned = 0;
-
-					if (keepDeployedMode == 0) retractEvent();
+					onLabReset();
 				}
 				eventsCheck();
 			}
+		}
+
+		protected virtual void onLabReset()
+		{
+			if (experimentLimit != 0)
+			{
+				if (!string.IsNullOrEmpty(sampleEmptyAnim))
+					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+				else if (!string.IsNullOrEmpty(sampleAnim))
+					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+				if (!string.IsNullOrEmpty(indicatorAnim))
+					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+			}
+			experimentNumber = 0;
+			experimentsReturned = 0;
+
+			if (keepDeployedMode == 0) retractEvent();
 		}
 
 		private void FixedUpdate()
@@ -578,6 +583,10 @@ namespace DMagic.Part_Modules
 		new public void CollectDataExternalEvent()
 		{
 			List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
+
+			if (EVACont.Count <= 0)
+				return;
+
 			if (storedScienceReports.Count > 0)
 			{
 				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false))
@@ -1163,13 +1172,11 @@ namespace DMagic.Part_Modules
 
 			Inoperable = false;
 
-
 			if (experimentLimit <= 1)
 				Deployed = true;
 			else
 			{
-				if (experimentNumber >= experimentLimit - 1)
-					Deployed = true;
+				Deployed = experimentNumber >= experimentLimit;
 			}
 		}
 
