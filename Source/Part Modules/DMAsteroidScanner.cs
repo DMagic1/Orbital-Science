@@ -123,8 +123,6 @@ namespace DMagic.Part_Modules
 				if (USScience)
 					animator(0f, 1f, USAnim, USBayAnimation);
 			}
-			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
-				FlightGlobals.Bodies[16].bodyName = asteroidBodyNameFixed;
 
 			dishBase = part.FindModelTransform(baseTransformName);
 			dish = part.FindModelTransform(transformName);
