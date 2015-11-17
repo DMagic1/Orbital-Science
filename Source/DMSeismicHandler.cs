@@ -7,6 +7,10 @@ using UnityEngine;
 
 namespace DMagic
 {
+	public interface IDMSeismometer
+	{
+		void updatePosition();
+	}
 
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class DMSeismicHandler : MonoBehaviour
@@ -32,7 +36,8 @@ namespace DMagic
 
 		private void Update()
 		{
-
+			if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+				updatePositions();
 		}
 
 		private IEnumerator loadSensors()
@@ -59,15 +64,10 @@ namespace DMagic
 						if (p == null)
 							continue;
 
-						DMSeismicSensor sensor = p.FindModuleImplementing<DMSeismicSensor>();
+						IDMSeismometer sensor = p.FindModuleImplementing<IDMSeismometer>();
 
 						if (sensor != null)
 							addSeismometer(p.flightID, sensor);
-
-						DMSeismicHammer hammer = p.FindModuleImplementing<DMSeismicHammer>();
-
-						if (hammer != null)
-							addHammer(p.flightID, hammer);
 					}
 				}
 				else
@@ -88,41 +88,56 @@ namespace DMagic
 							if (m == null)
 								continue;
 
-							if (m.moduleName == "DMSeismicSensor")
-							{
-								if (m.moduleRef.GetType() == typeof(DMSeismicSensor))
-								{
-									addSeismometer(p.flightID, (DMSeismicSensor)m.moduleRef);
-									continue;
-								}
-							}
-
-							if (m.moduleName == "DMSeismicHammer")
-							{
-								if (m.moduleRef.GetType() == typeof(DMSeismicHammer))
-								{
-									addHammer(p.flightID, (DMSeismicHammer)m.moduleRef);
-									continue;
-								}
-							}
+							if (m.moduleName == "DMSeismicSensor" || m.moduleName == "DMSeismicHammer")
+								addSeismometer(p.flightID, (IDMSeismometer)m.moduleRef);
 						}
 					}
 				}
 			}
 		}
 
-		private void addSeismometer(uint id, DMSeismicSensor sensor)
+		private void addSeismometer(uint id, IDMSeismometer sensor)
 		{
-			if (!seismometers.ContainsKey(id))
-				seismometers.Add(id, sensor);
+			if (sensor.GetType() == typeof(DMSeismicSensor))
+			{
+				if (!seismometers.ContainsKey(id))
+					seismometers.Add(id, (DMSeismicSensor)sensor);
+			}
+			else if (sensor.GetType() == typeof(DMSeismicHammer))
+			{
+				if (!hammers.ContainsKey(id))
+					hammers.Add(id, (DMSeismicHammer)sensor);
+			}
 		}
 
-		private void addHammer(uint id, DMSeismicHammer hammer)
+		private void updatePositions()
 		{
-			if (!hammers.ContainsKey(id))
-				hammers.Add(id, hammer);
-		}
-		
+			for (int i = 0; i < seismometers.Count; i++)
+			{
+				DMSeismicSensor s = seismometers.ElementAt(i).Value;
+
+				if (s == null)
+					continue;
+
+				if (!s.vessel.Landed && s.vessel.heightFromTerrain> 1000)
+					continue;
+
+				s.updatePosition();
+			}
+
+			for (int i = 0; i < hammers.Count; i++)
+			{
+				DMSeismicHammer h = hammers.ElementAt(i).Value;
+
+				if (h == null)
+					continue;
+
+				if (!h.vessel.Landed && h.vessel.heightFromTerrain > 1000)
+					continue;
+
+				h.updatePosition();
+			}
+		}		
 
 		public DMSeismicHandler Instance
 		{
