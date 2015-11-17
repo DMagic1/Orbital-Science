@@ -254,7 +254,7 @@ namespace DMagic
 		{
 			ExperimentSituations targetSituation;
 			ScienceSubject sub;
-			string subject, anomName;
+			string anomName;
 
 			if (Body == null)
 				return null;
