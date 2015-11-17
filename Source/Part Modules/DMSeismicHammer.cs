@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DMagic.Part_Modules
 {
-	class DMSeismicHammer : DMBasicScienceModule
+	class DMSeismicHammer : DMBasicScienceModule, IDMSeismometer
 	{
 		[KSPField]
 		public string animationName = "";
@@ -55,6 +55,11 @@ namespace DMagic.Part_Modules
 
 
 		#endregion
+
+		public void updatePosition()
+		{
+
+		}
 
 
 	}
