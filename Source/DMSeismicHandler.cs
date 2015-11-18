@@ -9,8 +9,7 @@ namespace DMagic
 {
 	public interface IDMSeismometer
 	{
-		void updatePosition();
-		void addSeismometer(uint id, IDMSeismometer sensor, float distance);
+		void addSeismometer(IDMSeismometer sensor, Vector2 vector = new Vector2());
 	}
 
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -20,8 +19,6 @@ namespace DMagic
 
 		private Dictionary<uint, DMSeismicSensor> seismometers = new Dictionary<uint, DMSeismicSensor>();
 		private Dictionary<uint, DMSeismicHammer> hammers = new Dictionary<uint, DMSeismicHammer>();
-
-
 
 		private void Start()
 		{
@@ -120,6 +117,12 @@ namespace DMagic
 				if (h == null)
 					continue;
 
+				if (h.part == null)
+					continue;
+
+				if (h.vessel == null)
+					continue;
+
 				if (!h.vessel.Landed && h.vessel.heightFromTerrain > 1000)
 					continue;
 
@@ -130,6 +133,12 @@ namespace DMagic
 					if (s == null)
 						continue;
 
+					if (s.part == null)
+						continue;
+
+					if (s.vessel == null)
+						continue;
+
 					if (!s.vessel.Landed && s.vessel.heightFromTerrain > 1000)
 						continue;
 
@@ -137,9 +146,11 @@ namespace DMagic
 
 					if (distance < 15000)
 					{
-						h.addSeismometer(s.part.flightID, s, distance);
+						float angle = (float)DMUtils.bearing(h.vessel.latitude, h.vessel.longitude, s.vessel.latitude, s.vessel.longitude);
 
-						s.addSeismometer(h.part.flightID, h, distance);
+						h.addSeismometer(s, new Vector2(distance, angle));
+
+						s.addSeismometer(h);
 					}
 				}
 			}
