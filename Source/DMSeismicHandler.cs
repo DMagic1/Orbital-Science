@@ -10,6 +10,7 @@ namespace DMagic
 	public interface IDMSeismometer
 	{
 		void updatePosition();
+		void addSeismometer(uint id, IDMSeismometer sensor, float distance);
 	}
 
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -112,19 +113,6 @@ namespace DMagic
 
 		private void updatePositions()
 		{
-			for (int i = 0; i < seismometers.Count; i++)
-			{
-				DMSeismicSensor s = seismometers.ElementAt(i).Value;
-
-				if (s == null)
-					continue;
-
-				if (!s.vessel.Landed && s.vessel.heightFromTerrain> 1000)
-					continue;
-
-				s.updatePosition();
-			}
-
 			for (int i = 0; i < hammers.Count; i++)
 			{
 				DMSeismicHammer h = hammers.ElementAt(i).Value;
@@ -135,7 +123,25 @@ namespace DMagic
 				if (!h.vessel.Landed && h.vessel.heightFromTerrain > 1000)
 					continue;
 
-				h.updatePosition();
+				for (int j = 0; j < seismometers.Count; j++)
+				{
+					DMSeismicSensor s = seismometers.ElementAt(j).Value;
+
+					if (s == null)
+						continue;
+
+					if (!s.vessel.Landed && s.vessel.heightFromTerrain > 1000)
+						continue;
+
+					float distance = Math.Abs((h.part.transform.position - s.part.transform.position).magnitude);
+
+					if (distance < 15000)
+					{
+						h.addSeismometer(s.part.flightID, s, distance);
+
+						s.addSeismometer(h.part.flightID, h, distance);
+					}
+				}
 			}
 		}		
 
