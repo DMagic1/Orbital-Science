@@ -11,8 +11,8 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public string animationName = "";
 
-		private Dictionary<uint, DMSeismicSensor> nearbySensors = new Dictionary<uint, DMSeismicSensor>();
-
+		private Dictionary<DMSeismicSensor, Vector2> nearbySensors = new Dictionary<DMSeismicSensor, Vector2>();
+		private int sensorsInRange;
 
 		private Animation Anim;
 
@@ -57,18 +57,15 @@ namespace DMagic.Part_Modules
 
 
 		#endregion
-
-		public void updatePosition()
+		
+		public void addSeismometer(IDMSeismometer s, Vector2 v)
 		{
-
-		}
-
-		public void addSeismometer(uint id, IDMSeismometer sensor, float distance)
-		{
-			if (nearbySensors.ContainsKey(id))
+			if (nearbySensors.ContainsKey((DMSeismicSensor)s))
 				return;
 
-			nearbySensors.Add(id, (DMSeismicSensor)sensor);
+			nearbySensors.Add((DMSeismicSensor)s, v);
+
+			sensorsInRange = nearbySensors.Count;
 		}
 
 	}
