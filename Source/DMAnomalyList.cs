@@ -167,13 +167,7 @@ namespace DMagic
 
 		internal static void bearing(Vessel v, DMAnomalyObject a)
 		{
-			double vlat = v.latitude;
-			double vlon = v.longitude;
-			double longdiff = (a.Lon - vlon) * Mathf.Deg2Rad;
-			double y = Math.Sin(longdiff) * Math.Cos(Mathf.Deg2Rad * a.Lat);
-			double x = Math.Cos(Mathf.Deg2Rad * vlat) * Math.Sin(Mathf.Deg2Rad * a.Lat) - Math.Sin(Mathf.Deg2Rad * vlat) * Math.Cos(Mathf.Deg2Rad * a.Lat) * Math.Cos(longdiff);
-			double aBearing = (Math.Atan2(y, x) * Mathf.Rad2Deg + 360) % 360;
-			a.Bearing = aBearing;
+			a.Bearing = DMUtils.bearing(v.latitude, v.longitude, a.Lat, a.Lon);
 		}
 	}
 }
