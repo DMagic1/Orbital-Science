@@ -11,6 +11,7 @@ namespace DMagic.Part_Modules
 		public string animationName = "";
 
 		private Dictionary<uint, DMSeismicHammer> nearbyHammers = new Dictionary<uint, DMSeismicHammer>();
+		private bool hammerInRange;
 
 		private Animation Anim;
 
@@ -56,17 +57,12 @@ namespace DMagic.Part_Modules
 
 		#endregion
 
-		public void updatePosition()
+		public void addSeismometer(IDMSeismometer s, Vector2 v = new Vector2())
 		{
-
-		}
-
-		public void addSeismometer(uint id, IDMSeismometer sensor, float distance)
-		{
-			if (nearbyHammers.ContainsKey(id))
+			if (nearbyHammers.ContainsKey(((DMSeismicHammer)s).part.flightID))
 				return;
 
-			nearbyHammers.Add(id, (DMSeismicHammer)sensor);
+			nearbyHammers.Add(((DMSeismicHammer)s).part.flightID, (DMSeismicHammer)s);
 		}
 
 	}
