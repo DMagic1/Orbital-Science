@@ -10,6 +10,7 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public string animationName = "";
 
+		private Dictionary<uint, DMSeismicHammer> nearbyHammers = new Dictionary<uint, DMSeismicHammer>();
 
 		private Animation Anim;
 
@@ -58,6 +59,14 @@ namespace DMagic.Part_Modules
 		public void updatePosition()
 		{
 
+		}
+
+		public void addSeismometer(uint id, IDMSeismometer sensor, float distance)
+		{
+			if (nearbyHammers.ContainsKey(id))
+				return;
+
+			nearbyHammers.Add(id, (DMSeismicHammer)sensor);
 		}
 
 	}
