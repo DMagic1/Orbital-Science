@@ -138,6 +138,15 @@ namespace DMagic
 			}
 		}
 
+		internal static double bearing(double lat1, double lon1, double lat2, double lon2)
+		{
+			double longdiff = (lon2 - lon1) * Mathf.Deg2Rad;
+			double y = Math.Sin(longdiff) * Math.Cos(Mathf.Deg2Rad * lat2);
+			double x = Math.Cos(Mathf.Deg2Rad * lat1) * Math.Sin(Mathf.Deg2Rad * lat2) - Math.Sin(Mathf.Deg2Rad * lat1) * Math.Cos(Mathf.Deg2Rad * lat2) * Math.Cos(longdiff);
+			double Bearing = (Math.Atan2(y, x) * Mathf.Rad2Deg + 360) % 360;
+			return Bearing;
+		}
+
 		internal static double timeInDays(double D)
 		{
 			if (GameSettings.KERBIN_TIME)
