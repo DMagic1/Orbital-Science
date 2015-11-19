@@ -10,6 +10,8 @@ namespace DMagic
 	public interface IDMSeismometer
 	{
 		void addSeismometer(IDMSeismometer sensor, Vector2 vector = new Vector2());
+		void removeSeismometer(IDMSeismometer sensor);
+		void updateScore();
 	}
 
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -152,7 +154,17 @@ namespace DMagic
 
 						s.addSeismometer(h);
 					}
+					else if (distance > 16000)
+					{
+						h.removeSeismometer(s);
+
+						s.removeSeismometer(h);
+					}
+
+					s.updateScore();
 				}
+
+				h.updateScore();
 			}
 		}		
 

@@ -11,7 +11,7 @@ namespace DMagic.Part_Modules
 		public string animationName = "";
 
 		private Dictionary<uint, DMSeismicHammer> nearbyHammers = new Dictionary<uint, DMSeismicHammer>();
-		private bool hammerInRange;
+		private float experimentScore = 0.2f;
 
 		private Animation Anim;
 
@@ -57,6 +57,8 @@ namespace DMagic.Part_Modules
 
 		#endregion
 
+		#region IDMSeismometer
+
 		public void addSeismometer(IDMSeismometer s, Vector2 v = new Vector2())
 		{
 			if (nearbyHammers.ContainsKey(((DMSeismicHammer)s).part.flightID))
@@ -65,5 +67,22 @@ namespace DMagic.Part_Modules
 			nearbyHammers.Add(((DMSeismicHammer)s).part.flightID, (DMSeismicHammer)s);
 		}
 
+		public void removeSeismometer(IDMSeismometer s)
+		{
+			if (nearbyHammers.ContainsKey(((DMSeismicHammer)s).part.flightID))
+				nearbyHammers.Remove(((DMSeismicHammer)s).part.flightID);
+		}
+
+		public void updateScore()
+		{
+			experimentScore = 0.2f;
+		}
+
+		#endregion
+
+		public bool SensorsInRange
+		{
+			get { return nearbyHammers.Count > 0; }
+		}
 	}
 }

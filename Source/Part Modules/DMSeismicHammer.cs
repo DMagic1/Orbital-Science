@@ -12,7 +12,7 @@ namespace DMagic.Part_Modules
 		public string animationName = "";
 
 		private Dictionary<DMSeismicSensor, Vector2> nearbySensors = new Dictionary<DMSeismicSensor, Vector2>();
-		private int sensorsInRange;
+		private float experimentScore = 0.5f;
 
 		private Animation Anim;
 
@@ -57,15 +57,34 @@ namespace DMagic.Part_Modules
 
 
 		#endregion
-		
+
+		#region IDMSeismometer
+
 		public void addSeismometer(IDMSeismometer s, Vector2 v)
 		{
+			if (!nearbySensors.ContainsKey((DMSeismicSensor)s))
+				nearbySensors.Add((DMSeismicSensor)s, v);
+			else
+				nearbySensors[(DMSeismicSensor)s] = v;
+
+		}
+
+		public void removeSeismometer(IDMSeismometer s)
+		{
 			if (nearbySensors.ContainsKey((DMSeismicSensor)s))
-				return;
+				nearbySensors.Remove((DMSeismicSensor)s);
+		}
 
-			nearbySensors.Add((DMSeismicSensor)s, v);
+		public void updateScore()
+		{
+			experimentScore = 0.5f;
+		}
 
-			sensorsInRange = nearbySensors.Count;
+		#endregion
+
+		public int sensorsInRange
+		{
+			get { return nearbySensors.Count; }
 		}
 
 	}
