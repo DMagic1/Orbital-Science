@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DMagic.Part_Modules;
+using DMagic.Scenario;
 using UnityEngine;
 
 namespace DMagic
@@ -12,15 +13,19 @@ namespace DMagic
 		void addSeismometer(IDMSeismometer sensor, Vector2 vector = new Vector2());
 		void removeSeismometer(IDMSeismometer sensor);
 		void updateScore();
+		float experimentScore { get; set; }
 	}
 
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class DMSeismicHandler : MonoBehaviour
 	{
-		private DMSeismicHandler instance;
+		private static DMSeismicHandler instance;
 
 		private Dictionary<uint, DMSeismicSensor> seismometers = new Dictionary<uint, DMSeismicSensor>();
 		private Dictionary<uint, DMSeismicHammer> hammers = new Dictionary<uint, DMSeismicHammer>();
+
+		private const string bodyNameFixed = "Eeloo";
+
 
 		private void Start()
 		{
@@ -168,9 +173,78 @@ namespace DMagic
 			}
 		}		
 
-		public DMSeismicHandler Instance
+		public static DMSeismicHandler Instance
 		{
 			get { return instance; }
+		}
+
+		public static ScienceData makeData(IDMSeismometer sensor, uint partID, ScienceExperiment exp, string expID, CelestialBody body, Vessel v, bool seismometerOnly, bool asteroid)
+		{
+			if (sensor == null || exp == null || body == null || v == null)
+				return null;
+
+			string biome = ScienceUtil.GetExperimentBiome(body, v.latitude, v.longitude);
+
+			DMAsteroidScience newAsteroid = null;
+			bool asteroids = false;
+
+			if (asteroid)
+			{
+				newAsteroid = new DMAsteroidScience();
+				asteroids = true;
+				body = newAsteroid.Body;
+				biome = newAsteroid.AType + newAsteroid.ASeed.ToString();
+			}
+
+			ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, ExperimentSituations.SrfLanded, body, biome);
+
+			if (sub == null)
+			{
+
+				return null;
+			}
+
+			if (asteroids)
+			{
+				DMUtils.OnAsteroidScience.Fire(newAsteroid.AClass, expID);
+				sub.title = exp.experimentTitle + string.Format(" from the surface of a {0} asteroid", newAsteroid.AType);
+				registerDMScience(newAsteroid, exp, sub);
+				body.bodyName = bodyNameFixed;
+			}
+			else
+			{
+				DMUtils.OnAnomalyScience.Fire(body, expID, biome);
+				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.theName, biome);
+				sub.scienceCap = exp.scienceCap * sub.subjectValue;
+			}
+
+			return new ScienceData(exp.baseValue * sub.dataScale * sensor.experimentScore, 1f, 1f, sub.id, sub.title, false, partID);
+		}
+
+		private static void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub)
+		{
+			if (HighLogic.CurrentGame.Mode == Game.Modes.SANDBOX)
+				return;
+
+			DMScienceData DMData = null;
+
+			DMScienceData DMScience = DMScienceScenario.SciScenario.getDMScience(sub.title);
+			if (DMScience != null)
+			{
+				sub.scientificValue *= DMScience.SciVal;
+				DMData = DMScience;
+			}
+
+			if (DMData == null)
+			{
+				float astSciCap = exp.scienceCap * 40f;
+				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, 1f, 0f, astSciCap);
+				sub.scientificValue = 1f;
+			}
+
+			sub.subjectValue = newAst.SciMult;
+			sub.scienceCap = exp.scienceCap * sub.subjectValue;
+			sub.science = Math.Max(0f, Math.Min(sub.scienceCap, sub.scienceCap - (sub.scienceCap * sub.scientificValue)));
 		}
 
 	}

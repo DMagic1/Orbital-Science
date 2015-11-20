@@ -11,7 +11,6 @@ namespace DMagic.Part_Modules
 		public string animationName = "";
 
 		private Dictionary<uint, DMSeismicHammer> nearbyHammers = new Dictionary<uint, DMSeismicHammer>();
-		private float experimentScore = 0.2f;
 
 		private Animation Anim;
 
@@ -57,6 +56,18 @@ namespace DMagic.Part_Modules
 
 		#endregion
 
+		private void getScienceData(bool sensorOnly, bool asteroid)
+		{
+			ScienceData data = DMSeismicHandler.makeData(this, part.flightID, exp, experimentID, vessel.mainBody, vessel, sensorOnly, asteroid);
+
+			if (data == null)
+				return;
+
+			scienceReports.Add(data);
+			Deployed = true;
+			ReviewData();
+		}
+
 		#region IDMSeismometer
 
 		public void addSeismometer(IDMSeismometer s, Vector2 v = new Vector2())
@@ -77,6 +88,8 @@ namespace DMagic.Part_Modules
 		{
 			experimentScore = 0.2f;
 		}
+
+		public float experimentScore { get; set; }
 
 		#endregion
 
