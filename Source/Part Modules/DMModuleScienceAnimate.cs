@@ -842,7 +842,7 @@ namespace DMagic.Part_Modules
 				failMessage = storageFullMessage;
 				return false;
 			}
-			if ((sitMask & (int)getSituation()) == 0)
+			else if ((sitMask & (int)getSituation()) == 0)
 			{
 				failMessage = customFailMessage;
 				return false;
