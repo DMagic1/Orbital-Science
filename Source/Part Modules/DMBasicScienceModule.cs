@@ -7,11 +7,26 @@ namespace DMagic.Part_Modules
 {
 	public class DMBasicScienceModule : PartModule, IScienceDataContainer
 	{
-
+		[KSPField]
+		public string collectActionName;
+		[KSPField]
+		public string experimentActionName;
+		[KSPField]
+		public float interactionRange;
+		[KSPField]
+		public string resetActionName;
+		[KSPField]
+		public bool resettable;
+		[KSPField]
+		public bool resettableOnEVA;
+		[KSPField]
+		public string reviewActionName;
 		[KSPField]
 		public string experimentID = "";
 		[KSPField]
 		public string experimentResource = "ElectricCharge";
+		[KSPField]
+		public string customFailMessage = "";
 		[KSPField]
 		public bool rerunnable = true;
 		[KSPField]
@@ -34,8 +49,13 @@ namespace DMagic.Part_Modules
 		protected ScienceExperiment exp = null;
 		protected List<ScienceData> scienceReports = new List<ScienceData>();
 
-
-
+		public override void OnStart(PartModule.StartState state)
+		{
+			if (state == StartState.Editor)
+				editorSetup();
+			else
+				setup();
+		}
 
 		public override void OnSave(ConfigNode node)
 		{
@@ -65,6 +85,23 @@ namespace DMagic.Part_Modules
 			Events["CollectDataExternalEvent"].active = scienceReports.Count > 0 && dataIsCollectable;
 			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable;
 			Events["ReviewDataEvent"].active = scienceReports.Count > 0;
+		}
+
+		protected virtual void setup()
+		{
+			Events["CollectDataExternalEvent"].guiName = collectActionName;
+			Events["ResetExperiment"].guiName = resetActionName;
+			Events["DeployExperiment"].guiName = experimentActionName;
+			Events["DeployExperiment"].unfocusedRange = interactionRange;
+			Actions["DeployAction"].guiName = experimentActionName;
+			if (!string.IsNullOrEmpty(experimentID))
+				exp = ResearchAndDevelopment.GetExperiment(experimentID);
+		}
+
+		protected virtual void editorSetup()
+		{
+			Actions["ResetAction"].active = true;
+			Actions["DeployAction"].guiName = experimentActionName;
 		}
 
 		#region Events
