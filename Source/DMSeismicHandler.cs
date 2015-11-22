@@ -10,26 +10,64 @@ namespace DMagic
 {
 	public interface IDMSeismometer
 	{
-		void addSeismometer(IDMSeismometer sensor, Vector2 vector = new Vector2());
+		void addSeismometer(IDMSeismometer sensor, DMSeismometerValues values = null);
 		void removeSeismometer(IDMSeismometer sensor);
 		void updateScore();
 		float experimentScore { get; set; }
+	}
+
+	public class DMSeismometerValues
+	{
+		private float distance;
+		private float angle;
+		private float score;
+
+		public DMSeismometerValues(float d, float a)
+		{
+			distance = d;
+			angle = a;
+			score = 0;
+		}
+
+		public float Distance
+		{
+			get { return distance; }
+		}
+
+		public float Angle
+		{
+			get { return angle; }
+		}
+
+		public float Score
+		{
+			get { return score; }
+			set
+			{
+				score = Mathf.Clamp(value, 0f, 0.2f);
+			}
+		}
 	}
 
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class DMSeismicHandler : MonoBehaviour
 	{
 		private static DMSeismicHandler instance;
+		public static DMSeismicHandler Instance
+		{
+			get { return instance; }
+		}
 
 		private Dictionary<uint, DMSeismicSensor> seismometers = new Dictionary<uint, DMSeismicSensor>();
 		private Dictionary<uint, DMSeismicHammer> hammers = new Dictionary<uint, DMSeismicHammer>();
 
-		private const string bodyNameFixed = "Eeloo";
-
+		private static string bodyNameFixed = "Eeloo";
 
 		private void Start()
 		{
 			instance = this;
+
+			bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
 
 			StartCoroutine(loadSensors());
 		}
@@ -149,17 +187,25 @@ namespace DMagic
 					if (!s.vessel.Landed && s.vessel.heightFromTerrain > 1000)
 						continue;
 
+					bool sameVessel = s.vessel == h.vessel;
+
 					float distance = Math.Abs((h.part.transform.position - s.part.transform.position).magnitude);
 
-					if (distance < 15000)
+					if (!sameVessel && distance < 15000)
 					{
 						float angle = (float)DMUtils.bearing(h.vessel.latitude, h.vessel.longitude, s.vessel.latitude, s.vessel.longitude);
 
-						h.addSeismometer(s, new Vector2(distance, angle));
+						h.addSeismometer(s, new DMSeismometerValues(distance, angle));
 
 						s.addSeismometer(h);
 					}
 					else if (distance > 16000)
+					{
+						h.removeSeismometer(s);
+
+						s.removeSeismometer(h);
+					}
+					else if (sameVessel)
 					{
 						h.removeSeismometer(s);
 
@@ -171,11 +217,6 @@ namespace DMagic
 
 				h.updateScore();
 			}
-		}		
-
-		public static DMSeismicHandler Instance
-		{
-			get { return instance; }
 		}
 
 		public static ScienceData makeData(IDMSeismometer sensor, uint partID, ScienceExperiment exp, string expID, CelestialBody body, Vessel v, bool seismometerOnly, bool asteroid)
@@ -186,12 +227,10 @@ namespace DMagic
 			string biome = ScienceUtil.GetExperimentBiome(body, v.latitude, v.longitude);
 
 			DMAsteroidScience newAsteroid = null;
-			bool asteroids = false;
 
 			if (asteroid)
 			{
 				newAsteroid = new DMAsteroidScience();
-				asteroids = true;
 				body = newAsteroid.Body;
 				biome = newAsteroid.AType + newAsteroid.ASeed.ToString();
 			}
@@ -200,11 +239,11 @@ namespace DMagic
 
 			if (sub == null)
 			{
-
+				Debug.LogError("[DM] Something Went Wrong Here; Null Seismometer Subject Returned; Please Report This On The KSP Forum With Output.log Data");
 				return null;
 			}
 
-			if (asteroids)
+			if (asteroid)
 			{
 				DMUtils.OnAsteroidScience.Fire(newAsteroid.AClass, expID);
 				sub.title = exp.experimentTitle + string.Format(" from the surface of a {0} asteroid", newAsteroid.AType);
