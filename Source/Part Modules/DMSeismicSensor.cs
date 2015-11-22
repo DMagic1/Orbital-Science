@@ -9,17 +9,22 @@ namespace DMagic.Part_Modules
 	{
 		[KSPField]
 		public string animationName = "";
+		[KSPField]
+		public float baseExperimentValue = 0.2f;
+		[KSPField(guiActive = false)]
+		public string scoreString = "0%";
 
 		private Dictionary<uint, DMSeismicHammer> nearbyHammers = new Dictionary<uint, DMSeismicHammer>();
 
 		private Animation Anim;
+		private string failMessage;
 
 		public override void OnStart(PartModule.StartState state)
 		{
 			if (!string.IsNullOrEmpty(animationName))
 				Anim = part.FindModelAnimators(animationName)[0];
-			if (!string.IsNullOrEmpty(experimentID))
-				exp = ResearchAndDevelopment.GetExperiment(experimentID);
+
+			base.OnStart(state);
 		}
 
 		public override void OnLoad(ConfigNode node)
@@ -35,6 +40,8 @@ namespace DMagic.Part_Modules
 		private void Update()
 		{
 			base.EventsCheck();
+
+			scoreString = experimentScore.ToString("P0");
 		}
 
 		#region Animator
@@ -56,6 +63,19 @@ namespace DMagic.Part_Modules
 
 		#endregion
 
+		#region Science Setup
+
+		new public void DeployExperiment()
+		{
+			if (!canConduct())
+			{
+				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+
+			getScienceData(nearbyHammers.Count <= 0, DMAsteroidScience.AsteroidGrappled);
+		}
+
 		private void getScienceData(bool sensorOnly, bool asteroid)
 		{
 			ScienceData data = DMSeismicHandler.makeData(this, part.flightID, exp, experimentID, vessel.mainBody, vessel, sensorOnly, asteroid);
@@ -68,9 +88,48 @@ namespace DMagic.Part_Modules
 			ReviewData();
 		}
 
+		private bool canConduct()
+		{
+			failMessage = "";
+			if (Inoperable)
+			{
+				failMessage = "Experiment is no longer functional; must be reset at a science lab or returned to Kerbin";
+				return false;
+			}
+			else if (Deployed)
+			{
+				failMessage = customFailMessage;
+				return false;
+			}
+			else if (scienceReports.Count > 0)
+			{
+				failMessage = customFailMessage;
+				return false;
+			}
+			else if (vessel.situation != Vessel.Situations.LANDED && vessel.situation != Vessel.Situations.PRELAUNCH && !DMAsteroidScience.AsteroidGrappled)
+			{
+				failMessage = customFailMessage;
+				return false;
+			}
+			else if (FlightGlobals.ActiveVessel.isEVA)
+			{
+				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
+				{
+					failMessage = usageReqMessage;
+					return false;
+				}
+				else
+					return true;
+			}
+			else
+				return true;
+		}
+
+		#endregion
+
 		#region IDMSeismometer
 
-		public void addSeismometer(IDMSeismometer s, Vector2 v = new Vector2())
+		public void addSeismometer(IDMSeismometer s, DMSeismometerValues v = null)
 		{
 			if (nearbyHammers.ContainsKey(((DMSeismicHammer)s).part.flightID))
 				return;
@@ -86,7 +145,10 @@ namespace DMagic.Part_Modules
 
 		public void updateScore()
 		{
-			experimentScore = 0.2f;
+			if (nearbyHammers.Count <= 0)
+				experimentScore = baseExperimentValue;
+			else
+				experimentScore = nearbyHammers.Values.OrderBy(h => h.experimentScore).Last().experimentScore;
 		}
 
 		public float experimentScore { get; set; }
