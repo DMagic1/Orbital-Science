@@ -13,6 +13,7 @@ namespace DMagic
 		void addSeismometer(IDMSeismometer sensor, DMSeismometerValues values = null);
 		void removeSeismometer(IDMSeismometer sensor);
 		void updateScore();
+		bool experimentArm { get; set; }
 		float experimentScore { get; set; }
 	}
 
@@ -162,6 +163,9 @@ namespace DMagic
 				if (h == null)
 					continue;
 
+				if (!h.experimentArm)
+					continue;
+
 				if (h.part == null)
 					continue;
 
@@ -176,6 +180,9 @@ namespace DMagic
 					DMSeismicSensor s = seismometers.ElementAt(j).Value;
 
 					if (s == null)
+						continue;
+
+					if (!s.experimentArm)
 						continue;
 
 					if (s.part == null)
