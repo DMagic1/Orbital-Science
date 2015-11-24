@@ -8,23 +8,22 @@ namespace DMagic.Part_Modules
 	public class DMSeismicSensor : DMBasicScienceModule, IDMSeismometer
 	{
 		[KSPField]
-		public string animationName = "";
-		[KSPField]
 		public float baseExperimentValue = 0.2f;
 		[KSPField(guiActive = false)]
 		public string scoreString = "0%";
 
 		private Dictionary<uint, DMSeismicHammer> nearbyHammers = new Dictionary<uint, DMSeismicHammer>();
 
-		private Animation Anim;
 		private string failMessage;
 
 		public override void OnStart(PartModule.StartState state)
 		{
-			if (!string.IsNullOrEmpty(animationName))
-				Anim = part.FindModelAnimators(animationName)[0];
-
 			base.OnStart(state);
+
+			if (IsDeployed)
+				experimentArm = true;
+			else
+				experimentArm = false;
 		}
 
 		public override void OnLoad(ConfigNode node)
@@ -44,24 +43,17 @@ namespace DMagic.Part_Modules
 			scoreString = experimentScore.ToString("P0");
 		}
 
-		#region Animator
-
-		//Controls the main, door-opening animation
-		private void animator(float speed, float time, Animation a, string name)
+		public override void deployEvent()
 		{
-			if (a != null)
-			{
-				a[name].speed = speed;
-				if (!a.IsPlaying(name))
-				{
-					a[name].normalizedTime = time;
-					a.Blend(name, 1f);
-				}
-			}
+			base.deployEvent();
+			experimentArm = true;
 		}
 
-
-		#endregion
+		public override void retractEvent()
+		{
+			base.retractEvent();
+			experimentArm = false;
+		}
 
 		#region Science Setup
 
@@ -152,6 +144,8 @@ namespace DMagic.Part_Modules
 		}
 
 		public float experimentScore { get; set; }
+
+		public bool experimentArm { get; set; }
 
 		#endregion
 
