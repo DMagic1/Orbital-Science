@@ -9,7 +9,7 @@ namespace DMagic.Part_Modules
 	class DMSeismicHammer : DMBasicScienceModule, IDMSeismometer
 	{
 		[KSPField]
-		public string animationName = "";
+		public string hammerAnimation = "";
 		[KSPField]
 		public float baseExperimentValue = 0.4f;
 		[KSPField(guiActive = false)]
@@ -27,10 +27,15 @@ namespace DMagic.Part_Modules
 
 		public override void OnStart(PartModule.StartState state)
 		{
-			if (!string.IsNullOrEmpty(animationName))
-				Anim = part.FindModelAnimators(animationName)[0];
+			if (!string.IsNullOrEmpty(hammerAnimation))
+				Anim = part.FindModelAnimators(hammerAnimation)[0];
 
 			base.OnStart(state);
+
+			if (IsDeployed)
+				experimentArm = true;
+			else
+				experimentArm = false;
 		}
 
 		public override void OnLoad(ConfigNode node)
@@ -66,12 +71,24 @@ namespace DMagic.Part_Modules
 			}
 		}
 
+		public override void deployEvent()
+		{
+			base.deployEvent();
+			experimentArm = true;
+		}
+
+		public override void retractEvent()
+		{
+			base.retractEvent();
+			experimentArm = false;
+		}
+
 
 		#endregion
 
 		#region Science Setup
 
-		new public void DeployExperiment()
+		public override void DeployExperiment()
 		{
 			if (!canConduct())
 			{
@@ -255,6 +272,8 @@ namespace DMagic.Part_Modules
 		}
 
 		public float experimentScore { get; set; }
+
+		public bool experimentArm { get; set; }
 
 		#endregion
 
