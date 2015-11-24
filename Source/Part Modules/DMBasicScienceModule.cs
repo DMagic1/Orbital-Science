@@ -8,6 +8,26 @@ namespace DMagic.Part_Modules
 	public class DMBasicScienceModule : PartModule, IScienceDataContainer
 	{
 		[KSPField]
+		public string animationName = null;
+		[KSPField]
+		public float animSpeed = 1f;
+		[KSPField]
+		public string endEventGUIName = "Retract";
+		[KSPField]
+		public bool showEndEvent = true;
+		[KSPField]
+		public string startEventGUIName = "Deploy";
+		[KSPField]
+		public bool showStartEvent = true;
+		[KSPField]
+		public string toggleEventGUIName = "Toggle";
+		[KSPField]
+		public bool showToggleEvent = false;
+		[KSPField]
+		public bool showEditorEvents = true;
+		[KSPField]
+		public bool deployExternal = true;
+		[KSPField]
 		public string collectActionName;
 		[KSPField]
 		public string experimentActionName;
@@ -49,12 +69,21 @@ namespace DMagic.Part_Modules
 		protected ScienceExperiment exp = null;
 		protected List<ScienceData> scienceReports = new List<ScienceData>();
 
+		private Animation anim;
+
 		public override void OnStart(PartModule.StartState state)
 		{
+			if (!string.IsNullOrEmpty(animationName))
+				anim = part.FindModelAnimators(animationName)[0];
+
 			if (state == StartState.Editor)
 				editorSetup();
 			else
+			{
 				setup();
+				if (IsDeployed)
+					primaryAnimator(1f, 1f, WrapMode.Default, animationName, anim);
+			}
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -89,10 +118,22 @@ namespace DMagic.Part_Modules
 
 		protected virtual void setup()
 		{
+			Events["deployEvent"].guiActive = showStartEvent;
+			Events["retractEvent"].guiActive = showEndEvent;
+			Events["toggleEvent"].guiActive = showToggleEvent;
+			Events["deployEvent"].guiActiveUnfocused = Events["deployEvent"].externalToEVAOnly  = deployExternal;
+			Events["retractEvent"].guiActiveUnfocused = Events["retractEvent"].externalToEVAOnly = deployExternal;
+			Events["toggleEvent"].guiActiveUnfocused = Events["toggleEvent"].externalToEVAOnly = deployExternal;
+			Events["deployEvent"].guiName = startEventGUIName;
+			Events["retractEvent"].guiName = endEventGUIName;
+			Events["toggleEvent"].guiName = toggleEventGUIName;
 			Events["CollectDataExternalEvent"].guiName = collectActionName;
 			Events["ResetExperiment"].guiName = resetActionName;
 			Events["DeployExperiment"].guiName = experimentActionName;
 			Events["DeployExperiment"].unfocusedRange = interactionRange;
+			Actions["deployAction"].guiName = startEventGUIName;
+			Actions["retractAction"].guiName = endEventGUIName;
+			Actions["toggleAction"].guiName = toggleEventGUIName;
 			Actions["DeployAction"].guiName = experimentActionName;
 			if (!string.IsNullOrEmpty(experimentID))
 				exp = ResearchAndDevelopment.GetExperiment(experimentID);
@@ -100,11 +141,86 @@ namespace DMagic.Part_Modules
 
 		protected virtual void editorSetup()
 		{
+			Events["deployEvent"].guiActive = showEditorEvents && showStartEvent;
+			Events["retractEvent"].guiActive = showEditorEvents && showEndEvent;
+			Events["toggleEvent"].guiActive = showEditorEvents && showToggleEvent;
+			Events["deployEvent"].guiName = startEventGUIName;
+			Events["retractEvent"].guiName = endEventGUIName;
+			Events["toggleEvent"].guiName = toggleEventGUIName;
+			Actions["deployAction"].active = showStartEvent;
+			Actions["retractAction"].active = showEndEvent;
+			Actions["toggleAction"].active = showToggleEvent;
+			Actions["deployAction"].guiName = startEventGUIName;
+			Actions["retractAction"].guiName = endEventGUIName;
+			Actions["toggleAction"].guiName = toggleEventGUIName;
 			Actions["ResetAction"].active = true;
 			Actions["DeployAction"].guiName = experimentActionName;
 		}
 
+		#region Animator
+
+		protected virtual void primaryAnimator(float speed, float time, WrapMode wrap, string name, Animation a)
+		{
+			if (a != null)
+			{
+				a[name].speed = speed;
+				if (!a.IsPlaying(name))
+				{
+					a[name].wrapMode = wrap;
+					a[name].normalizedTime = time;
+					a.Blend(name, 1f);
+				}
+			}
+		}
+
+		#endregion
+
 		#region Events
+
+		[KSPEvent(guiActive = true, guiName = "Deploy", active = true)]
+		public virtual void deployEvent()
+		{
+			primaryAnimator(animSpeed * 1f, 0f, WrapMode.Default, animationName, anim);
+			IsDeployed = true;
+			Events["deployEvent"].active = false;
+			Events["retractEvent"].active = true;
+		}
+
+		[KSPAction("Deploy")]
+		public void deployAction(KSPActionParam param)
+		{
+			deployEvent();
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Retract", active = false)]
+		public virtual void retractEvent()
+		{
+			primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, animationName, anim);
+			IsDeployed = false;
+			Events["deployEvent"].active = true;
+			Events["retractEvent"].active = false;
+		}
+
+		[KSPAction("Retract")]
+		public void retractAction(KSPActionParam param)
+		{
+			retractEvent();
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Toggle", active = true)]
+		public void toggleEvent()
+		{
+			if (IsDeployed)
+				retractEvent();
+			else
+				deployEvent();
+		}
+
+		[KSPAction("Toggle")]
+		public void toggleAction(KSPActionParam Param)
+		{
+			toggleEvent();
+		}
 
 		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Reset Experiment", active = false)]
 		public void ResetExperiment()
@@ -146,7 +262,7 @@ namespace DMagic.Part_Modules
 		}
 
 		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Deploy Experiment", active = false)]
-		public void DeployExperiment()
+		public virtual void DeployExperiment()
 		{
 
 		}
