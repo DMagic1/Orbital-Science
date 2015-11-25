@@ -15,7 +15,7 @@ namespace DMagic.Part_Modules
 		[KSPField(guiActive = false)]
 		public string scoreString = "0%";
 
-		private Dictionary<DMSeismicSensor, DMSeismometerValues> nearbySensors = new Dictionary<DMSeismicSensor, DMSeismometerValues>();
+		private Dictionary<DMSeismicSensor, Vector2> nearbySensors = new Dictionary<DMSeismicSensor, Vector2>();
 
 		private Animation Anim;
 		private string failMessage;
@@ -152,7 +152,7 @@ namespace DMagic.Part_Modules
 
 		#region IDMSeismometer
 
-		public void addSeismometer(IDMSeismometer s, DMSeismometerValues v)
+		public void addSeismometer(IDMSeismometer s, Vector2 v)
 		{
 			if (!nearbySensors.ContainsKey((DMSeismicSensor)s))
 				nearbySensors.Add((DMSeismicSensor)s, v);
@@ -176,7 +176,7 @@ namespace DMagic.Part_Modules
 
 			if (nearbySensors.Count >= 5)
 			{
-				if (nearbySensors.Where(s => s.Value.Distance > 10).Count() >= 2)
+				if (nearbySensors.Where(s => s.Value.x > 10).Count() >= 2)
 				{
 					experimentScore = 1f;
 					return;
@@ -192,30 +192,30 @@ namespace DMagic.Part_Modules
 
 			for (int i = 0; i < nearbySensors.Count; i++)
 			{
-				DMSeismometerValues v = nearbySensors.ElementAt(i).Value;
+				Vector2 v = nearbySensors.ElementAt(i).Value;
 
-				if (v.Distance < 2500)
+				if (v.x < 2500)
 				{
 					float distanceScore = 0f;
 					float angleScore = 0f;
 
-					if (v.Distance < 10)
+					if (v.x < 10)
 					{
 						distanceScore = 0f;
 						angleScore = 0f;
 					}
 					else
 					{
-						if (v.Distance < 1500)
-							distanceScore = ((v.Distance - 10) / 1490f) * 0.15f;
-						else if (v.Distance >= 1500)
+						if (v.x < 1500)
+							distanceScore = ((v.x - 10) / 1490f) * 0.15f;
+						else if (v.x >= 1500)
 							distanceScore = 0.15f;
 
 						if (farSensorAngle == null)
 							angleScore = 0.05f;
 						else
 						{
-							float angleDelta = angleDifference(v.Angle, (float)farSensorAngle);
+							float angleDelta = angleDifference(v.y, (float)farSensorAngle);
 
 							if (angleDelta < 30)
 								angleScore = 0f;
@@ -226,12 +226,12 @@ namespace DMagic.Part_Modules
 						}
 					}
 
-					v.Score = distanceScore + angleScore;
+					float totalScore = distanceScore + angleScore;
 
-					if (v.Score > nearSensorScore)
+					if (totalScore > nearSensorScore)
 					{
-						nearSensorScore = v.Score;
-						nearSensorAngle = v.Angle;
+						nearSensorScore = totalScore;
+						nearSensorAngle = v.y;
 					}
 				}
 				else
@@ -239,8 +239,8 @@ namespace DMagic.Part_Modules
 					float distanceScore = 0f;
 					float angleScore = 0f;
 
-					if (v.Distance < 4000)
-						distanceScore = ((v.Distance - 2500) / 2500) * 0.15f;
+					if (v.x < 4000)
+						distanceScore = ((v.x - 2500) / 2500) * 0.15f;
 					else
 						distanceScore = 0.15f;
 
@@ -248,7 +248,7 @@ namespace DMagic.Part_Modules
 						angleScore = 0.05f;
 					else
 					{
-						float angleDelta = angleDifference(v.Angle, (float)nearSensorAngle);
+						float angleDelta = angleDifference(v.y, (float)nearSensorAngle);
 
 						if (angleDelta < 30)
 							angleScore = 0f;
@@ -258,12 +258,12 @@ namespace DMagic.Part_Modules
 							angleScore = 0.05f;
 					}
 
-					v.Score = distanceScore + angleScore;
+					float totalScore = distanceScore + angleScore;
 
-					if (v.Score > farSensorScore)
+					if (totalScore > farSensorScore)
 					{
-						farSensorScore = v.Score;
-						farSensorAngle = v.Angle;
+						farSensorScore = totalScore;
+						farSensorAngle = v.y;
 					}
 				}
 

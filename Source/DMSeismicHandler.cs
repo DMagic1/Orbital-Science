@@ -10,45 +10,45 @@ namespace DMagic
 {
 	public interface IDMSeismometer
 	{
-		void addSeismometer(IDMSeismometer sensor, DMSeismometerValues values = null);
+		void addSeismometer(IDMSeismometer sensor, Vector2 values = new Vector2());
 		void removeSeismometer(IDMSeismometer sensor);
 		void updateScore();
 		bool experimentArm { get; set; }
 		float experimentScore { get; set; }
 	}
 
-	public class DMSeismometerValues
-	{
-		private float distance;
-		private float angle;
-		private float score;
+	//public class DMSeismometerValues
+	//{
+	//	private float distance;
+	//	private float angle;
+	//	private float score;
 
-		public DMSeismometerValues(float d, float a)
-		{
-			distance = d;
-			angle = a;
-			score = 0;
-		}
+	//	public DMSeismometerValues(float d, float a)
+	//	{
+	//		distance = d;
+	//		angle = a;
+	//		score = 0;
+	//	}
 
-		public float Distance
-		{
-			get { return distance; }
-		}
+	//	public float Distance
+	//	{
+	//		get { return distance; }
+	//	}
 
-		public float Angle
-		{
-			get { return angle; }
-		}
+	//	public float Angle
+	//	{
+	//		get { return angle; }
+	//	}
 
-		public float Score
-		{
-			get { return score; }
-			set
-			{
-				score = Mathf.Clamp(value, 0f, 0.2f);
-			}
-		}
-	}
+	//	public float Score
+	//	{
+	//		get { return score; }
+	//		set
+	//		{
+	//			score = Mathf.Clamp(value, 0f, 0.2f);
+	//		}
+	//	}
+	//}
 
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class DMSeismicHandler : MonoBehaviour
@@ -202,7 +202,7 @@ namespace DMagic
 					{
 						float angle = (float)DMUtils.bearing(h.vessel.latitude, h.vessel.longitude, s.vessel.latitude, s.vessel.longitude);
 
-						h.addSeismometer(s, new DMSeismometerValues(distance, angle));
+						h.addSeismometer(s, new Vector2(distance, angle));
 
 						s.addSeismometer(h);
 					}

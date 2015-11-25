@@ -121,7 +121,7 @@ namespace DMagic.Part_Modules
 
 		#region IDMSeismometer
 
-		public void addSeismometer(IDMSeismometer s, DMSeismometerValues v = null)
+		public void addSeismometer(IDMSeismometer s, Vector2 v = new Vector2())
 		{
 			if (nearbyHammers.ContainsKey(((DMSeismicHammer)s).part.flightID))
 				return;
