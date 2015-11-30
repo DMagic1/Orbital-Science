@@ -19,7 +19,7 @@ namespace DMagic.Part_Modules
 				case Vessel.Situations.PRELAUNCH:
 				case Vessel.Situations.SUB_ORBITAL:
 				case Vessel.Situations.FLYING:
-					if (part.WaterContact && part.partBuoyancy.submergedPortion >= 0.95)
+					if (part.WaterContact && part.submergedPortion >= 0.95)
 						return ExperimentSituations.SrfSplashed;
 					else
 						return ExperimentSituations.InSpaceHigh;
@@ -48,17 +48,25 @@ namespace DMagic.Part_Modules
 			}
 		}
 
+		protected override float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
+		{
+			if (part.depth >= depthThreshold)
+				boost = 2f;
+
+			return base.fixSubjectValue(s, f, boost, body);
+		}
+
 		protected override string situationCleanup(ExperimentSituations expSit, string b)
 		{
 			if (b.EndsWith("Shallow"))
 			{
 				b = b.Remove(b.LastIndexOf("Shallow"));
-				return string.Format("In the shallows of {0}'s {1}", vessel.mainBody.theName, b);
+				return string.Format(" from the shallows of {0}'s {1}", vessel.mainBody.theName, b);
 			}
 			else if (b.EndsWith("Deep"))
 			{
 				b = b.Remove(b.LastIndexOf("Deep"));
-				return string.Format("Deep in {0}'s {1}", vessel.mainBody.theName, b);
+				return string.Format(" from deep in {0}'s {1}", vessel.mainBody.theName, b);
 			}
 			else
 				return string.Format("In {0}'s {1}", vessel.mainBody.theName, b);
