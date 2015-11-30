@@ -10,45 +10,7 @@ namespace DMagic
 {
 	public interface IDMSeismometer
 	{
-		void addSeismometer(IDMSeismometer sensor, Vector2 values = new Vector2());
-		void removeSeismometer(IDMSeismometer sensor);
-		void updateScore();
-		bool experimentArm { get; set; }
-		float experimentScore { get; set; }
 	}
-
-	//public class DMSeismometerValues
-	//{
-	//	private float distance;
-	//	private float angle;
-	//	private float score;
-
-	//	public DMSeismometerValues(float d, float a)
-	//	{
-	//		distance = d;
-	//		angle = a;
-	//		score = 0;
-	//	}
-
-	//	public float Distance
-	//	{
-	//		get { return distance; }
-	//	}
-
-	//	public float Angle
-	//	{
-	//		get { return angle; }
-	//	}
-
-	//	public float Score
-	//	{
-	//		get { return score; }
-	//		set
-	//		{
-	//			score = Mathf.Clamp(value, 0f, 0.2f);
-	//		}
-	//	}
-	//}
 
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class DMSeismicHandler : MonoBehaviour
@@ -59,10 +21,11 @@ namespace DMagic
 			get { return instance; }
 		}
 
-		private Dictionary<uint, DMSeismicSensor> seismometers = new Dictionary<uint, DMSeismicSensor>();
-		private Dictionary<uint, DMSeismicHammer> hammers = new Dictionary<uint, DMSeismicHammer>();
+		private Dictionary<uint, DMSeismometerValues> seismometers = new Dictionary<uint, DMSeismometerValues>();
+		private Dictionary<uint, DMSeismometerValues> hammers = new Dictionary<uint, DMSeismometerValues>();
 
 		private static string bodyNameFixed = "Eeloo";
+		private const string potato = "PotatoRoid";
 
 		private void Start()
 		{
@@ -111,7 +74,7 @@ namespace DMagic
 						IDMSeismometer sensor = p.FindModuleImplementing<IDMSeismometer>();
 
 						if (sensor != null)
-							addSeismometer(p.flightID, sensor);
+							addLoadedSeismometer(p.flightID, sensor);
 					}
 				}
 				else
@@ -133,104 +96,197 @@ namespace DMagic
 								continue;
 
 							if (m.moduleName == "DMSeismicSensor" || m.moduleName == "DMSeismicHammer")
-								addSeismometer(p.flightID, (IDMSeismometer)m.moduleRef);
+								addProtoSeismometer(p.flightID, p, m);
 						}
 					}
 				}
 			}
 		}
 
-		private void addSeismometer(uint id, IDMSeismometer sensor)
+		private void addLoadedSeismometer(uint id, IDMSeismometer sensor)
 		{
 			if (sensor.GetType() == typeof(DMSeismicSensor))
 			{
 				if (!seismometers.ContainsKey(id))
-					seismometers.Add(id, (DMSeismicSensor)sensor);
+				{
+					DMSeismicSensor s = (DMSeismicSensor)sensor;
+					DMSeismometerValues v = new DMSeismometerValues(s.vessel, s.part.protoPartSnapshot, s.snapshot, false);
+					seismometers.Add(id, v);
+				}
 			}
 			else if (sensor.GetType() == typeof(DMSeismicHammer))
 			{
 				if (!hammers.ContainsKey(id))
-					hammers.Add(id, (DMSeismicHammer)sensor);
+				{
+					DMSeismicHammer h = (DMSeismicHammer)sensor;
+					DMSeismometerValues v = new DMSeismometerValues(h.vessel, h.part.protoPartSnapshot, h.snapshot, true);
+					hammers.Add(id, v);
+				}
 			}
+		}
+
+		private void addProtoSeismometer(uint id, ProtoPartSnapshot pp, ProtoPartModuleSnapshot pm)
+		{
+			if (pm.moduleName == "DMSeismicSensor")
+			{
+				if (!seismometers.ContainsKey(id))
+				{
+					DMSeismometerValues v = new DMSeismometerValues(pp.pVesselRef.vesselRef, pp, pm, false);
+					seismometers.Add(id, v);
+				}
+			}
+			else if (pm.moduleName == "DMSeismicHammer")
+			{
+				if (!hammers.ContainsKey(id))
+				{
+					DMSeismometerValues v = new DMSeismometerValues(pp.pVesselRef.vesselRef, pp, pm, true);
+					hammers.Add(id, v);
+				}
+			}
+		}
+
+		public DMSeismometerValues getSeismicSensor(uint id)
+		{
+			if (seismometers.ContainsKey(id))
+				return seismometers[id];
+
+			return null;
+		}
+
+		public DMSeismometerValues getSeismicHammer(uint id)
+		{
+			if (hammers.ContainsKey(id))
+				return hammers[id];
+
+			return null;
 		}
 
 		private void updatePositions()
 		{
 			for (int i = 0; i < hammers.Count; i++)
 			{
-				DMSeismicHammer h = hammers.ElementAt(i).Value;
+				DMSeismometerValues h = hammers.ElementAt(i).Value;
 
 				if (h == null)
 					continue;
 
-				if (!h.experimentArm)
+				if (!h.Hammer)
+				{
+					h.removeAllSensors();
 					continue;
+				}
 
-				if (h.part == null)
+				if (!h.Armed)
+				{
+					h.removeAllSensors();
 					continue;
+				}
 
-				if (h.vessel == null)
+				if (h.ProtoPartRef == null)
+				{
+					h.removeAllSensors();
+					h.updateScore();
 					continue;
+				}
 
-				if (!h.vessel.Landed && h.vessel.heightFromTerrain > 1000)
+				if (h.VesselRef == null)
+				{
+					h.removeAllSensors();
+					h.updateScore();
 					continue;
+				}
+
+				if (!h.VesselRef.LandedOrSplashed)
+				{
+					h.removeAllSensors();
+					h.updateScore();
+					continue;
+				}
 
 				for (int j = 0; j < seismometers.Count; j++)
 				{
-					DMSeismicSensor s = seismometers.ElementAt(j).Value;
+					DMSeismometerValues s = seismometers.ElementAt(j).Value;
 
 					if (s == null)
 						continue;
 
-					if (!s.experimentArm)
-						continue;
-
-					if (s.part == null)
-						continue;
-
-					if (s.vessel == null)
-						continue;
-
-					if (!s.vessel.Landed && s.vessel.heightFromTerrain > 1000)
-						continue;
-
-					bool sameVessel = s.vessel == h.vessel;
-
-					float distance = Math.Abs((h.part.transform.position - s.part.transform.position).magnitude);
-
-					if (!sameVessel && distance < 15000)
+					if (s.Hammer)
 					{
-						float angle = (float)DMUtils.bearing(h.vessel.latitude, h.vessel.longitude, s.vessel.latitude, s.vessel.longitude);
-
-						h.addSeismometer(s, new Vector2(distance, angle));
-
-						s.addSeismometer(h);
-					}
-					else if (distance > 16000)
-					{
-						h.removeSeismometer(s);
-
-						s.removeSeismometer(h);
-					}
-					else if (sameVessel)
-					{
-						h.removeSeismometer(s);
-
-						s.removeSeismometer(h);
+						removeSensors(h, s);
+						continue;
 					}
 
-					s.updateScore();
+					if (!s.Armed)
+					{
+						removeSensors(h, s);
+						continue;
+					}
+
+					if (s.ProtoPartRef == null)
+					{
+						removeSensors(h, s);
+						s.updateScore();
+						continue;
+					}
+
+					if (s.VesselRef == null)
+					{
+						removeSensors(h, s);
+						s.updateScore();
+						continue;
+					}
+
+					if (!s.VesselRef.LandedOrSplashed)
+					{
+						removeSensors(h, s);
+						s.updateScore();
+						continue;
+					}
+
+					if (s.VesselRef == h.VesselRef)
+					{
+						removeSensors(h, s);
+						s.updateScore();
+						continue;
+					}
+
+					double distance = Math.Abs((h.VesselRef.GetWorldPos3D() - s.VesselRef.GetWorldPos3D()).magnitude);
+
+					if (distance > 16000)
+					{
+						removeSensors(h, s);
+						s.updateScore();	
+						continue;
+					}
+					else if (distance < 15000)
+					{
+						float angle = (float)DMUtils.bearing(h.VesselRef.latitude, h.VesselRef.longitude, s.VesselRef.latitude, s.VesselRef.longitude);
+
+						h.addSensor(s.ID, new Vector2((float)distance, angle));
+
+						s.addSensor(h.ID, new Vector2());
+
+						s.updateScore();
+					}
 				}
-
 				h.updateScore();
 			}
 		}
 
-		public static ScienceData makeData(IDMSeismometer sensor, uint partID, ScienceExperiment exp, string expID, CelestialBody body, Vessel v, bool seismometerOnly, bool asteroid)
+		private void removeSensors(DMSeismometerValues hammer, DMSeismometerValues pod)
 		{
-			if (sensor == null || exp == null || body == null || v == null)
+			hammer.removeSensor(pod.ID);
+
+			pod.removeSensor(hammer.ID);
+		}
+
+		public static ScienceData makeData(DMSeismometerValues sensor, ScienceExperiment exp, string expID, bool seismometerOnly, bool asteroid)
+		{
+			if (sensor == null || exp == null || sensor.VesselRef == null || sensor.VesselRef.mainBody == null)
 				return null;
 
+			Vessel v = sensor.VesselRef;
+			CelestialBody body = v.mainBody;
 			string biome = ScienceUtil.GetExperimentBiome(body, v.latitude, v.longitude);
 
 			DMAsteroidScience newAsteroid = null;
@@ -261,10 +317,9 @@ namespace DMagic
 			{
 				DMUtils.OnAnomalyScience.Fire(body, expID, biome);
 				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.theName, biome);
-				sub.scienceCap = exp.scienceCap * sub.subjectValue;
 			}
 
-			return new ScienceData(exp.baseValue * sub.dataScale * sensor.experimentScore, 1f, 1f, sub.id, sub.title, false, partID);
+			return new ScienceData(exp.baseValue * sub.dataScale * sensor.Score, 1f, 1f, sub.id, sub.title, false, sensor.ID);
 		}
 
 		private static void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub)
