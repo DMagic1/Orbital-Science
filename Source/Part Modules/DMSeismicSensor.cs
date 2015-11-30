@@ -7,23 +7,24 @@ namespace DMagic.Part_Modules
 {
 	public class DMSeismicSensor : DMBasicScienceModule, IDMSeismometer
 	{
-		[KSPField]
+		[KSPField(isPersistant = true)]
 		public float baseExperimentValue = 0.2f;
 		[KSPField(guiActive = false)]
 		public string scoreString = "0%";
 
-		private Dictionary<uint, DMSeismicHammer> nearbyHammers = new Dictionary<uint, DMSeismicHammer>();
-
 		private string failMessage;
+		private DMSeismometerValues values;
 
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
 
 			if (IsDeployed)
-				experimentArm = true;
+				Fields["scoreString"].guiActive = true;
 			else
-				experimentArm = false;
+				Fields["scoreString"].guiActive = false;
+
+			Fields["scoreString"].guiName = "Experiment Value";
 		}
 
 		public override void OnLoad(ConfigNode node)
@@ -40,19 +41,41 @@ namespace DMagic.Part_Modules
 		{
 			base.EventsCheck();
 
-			scoreString = experimentScore.ToString("P0");
+			if (!HighLogic.LoadedSceneIsFlight)
+				return;
+
+			if (values != null)
+			{
+				if (vessel.Landed)
+					scoreString = values.Score.ToString("P0");
+				else
+					scoreString = "Not Valid";
+			}
+			else
+				values = DMSeismicHandler.Instance.getSeismicSensor(part.flightID);
+		}
+
+		protected override void EventsCheck()
+		{
+			base.EventsCheck();
+
+			Events["DeployExperiment"].active = IsDeployed;
 		}
 
 		public override void deployEvent()
 		{
 			base.deployEvent();
-			experimentArm = true;
+			Fields["scoreString"].guiActive = true;
+			if (values != null)
+				values.Armed = true;
 		}
 
 		public override void retractEvent()
 		{
 			base.retractEvent();
-			experimentArm = false;
+			Fields["scoreString"].guiActive = false;
+			if (values != null)
+				values.Armed = false;
 		}
 
 		#region Science Setup
@@ -65,12 +88,15 @@ namespace DMagic.Part_Modules
 				return;
 			}
 
-			getScienceData(nearbyHammers.Count <= 0, DMAsteroidScience.AsteroidGrappled);
+			if (!IsDeployed)
+				deployEvent();
+
+			getScienceData(values.NearbySensorCount <= 0, DMAsteroidScience.AsteroidGrappled);
 		}
 
 		private void getScienceData(bool sensorOnly, bool asteroid)
 		{
-			ScienceData data = DMSeismicHandler.makeData(this, part.flightID, exp, experimentID, vessel.mainBody, vessel, sensorOnly, asteroid);
+			ScienceData data = DMSeismicHandler.makeData(values.getBestHammer(), exp, experimentID, sensorOnly, asteroid);
 
 			if (data == null)
 				return;
@@ -118,40 +144,5 @@ namespace DMagic.Part_Modules
 		}
 
 		#endregion
-
-		#region IDMSeismometer
-
-		public void addSeismometer(IDMSeismometer s, Vector2 v = new Vector2())
-		{
-			if (nearbyHammers.ContainsKey(((DMSeismicHammer)s).part.flightID))
-				return;
-
-			nearbyHammers.Add(((DMSeismicHammer)s).part.flightID, (DMSeismicHammer)s);
-		}
-
-		public void removeSeismometer(IDMSeismometer s)
-		{
-			if (nearbyHammers.ContainsKey(((DMSeismicHammer)s).part.flightID))
-				nearbyHammers.Remove(((DMSeismicHammer)s).part.flightID);
-		}
-
-		public void updateScore()
-		{
-			if (nearbyHammers.Count <= 0)
-				experimentScore = baseExperimentValue;
-			else
-				experimentScore = nearbyHammers.Values.OrderBy(h => h.experimentScore).Last().experimentScore;
-		}
-
-		public float experimentScore { get; set; }
-
-		public bool experimentArm { get; set; }
-
-		#endregion
-
-		public bool SensorsInRange
-		{
-			get { return nearbyHammers.Count > 0; }
-		}
 	}
 }
