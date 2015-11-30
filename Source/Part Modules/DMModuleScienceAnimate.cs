@@ -705,15 +705,32 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		internal float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
+		protected virtual float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
 		{
 			float subV = f;
-			if (s == ExperimentSituations.SrfLanded) subV = body.scienceValues.LandedDataValue;
-			else if (s == ExperimentSituations.SrfSplashed) subV = body.scienceValues.SplashedDataValue;
-			else if (s == ExperimentSituations.FlyingLow) subV = body.scienceValues.FlyingLowDataValue;
-			else if (s == ExperimentSituations.FlyingHigh) subV = body.scienceValues.FlyingHighDataValue;
-			else if (s == ExperimentSituations.InSpaceLow) subV = body.scienceValues.InSpaceLowDataValue;
-			else if (s == ExperimentSituations.InSpaceHigh) subV = body.scienceValues.InSpaceHighDataValue;
+
+			switch (s)
+			{
+				case ExperimentSituations.SrfLanded:
+					subV = body.scienceValues.LandedDataValue;
+					break;
+				case ExperimentSituations.SrfSplashed:
+					subV = body.scienceValues.SplashedDataValue;
+					break;
+				case ExperimentSituations.FlyingLow:
+					subV = body.scienceValues.FlyingLowDataValue;
+					break;
+				case ExperimentSituations.FlyingHigh:
+					subV = body.scienceValues.FlyingHighDataValue;
+					break;
+				case ExperimentSituations.InSpaceLow:
+					subV = body.scienceValues.InSpaceLowDataValue;
+					break;
+				case ExperimentSituations.InSpaceHigh:
+					subV = body.scienceValues.InSpaceHighDataValue;
+					break;
+			}
+
 			return subV * boost;
 		}
 
