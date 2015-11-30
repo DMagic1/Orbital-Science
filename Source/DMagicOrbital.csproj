@@ -52,9 +52,11 @@
     <Compile Include="Contracts\DMAnomalyContract.cs" />
     <Compile Include="DMContractGenerators.cs" />
     <Compile Include="DMSeismicHandler.cs" />
+    <Compile Include="DMSeismometerValues.cs" />
     <Compile Include="Parameters\DMCompleteParameter.cs" />
     <Compile Include="Part Modules\DMAsteroidScanner.cs" />
     <Compile Include="Part Modules\DMBasicScienceModule.cs" />
+    <Compile Include="Part Modules\DMBathymetry.cs" />
     <Compile Include="Part Modules\DMRoverGooMat.cs" />
     <Compile Include="Part Modules\DMSeismicHammer.cs" />
     <Compile Include="Part Modules\DMSeismicSensor.cs" />
