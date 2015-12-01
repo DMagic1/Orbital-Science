@@ -48,6 +48,8 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public string customFailMessage = "";
 		[KSPField]
+		public string experimentFullMessage = "No more data can be stored";
+		[KSPField]
 		public bool rerunnable = true;
 		[KSPField]
 		public bool dataIsCollectable = true;
@@ -70,6 +72,28 @@ namespace DMagic.Part_Modules
 		protected List<ScienceData> scienceReports = new List<ScienceData>();
 
 		private Animation anim;
+
+		/// <summary>
+		/// For external use to determine if a module can conduct science
+		/// </summary>
+		/// <param name="MSE">The base PartModule instance</param>
+		/// <returns>True if the experiment can be conducted under current conditions</returns>
+		public static bool conduct(PartModule MSE)
+		{
+			if (MSE.GetType() != typeof(DMBasicScienceModule))
+				return false;
+
+			DMBasicScienceModule DMBasicMod = (DMBasicScienceModule)MSE;
+			try
+			{
+				return DMBasicMod.canConduct();
+			}
+			catch (Exception e)
+			{
+				Debug.LogWarning("[DM] Error in casting PartModule to DMBasicScienceModule; Invalid Part Module... : " + e);
+				return false;
+			}
+		}
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -106,6 +130,11 @@ namespace DMagic.Part_Modules
 					scienceReports.Add(data);
 				}
 			}
+		}
+
+		public override string GetInfo()
+		{
+			return base.GetInfo();
 		}
 
 		protected virtual void EventsCheck()
@@ -274,6 +303,11 @@ namespace DMagic.Part_Modules
 		}
 
 		#endregion
+
+		protected virtual bool canConduct()
+		{
+			return false;
+		}
 
 		#region Results Page
 
