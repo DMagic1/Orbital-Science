@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DMagic.Part_Modules;
 using UnityEngine;
 
 namespace DMagic
@@ -14,6 +15,7 @@ namespace DMagic
 		private float baseScore;
 		private bool armed;
 		private bool hammer;
+		private bool onAsteroid;
 		private uint id;
 		private Dictionary<uint, Vector2> nearbySensors = new Dictionary<uint, Vector2>();
 
@@ -86,6 +88,20 @@ namespace DMagic
 		{
 			if (hammer)
 			{
+				if (onAsteroid)
+				{
+					if (vesselRef.loaded && vesselRef.FindPartModulesImplementing<DMSeismicSensor>().Count > 0)
+					{
+						score = 1f;
+						return;
+					}
+					else
+					{
+						score = baseScore;
+						return;
+					}
+				}
+
 				if (nearbySensors.Count <= 0)
 				{
 					score = baseScore;
@@ -112,21 +128,21 @@ namespace DMagic
 				{
 					Vector2 v = nearbySensors.ElementAt(i).Value;
 
-					if (v.x < 2500)
+					if (v.x < DMSeismicHandler.nearPodMaxDistance)
 					{
 						float distanceScore = 0f;
 						float angleScore = 0f;
 
-						if (v.x < 10)
+						if (v.x < DMSeismicHandler.nearPodMinDistance)
 						{
 							distanceScore = 0f;
 							angleScore = 0f;
 						}
 						else
 						{
-							if (v.x < 1500)
-								distanceScore = ((v.x - 10) / 1490f) * 0.15f;
-							else if (v.x >= 1500)
+							if (v.x < DMSeismicHandler.nearPodThreshold)
+								distanceScore = ((v.x - DMSeismicHandler.nearPodMinDistance) / (DMSeismicHandler.nearPodThreshold - DMSeismicHandler.nearPodMinDistance)) * 0.15f;
+							else if (v.x >= DMSeismicHandler.nearPodThreshold)
 								distanceScore = 0.15f;
 
 							if (farSensorAngle == null)
@@ -135,10 +151,10 @@ namespace DMagic
 							{
 								float angleDelta = angleDifference(v.y, (float)farSensorAngle);
 
-								if (angleDelta < 30)
+								if (angleDelta < DMSeismicHandler.podMinAngle)
 									angleScore = 0f;
-								else if (angleDelta < 120)
-									angleScore = ((angleDelta - 30) / 90) * 0.05f;
+								else if (angleDelta < DMSeismicHandler.podAngleThreshold)
+									angleScore = ((angleDelta - DMSeismicHandler.podMinAngle) / (DMSeismicHandler.podAngleThreshold - DMSeismicHandler.podMinAngle)) * 0.05f;
 								else
 									angleScore = 0.05f;
 							}
@@ -157,8 +173,8 @@ namespace DMagic
 						float distanceScore = 0f;
 						float angleScore = 0f;
 
-						if (v.x < 4000)
-							distanceScore = ((v.x - 2500) / 2500) * 0.15f;
+						if (v.x < DMSeismicHandler.farPodThreshold)
+							distanceScore = ((v.x - DMSeismicHandler.farPodMinDistance) / (DMSeismicHandler.farPodThreshold - DMSeismicHandler.farPodMinDistance)) * 0.15f;
 						else
 							distanceScore = 0.15f;
 
@@ -168,10 +184,10 @@ namespace DMagic
 						{
 							float angleDelta = angleDifference(v.y, (float)nearSensorAngle);
 
-							if (angleDelta < 30)
+							if (angleDelta < DMSeismicHandler.podMinAngle)
 								angleScore = 0f;
-							else if (angleDelta < 120)
-								angleScore = ((angleDelta - 30) / 90) * 0.05f;
+							else if (angleDelta < DMSeismicHandler.podAngleThreshold)
+								angleScore = ((angleDelta - DMSeismicHandler.podMinAngle) / (DMSeismicHandler.podAngleThreshold - DMSeismicHandler.podMinAngle)) * 0.05f;
 							else
 								angleScore = 0.05f;
 						}
@@ -189,6 +205,20 @@ namespace DMagic
 			}
 			else
 			{
+				if (onAsteroid)
+				{
+					if (vesselRef.loaded && vesselRef.FindPartModulesImplementing<DMSeismicHammer>().Count > 0)
+					{
+						score = 1f;
+						return;
+					}
+					else
+					{
+						score = baseScore;
+						return;
+					}
+				}
+
 				if (nearbySensors.Count <= 0)
 					score = baseScore;
 				else
@@ -242,6 +272,12 @@ namespace DMagic
 		{
 			get { return armed; }
 			set { armed = value; }
+		}
+
+		public bool OnAsteroid
+		{
+			get { return onAsteroid; }
+			set { onAsteroid = value; }
 		}
 
 		public bool Hammer
