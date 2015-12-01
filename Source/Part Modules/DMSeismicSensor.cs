@@ -19,12 +19,28 @@ namespace DMagic.Part_Modules
 		{
 			base.OnStart(state);
 
+			if (state == StartState.Editor)
+				return;
+
 			if (IsDeployed)
 				Fields["scoreString"].guiActive = true;
 			else
 				Fields["scoreString"].guiActive = false;
 
 			Fields["scoreString"].guiName = "Experiment Value";
+
+			GameEvents.onVesselWasModified.Add(onVesselModified);
+		}
+
+		public override string GetInfo()
+		{
+			string info = base.GetInfo();
+
+			string ranges = string.Format("\nIdeal Seismic Pod Ranges:\nNear: {0:N0}m - {1:N0}m\nFar: {2:N0}m - {3:N0}m", DMSeismicHandler.nearPodThreshold, DMSeismicHandler.nearPodMaxDistance, DMSeismicHandler.farPodThreshold, DMSeismicHandler.farPodMaxDistance);
+
+			string angles = string.Format("\nIdeal Seismic Pod Angle Difference: {0:N0}° - 180°", DMSeismicHandler.podAngleThreshold);
+
+			return info + ranges + angles; ;
 		}
 
 		public override void OnLoad(ConfigNode node)
@@ -37,6 +53,22 @@ namespace DMagic.Part_Modules
 			base.OnSave(node);
 		}
 
+		private void OnDestroy()
+		{
+			GameEvents.onVesselWasModified.Remove(onVesselModified);
+		}
+
+		private void onVesselModified(Vessel v)
+		{
+			if (v == null)
+				return;
+
+			if (vessel != v)
+				return;
+
+			values.OnAsteroid = DMAsteroidScience.AsteroidGrappled;
+		}
+
 		private void Update()
 		{
 			base.EventsCheck();
@@ -46,7 +78,7 @@ namespace DMagic.Part_Modules
 
 			if (values != null)
 			{
-				if (vessel.Landed)
+				if (vessel.Landed || values.OnAsteroid)
 					scoreString = values.Score.ToString("P0");
 				else
 					scoreString = "Not Valid";
@@ -91,7 +123,7 @@ namespace DMagic.Part_Modules
 			if (!IsDeployed)
 				deployEvent();
 
-			getScienceData(values.NearbySensorCount <= 0, DMAsteroidScience.AsteroidGrappled);
+			getScienceData(values.NearbySensorCount <= 0, values.OnAsteroid);
 		}
 
 		private void getScienceData(bool sensorOnly, bool asteroid)
@@ -106,7 +138,7 @@ namespace DMagic.Part_Modules
 			ReviewData();
 		}
 
-		private bool canConduct()
+		protected override bool canConduct()
 		{
 			failMessage = "";
 			if (Inoperable)
@@ -116,12 +148,12 @@ namespace DMagic.Part_Modules
 			}
 			else if (Deployed)
 			{
-				failMessage = customFailMessage;
+				failMessage = experimentFullMessage;
 				return false;
 			}
 			else if (scienceReports.Count > 0)
 			{
-				failMessage = customFailMessage;
+				failMessage = experimentFullMessage;
 				return false;
 			}
 			else if (vessel.situation != Vessel.Situations.LANDED && vessel.situation != Vessel.Situations.PRELAUNCH && !DMAsteroidScience.AsteroidGrappled)
