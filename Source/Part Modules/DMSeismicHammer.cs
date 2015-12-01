@@ -21,7 +21,7 @@ namespace DMagic.Part_Modules
 		private Transform ExtensionTransform;
 		private bool dryRun = true;
 		private DMSeismometerValues values;
-
+	
 		private const string rotationTransformName = "RotationTransform";
 		private const string extensionTransformName = "ThumperCasing";
 		private const string potato = "PotatoRoid";
@@ -35,6 +35,9 @@ namespace DMagic.Part_Modules
 
 			base.OnStart(state);
 
+			if (state == StartState.Editor)
+				return;
+
 			Events["hammerEvent"].unfocusedRange = interactionRange;
 			Events["hammerEvent"].guiName = "Hammer Test";
 
@@ -44,6 +47,19 @@ namespace DMagic.Part_Modules
 				Fields["scoreString"].guiActive = false;
 
 			Fields["scoreString"].guiName = "Experiment Value";
+
+			GameEvents.onVesselWasModified.Add(onVesselModified);
+		}
+
+		public override string GetInfo()
+		{
+			string info = base.GetInfo();
+
+			string ranges = string.Format("\nIdeal Seismic Pod Ranges:\nNear: {0:N0}m - {1:N0}m\nFar: {2:N0}m - {3:N0}m", DMSeismicHandler.nearPodThreshold, DMSeismicHandler.nearPodMaxDistance, DMSeismicHandler.farPodThreshold, DMSeismicHandler.farPodMaxDistance);
+
+			string angles = string.Format("\nIdeal Seismic Pod Angle Difference: {0:N0}° - 180°", DMSeismicHandler.podAngleThreshold);
+
+			return info + ranges + angles; ;
 		}
 
 		public override void OnLoad(ConfigNode node)
@@ -56,6 +72,22 @@ namespace DMagic.Part_Modules
 			base.OnSave(node);
 		}
 
+		private void OnDestroy()
+		{
+			GameEvents.onVesselWasModified.Remove(onVesselModified);
+		}
+
+		private void onVesselModified(Vessel v)
+		{
+			if (v == null)
+				return;
+
+			if (vessel != v)
+				return;
+
+			values.OnAsteroid = DMAsteroidScience.AsteroidGrappled;
+		}
+
 		private void Update()
 		{
 			base.EventsCheck();
@@ -65,7 +97,7 @@ namespace DMagic.Part_Modules
 
 			if (values != null)
 			{
-				if (vessel.Landed)
+				if (vessel.Landed || values.OnAsteroid)
 					scoreString = values.Score.ToString("P0");
 				else
 					scoreString = "Not Valid";
@@ -167,25 +199,35 @@ namespace DMagic.Part_Modules
 		{
 			float distance = 0f;
 
-			//First we draw a line from the rotation transform object to the point on the surface directly below it
-			Vector3d surfacePos = vessel.mainBody.GetWorldSurfacePosition(vessel.mainBody.GetLatitude(RotationTransform.position), vessel.mainBody.GetLongitude(RotationTransform.position), vessel.pqsAltitude);
-			Vector3d hammerLine = RotationTransform.InverseTransformPoint(surfacePos);
+			float angle = 0;
+			float originalAngle = RotationTransform.localEulerAngles.x;
 
-			//Calculate the angle on the Z axis
-			float angle = Mathf.Atan2((float)hammerLine.y, (float)hammerLine.z) * Mathf.Rad2Deg;
+			if (values.OnAsteroid)
+			{
 
-			//Make sure the angle is within a normal range
-			angle = normalizeAngle(angle);
+			}
+			else
+			{
+				//First we draw a line from the rotation transform object to the point on the surface directly below it
+				Vector3d surfacePos = vessel.mainBody.GetWorldSurfacePosition(vessel.mainBody.GetLatitude(RotationTransform.position), vessel.mainBody.GetLongitude(RotationTransform.position), vessel.pqsAltitude);
+				Vector3d hammerLine = RotationTransform.InverseTransformPoint(surfacePos);
 
-			DMUtils.DebugLog("Hammer Angle: {0:N7}", angle);
+				//Calculate the angle on the Z axis
+				angle = Mathf.Atan2((float)hammerLine.y, (float)hammerLine.z) * Mathf.Rad2Deg;
 
-			//Clamp the rotation between maximum limits for the model
-			angle = Mathf.Clamp(angle, -30, 90);
+				//Make sure the angle is within a normal range
+				angle = normalizeAngle(angle);
 
-			//Reverse the angle to compensate for initial transform rotation
-			angle *= -1;
+				DMUtils.DebugLog("Hammer Angle: {0:N7}", angle);
 
-			DMUtils.DebugLog("Clamped Angle: {0:N7}", angle);
+				//Clamp the rotation between maximum limits for the model
+				angle = Mathf.Clamp(angle, -30, 90);
+
+				//Reverse the angle to compensate for initial transform rotation
+				angle *= -1;
+
+				DMUtils.DebugLog("Clamped Angle: {0:N7}", angle);
+			}
 
 			//Wait while the primary animator is playing so that the hammer transform can clear the base
 			while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.03f)
@@ -196,7 +238,6 @@ namespace DMagic.Part_Modules
 			DMUtils.DebugLog("Hammer Starting Angle: {0:N7}", RotationTransform.localEulerAngles.x);
 
 			//Cache the original rotation angle of the transform and calculate the target angle
-			float originalAngle = RotationTransform.localEulerAngles.x;
 			float newAngle = fixAngle(originalAngle + angle);
 
 			DMUtils.DebugLog("New Angle: {0:N7}", newAngle);
@@ -304,7 +345,7 @@ namespace DMagic.Part_Modules
 
 			//If this is a real run gather science data, then reset the flag
 			if (!dryRun)
-				getScienceData(DMAsteroidScience.AsteroidGrappled);
+				getScienceData(values.OnAsteroid);
 
 			dryRun = true;
 
@@ -417,7 +458,7 @@ namespace DMagic.Part_Modules
 			ReviewData();
 		}
 
-		private bool canConduct()
+		protected override bool canConduct()
 		{
 			failMessage = "";
 			if (Inoperable)
@@ -427,12 +468,12 @@ namespace DMagic.Part_Modules
 			}
 			else if (Deployed)
 			{
-				failMessage = customFailMessage;
+				failMessage = experimentFullMessage;
 				return false;
 			}
 			else if (scienceReports.Count > 0)
 			{
-				failMessage = customFailMessage;
+				failMessage = experimentFullMessage;
 				return false;
 			}
 			else if (vessel.situation != Vessel.Situations.LANDED && vessel.situation != Vessel.Situations.PRELAUNCH && !DMAsteroidScience.AsteroidGrappled)
