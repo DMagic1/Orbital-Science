@@ -21,6 +21,15 @@ namespace DMagic
 			get { return instance; }
 		}
 
+		public static float nearPodThreshold = 500;
+		public static float nearPodMinDistance = 10;
+		public static float nearPodMaxDistance = 2500;
+		public static float farPodThreshold = 4000;
+		public static float farPodMinDistance = 2500;
+		public static float farPodMaxDistance = 15000;
+		public static float podMinAngle = 20;
+		public static float podAngleThreshold = 90;
+
 		private Dictionary<uint, DMSeismometerValues> seismometers = new Dictionary<uint, DMSeismometerValues>();
 		private Dictionary<uint, DMSeismometerValues> hammers = new Dictionary<uint, DMSeismometerValues>();
 
@@ -252,13 +261,13 @@ namespace DMagic
 
 					double distance = Math.Abs((h.VesselRef.GetWorldPos3D() - s.VesselRef.GetWorldPos3D()).magnitude);
 
-					if (distance > 16000)
+					if (distance > farPodMaxDistance + 1000)
 					{
 						removeSensors(h, s);
 						s.updateScore();	
 						continue;
 					}
-					else if (distance < 15000)
+					else if (distance < farPodMaxDistance)
 					{
 						float angle = (float)DMUtils.bearing(h.VesselRef.latitude, h.VesselRef.longitude, s.VesselRef.latitude, s.VesselRef.longitude);
 
@@ -287,7 +296,7 @@ namespace DMagic
 
 			Vessel v = sensor.VesselRef;
 			CelestialBody body = v.mainBody;
-			string biome = ScienceUtil.GetExperimentBiome(body, v.latitude, v.longitude);
+			string biome = ((int)exp.biomeMask & (int)ExperimentSituations.SrfLanded) == 0 ? "" : ScienceUtil.GetExperimentBiome(body, v.latitude, v.longitude);
 
 			DMAsteroidScience newAsteroid = null;
 
@@ -306,6 +315,8 @@ namespace DMagic
 				return null;
 			}
 
+			float science = exp.baseValue * sub.dataScale * sensor.Score;
+
 			if (asteroid)
 			{
 				DMUtils.OnAsteroidScience.Fire(newAsteroid.AClass, expID);
@@ -317,9 +328,19 @@ namespace DMagic
 			{
 				DMUtils.OnAnomalyScience.Fire(body, expID, biome);
 				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.theName, biome);
+				sub.scientificValue = 1f;
+				if (sub.science > 0)
+				{
+					if (sub.science > (science / sub.dataScale))
+						sub.scientificValue = 0f;
+
+					science = Mathf.Max(0, ((science / sub.dataScale) - sub.science));
+
+					science *= sub.dataScale;
+				}
 			}
 
-			return new ScienceData(exp.baseValue * sub.dataScale * sensor.Score, 1f, 1f, sub.id, sub.title, false, sensor.ID);
+			return new ScienceData(science, 1f, 1f, sub.id, sub.title, false, sensor.ID);
 		}
 
 		private static void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub)
