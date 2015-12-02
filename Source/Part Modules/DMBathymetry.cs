@@ -9,6 +9,41 @@ namespace DMagic.Part_Modules
 	{
 		[KSPField]
 		public float depthThreshold = 100;
+		[KSPField]
+		public string redLightName = "redLight";
+		[KSPField]
+		public string blueLightName = "blueLight";
+
+		private Light redLight;
+		private Light blueLight;
+
+		public override void OnStart(PartModule.StartState state)
+		{
+			redLight = part.FindModelComponent<Light>(redLightName);
+			blueLight = part.FindModelComponent<Light>(blueLightName);
+
+			base.OnStart(state);
+		}
+
+		public override void deployEvent()
+		{
+			base.deployEvent();
+
+			if (redLight != null)
+				redLight.enabled = true;
+			if (blueLight != null)
+				blueLight.enabled = true;
+		}
+
+		public override void retractEvent()
+		{
+			base.retractEvent();
+
+			if (redLight != null)
+				redLight.enabled = false;
+			if (blueLight != null)
+				blueLight.enabled = false;
+		}
 
 		protected override ExperimentSituations getSituation()
 		{
