@@ -133,6 +133,8 @@ namespace DMagic.Part_Modules
 			if (data == null)
 				return;
 
+			GameEvents.OnExperimentDeployed.Fire(data);
+
 			scienceReports.Add(data);
 			Deployed = true;
 			ReviewData();
