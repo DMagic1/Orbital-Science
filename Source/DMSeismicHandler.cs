@@ -317,27 +317,28 @@ namespace DMagic
 
 			float science = exp.baseValue * sub.dataScale * sensor.Score;
 
+			if (sub.science > 0)
+			{
+				if (sub.science > (science / sub.dataScale))
+					sub.scientificValue = 0f;
+
+				science = Mathf.Max(0, ((science / sub.dataScale) - sub.science));
+
+				science *= sub.dataScale;
+			}
+
 			if (asteroid)
 			{
+				body.bodyName = bodyNameFixed;
 				DMUtils.OnAsteroidScience.Fire(newAsteroid.AClass, expID);
 				sub.title = exp.experimentTitle + string.Format(" from the surface of a {0} asteroid", newAsteroid.AType);
 				registerDMScience(newAsteroid, exp, sub);
-				body.bodyName = bodyNameFixed;
 			}
 			else
 			{
 				DMUtils.OnAnomalyScience.Fire(body, expID, biome);
 				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.theName, biome);
-				sub.scientificValue = 1f;
-				if (sub.science > 0)
-				{
-					if (sub.science > (science / sub.dataScale))
-						sub.scientificValue = 0f;
-
-					science = Mathf.Max(0, ((science / sub.dataScale) - sub.science));
-
-					science *= sub.dataScale;
-				}
+				sub.scientificValue = 1f;				
 			}
 
 			return new ScienceData(science, 1f, 1f, sub.id, sub.title, false, sensor.ID);

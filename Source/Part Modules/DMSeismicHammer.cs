@@ -201,33 +201,64 @@ namespace DMagic.Part_Modules
 
 			float angle = 0;
 			float originalAngle = RotationTransform.localEulerAngles.x;
+			Vector3d hammerLine = new Vector3d();
 
 			if (values.OnAsteroid)
 			{
+				var asteroids = vessel.FindPartModulesImplementing<ModuleAsteroid>();
 
+				ModuleAsteroid m = null;
+				float astDistance = 2000;
+
+				for (int i = 0; i < asteroids.Count; i++)
+				{
+					ModuleAsteroid ast = asteroids[i];
+
+					if (ast == null)
+						continue;
+
+					float d = (RotationTransform.position - ast.part.transform.position).magnitude;
+
+					if (d < astDistance)
+					{
+						astDistance = d;
+						m = ast;
+					}
+				}
+
+				if (m == null)
+				{
+					animator(-1f, 1f, Anim, hammerAnimation);
+					dryRun = true;
+
+					ScreenMessages.PostScreenMessage("Seismic Hammer can't impact the surface from here...", 6f, ScreenMessageStyle.UPPER_CENTER);
+					yield break;
+				}
+
+				hammerLine = RotationTransform.InverseTransformPoint(m.part.transform.position);
 			}
 			else
 			{
 				//First we draw a line from the rotation transform object to the point on the surface directly below it
 				Vector3d surfacePos = vessel.mainBody.GetWorldSurfacePosition(vessel.mainBody.GetLatitude(RotationTransform.position), vessel.mainBody.GetLongitude(RotationTransform.position), vessel.pqsAltitude);
-				Vector3d hammerLine = RotationTransform.InverseTransformPoint(surfacePos);
-
-				//Calculate the angle on the Z axis
-				angle = Mathf.Atan2((float)hammerLine.y, (float)hammerLine.z) * Mathf.Rad2Deg;
-
-				//Make sure the angle is within a normal range
-				angle = normalizeAngle(angle);
-
-				DMUtils.DebugLog("Hammer Angle: {0:N7}", angle);
-
-				//Clamp the rotation between maximum limits for the model
-				angle = Mathf.Clamp(angle, -30, 90);
-
-				//Reverse the angle to compensate for initial transform rotation
-				angle *= -1;
-
-				DMUtils.DebugLog("Clamped Angle: {0:N7}", angle);
+				hammerLine = RotationTransform.InverseTransformPoint(surfacePos);
 			}
+
+			//Calculate the angle on the Z axis
+			angle = Mathf.Atan2((float)hammerLine.y, (float)hammerLine.z) * Mathf.Rad2Deg;
+
+			//Make sure the angle is within a normal range
+			angle = normalizeAngle(angle);
+
+			DMUtils.DebugLog("Hammer Angle: {0:N7}", angle);
+
+			//Clamp the rotation between maximum limits for the model
+			angle = Mathf.Clamp(angle, -30, 90);
+
+			//Reverse the angle to compensate for initial transform rotation
+			angle *= -1;
+
+			DMUtils.DebugLog("Clamped Angle: {0:N7}", angle);
 
 			//Wait while the primary animator is playing so that the hammer transform can clear the base
 			while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.03f)
@@ -452,6 +483,8 @@ namespace DMagic.Part_Modules
 
 			if (data == null)
 				return;
+
+			GameEvents.OnExperimentDeployed.Fire(data);
 
 			scienceReports.Add(data);
 			Deployed = true;
