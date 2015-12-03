@@ -13,6 +13,8 @@ namespace DMagic.Part_Modules
 		public string redLightName = "redLight";
 		[KSPField]
 		public string blueLightName = "blueLight";
+		[KSPField(isPersistant = true)]
+		public bool lightsOn = false;
 
 		private Light redLight;
 		private Light blueLight;
@@ -23,11 +25,56 @@ namespace DMagic.Part_Modules
 			blueLight = part.FindModelComponent<Light>(blueLightName);
 
 			base.OnStart(state);
+
+			if (lightsOn)
+				turnLightsOn();
+
+			Events["turnLightsOn"].unfocusedRange = interactionRange;
+			Events["turnLightsOff"].unfocusedRange = interactionRange;
 		}
 
 		public override void deployEvent()
 		{
 			base.deployEvent();
+
+			turnLightsOn();
+		}
+
+		public override void retractEvent()
+		{
+			base.retractEvent();
+
+			turnLightsOff();
+		}
+
+		[KSPAction("Toggle Lights", KSPActionGroup.Light)]
+		public void toggleLights()
+		{
+			if (lightsOn)
+				turnLightsOff();
+			else
+				turnLightsOn();
+		}
+
+		[KSPAction("Turn Lights On")]
+		public void LightOnAction(KSPActionParam param)
+		{
+			turnLightsOn();
+		}
+
+		[KSPAction("Turn Lights Off")]
+		public void LightOffAction(KSPActionParam param)
+		{
+			turnLightsOff();
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Turn Lights On", guiActiveEditor = true, guiActiveUnfocused = true, externalToEVAOnly = true, active = true)]
+		public void turnLightsOn()
+		{
+			lightsOn = true;
+
+			Events["turnLightsOn"].active = false;
+			Events["turnLightsOff"].active = true;
 
 			if (redLight != null)
 				redLight.enabled = true;
@@ -35,9 +82,13 @@ namespace DMagic.Part_Modules
 				blueLight.enabled = true;
 		}
 
-		public override void retractEvent()
+		[KSPEvent(guiActive = true, guiName = "Turn Lights Off", guiActiveEditor = true, guiActiveUnfocused = true, externalToEVAOnly = true, active = false)]
+		public void turnLightsOff()
 		{
-			base.retractEvent();
+			lightsOn = false;
+
+			Events["turnLightsOn"].active = true;
+			Events["turnLightsOff"].active = false;
 
 			if (redLight != null)
 				redLight.enabled = false;
@@ -54,7 +105,7 @@ namespace DMagic.Part_Modules
 				case Vessel.Situations.PRELAUNCH:
 				case Vessel.Situations.SUB_ORBITAL:
 				case Vessel.Situations.FLYING:
-					if (part.WaterContact && part.submergedPortion >= 0.95)
+					if (vessel.mainBody.ocean && part.WaterContact && part.submergedPortion >= 0.95)
 						return ExperimentSituations.SrfSplashed;
 					else
 						return ExperimentSituations.InSpaceHigh;
