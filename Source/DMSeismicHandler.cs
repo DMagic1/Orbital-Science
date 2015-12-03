@@ -234,28 +234,24 @@ namespace DMagic
 					if (s.ProtoPartRef == null)
 					{
 						removeSensors(h, s);
-						s.updateScore();
 						continue;
 					}
 
 					if (s.VesselRef == null)
 					{
 						removeSensors(h, s);
-						s.updateScore();
 						continue;
 					}
 
 					if (!s.VesselRef.LandedOrSplashed)
 					{
 						removeSensors(h, s);
-						s.updateScore();
 						continue;
 					}
 
 					if (s.VesselRef == h.VesselRef)
 					{
 						removeSensors(h, s);
-						s.updateScore();
 						continue;
 					}
 
@@ -264,7 +260,6 @@ namespace DMagic
 					if (distance > farPodMaxDistance + 1000)
 					{
 						removeSensors(h, s);
-						s.updateScore();	
 						continue;
 					}
 					else if (distance < farPodMaxDistance)
@@ -274,11 +269,25 @@ namespace DMagic
 						h.addSensor(s.ID, new Vector2((float)distance, angle));
 
 						s.addSensor(h.ID, new Vector2());
-
-						s.updateScore();
 					}
 				}
 				h.updateScore();
+			}
+
+			for (int j = 0; j < seismometers.Count; j++)
+			{
+				DMSeismometerValues s = seismometers.ElementAt(j).Value;
+
+				if (s == null)
+					continue;
+
+				if (s.Hammer)
+					continue;
+
+				if (!s.Armed)
+					continue;
+
+				s.updateScore();
 			}
 		}
 
@@ -317,18 +326,9 @@ namespace DMagic
 
 			float science = exp.baseValue * sub.dataScale * sensor.Score;
 
-			if (sub.science > 0)
+			if (asteroid) 
 			{
-				if (sub.science > (science / sub.dataScale))
-					sub.scientificValue = 0f;
 
-				science = Mathf.Max(0, ((science / sub.dataScale) - sub.science));
-
-				science *= sub.dataScale;
-			}
-
-			if (asteroid)
-			{
 				body.bodyName = bodyNameFixed;
 				DMUtils.OnAsteroidScience.Fire(newAsteroid.AClass, expID);
 				sub.title = exp.experimentTitle + string.Format(" from the surface of a {0} asteroid", newAsteroid.AType);
@@ -336,9 +336,17 @@ namespace DMagic
 			}
 			else
 			{
+				if (sub.science > 0)
+				{
+					sub.scientificValue = 1f;
+
+					if (sub.science >= ((science / sub.dataScale) * sub.subjectValue))
+						sub.scientificValue = 0f;
+					else
+						sub.scientificValue = 1 - ((sub.science / sub.subjectValue) / (science / sub.dataScale));
+				}
 				DMUtils.OnAnomalyScience.Fire(body, expID, biome);
 				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.theName, biome);
-				sub.scientificValue = 1f;				
 			}
 
 			return new ScienceData(science, 1f, 1f, sub.id, sub.title, false, sensor.ID);
