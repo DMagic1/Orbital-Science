@@ -231,7 +231,7 @@ namespace DMagic.Part_Modules
 					animator(-1f, 1f, Anim, hammerAnimation);
 					dryRun = true;
 
-					ScreenMessages.PostScreenMessage("Seismic Hammer can't impact the surface from here...", 6f, ScreenMessageStyle.UPPER_CENTER);
+					ScreenMessages.PostScreenMessage("Seismic Hammer can't find an asteroid to impact...", 6f, ScreenMessageStyle.UPPER_CENTER);
 					yield break;
 				}
 
@@ -302,7 +302,7 @@ namespace DMagic.Part_Modules
 			float scale = part.rescaleFactor;
 
 			//After the transform is rotated and pointing at the surface draw a ray from the extension transform; check for impacts on the terrain
-			if (!rayImpact(false, ExtensionTransform, scale, out distance))
+			if (!rayImpact(values.OnAsteroid, ExtensionTransform, scale, out distance))
 			{
 				//If no impact is detected within the distance limit stop the animation, reverse the rotation, and cancel the coroutine
 				DMUtils.DebugLog("Hammer Failed: Distance: {0:N3}", distance);
