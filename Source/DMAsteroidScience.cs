@@ -183,25 +183,36 @@ namespace DMagic
 		{
 			get
 			{
-				List<Vessel> vesselList = FlightGlobals.fetch.vessels;
-				foreach (Vessel v in vesselList)
+				for (int i = 0; i < FlightGlobals.Vessels.Count; i++)
 				{
-					if (v != FlightGlobals.ActiveVessel)
-					{
-						ModuleAsteroid m = v.FindPartModulesImplementing<ModuleAsteroid>().FirstOrDefault();
-						if (m != null)
-						{
-							Vector3 asteroidPosition = m.part.transform.position;
-							Vector3 vesselPosition = FlightGlobals.ActiveVessel.transform.position;
-							double distance = (asteroidPosition - vesselPosition).magnitude;
-							if (distance < 2000)
-							{
-								modAsteroid = m;
-								return true;
-							}
-						}
-					}
+					Vessel v = FlightGlobals.Vessels[i];
+
+					if (v == null)
+						continue;
+
+					if (!v.loaded)
+						continue;
+
+					if (v == FlightGlobals.ActiveVessel)
+						continue;
+
+					if (v.mainBody != FlightGlobals.ActiveVessel.mainBody)
+						continue;
+
+					ModuleAsteroid m = v.FindPartModulesImplementing<ModuleAsteroid>().FirstOrDefault();
+
+					if (m == null)
+						continue;
+
+					double distance = (m.part.transform.position - FlightGlobals.ActiveVessel.transform.position).magnitude;
+
+					if (distance > 2000)
+						continue;
+
+					modAsteroid = m;
+					return true;
 				}
+
 				return false;
 			}
 		}
