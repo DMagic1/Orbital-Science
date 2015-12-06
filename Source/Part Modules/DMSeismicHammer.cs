@@ -51,6 +51,19 @@ namespace DMagic.Part_Modules
 		private Transform ExtensionTransform;
 		private bool dryRun = true;
 		private DMSeismometerValues values;
+		private Material scoreLightOne;
+		private Material scoreLightTwo;
+		private Material scoreLightThree;
+		private Material scoreLightFour;
+		private Material scoreLightFive;
+		private Material signalLightOne;
+		private Material signalLightTwo;
+		private Color redLight = new Color(0.7647f, 0, 0, 1);
+		private Color yellowLight = new Color(0.72f, 0.7137f, 0.0314f, 1);
+		private Color greenLight = new Color(0.0549f, 0.7137f, 0.0314f, 1);
+		private Color offColor = new Color(0, 0, 0, 0);
+		private float oldScore;
+		private int oldSensorCount;
 	
 		private const string rotationTransformName = "RotationTransform";
 		private const string extensionTransformName = "ThumperCasing";
@@ -62,6 +75,13 @@ namespace DMagic.Part_Modules
 				Anim = part.FindModelAnimators(hammerAnimation)[0];
 			RotationTransform = part.FindModelTransform(rotationTransformName);
 			ExtensionTransform = part.FindModelTransform(extensionTransformName);
+			scoreLightOne = part.FindModelTransform("SignalLight_004").renderer.material;
+			scoreLightTwo = part.FindModelTransform("SignalLight_003").renderer.material;
+			scoreLightThree = part.FindModelTransform("SignalLight_002").renderer.material;
+			scoreLightFour = part.FindModelTransform("SignalLight_001").renderer.material;
+			scoreLightFive = part.FindModelTransform("SignalLight_000").renderer.material;
+			signalLightOne = part.FindModelTransform("SensorLight_000").renderer.material;
+			signalLightTwo = part.FindModelTransform("SensorLight_001").renderer.material;
 
 			base.OnStart(state);
 
@@ -120,20 +140,92 @@ namespace DMagic.Part_Modules
 
 		private void Update()
 		{
-			base.EventsCheck();
+			EventsCheck();
 
 			if (!HighLogic.LoadedSceneIsFlight)
 				return;
 
-			if (values != null)
+			if (values == null)
 			{
-				if (vessel.Landed || values.OnAsteroid)
-					scoreString = values.Score.ToString("P0");
-				else
-					scoreString = "Not Valid";
+				values = DMSeismicHandler.Instance.getSeismicHammer(part.flightID);
+				return;
+			}
+
+			if (vessel.Landed || values.OnAsteroid)
+				scoreString = values.Score.ToString("P0");
+			else
+				scoreString = "Not Valid";
+
+			if (values.NearbySensorCount != oldSensorCount)
+			{
+				oldSensorCount = values.NearbySensorCount;
+
+				switch (oldSensorCount)
+				{
+					case 0:
+						setEmissive(signalLightOne, offColor);
+						setEmissive(signalLightTwo, offColor);
+						break;
+					case 1:
+						setEmissive(signalLightOne, greenLight);
+						setEmissive(signalLightTwo, offColor);
+						break;
+					case 2:
+						setEmissive(signalLightOne, greenLight);
+						setEmissive(signalLightTwo, greenLight);
+						break;
+					default:
+						setEmissive(signalLightOne, offColor);
+						setEmissive(signalLightTwo, offColor);
+						break;
+				}
+			}
+
+			if (values.Score == oldScore)
+				return;
+
+			oldScore = values.Score;
+
+			if (values.Score < 0.41f)
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, offColor);
+				setEmissive(scoreLightThree, offColor);
+				setEmissive(scoreLightFour, offColor);
+				setEmissive(scoreLightFive, offColor);
+			}
+			else if (values.Score < 0.56f)
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, yellowLight);
+				setEmissive(scoreLightThree, offColor);
+				setEmissive(scoreLightFour, offColor);
+				setEmissive(scoreLightFive, offColor);
+			}
+			else if (values.Score < 0.71f)
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, yellowLight);
+				setEmissive(scoreLightThree, yellowLight);
+				setEmissive(scoreLightFour, offColor);
+				setEmissive(scoreLightFive, offColor);
+			}
+			else if (values.Score < 0.86f)
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, yellowLight);
+				setEmissive(scoreLightThree, yellowLight);
+				setEmissive(scoreLightFour, greenLight);
+				setEmissive(scoreLightFive, offColor);
 			}
 			else
-				values = DMSeismicHandler.Instance.getSeismicHammer(part.flightID);
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, yellowLight);
+				setEmissive(scoreLightThree, yellowLight);
+				setEmissive(scoreLightFour, greenLight);
+				setEmissive(scoreLightFive, greenLight);
+			}
 		}
 
 		protected override void EventsCheck()
@@ -157,6 +249,18 @@ namespace DMagic.Part_Modules
 					a.Blend(name, 1f);
 				}
 			}
+		}
+
+		private void setEmissive(Material m, Color c)
+		{
+			DMUtils.DebugLog("Checking Emitter Material...");
+
+			if (m == null)
+				return;
+
+			DMUtils.DebugLog("Setting Emitter Color: {0}", c);
+
+			m.SetColor("_EmissiveColor", c);
 		}
 
 		private void rotation(float angle, float time = 1f)
