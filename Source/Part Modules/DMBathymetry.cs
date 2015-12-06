@@ -78,7 +78,7 @@ namespace DMagic.Part_Modules
 		}
 
 		[KSPAction("Toggle Lights", KSPActionGroup.Light)]
-		public void toggleLights()
+		public void toggleLights(KSPActionParam param)
 		{
 			if (lightsOn)
 				turnLightsOff();
