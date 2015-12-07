@@ -45,6 +45,16 @@ namespace DMagic.Part_Modules
 
 		private string failMessage;
 		private DMSeismometerValues values;
+		private Material scoreLightOne;
+		private Material scoreLightTwo;
+		private Material scoreLightThree;
+		private Material scoreLightFour;
+		private Material scoreLightFive;
+		private Material signalLightOne;
+		private Color redLight = new Color(0.7647f, 0, 0, 1);
+		private Color yellowLight = new Color(0.72f, 0.7137f, 0.0314f, 1);
+		private Color greenLight = new Color(0.0549f, 0.7137f, 0.0314f, 1);
+		private Color offColor = new Color(0, 0, 0, 0);
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -52,6 +62,13 @@ namespace DMagic.Part_Modules
 
 			if (state == StartState.Editor)
 				return;
+
+			scoreLightOne = part.FindModelTransform("SignalLight_004").renderer.material;
+			scoreLightTwo = part.FindModelTransform("SignalLight_003").renderer.material;
+			scoreLightThree = part.FindModelTransform("SignalLight_002").renderer.material;
+			scoreLightFour = part.FindModelTransform("SignalLight_001").renderer.material;
+			scoreLightFive = part.FindModelTransform("SignalLight_000").renderer.material;
+			signalLightOne = part.FindModelTransform("SensorLight_000").renderer.material;
 
 			if (IsDeployed)
 				Fields["scoreString"].guiActive = true;
@@ -107,15 +124,81 @@ namespace DMagic.Part_Modules
 			if (!HighLogic.LoadedSceneIsFlight)
 				return;
 
-			if (values != null)
+			if (values == null)
 			{
-				if (vessel.Landed || values.OnAsteroid)
-					scoreString = values.Score.ToString("P0");
-				else
-					scoreString = "Not Valid";
+				values = DMSeismicHandler.Instance.getSeismicSensor(part.flightID);
+				return;
+			}
+
+			if (vessel.Landed || values.OnAsteroid)
+				scoreString = values.Score.ToString("P0");
+			else
+				scoreString = "Not Valid";
+
+			if (!values.Armed)
+				return;
+
+			if (values.NearbySensorCount >= 1)
+				setEmissive(signalLightOne, greenLight);
+			else
+				setEmissive(signalLightOne, offColor);
+
+			if (values.Score < 0.21f)
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, offColor);
+				setEmissive(scoreLightThree, offColor);
+				setEmissive(scoreLightFour, offColor);
+				setEmissive(scoreLightFive, offColor);
+			}
+			else if (values.Score < 0.56f)
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, yellowLight);
+				setEmissive(scoreLightThree, offColor);
+				setEmissive(scoreLightFour, offColor);
+				setEmissive(scoreLightFive, offColor);
+			}
+			else if (values.Score < 0.71f)
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, yellowLight);
+				setEmissive(scoreLightThree, yellowLight);
+				setEmissive(scoreLightFour, offColor);
+				setEmissive(scoreLightFive, offColor);
+			}
+			else if (values.Score < 0.86f)
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, yellowLight);
+				setEmissive(scoreLightThree, yellowLight);
+				setEmissive(scoreLightFour, greenLight);
+				setEmissive(scoreLightFive, offColor);
 			}
 			else
-				values = DMSeismicHandler.Instance.getSeismicSensor(part.flightID);
+			{
+				setEmissive(scoreLightOne, redLight);
+				setEmissive(scoreLightTwo, yellowLight);
+				setEmissive(scoreLightThree, yellowLight);
+				setEmissive(scoreLightFour, greenLight);
+				setEmissive(scoreLightFive, greenLight);
+			}
+		}
+
+		private void setEmissive(Material m, Color c)
+		{
+			DMUtils.DebugLog("Checking Emitter Material...");
+
+			if (m == null)
+				return;
+
+			DMUtils.DebugLog("Setting Emitter Color: {0}", c);
+
+			Color old = m.GetColor("_EmissiveColor");
+
+			Color target = Color.Lerp(old, c, TimeWarp.deltaTime);
+
+			m.SetColor("_EmissiveColor", target);
 		}
 
 		protected override void EventsCheck()
