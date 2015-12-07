@@ -62,8 +62,6 @@ namespace DMagic.Part_Modules
 		private Color yellowLight = new Color(0.72f, 0.7137f, 0.0314f, 1);
 		private Color greenLight = new Color(0.0549f, 0.7137f, 0.0314f, 1);
 		private Color offColor = new Color(0, 0, 0, 0);
-		private float oldScore;
-		private int oldSensorCount;
 	
 		private const string rotationTransformName = "RotationTransform";
 		private const string extensionTransformName = "ThumperCasing";
@@ -74,7 +72,13 @@ namespace DMagic.Part_Modules
 			if (!string.IsNullOrEmpty(hammerAnimation))
 				Anim = part.FindModelAnimators(hammerAnimation)[0];
 			RotationTransform = part.FindModelTransform(rotationTransformName);
-			ExtensionTransform = part.FindModelTransform(extensionTransformName);
+			ExtensionTransform = part.FindModelTransform(extensionTransformName);			
+
+			base.OnStart(state);
+
+			if (state == StartState.Editor)
+				return;
+
 			scoreLightOne = part.FindModelTransform("SignalLight_004").renderer.material;
 			scoreLightTwo = part.FindModelTransform("SignalLight_003").renderer.material;
 			scoreLightThree = part.FindModelTransform("SignalLight_002").renderer.material;
@@ -82,11 +86,6 @@ namespace DMagic.Part_Modules
 			scoreLightFive = part.FindModelTransform("SignalLight_000").renderer.material;
 			signalLightOne = part.FindModelTransform("SensorLight_000").renderer.material;
 			signalLightTwo = part.FindModelTransform("SensorLight_001").renderer.material;
-
-			base.OnStart(state);
-
-			if (state == StartState.Editor)
-				return;
 
 			Events["hammerEvent"].unfocusedRange = interactionRange;
 			Events["hammerEvent"].guiName = "Hammer Test";
@@ -156,35 +155,28 @@ namespace DMagic.Part_Modules
 			else
 				scoreString = "Not Valid";
 
-			if (values.NearbySensorCount != oldSensorCount)
-			{
-				oldSensorCount = values.NearbySensorCount;
-
-				switch (oldSensorCount)
-				{
-					case 0:
-						setEmissive(signalLightOne, offColor);
-						setEmissive(signalLightTwo, offColor);
-						break;
-					case 1:
-						setEmissive(signalLightOne, greenLight);
-						setEmissive(signalLightTwo, offColor);
-						break;
-					case 2:
-						setEmissive(signalLightOne, greenLight);
-						setEmissive(signalLightTwo, greenLight);
-						break;
-					default:
-						setEmissive(signalLightOne, offColor);
-						setEmissive(signalLightTwo, offColor);
-						break;
-				}
-			}
-
-			if (values.Score == oldScore)
+			if (!values.Armed)
 				return;
 
-			oldScore = values.Score;
+			switch (values.NearbySensorCount)
+			{
+				case 0:
+					setEmissive(signalLightOne, offColor);
+					setEmissive(signalLightTwo, offColor);
+					break;
+				case 1:
+					setEmissive(signalLightOne, greenLight);
+					setEmissive(signalLightTwo, offColor);
+					break;
+				case 2:
+					setEmissive(signalLightOne, greenLight);
+					setEmissive(signalLightTwo, greenLight);
+					break;
+				default:
+					setEmissive(signalLightOne, offColor);
+					setEmissive(signalLightTwo, offColor);
+					break;
+			}
 
 			if (values.Score < 0.41f)
 			{
@@ -260,7 +252,11 @@ namespace DMagic.Part_Modules
 
 			DMUtils.DebugLog("Setting Emitter Color: {0}", c);
 
-			m.SetColor("_EmissiveColor", c);
+			Color old = m.GetColor("_EmissiveColor");
+
+			Color target = Color.Lerp(old, c, TimeWarp.deltaTime);
+
+			m.SetColor("_EmissiveColor", target);
 		}
 
 		private void rotation(float angle, float time = 1f)
@@ -479,6 +475,42 @@ namespace DMagic.Part_Modules
 
 			//Transform translation does not take the part scale into account, so we need to convert the distance back into the unscaled dimensions
 			distance /= scale;
+
+			//If the hammer is to close to the surface we risk flipping the vessel over, so check for a minimum distance here
+			if (distance < -0.4f)
+			{
+				DMUtils.DebugLog("Hammer Failed: Distance To Close: {0:N3}", distance);
+				animator(-1f, 1f, Anim, hammerAnimation);
+				dryRun = true;
+
+				ScreenMessages.PostScreenMessage("Seismic Hammer is too close to the surface...", 6f, ScreenMessageStyle.UPPER_CENTER);
+
+				while (Anim.IsPlaying(hammerAnimation))
+				{
+					if (angle > 0)
+					{
+						while (RotationTransform.localEulerAngles.x > originalAngle)
+						{
+							if (RotationTransform.localEulerAngles.x > originalAngle)
+								rotation(0, TimeWarp.deltaTime * 30f);
+							yield return null;
+						}
+					}
+					else
+					{
+						while (fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
+						{
+							if (fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
+								rotation(0, TimeWarp.deltaTime * 30f);
+							yield return null;
+						}
+					}
+					yield return null;
+				}
+				rotation(0);
+
+				yield break;
+			}
 
 			distance = Math.Max(0, distance);
 
