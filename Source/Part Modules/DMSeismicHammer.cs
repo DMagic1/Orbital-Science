@@ -155,30 +155,34 @@ namespace DMagic.Part_Modules
 			else
 				scoreString = "Not Valid";
 
-			if (!values.Armed)
-				return;
-
-			switch (values.NearbySensorCount)
+			if (values.Armed)
 			{
-				case 0:
-					setEmissive(signalLightOne, offColor);
-					setEmissive(signalLightTwo, offColor);
-					break;
-				case 1:
+				if (values.NearbySensorCount == 1)
+				{
 					setEmissive(signalLightOne, greenLight);
 					setEmissive(signalLightTwo, offColor);
-					break;
-				case 2:
+				}
+				else if (values.NearbySensorCount >= 2)
+				{
 					setEmissive(signalLightOne, greenLight);
 					setEmissive(signalLightTwo, greenLight);
-					break;
-				default:
-					setEmissive(signalLightOne, offColor);
-					setEmissive(signalLightTwo, offColor);
-					break;
+				}
+			}
+			else
+			{
+				setEmissive(signalLightOne, offColor);
+				setEmissive(signalLightTwo, offColor);
 			}
 
-			if (values.Score < 0.41f)
+			if (!values.Armed)
+			{
+				setEmissive(scoreLightOne, offColor);
+				setEmissive(scoreLightTwo, offColor);
+				setEmissive(scoreLightThree, offColor);
+				setEmissive(scoreLightFour, offColor);
+				setEmissive(scoreLightFive, offColor);
+			}
+			else if (values.Score < 0.41f)
 			{
 				setEmissive(scoreLightOne, redLight);
 				setEmissive(scoreLightTwo, offColor);
