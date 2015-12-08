@@ -79,14 +79,6 @@ namespace DMagic.Part_Modules
 			if (state == StartState.Editor)
 				return;
 
-			scoreLightOne = part.FindModelTransform("SignalLight_004").renderer.material;
-			scoreLightTwo = part.FindModelTransform("SignalLight_003").renderer.material;
-			scoreLightThree = part.FindModelTransform("SignalLight_002").renderer.material;
-			scoreLightFour = part.FindModelTransform("SignalLight_001").renderer.material;
-			scoreLightFive = part.FindModelTransform("SignalLight_000").renderer.material;
-			signalLightOne = part.FindModelTransform("SensorLight_000").renderer.material;
-			signalLightTwo = part.FindModelTransform("SensorLight_001").renderer.material;
-
 			Events["hammerEvent"].unfocusedRange = interactionRange;
 			Events["hammerEvent"].guiName = "Hammer Test";
 
@@ -98,6 +90,29 @@ namespace DMagic.Part_Modules
 			Fields["scoreString"].guiName = "Experiment Value";
 
 			GameEvents.onVesselWasModified.Add(onVesselModified);
+
+			Transform l1 = part.FindModelTransform("SignalLight_004");
+			Transform l2 = part.FindModelTransform("SignalLight_003");
+			Transform l3 = part.FindModelTransform("SignalLight_002");
+			Transform l4 = part.FindModelTransform("SignalLight_001");
+			Transform l5 = part.FindModelTransform("SignalLight_000");
+			Transform s1 = part.FindModelTransform("SensorLight_000");
+			Transform s2 = part.FindModelTransform("SensorLight_001");
+
+			if (l1 != null && l1.renderer != null)
+				scoreLightOne = l1.renderer.material;
+			if (l2 != null && l2.renderer != null)
+				scoreLightTwo = l2.renderer.material;
+			if (l3 != null && l3.renderer != null)
+				scoreLightThree = l3.renderer.material;
+			if (l4 != null && l4.renderer != null)
+				scoreLightFour = l4.renderer.material;
+			if (l4 != null && l5.renderer != null)
+				scoreLightFive = l5.renderer.material;
+			if (s1 != null && s1.renderer != null)
+				signalLightOne = s1.renderer.material;
+			if (s2 != null && s2.renderer != null)
+				signalLightTwo = s2.renderer.material;
 		}
 
 		public override string GetInfo()
@@ -150,7 +165,9 @@ namespace DMagic.Part_Modules
 				return;
 			}
 
-			if (vessel.Landed || values.OnAsteroid)
+			bool valid = vessel.Landed || values.OnAsteroid;
+
+			if (valid)
 				scoreString = values.Score.ToString("P0");
 			else
 				scoreString = "Not Valid";
@@ -174,7 +191,7 @@ namespace DMagic.Part_Modules
 				setEmissive(signalLightTwo, offColor);
 			}
 
-			if (!values.Armed)
+			if (!values.Armed || !valid)
 			{
 				setEmissive(scoreLightOne, offColor);
 				setEmissive(scoreLightTwo, offColor);
@@ -249,12 +266,8 @@ namespace DMagic.Part_Modules
 
 		private void setEmissive(Material m, Color c)
 		{
-			DMUtils.DebugLog("Checking Emitter Material...");
-
 			if (m == null)
 				return;
-
-			DMUtils.DebugLog("Setting Emitter Color: {0}", c);
 
 			Color old = m.GetColor("_EmissiveColor");
 
