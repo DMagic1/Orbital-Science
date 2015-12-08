@@ -316,7 +316,7 @@ namespace DMagic.Part_Modules
 			if (!values.Armed)
 				return;
 
-			animator(1f, 0f, Anim, hammerAnimation);
+			animator(0.9f, 0f, Anim, hammerAnimation);
 
 			StartCoroutine(RunThumper());
 		}
@@ -421,32 +421,34 @@ namespace DMagic.Part_Modules
 			DMUtils.DebugLog("New Angle: {0:N7}", newAngle);
 
 			//Rotate the transform while the primary animator is playing; only allow this to go on for a certain amount of time
-			while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.341f)
+
+			//Rotation check is dependent on the sign of the target rotation angle
+			if (angle > 0)
 			{
-				//Rotation check is dependent on the sign of the target rotation angle
-				if (angle > 0)
+				while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.30f && RotationTransform.localEulerAngles.x < newAngle)
 				{
-					while (RotationTransform.localEulerAngles.x < newAngle)
-					{
-						//DMUtils.Logging("Rotation positive: {0:N7}", RotationTransform.localEulerAngles.x);
-						rotation(angle, TimeWarp.deltaTime * 28f);
-						yield return null;
-					}
+					//DMUtils.DebugLog("Rotation positive: {0:N7}", RotationTransform.localEulerAngles.x);
+					rotation(angle, TimeWarp.deltaTime * 28f);
+					yield return null;
 				}
-				else if (angle < 0)
-				{
-					while (fixAngle(RotationTransform.localEulerAngles.x) > newAngle)
-					{
-						//DMUtils.Logging("Rotation negative: {0:N7}", RotationTransform.localEulerAngles.x);
-						rotation(angle, TimeWarp.deltaTime * 28f);
-						yield return null;
-					}
-				}
-				yield return null;
 			}
+			else if (angle < 0)
+			{
+				while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.30f && fixAngle(RotationTransform.localEulerAngles.x) > newAngle)
+				{
+					//DMUtils.DebugLog("Rotation negative: {0:N7}", RotationTransform.localEulerAngles.x);
+					rotation(angle, TimeWarp.deltaTime * 28f);
+					yield return null;
+				}
+			}
+
+			while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.33f)
+				yield return null;
 
 			//Take any changes to the rescale factor into account *need to add tweakscale reference too*
 			float scale = part.rescaleFactor;
+
+			DMUtils.DebugLog("Checking Distance To Terrain...");
 
 			//After the transform is rotated and pointing at the surface draw a ray from the extension transform; check for impacts on the terrain
 			if (!rayImpact(values.OnAsteroid, ExtensionTransform, scale, out distance))
@@ -458,27 +460,21 @@ namespace DMagic.Part_Modules
 
 				ScreenMessages.PostScreenMessage("Seismic Hammer can't impact the surface from here...", 6f, ScreenMessageStyle.UPPER_CENTER);
 
-				while (Anim.IsPlaying(hammerAnimation))
+				if (angle > 0)
 				{
-					if (angle > 0)
+					while (Anim.IsPlaying(hammerAnimation) && RotationTransform.localEulerAngles.x > originalAngle)
 					{
-						while (RotationTransform.localEulerAngles.x > originalAngle)
-						{
-							if (RotationTransform.localEulerAngles.x > originalAngle)
-								rotation(0, TimeWarp.deltaTime * 30f);
-							yield return null;
-						}
+						rotation(0, TimeWarp.deltaTime * 30f);
+						yield return null;
 					}
-					else
+				}
+				else if (angle < 0)
+				{
+					while (Anim.IsPlaying(hammerAnimation) && fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
 					{
-						while (fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-						{
-							if (fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-								rotation(0, TimeWarp.deltaTime * 30f);
-							yield return null;
-						}
+						rotation(0, TimeWarp.deltaTime * 30f);
+						yield return null;
 					}
-					yield return null;
 				}
 				rotation(0);
 
@@ -502,27 +498,21 @@ namespace DMagic.Part_Modules
 
 				ScreenMessages.PostScreenMessage("Seismic Hammer is too close to the surface...", 6f, ScreenMessageStyle.UPPER_CENTER);
 
-				while (Anim.IsPlaying(hammerAnimation))
+				if (angle > 0)
 				{
-					if (angle > 0)
+					while (Anim.IsPlaying(hammerAnimation) && RotationTransform.localEulerAngles.x > originalAngle)
 					{
-						while (RotationTransform.localEulerAngles.x > originalAngle)
-						{
-							if (RotationTransform.localEulerAngles.x > originalAngle)
-								rotation(0, TimeWarp.deltaTime * 30f);
-							yield return null;
-						}
+						rotation(0, TimeWarp.deltaTime * 30f);
+						yield return null;
 					}
-					else
+				}
+				else if (angle < 0)
+				{
+					while (Anim.IsPlaying(hammerAnimation) && fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
 					{
-						while (fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-						{
-							if (fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-								rotation(0, TimeWarp.deltaTime * 30f);
-							yield return null;
-						}
+						rotation(0, TimeWarp.deltaTime * 30f);
+						yield return null;
 					}
-					yield return null;
 				}
 				rotation(0);
 
@@ -543,19 +533,18 @@ namespace DMagic.Part_Modules
 			DMUtils.DebugLog("Drill Target Position: {0:N3}", targetPosition);
 
 			//While the animation is playing translate the extension transform out
-			while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.68f)
+			if (distance > 0)
 			{
-				if (distance > 0)
+				while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.65f && ExtensionTransform.localPosition.z > targetPosition)
 				{
-					while (ExtensionTransform.localPosition.z > targetPosition)
-					{
-						//DMUtils.Logging("Drill Position: {0:N3}", ExtensionTransform.localPosition.z);
-						extension(Vector3.back, TimeWarp.deltaTime);
-						yield return null;
-					}
+					//DMUtils.Logging("Drill Position: {0:N3}", ExtensionTransform.localPosition.z);
+					extension(Vector3.back, TimeWarp.deltaTime);
+					yield return null;
 				}
-				yield return null;
 			}
+
+			while (Anim[hammerAnimation].normalizedTime < 0.68f)
+				yield return null;
 
 			//If this is a real run gather science data, then reset the flag
 			if (!dryRun)
@@ -564,42 +553,41 @@ namespace DMagic.Part_Modules
 			dryRun = true;
 
 			//After the experiment has been collected reverse the rotation and translation
-			while (Anim.IsPlaying(hammerAnimation))
+			if (angle > 0)
 			{
-				if (angle > 0)
+				while (Anim.IsPlaying(hammerAnimation) && (ExtensionTransform.localPosition.z < originalPosition.z || RotationTransform.localEulerAngles.x > originalAngle))
 				{
-					while (ExtensionTransform.localPosition.z < originalPosition.z || RotationTransform.localEulerAngles.x > originalAngle)
+					//DMUtils.Logging("Rotation Angle Back positive: {0:N3}", RotationTransform.localEulerAngles.x);
+					//DMUtils.Logging("Drill Position Back: {0:N3}", ExtensionTransform.localPosition.z);
+					if (distance > 0)
 					{
-						//DMUtils.Logging("Rotation Angle Back positive: {0:N3}", RotationTransform.localEulerAngles.x);
-						//DMUtils.Logging("Drill Position Back: {0:N3}", ExtensionTransform.localPosition.z);
-						if (distance > 0)
-						{
-							if (ExtensionTransform.localPosition.z < originalPosition.z)
-								extension(Vector3.forward, TimeWarp.deltaTime);
-						}
-						if (RotationTransform.localEulerAngles.x > originalAngle)
-							rotation(0, TimeWarp.deltaTime * 20f);
-						yield return null;
+						if (ExtensionTransform.localPosition.z < originalPosition.z)
+							extension(Vector3.forward, TimeWarp.deltaTime);
 					}
+					if (RotationTransform.localEulerAngles.x > originalAngle)
+						rotation(0, TimeWarp.deltaTime * 20f);
+					yield return null;
 				}
-				else
-				{
-					while (ExtensionTransform.localPosition.z < originalPosition.z || fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-					{
-						//DMUtils.Logging("Rotation Angle Back negative: {0:N3}", RotationTransform.localEulerAngles.x);
-						//DMUtils.Logging("Drill Position Back: {0:N3}", ExtensionTransform.localPosition.z);
-						if (distance > 0)
-						{
-							if (ExtensionTransform.localPosition.z < originalPosition.z)
-								extension(Vector3.forward, TimeWarp.deltaTime);
-						}
-						if (fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-							rotation(0, TimeWarp.deltaTime * 20f);
-						yield return null;
-					}
-				}
-				yield return null;
 			}
+			else
+			{
+				while (Anim.IsPlaying(hammerAnimation) && (ExtensionTransform.localPosition.z < originalPosition.z || fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle)))
+				{
+					//DMUtils.Logging("Rotation Angle Back negative: {0:N3}", RotationTransform.localEulerAngles.x);
+					//DMUtils.Logging("Drill Position Back: {0:N3}", ExtensionTransform.localPosition.z);
+					if (distance > 0)
+					{
+						if (ExtensionTransform.localPosition.z < originalPosition.z)
+							extension(Vector3.forward, TimeWarp.deltaTime);
+					}
+					if (fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
+						rotation(0, TimeWarp.deltaTime * 20f);
+					yield return null;
+				}
+			}
+
+			while (Anim.IsPlaying(hammerAnimation))
+				yield return null;
 
 			//Reset the transform positions after the primary animation has completed; this corrects and timestep errors
 			rotation(0);
@@ -645,7 +633,7 @@ namespace DMagic.Part_Modules
 				{
 					Transform hitT = hit.collider.transform;
 					int i = 0; //Just to prevent this from getting stuck in a loop
-					while (hitT != null && i < 200)
+					while (hitT != null && i < 30)
 					{
 						if (hitT.name.Contains(vessel.mainBody.name))
 						{
