@@ -48,15 +48,18 @@ namespace DMagic.Part_Modules
 			base.labDataBoost = 0.3f;
 		}
 
-		public override void DeployExperiment()
+		public override void gatherScienceData(bool silent = false)
 		{
-			if (vessel.mainBody.name == "Eve" || vessel.mainBody.name == "Kerbin" || vessel.mainBody.name == "Duna" || vessel.mainBody.name == "Laythe" || vessel.mainBody.name == "Bop" || vessel.mainBody.name == "Vall" || vessel.mainBody.name == "Slate" || vessel.mainBody.atmosphere) {
+			if (vessel.mainBody.name == "Eve" || vessel.mainBody.name == "Kerbin" || vessel.mainBody.name == "Duna" || vessel.mainBody.name == "Laythe" || vessel.mainBody.name == "Bop" || vessel.mainBody.name == "Vall" || vessel.mainBody.name == "Slate" || vessel.mainBody.atmosphere)
+			{
 				if (vessel.mainBody.name == "Eve")
 					base.scienceBoost = 2f;
-				else 
+				else
 					base.scienceBoost = 1f;
-				if (anim.IsPlaying(verticalDrill)) return;
-				base.DeployExperiment();
+				if (anim.IsPlaying(verticalDrill))
+					return;
+
+				base.gatherScienceData(silent);
 			}
 			else
 				ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);

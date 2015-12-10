@@ -347,8 +347,8 @@ namespace DMagic.Part_Modules
 		#endregion
 
 		#region experiment setup
-
-		public override void DeployExperiment()
+		
+		public override void gatherScienceData(bool silent = false)
 		{
 			if (canConduct())
 			{
@@ -359,7 +359,7 @@ namespace DMagic.Part_Modules
 				if (anomInRange)
 				{
 					if (anomCloseRange)
-						runExperiment(getSituation());
+						runExperiment(getSituation(), silent);
 				}
 				else
 					ScreenMessages.PostScreenMessage("No anomalous signals detected.", 5f, ScreenMessageStyle.UPPER_CENTER);

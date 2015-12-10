@@ -50,6 +50,7 @@ namespace DMagic.Part_Modules
 		private Transform RotationTransform;
 		private Transform ExtensionTransform;
 		private bool dryRun = true;
+		private bool silentRun;
 		private DMSeismometerValues values;
 		private Material scoreLightOne;
 		private Material scoreLightTwo;
@@ -325,7 +326,7 @@ namespace DMagic.Part_Modules
 
 		#region Science Setup
 
-		public override void DeployExperiment()
+		public override void gatherScienceData(bool silent = false)
 		{
 			if (!canConduct())
 			{
@@ -337,6 +338,7 @@ namespace DMagic.Part_Modules
 				deployEvent();
 
 			dryRun = false;
+			silentRun = silent;
 
 			hammerEvent();
 		}
@@ -344,6 +346,8 @@ namespace DMagic.Part_Modules
 		//This is where the primary animator runs
 		private IEnumerator RunThumper()
 		{
+			bool showData = silentRun;
+			silentRun = false;
 			float distance = 0f;
 
 			float angle = 0;
@@ -548,7 +552,7 @@ namespace DMagic.Part_Modules
 
 			//If this is a real run gather science data, then reset the flag
 			if (!dryRun)
-				getScienceData(values.OnAsteroid);
+				getScienceData(values.OnAsteroid, showData);
 
 			dryRun = true;
 
@@ -648,7 +652,7 @@ namespace DMagic.Part_Modules
 			return false;
 		}
 
-		private void getScienceData(bool asteroid)
+		private void getScienceData(bool asteroid, bool silent)
 		{
 			ScienceData data = DMSeismicHandler.makeData(values, exp, experimentID, false, asteroid);
 
@@ -659,7 +663,8 @@ namespace DMagic.Part_Modules
 
 			scienceReports.Add(data);
 			Deployed = true;
-			ReviewData();
+			if (!silent)
+				ReviewData();
 		}
 
 		protected override bool canConduct()

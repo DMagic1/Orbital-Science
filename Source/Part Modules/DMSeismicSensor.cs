@@ -242,7 +242,7 @@ namespace DMagic.Part_Modules
 
 		#region Science Setup
 
-		new public void DeployExperiment()
+		public override void gatherScienceData(bool silent = false)
 		{
 			if (!canConduct())
 			{
@@ -253,10 +253,10 @@ namespace DMagic.Part_Modules
 			if (!IsDeployed)
 				deployEvent();
 
-			getScienceData(values.NearbySensorCount <= 0, values.OnAsteroid);
+			getScienceData(values.NearbySensorCount <= 0, values.OnAsteroid, silent);
 		}
 
-		private void getScienceData(bool sensorOnly, bool asteroid)
+		private void getScienceData(bool sensorOnly, bool asteroid, bool silent)
 		{
 			ScienceData data = DMSeismicHandler.makeData(values.getBestHammer(), exp, experimentID, sensorOnly, asteroid);
 
@@ -267,7 +267,8 @@ namespace DMagic.Part_Modules
 
 			scienceReports.Add(data);
 			Deployed = true;
-			ReviewData();
+			if (!silent)
+				ReviewData();
 		}
 
 		protected override bool canConduct()

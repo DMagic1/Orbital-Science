@@ -291,7 +291,12 @@ namespace DMagic.Part_Modules
 		}
 
 		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Deploy Experiment", active = false)]
-		public virtual void DeployExperiment()
+		public void DeployExperiment()
+		{
+			gatherScienceData();
+		}
+
+		public virtual void gatherScienceData(bool silent = false)
 		{
 
 		}

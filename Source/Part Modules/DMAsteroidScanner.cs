@@ -594,6 +594,11 @@ namespace DMagic.Part_Modules
 		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Scan Asteroid Interior", active = false)]
 		public void DeployExperiment()
 		{
+			gatherScienceData();
+		}
+
+		public void gatherScienceData(bool silent = false)
+		{
 			if (FlightGlobals.ActiveVessel.isEVA)
 			{
 				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
@@ -607,7 +612,7 @@ namespace DMagic.Part_Modules
 			{
 				ModuleAsteroid modAst = null;
 				float distance = asteroidScanLength(out modAst);
-				runExperiment(distance, modAst);
+				runExperiment(distance, modAst, silent);
 			}
 			else
 				ScreenMessages.PostScreenMessage("No valid targets within scaning range", 5f, ScreenMessageStyle.UPPER_CENTER);
@@ -682,7 +687,7 @@ namespace DMagic.Part_Modules
 			return dist;
 		}
 
-		private void runExperiment(float distance, ModuleAsteroid m)
+		private void runExperiment(float distance, ModuleAsteroid m, bool silent)
 		{
 			ScienceData data = makeScience(distance, m);
 			if (data == null)
@@ -692,7 +697,8 @@ namespace DMagic.Part_Modules
 				GameEvents.OnExperimentDeployed.Fire(data);
 				scienceReports.Add(data);
 				Deployed = true;
-				ReviewData();
+				if (!silent)
+					ReviewData();
 			}
 		}
 

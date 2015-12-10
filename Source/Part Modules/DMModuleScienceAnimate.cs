@@ -623,7 +623,17 @@ namespace DMagic.Part_Modules
 
 		#region Science Experiment Setup
 
-		new public virtual void DeployExperiment()
+		new public void DeployExperiment()
+		{
+			gatherScienceData();
+		}
+
+		new public void DeployAction(KSPActionParam param)
+		{
+			DeployExperiment();
+		}
+
+		public virtual void gatherScienceData(bool silent = false)
 		{
 			if (canConduct())
 			{
@@ -647,39 +657,34 @@ namespace DMagic.Part_Modules
 							{
 								if (resourceExpCost > 0)
 									resourceOn = true;
-								StartCoroutine("WaitForAnimation", waitForAnimationTime);
+								StartCoroutine("WaitForAnimation", silent);
 							}
 							else
-								runExperiment(getSituation());
+								runExperiment(getSituation(), silent);
 						}
 						else if (resourceExpCost > 0)
 						{
 							resourceOn = true;
-							StartCoroutine("WaitForAnimation", waitForAnimationTime);
+							StartCoroutine("WaitForAnimation", silent);
 						}
-						else runExperiment(getSituation());
+						else runExperiment(getSituation(), silent);
 					}
 				}
-				else runExperiment(getSituation());
+				else runExperiment(getSituation(), silent);
 			}
 			else
 				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		new public void DeployAction(KSPActionParam param)
-		{
-			DeployExperiment();
-		}
-
-		private IEnumerator WaitForAnimation(float waitTime)
+		private IEnumerator WaitForAnimation(bool s)
 		{
 			ExperimentSituations vesselSit = getSituation();
-			yield return new WaitForSeconds(waitTime);
+			yield return new WaitForSeconds(waitForAnimationTime);
 			resourceOn = false;
-			runExperiment(vesselSit);
+			runExperiment(vesselSit, s);
 		}
 
-		protected void runExperiment(ExperimentSituations sit)
+		protected void runExperiment(ExperimentSituations sit, bool silent)
 		{
 			ScienceData data = makeScience(scienceBoost, sit);
 			if (data == null)
@@ -692,14 +697,18 @@ namespace DMagic.Part_Modules
 					dataIndex = 0;
 					storedScienceReports.Add(data);
 					Deployed = true;
-					ReviewData();
+					if (!silent)
+						ReviewData();
 				}
 				else
 				{
 					scienceReports.Add(data);
 					if (experimentNumber >= experimentLimit - 1)
 						Deployed = true;
-					initialResultsPage();
+					if (silent)
+						onKeepInitialData(data);
+					else
+						initialResultsPage();
 				}
 				if (keepDeployedMode == 1) retractEvent();
 			}
