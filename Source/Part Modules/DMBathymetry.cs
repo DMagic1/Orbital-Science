@@ -55,8 +55,8 @@ namespace DMagic.Part_Modules
 		private Light blueLight;
 		private Material redLightMat;
 		private Material blueLightMat;
-		private Color redLightColor = new Color(1, 0, 0, 1);
-		private Color blueLightColor = new Color(0, 0, 1, 1);
+		private Color redLightColor = new Color(0.8f, 0.082f, 0.082f, 1);
+		private Color blueLightColor = new Color(0.596f, 0.890f, 0.933f, 1);
 		private Color offColor = new Color();
 
 		public override void OnStart(PartModule.StartState state)
@@ -77,8 +77,15 @@ namespace DMagic.Part_Modules
 			if (blueLightT != null && blueLightT.renderer != null)
 				blueLightMat = blueLightT.renderer.material;
 
+			if (redLight != null)
+				redLight.enabled = false;
+			if (blueLight != null)
+				blueLight.enabled = false;
+
 			if (lightsOn)
 				turnLightsOn();
+			else
+				turnLightsOff();
 		}
 
 		public override void deployEvent()
@@ -98,10 +105,10 @@ namespace DMagic.Part_Modules
 		[KSPAction("Toggle Lights", KSPActionGroup.Light)]
 		public void toggleLights(KSPActionParam param)
 		{
-			if (lightsOn)
-				turnLightsOff();
-			else
+			if (param.type == KSPActionType.Activate)
 				turnLightsOn();
+			else
+				turnLightsOff();
 		}
 
 		[KSPAction("Turn Lights On")]
@@ -153,10 +160,10 @@ namespace DMagic.Part_Modules
 			{
 				timer++;
 
-				if (blueLight != null && blueLight.intensity <= 6)
-					blueLight.intensity += 0.5f;
-				if (redLight != null && redLight.intensity <= 8)
-					redLight.intensity += 0.5f;
+				if (blueLight != null && blueLight.intensity <= 1)
+					blueLight.intensity += 0.0333f;
+				if (redLight != null && redLight.intensity <= 1.5)
+					redLight.intensity += 0.05f;
 
 				setEmissive(redLightMat, redLightColor);
 				setEmissive(blueLightMat, blueLightColor);
@@ -173,9 +180,9 @@ namespace DMagic.Part_Modules
 				timer++;
 
 				if (blueLight != null && blueLight.intensity > 0)
-					blueLight.intensity -= 0.5f;
+					blueLight.intensity -= 0.0333f;
 				if (redLight != null && redLight.intensity > 0)
-					redLight.intensity -= 0.5f;
+					redLight.intensity -= 0.05f;
 
 				setEmissive(redLightMat, offColor);
 				setEmissive(blueLightMat, offColor);
