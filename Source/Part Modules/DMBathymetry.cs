@@ -29,6 +29,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -43,24 +44,41 @@ namespace DMagic.Part_Modules
 		public string redLightName = "redLight";
 		[KSPField]
 		public string blueLightName = "blueLight";
+		[KSPField]
+		public string redLightMaterial = "redLightMaterial";
+		[KSPField]
+		public string blueLightMaterial = "blueLightMaterial";
 		[KSPField(isPersistant = true)]
 		public bool lightsOn = false;
 
 		private Light redLight;
 		private Light blueLight;
+		private Material redLightMat;
+		private Material blueLightMat;
+		private Color redLightColor = new Color(1, 0, 0, 1);
+		private Color blueLightColor = new Color(0, 0, 1, 1);
+		private Color offColor = new Color();
 
 		public override void OnStart(PartModule.StartState state)
 		{
-			redLight = part.FindModelComponent<Light>(redLightName);
-			blueLight = part.FindModelComponent<Light>(blueLightName);
-
 			base.OnStart(state);
-
-			if (lightsOn)
-				turnLightsOn();
 
 			Events["turnLightsOn"].unfocusedRange = interactionRange;
 			Events["turnLightsOff"].unfocusedRange = interactionRange;
+
+			redLight = part.FindModelComponent<Light>(redLightName);
+			blueLight = part.FindModelComponent<Light>(blueLightName);
+
+			Transform redLightT = part.FindModelTransform(redLightMaterial);
+			Transform blueLightT = part.FindModelTransform(blueLightMaterial);
+
+			if (redLightT != null && redLightT.renderer != null)
+				redLightMat = redLightT.renderer.material;
+			if (blueLightT != null && blueLightT.renderer != null)
+				blueLightMat = blueLightT.renderer.material;
+
+			if (lightsOn)
+				turnLightsOn();
 		}
 
 		public override void deployEvent()
@@ -106,10 +124,8 @@ namespace DMagic.Part_Modules
 			Events["turnLightsOn"].active = false;
 			Events["turnLightsOff"].active = true;
 
-			if (redLight != null)
-				redLight.enabled = true;
-			if (blueLight != null)
-				blueLight.enabled = true;
+			StopCoroutine("dimLights");
+			StartCoroutine("brightenLights");
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Turn Lights Off", guiActiveEditor = true, guiActiveUnfocused = true, externalToEVAOnly = true, active = false)]
@@ -120,10 +136,68 @@ namespace DMagic.Part_Modules
 			Events["turnLightsOn"].active = true;
 			Events["turnLightsOff"].active = false;
 
+			StopCoroutine("brightenLights");
+			StartCoroutine("dimLights");
+		}
+
+		private IEnumerator brightenLights()
+		{
+			int timer = 0;
+
+			if (redLight != null)
+				redLight.enabled = true;
+			if (blueLight != null)
+				blueLight.enabled = true;
+
+			while (timer < 30)
+			{
+				timer++;
+
+				if (blueLight != null && blueLight.intensity <= 6)
+					blueLight.intensity += 0.5f;
+				if (redLight != null && redLight.intensity <= 8)
+					redLight.intensity += 0.5f;
+
+				setEmissive(redLightMat, redLightColor);
+				setEmissive(blueLightMat, blueLightColor);
+				yield return null;
+			}
+		}
+
+		private IEnumerator dimLights()
+		{
+			int timer = 0;
+
+			while (timer < 30)
+			{
+				timer++;
+
+				if (blueLight != null && blueLight.intensity > 0)
+					blueLight.intensity -= 0.5f;
+				if (redLight != null && redLight.intensity > 0)
+					redLight.intensity -= 0.5f;
+
+				setEmissive(redLightMat, offColor);
+				setEmissive(blueLightMat, offColor);
+				yield return null;
+			}
+
 			if (redLight != null)
 				redLight.enabled = false;
 			if (blueLight != null)
 				blueLight.enabled = false;
+		}
+
+		private void setEmissive(Material m, Color c)
+		{
+			if (m == null)
+				return;
+
+			Color old = m.GetColor("_EmissiveColor");
+
+			Color target = Color.Lerp(old, c, TimeWarp.deltaTime);
+
+			m.SetColor("_EmissiveColor", target);
 		}
 
 		protected override ExperimentSituations getSituation()
