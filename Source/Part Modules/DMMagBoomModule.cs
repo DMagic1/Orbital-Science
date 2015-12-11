@@ -113,6 +113,23 @@ namespace DMagic.Part_Modules
 
 		#region Update
 
+		public void FixedUpdate()
+		{
+			if (HighLogic.LoadedSceneIsFlight && primaryModule != null)
+			{
+				if (!FlightGlobals.ready)
+					return;
+
+				if (!primaryModule.IsDeployed || !runMagnetometer)
+					return;
+
+				if (TimeWarp.CurrentRate < 15000)
+				{
+					part.RequestResource(resourceToUse, resourceCost * TimeWarp.fixedDeltaTime);
+				}
+			}
+		}
+
 		public void Update()
 		{
 			if (HighLogic.LoadedSceneIsFlight && primaryModule != null)
@@ -130,8 +147,7 @@ namespace DMagic.Part_Modules
 					if (primaryModule.IsDeployed && runMagnetometer)
 					{
 						CelestialBody planetID = vessel.mainBody;
-						int ID = planetID.flightGlobalsIndex;
-						part.RequestResource(resourceToUse, resourceCost * TimeWarp.deltaTime);
+						int ID = planetID.flightGlobalsIndex;						
 
 						//double latDeg; // = (vessel.latitude + 90 + 180) % 180 - 90;
 						//double lonDeg; // = (vessel.longitude + 180 + 360) % 360 - 180;

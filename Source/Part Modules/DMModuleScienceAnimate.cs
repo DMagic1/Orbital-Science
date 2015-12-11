@@ -227,20 +227,6 @@ namespace DMagic.Part_Modules
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				if (resourceOn)
-				{
-					if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
-					{
-						float cost = resourceExpCost * Time.deltaTime;
-						if (part.RequestResource(resourceExperiment, cost) < cost)
-						{
-							StopCoroutine("WaitForAnimation");
-							resourceOn = false;
-							ScreenMessages.PostScreenMessage("Not enough " + resourceExperiment + ", shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
-							if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
-						}
-					}
-				}
 				//Durrrr, gameEvents sure are helpful....
 				if (Inoperable)
 					lastInOperableState = true;
@@ -262,6 +248,27 @@ namespace DMagic.Part_Modules
 					if (keepDeployedMode == 0) retractEvent();
 				}
 				eventsCheck();
+			}
+		}
+
+		private void FixedUpdate()
+		{
+			if (HighLogic.LoadedSceneIsFlight)
+			{
+				if (resourceOn)
+				{
+					if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
+					{
+						float cost = resourceExpCost * TimeWarp.fixedDeltaTime;
+						if (part.RequestResource(resourceExperiment, cost) < cost)
+						{
+							StopCoroutine("WaitForAnimation");
+							resourceOn = false;
+							ScreenMessages.PostScreenMessage("Not enough " + resourceExperiment + ", shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
+							if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
+						}
+					}
+				}
 			}
 		}
 
@@ -897,7 +904,7 @@ namespace DMagic.Part_Modules
 				sub.scienceCap = scienceExp.scienceCap * sub.subjectValue;
 			}
 
-			data = new ScienceData(scienceExp.baseValue * sub.dataScale, xmitDataScalar, 1f, sub.id, sub.title);
+			data = new ScienceData(scienceExp.baseValue * sub.dataScale, xmitDataScalar, 1f, sub.id, sub.title, false, part.flightID);
 
 			return data;
 		}
@@ -1127,6 +1134,11 @@ namespace DMagic.Part_Modules
 			ReviewData();
 		}
 
+		void IScienceDataContainer.ReturnData(ScienceData data)
+		{
+			ReturnData(data);
+		}
+
 		void IScienceDataContainer.ReviewDataItem(ScienceData data)
 		{
 			ReviewData();
@@ -1135,6 +1147,30 @@ namespace DMagic.Part_Modules
 		void IScienceDataContainer.DumpData(ScienceData data)
 		{
 			DumpData(data);
+		}
+
+		new public void ReturnData(ScienceData data)
+		{
+			if (data == null)
+				return;
+
+			storedScienceReports.Add(data);
+
+			experimentsReturned--;
+
+			if (experimentsReturned < 0)
+				experimentsReturned = 0;
+
+			Inoperable = false;
+
+
+			if (experimentLimit <= 1)
+				Deployed = true;
+			else
+			{
+				if (experimentNumber >= experimentLimit - 1)
+					Deployed = true;
+			}
 		}
 
 		private void DumpAllData(List<ScienceData> data)

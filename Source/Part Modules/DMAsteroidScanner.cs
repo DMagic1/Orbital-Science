@@ -765,7 +765,7 @@ namespace DMagic.Part_Modules
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
 
-			data = new ScienceData(multiplier * exp.baseValue * sub.dataScale, transmitValue, 0f, sub.id, dataTitle);
+			data = new ScienceData(multiplier * exp.baseValue * sub.dataScale, transmitValue, 0f, sub.id, dataTitle, false, part.flightID);
 
 			return data;
 		}
@@ -870,6 +870,16 @@ namespace DMagic.Part_Modules
 		public void ReviewDataItem(ScienceData data)
 		{
 			ReviewData();
+		}
+
+		public void ReturnData(ScienceData data)
+		{
+			if (data == null)
+				return;
+
+			scienceReports.Add(data);
+			Inoperable = false;
+			Deployed = true;
 		}
 
 		public bool IsRerunnable()
