@@ -258,7 +258,22 @@ namespace DMagic.Part_Modules
 
 		private void getScienceData(bool sensorOnly, bool asteroid, bool silent)
 		{
-			ScienceData data = DMSeismicHandler.makeData(values.getBestHammer(), exp, experimentID, sensorOnly, asteroid);
+			ScienceData data = null;			
+
+			if (asteroid && values.getBestHammer().Hammer)
+			{
+				DMSeismicHammer hammer = vessel.FindPartModulesImplementing<DMSeismicHammer>().FirstOrDefault();
+
+				if (hammer == null)
+					data = DMSeismicHandler.makeData(values.getBestHammer(), exp, experimentID, sensorOnly, asteroid);
+				else
+				{
+					hammer.DeployExperiment();
+					return;
+				}
+			}
+			else
+				data = DMSeismicHandler.makeData(values.getBestHammer(), exp, experimentID, sensorOnly, asteroid);
 
 			if (data == null)
 				return;
