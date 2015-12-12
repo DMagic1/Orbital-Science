@@ -200,7 +200,7 @@ namespace DMagic.Part_Modules
 				setEmissive(scoreLightFour, offColor);
 				setEmissive(scoreLightFive, offColor);
 			}
-			else if (values.Score < 0.41f)
+			else if (values.Score < 0.21f)
 			{
 				setEmissive(scoreLightOne, redLight);
 				setEmissive(scoreLightTwo, offColor);
@@ -347,7 +347,10 @@ namespace DMagic.Part_Modules
 		private IEnumerator RunThumper()
 		{
 			bool showData = silentRun;
+			bool dry = dryRun;
 			silentRun = false;
+			dryRun = true;
+
 			float distance = 0f;
 
 			float angle = 0;
@@ -460,7 +463,6 @@ namespace DMagic.Part_Modules
 				//If no impact is detected within the distance limit stop the animation, reverse the rotation, and cancel the coroutine
 				DMUtils.DebugLog("Hammer Failed: Distance: {0:N3}", distance);
 				animator(-1f, 1f, Anim, hammerAnimation);
-				dryRun = true;
 
 				ScreenMessages.PostScreenMessage("Seismic Hammer can't impact the surface from here...", 6f, ScreenMessageStyle.UPPER_CENTER);
 
@@ -498,7 +500,6 @@ namespace DMagic.Part_Modules
 			{
 				DMUtils.DebugLog("Hammer Failed: Distance To Close: {0:N3}", distance);
 				animator(-1f, 1f, Anim, hammerAnimation);
-				dryRun = true;
 
 				ScreenMessages.PostScreenMessage("Seismic Hammer is too close to the surface...", 6f, ScreenMessageStyle.UPPER_CENTER);
 
@@ -551,10 +552,8 @@ namespace DMagic.Part_Modules
 				yield return null;
 
 			//If this is a real run gather science data, then reset the flag
-			if (!dryRun)
+			if (!dry)
 				getScienceData(values.OnAsteroid, showData);
-
-			dryRun = true;
 
 			//After the experiment has been collected reverse the rotation and translation
 			if (angle > 0)
