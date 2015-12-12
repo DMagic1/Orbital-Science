@@ -129,7 +129,7 @@ namespace DMagic.Part_Modules
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
-		private const string bodyNameFixed = "Eeloo";
+		private string bodyNameFixed = "Eeloo";
 		private bool lastInOperableState = false;
 		protected float scienceBoost = 1f;
 		protected string failMessage = "";
@@ -331,8 +331,8 @@ namespace DMagic.Part_Modules
 			{
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
 			}
-			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
-				FlightGlobals.Bodies[16].bodyName = bodyNameFixed;
+			if (FlightGlobals.Bodies.Count >= 17)
+				bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
 			labDataBoost = xmitDataScalar / 2;
 		}
 

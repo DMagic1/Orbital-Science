@@ -77,7 +77,7 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public string usageReqMessage = "";
 
-		private const string asteroidBodyNameFixed = "Eeloo";
+		private string asteroidBodyNameFixed = "Eeloo";
 		private const string baseTransformName = "DishBaseTransform";
 		private const string transformName = "DishTransform";
 		private const string transformRotatorName = "DishArmTransform";
@@ -127,6 +127,9 @@ namespace DMagic.Part_Modules
 			dishBase = part.FindModelTransform(baseTransformName);
 			dish = part.FindModelTransform(transformName);
 			dishArm = part.FindModelTransform(transformRotatorName);
+
+			if (FlightGlobals.Bodies.Count >= 17)
+				asteroidBodyNameFixed = FlightGlobals.Bodies[16].bodyName;
 		}
 
 		public override void OnSave(ConfigNode node)

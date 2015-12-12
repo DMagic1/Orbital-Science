@@ -70,7 +70,8 @@ namespace DMagic
 		{
 			instance = this;
 
-			bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
+			if (FlightGlobals.Bodies.Count >= 17)
+				bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
 
 			StartCoroutine(loadSensors());
 		}
