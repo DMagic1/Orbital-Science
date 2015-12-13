@@ -70,6 +70,8 @@ namespace DMagic
 		{
 			instance = this;
 
+			GameEvents.onPartDie.Add(onPartDestroyed);
+
 			if (FlightGlobals.Bodies.Count >= 17)
 				bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
 
@@ -78,7 +80,7 @@ namespace DMagic
 
 		private void OnDestroy()
 		{
-
+			GameEvents.onPartDie.Remove(onPartDestroyed);
 		}
 
 		private void Update()
@@ -143,7 +145,7 @@ namespace DMagic
 			}
 		}
 
-		private void addLoadedSeismometer(uint id, IDMSeismometer sensor)
+		public void addLoadedSeismometer(uint id, IDMSeismometer sensor)
 		{
 			if (sensor.GetType() == typeof(DMSeismicSensor))
 			{
@@ -165,7 +167,7 @@ namespace DMagic
 			}
 		}
 
-		private void addProtoSeismometer(uint id, ProtoPartSnapshot pp, ProtoPartModuleSnapshot pm)
+		public void addProtoSeismometer(uint id, ProtoPartSnapshot pp, ProtoPartModuleSnapshot pm)
 		{
 			if (pm.moduleName == "DMSeismicSensor")
 			{
@@ -183,6 +185,27 @@ namespace DMagic
 					hammers.Add(id, v);
 				}
 			}
+		}
+
+		public void removeSeismometer(uint id)
+		{
+			if (seismometers.ContainsKey(id))
+				seismometers.Remove(id);
+		}
+
+		public void removeHammer(uint id)
+		{
+			if (hammers.ContainsKey(id))
+				hammers.Remove(id);
+		}
+
+		private void onPartDestroyed(Part p)
+		{
+			if (p == null)
+				return;
+
+			removeSeismometer(p.flightID);
+			removeHammer(p.flightID);
 		}
 
 		public DMSeismometerValues getSeismicSensor(uint id)
@@ -329,7 +352,7 @@ namespace DMagic
 			pod.removeSensor(hammer.ID);
 		}
 
-		public static ScienceData makeData(DMSeismometerValues sensor, ScienceExperiment exp, string expID, bool seismometerOnly, bool asteroid)
+		public static ScienceData makeData(DMSeismometerValues sensor, float score, ScienceExperiment exp, string expID, bool seismometerOnly, bool asteroid)
 		{
 			if (sensor == null || exp == null || sensor.VesselRef == null || sensor.VesselRef.mainBody == null)
 				return null;
@@ -355,7 +378,7 @@ namespace DMagic
 				return null;
 			}
 
-			float science = exp.baseValue * sub.dataScale * sensor.Score;
+			float science = exp.baseValue * sub.dataScale * score;
 
 			if (asteroid) 
 			{
