@@ -30,6 +30,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -71,6 +72,9 @@ namespace DMagic.Part_Modules
 			Fields["scoreString"].guiName = "Experiment Value";
 
 			GameEvents.onVesselWasModified.Add(onVesselModified);
+			GameEvents.onStageSeparation.Add(onDecouple);
+			GameEvents.onVesselCreate.Add(onNewVessel);
+			GameEvents.onPartCouple.Add(onCouple);
 
 			Transform l1 = part.FindModelTransform("SignalLight_004");
 			Transform l2 = part.FindModelTransform("SignalLight_003");
@@ -117,6 +121,77 @@ namespace DMagic.Part_Modules
 		private void OnDestroy()
 		{
 			GameEvents.onVesselWasModified.Remove(onVesselModified);
+			GameEvents.onStageSeparation.Remove(onDecouple);
+			GameEvents.onVesselCreate.Remove(onNewVessel);
+			GameEvents.onPartCouple.Remove(onCouple);
+		}
+
+		private void onDecouple(EventReport e)
+		{
+			if (e.origin != part)
+				return;
+
+			if (values == null)
+				return;
+
+			if (!values.Armed)
+				deployEvent();
+		}
+
+		private void onCouple(GameEvents.FromToAction<Part, Part> p)
+		{
+			if (p.from == null)
+				return;
+
+			if (p.to == null)
+				return;
+
+			if (p.from != part)
+				return;
+
+			DMUtils.DebugLog("This part coupled...");
+
+			StartCoroutine(waitOnVessel());
+		}
+
+		private IEnumerator waitOnVessel()
+		{
+			int timer = 0;
+
+			DMSeismicHandler.Instance.removeSeismometer(part.flightID);
+
+			while (timer < 20)
+			{
+				DMUtils.DebugLog("Waiting on vessel... Timer: {0}", timer);
+				timer++;
+				yield return null;
+			}
+			
+			DMSeismicHandler.Instance.addLoadedSeismometer(part.flightID, this);
+		}
+
+		private void onNewVessel(Vessel v)
+		{
+			DMUtils.DebugLog("Checking New Vessel...");
+
+			if (v == null)
+				return;
+
+			if (!v.loaded)
+				return;
+
+			if (v != vessel)
+				return;
+
+			if (values == null)
+				return;
+
+			DMUtils.DebugLog("Assigning New Vessel Ref To Seismic Sensor: {0}", v.vesselName);
+
+			values.VesselRef = v;
+
+			if (!values.Armed)
+				deployEvent();
 		}
 
 		private void onVesselModified(Vessel v)
@@ -126,6 +201,11 @@ namespace DMagic.Part_Modules
 
 			if (vessel != v)
 				return;
+
+			if (values == null)
+				return;
+
+			DMUtils.DebugLog("This vessel modified...");
 
 			values.OnAsteroid = DMAsteroidScience.AsteroidGrappled;
 		}
@@ -140,6 +220,8 @@ namespace DMagic.Part_Modules
 			if (values == null)
 			{
 				values = DMSeismicHandler.Instance.getSeismicSensor(part.flightID);
+				if (values != null)
+					values.OnAsteroid = DMAsteroidScience.AsteroidGrappled;
 				return;
 			}
 
@@ -258,14 +340,14 @@ namespace DMagic.Part_Modules
 
 		private void getScienceData(bool sensorOnly, bool asteroid, bool silent)
 		{
-			ScienceData data = null;			
+			ScienceData data = null;
 
-			if (asteroid && values.getBestHammer().Hammer)
+			if (asteroid)
 			{
 				DMSeismicHammer hammer = vessel.FindPartModulesImplementing<DMSeismicHammer>().FirstOrDefault();
 
 				if (hammer == null)
-					data = DMSeismicHandler.makeData(values.getBestHammer(), exp, experimentID, sensorOnly, asteroid);
+					data = DMSeismicHandler.makeData(values, values.Score, exp, experimentID, sensorOnly, asteroid);
 				else
 				{
 					hammer.DeployExperiment();
@@ -273,7 +355,10 @@ namespace DMagic.Part_Modules
 				}
 			}
 			else
-				data = DMSeismicHandler.makeData(values.getBestHammer(), exp, experimentID, sensorOnly, asteroid);
+			{
+				DMSeismometerValues v = values.getBestHammer();
+				data = DMSeismicHandler.makeData(v, v.Score, exp, experimentID, sensorOnly, asteroid);
+			}
 
 			if (data == null)
 				return;
