@@ -179,7 +179,7 @@ namespace DMagic
 								angleScore = 0.05f;
 							else
 							{
-								float angleDelta = angleDifference(v.y, (float)farSensorAngle);
+								float angleDelta = Math.Abs(angleDifference(v.y, (float)farSensorAngle));
 
 								if (angleDelta < DMSeismicHandler.podMinAngle)
 									angleScore = 0f;
@@ -212,7 +212,7 @@ namespace DMagic
 							angleScore = 0.05f;
 						else
 						{
-							float angleDelta = angleDifference(v.y, (float)nearSensorAngle);
+							float angleDelta = Math.Abs(angleDifference(v.y, (float)nearSensorAngle));
 
 							if (angleDelta < DMSeismicHandler.podMinAngle)
 								angleScore = 0f;
@@ -328,6 +328,13 @@ namespace DMagic
 		public Vessel VesselRef
 		{
 			get { return vesselRef; }
+			set
+			{
+				if (value == null)
+					return;
+
+				vesselRef = value;
+			}
 		}
 	}
 }
