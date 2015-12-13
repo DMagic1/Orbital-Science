@@ -162,7 +162,6 @@ namespace DMagic.Part_Modules
 
 			while (timer < 20)
 			{
-				DMUtils.DebugLog("Waiting on vessel... Timer: {0}", timer);
 				timer++;
 				yield return null;
 			}
@@ -172,8 +171,6 @@ namespace DMagic.Part_Modules
 
 		private void onNewVessel(Vessel v)
 		{
-			DMUtils.DebugLog("Checking New Vessel...");
-
 			if (v == null)
 				return;
 
