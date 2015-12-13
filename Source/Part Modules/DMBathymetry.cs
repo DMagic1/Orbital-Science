@@ -126,7 +126,7 @@ namespace DMagic.Part_Modules
 			float redNow = redLight.intensity;
 			float blueNow = blueLight.intensity;
 			float redNext = 1 * lightModifier;
-			float blueNext = 1.5f * lightModifier;
+			float blueNext = 1 * lightModifier;
 
 			redNow = Mathf.Lerp(redNow, redNext, TimeWarp.fixedDeltaTime);
 			redLight.intensity = redNow;
@@ -209,8 +209,8 @@ namespace DMagic.Part_Modules
 
 				if (blueLight != null && blueLight.intensity <= 1)
 					blueLight.intensity += 0.0333f;
-				if (redLight != null && redLight.intensity <= 1.5)
-					redLight.intensity += 0.05f;
+				if (redLight != null && redLight.intensity <= 1)
+					redLight.intensity += 0.0333f;
 
 				setEmissive(redLightMat, redLightColor);
 				setEmissive(blueLightMat, blueLightColor);
@@ -229,7 +229,7 @@ namespace DMagic.Part_Modules
 				if (blueLight != null && blueLight.intensity > 0)
 					blueLight.intensity -= 0.0333f;
 				if (redLight != null && redLight.intensity > 0)
-					redLight.intensity -= 0.05f;
+					redLight.intensity -= 0.0333f;
 
 				setEmissive(redLightMat, offColor);
 				setEmissive(blueLightMat, offColor);
