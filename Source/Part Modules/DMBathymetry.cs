@@ -48,6 +48,10 @@ namespace DMagic.Part_Modules
 		public string redLightMaterial = "redLightMaterial";
 		[KSPField]
 		public string blueLightMaterial = "blueLightMaterial";
+		[KSPField]
+		public string lightResource = "ElectricCharge";
+		[KSPField]
+		public float lightResourceCost = 0.04f;
 		[KSPField(isPersistant = true)]
 		public bool lightsOn = false;
 
@@ -95,6 +99,40 @@ namespace DMagic.Part_Modules
 			s += "\nDepth Threshold: " + depthThreshold.ToString("N0") + "m";
 
 			return s;
+		}
+
+		private void FixedUpdate()
+		{
+			if (!HighLogic.LoadedSceneIsFlight)
+				return;
+
+			if (redLight == null || blueLight == null)
+				return;
+
+			if (!lightsOn || lightResourceCost <= 0)
+				return;
+
+			if (PartResourceLibrary.Instance.GetDefinition(lightResource) == null)
+				return;
+
+			float cost = lightResourceCost * TimeWarp.fixedDeltaTime;
+			float available = part.RequestResource(lightResource, cost);
+
+			float lightModifier = 0;
+
+			if (available != 0)
+				lightModifier = cost / available;
+
+			float redNow = redLight.intensity;
+			float blueNow = blueLight.intensity;
+			float redNext = 1 * lightModifier;
+			float blueNext = 1.5f * lightModifier;
+
+			redNow = Mathf.Lerp(redNow, redNext, TimeWarp.fixedDeltaTime);
+			redLight.intensity = redNow;
+
+			blueNow = Mathf.Lerp(blueNow, blueNext, TimeWarp.fixedDeltaTime);
+			blueLight.intensity = blueNow;
 		}
 
 		public override void deployEvent()
