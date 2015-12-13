@@ -44,6 +44,8 @@ namespace DMagic.Part_Modules
 		public float baseExperimentValue = 0.4f;
 		[KSPField(guiActive = false)]
 		public string scoreString = "0%";
+		[KSPField]
+		public float scaleModifier = 1f;
 
 		private Animation Anim;
 		private string failMessage;
@@ -91,6 +93,7 @@ namespace DMagic.Part_Modules
 			Fields["scoreString"].guiName = "Experiment Value";
 
 			GameEvents.onVesselWasModified.Add(onVesselModified);
+			GameEvents.onPartCouple.Add(onCouple);
 
 			Transform l1 = part.FindModelTransform("SignalLight_004");
 			Transform l2 = part.FindModelTransform("SignalLight_003");
@@ -140,6 +143,38 @@ namespace DMagic.Part_Modules
 		private void OnDestroy()
 		{
 			GameEvents.onVesselWasModified.Remove(onVesselModified);
+			GameEvents.onPartCouple.Remove(onCouple);
+		}
+
+		private void onCouple(GameEvents.FromToAction<Part, Part> p)
+		{
+			if (p.from == null)
+				return;
+
+			if (p.to == null)
+				return;
+
+			if (p.from != part)
+				return;
+
+			DMUtils.DebugLog("This hammer coupled...");
+
+			StartCoroutine(waitOnVessel());
+		}
+
+		private IEnumerator waitOnVessel()
+		{
+			int timer = 0;
+
+			DMSeismicHandler.Instance.removeSeismometer(part.flightID);
+
+			while (timer < 20)
+			{
+				timer++;
+				yield return null;
+			}
+
+			DMSeismicHandler.Instance.addLoadedSeismometer(part.flightID, this);
 		}
 
 		private void onVesselModified(Vessel v)
@@ -149,6 +184,11 @@ namespace DMagic.Part_Modules
 
 			if (vessel != v)
 				return;
+
+			if (values == null)
+				return;
+
+			DMUtils.DebugLog("This vessel modified...");
 
 			values.OnAsteroid = DMAsteroidScience.AsteroidGrappled;
 		}
@@ -163,6 +203,8 @@ namespace DMagic.Part_Modules
 			if (values == null)
 			{
 				values = DMSeismicHandler.Instance.getSeismicHammer(part.flightID);
+				if (values != null)
+					values.OnAsteroid = DMAsteroidScience.AsteroidGrappled;
 				return;
 			}
 
@@ -351,10 +393,13 @@ namespace DMagic.Part_Modules
 			silentRun = false;
 			dryRun = true;
 
+			float s = values.Score;
+
 			float distance = 0f;
 
 			float angle = 0;
-			float originalAngle = RotationTransform.localEulerAngles.x;
+			Vector3 originalRotation = RotationTransform.localEulerAngles;
+			float originalAngle = originalRotation.x;
 			Vector3d hammerLine = new Vector3d();
 
 			if (values.OnAsteroid)
@@ -435,7 +480,7 @@ namespace DMagic.Part_Modules
 				while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.30f && RotationTransform.localEulerAngles.x < newAngle)
 				{
 					//DMUtils.DebugLog("Rotation positive: {0:N7}", RotationTransform.localEulerAngles.x);
-					rotation(angle, TimeWarp.deltaTime * 28f);
+					rotation(angle, TimeWarp.deltaTime * 30f);
 					yield return null;
 				}
 			}
@@ -444,16 +489,16 @@ namespace DMagic.Part_Modules
 				while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.30f && fixAngle(RotationTransform.localEulerAngles.x) > newAngle)
 				{
 					//DMUtils.DebugLog("Rotation negative: {0:N7}", RotationTransform.localEulerAngles.x);
-					rotation(angle, TimeWarp.deltaTime * 28f);
+					rotation(angle, TimeWarp.deltaTime * 30f);
 					yield return null;
 				}
 			}
 
-			while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.33f)
+			while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.32f)
 				yield return null;
 
 			//Take any changes to the rescale factor into account *need to add tweakscale reference too*
-			float scale = part.rescaleFactor;
+			float scale = part.rescaleFactor * scaleModifier;
 
 			DMUtils.DebugLog("Checking Distance To Terrain...");
 
@@ -470,7 +515,7 @@ namespace DMagic.Part_Modules
 				{
 					while (Anim.IsPlaying(hammerAnimation) && RotationTransform.localEulerAngles.x > originalAngle)
 					{
-						rotation(0, TimeWarp.deltaTime * 30f);
+						rotation(originalAngle, TimeWarp.deltaTime * 30f);
 						yield return null;
 					}
 				}
@@ -478,11 +523,11 @@ namespace DMagic.Part_Modules
 				{
 					while (Anim.IsPlaying(hammerAnimation) && fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
 					{
-						rotation(0, TimeWarp.deltaTime * 30f);
+						rotation(originalAngle, TimeWarp.deltaTime * 30f);
 						yield return null;
 					}
 				}
-				rotation(0);
+				RotationTransform.localEulerAngles = originalRotation;
 
 				yield break;
 			}
@@ -496,7 +541,7 @@ namespace DMagic.Part_Modules
 			distance /= scale;
 
 			//If the hammer is to close to the surface we risk flipping the vessel over, so check for a minimum distance here
-			if (distance < -0.4f)
+			if (!values.OnAsteroid && distance < -0.5f)
 			{
 				DMUtils.DebugLog("Hammer Failed: Distance To Close: {0:N3}", distance);
 				animator(-1f, 1f, Anim, hammerAnimation);
@@ -507,7 +552,7 @@ namespace DMagic.Part_Modules
 				{
 					while (Anim.IsPlaying(hammerAnimation) && RotationTransform.localEulerAngles.x > originalAngle)
 					{
-						rotation(0, TimeWarp.deltaTime * 30f);
+						rotation(originalAngle, TimeWarp.deltaTime * 30f);
 						yield return null;
 					}
 				}
@@ -515,11 +560,11 @@ namespace DMagic.Part_Modules
 				{
 					while (Anim.IsPlaying(hammerAnimation) && fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
 					{
-						rotation(0, TimeWarp.deltaTime * 30f);
+						rotation(originalAngle, TimeWarp.deltaTime * 30f);
 						yield return null;
 					}
 				}
-				rotation(0);
+				RotationTransform.localEulerAngles = originalRotation;
 
 				yield break;
 			}
@@ -553,7 +598,7 @@ namespace DMagic.Part_Modules
 
 			//If this is a real run gather science data, then reset the flag
 			if (!dry)
-				getScienceData(values.OnAsteroid, showData);
+				getScienceData(values.OnAsteroid, showData, s);
 
 			//After the experiment has been collected reverse the rotation and translation
 			if (angle > 0)
@@ -568,7 +613,7 @@ namespace DMagic.Part_Modules
 							extension(Vector3.forward, TimeWarp.deltaTime);
 					}
 					if (RotationTransform.localEulerAngles.x > originalAngle)
-						rotation(0, TimeWarp.deltaTime * 20f);
+						rotation(originalAngle, TimeWarp.deltaTime * 30f);
 					yield return null;
 				}
 			}
@@ -584,7 +629,7 @@ namespace DMagic.Part_Modules
 							extension(Vector3.forward, TimeWarp.deltaTime);
 					}
 					if (fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-						rotation(0, TimeWarp.deltaTime * 20f);
+						rotation(originalAngle, TimeWarp.deltaTime * 30f);
 					yield return null;
 				}
 			}
@@ -593,7 +638,7 @@ namespace DMagic.Part_Modules
 				yield return null;
 
 			//Reset the transform positions after the primary animation has completed; this corrects and timestep errors
-			rotation(0);
+			RotationTransform.localEulerAngles = originalRotation;
 			ExtensionTransform.localPosition = originalPosition;
 		}
 
@@ -651,9 +696,9 @@ namespace DMagic.Part_Modules
 			return false;
 		}
 
-		private void getScienceData(bool asteroid, bool silent)
+		private void getScienceData(bool asteroid, bool silent, float score)
 		{
-			ScienceData data = DMSeismicHandler.makeData(values, exp, experimentID, false, asteroid);
+			ScienceData data = DMSeismicHandler.makeData(values, score, exp, experimentID, false, asteroid);
 
 			if (data == null)
 				return;
