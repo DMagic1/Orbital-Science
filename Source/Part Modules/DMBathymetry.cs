@@ -88,6 +88,15 @@ namespace DMagic.Part_Modules
 				turnLightsOff();
 		}
 
+		public override string GetInfo()
+		{
+			string s = base.GetInfo();
+
+			s += "\nDepth Threshold: " + depthThreshold.ToString("N0") + "m";
+
+			return s;
+		}
+
 		public override void deployEvent()
 		{
 			base.deployEvent();
