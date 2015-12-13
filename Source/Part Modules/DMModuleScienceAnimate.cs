@@ -129,7 +129,7 @@ namespace DMagic.Part_Modules
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
-		private const string bodyNameFixed = "Eeloo";
+		private string bodyNameFixed = "Eeloo";
 		private bool lastInOperableState = false;
 		protected float scienceBoost = 1f;
 		protected string failMessage = "";
@@ -233,22 +233,27 @@ namespace DMagic.Part_Modules
 				else if (lastInOperableState)
 				{
 					lastInOperableState = false;
-					if (experimentLimit != 0)
-					{
-						if (!string.IsNullOrEmpty(sampleEmptyAnim))
-							secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-						else if (!string.IsNullOrEmpty(sampleAnim))
-							secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-						if (!string.IsNullOrEmpty(indicatorAnim))
-							secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
-					}
-					experimentNumber = 0;
-					experimentsReturned = 0;
-
-					if (keepDeployedMode == 0) retractEvent();
+					onLabReset();
 				}
 				eventsCheck();
 			}
+		}
+
+		protected virtual void onLabReset()
+		{
+			if (experimentLimit != 0)
+			{
+				if (!string.IsNullOrEmpty(sampleEmptyAnim))
+					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+				else if (!string.IsNullOrEmpty(sampleAnim))
+					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+				if (!string.IsNullOrEmpty(indicatorAnim))
+					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+			}
+			experimentNumber = 0;
+			experimentsReturned = 0;
+
+			if (keepDeployedMode == 0) retractEvent();
 		}
 
 		private void FixedUpdate()
@@ -326,8 +331,8 @@ namespace DMagic.Part_Modules
 			{
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
 			}
-			if (FlightGlobals.Bodies[16].bodyName != "Eeloo")
-				FlightGlobals.Bodies[16].bodyName = bodyNameFixed;
+			if (FlightGlobals.Bodies.Count >= 17)
+				bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
 			labDataBoost = xmitDataScalar / 2;
 		}
 
@@ -578,6 +583,10 @@ namespace DMagic.Part_Modules
 		new public void CollectDataExternalEvent()
 		{
 			List<ModuleScienceContainer> EVACont = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
+
+			if (EVACont.Count <= 0)
+				return;
+
 			if (storedScienceReports.Count > 0)
 			{
 				if (EVACont.First().StoreData(new List<IScienceDataContainer> { this }, false))
@@ -614,7 +623,17 @@ namespace DMagic.Part_Modules
 
 		#region Science Experiment Setup
 
-		new public virtual void DeployExperiment()
+		new public void DeployExperiment()
+		{
+			gatherScienceData();
+		}
+
+		new public void DeployAction(KSPActionParam param)
+		{
+			DeployExperiment();
+		}
+
+		public virtual void gatherScienceData(bool silent = false)
 		{
 			if (canConduct())
 			{
@@ -638,39 +657,34 @@ namespace DMagic.Part_Modules
 							{
 								if (resourceExpCost > 0)
 									resourceOn = true;
-								StartCoroutine("WaitForAnimation", waitForAnimationTime);
+								StartCoroutine("WaitForAnimation", silent);
 							}
 							else
-								runExperiment(getSituation());
+								runExperiment(getSituation(), silent);
 						}
 						else if (resourceExpCost > 0)
 						{
 							resourceOn = true;
-							StartCoroutine("WaitForAnimation", waitForAnimationTime);
+							StartCoroutine("WaitForAnimation", silent);
 						}
-						else runExperiment(getSituation());
+						else runExperiment(getSituation(), silent);
 					}
 				}
-				else runExperiment(getSituation());
+				else runExperiment(getSituation(), silent);
 			}
 			else
 				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		new public void DeployAction(KSPActionParam param)
-		{
-			DeployExperiment();
-		}
-
-		private IEnumerator WaitForAnimation(float waitTime)
+		private IEnumerator WaitForAnimation(bool s)
 		{
 			ExperimentSituations vesselSit = getSituation();
-			yield return new WaitForSeconds(waitTime);
+			yield return new WaitForSeconds(waitForAnimationTime);
 			resourceOn = false;
-			runExperiment(vesselSit);
+			runExperiment(vesselSit, s);
 		}
 
-		protected void runExperiment(ExperimentSituations sit)
+		protected void runExperiment(ExperimentSituations sit, bool silent)
 		{
 			ScienceData data = makeScience(scienceBoost, sit);
 			if (data == null)
@@ -683,28 +697,49 @@ namespace DMagic.Part_Modules
 					dataIndex = 0;
 					storedScienceReports.Add(data);
 					Deployed = true;
-					ReviewData();
+					if (!silent)
+						ReviewData();
 				}
 				else
 				{
 					scienceReports.Add(data);
 					if (experimentNumber >= experimentLimit - 1)
 						Deployed = true;
-					initialResultsPage();
+					if (silent)
+						onKeepInitialData(data);
+					else
+						initialResultsPage();
 				}
 				if (keepDeployedMode == 1) retractEvent();
 			}
 		}
 
-		internal float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
+		protected virtual float fixSubjectValue(ExperimentSituations s, float f, float boost, CelestialBody body)
 		{
 			float subV = f;
-			if (s == ExperimentSituations.SrfLanded) subV = body.scienceValues.LandedDataValue;
-			else if (s == ExperimentSituations.SrfSplashed) subV = body.scienceValues.SplashedDataValue;
-			else if (s == ExperimentSituations.FlyingLow) subV = body.scienceValues.FlyingLowDataValue;
-			else if (s == ExperimentSituations.FlyingHigh) subV = body.scienceValues.FlyingHighDataValue;
-			else if (s == ExperimentSituations.InSpaceLow) subV = body.scienceValues.InSpaceLowDataValue;
-			else if (s == ExperimentSituations.InSpaceHigh) subV = body.scienceValues.InSpaceHighDataValue;
+
+			switch (s)
+			{
+				case ExperimentSituations.SrfLanded:
+					subV = body.scienceValues.LandedDataValue;
+					break;
+				case ExperimentSituations.SrfSplashed:
+					subV = body.scienceValues.SplashedDataValue;
+					break;
+				case ExperimentSituations.FlyingLow:
+					subV = body.scienceValues.FlyingLowDataValue;
+					break;
+				case ExperimentSituations.FlyingHigh:
+					subV = body.scienceValues.FlyingHighDataValue;
+					break;
+				case ExperimentSituations.InSpaceLow:
+					subV = body.scienceValues.InSpaceLowDataValue;
+					break;
+				case ExperimentSituations.InSpaceHigh:
+					subV = body.scienceValues.InSpaceHighDataValue;
+					break;
+			}
+
 			return subV * boost;
 		}
 
@@ -833,7 +868,7 @@ namespace DMagic.Part_Modules
 				failMessage = storageFullMessage;
 				return false;
 			}
-			if ((sitMask & (int)getSituation()) == 0)
+			else if ((sitMask & (int)getSituation()) == 0)
 			{
 				failMessage = customFailMessage;
 				return false;
@@ -1163,13 +1198,11 @@ namespace DMagic.Part_Modules
 
 			Inoperable = false;
 
-
 			if (experimentLimit <= 1)
 				Deployed = true;
 			else
 			{
-				if (experimentNumber >= experimentLimit - 1)
-					Deployed = true;
+				Deployed = experimentNumber >= experimentLimit;
 			}
 		}
 

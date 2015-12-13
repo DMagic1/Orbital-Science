@@ -46,6 +46,14 @@ namespace DMagic.Part_Modules
 				sampleAnimator(0f, 0f, 1f);
 		}
 
+		protected override void onLabReset()
+		{
+			base.onLabReset();
+
+			if (IsDeployed)
+				sampleAnimator(-2f, 1f, (anim2[sampleAnim].length / 2f));
+		}
+
 		public override void deployEvent()
 		{
 			if (anim2 != null && anim != null)

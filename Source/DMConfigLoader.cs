@@ -84,7 +84,22 @@ namespace DMagic
 						DMUtils.maxMagneticOffered = 2;
 					if (!int.TryParse(setNode.GetValue("Max_Magnetic_Active"), out DMUtils.maxMagneticActive))
 						DMUtils.maxMagneticActive = 4;
-
+					if (!float.TryParse(setNode.GetValue("Seismic_Near_Pod_Min_Distance"), out DMSeismicHandler.nearPodMinDistance))
+						DMSeismicHandler.nearPodMinDistance = 10;
+					if (!float.TryParse(setNode.GetValue("Seismic_Near_Pod_Max_Distance"), out DMSeismicHandler.nearPodMaxDistance))
+						DMSeismicHandler.nearPodMaxDistance = 2500;
+					if (!float.TryParse(setNode.GetValue("Seismic_Near_Pod_Threshold"), out DMSeismicHandler.nearPodThreshold))
+						DMSeismicHandler.nearPodThreshold = 500;
+					if (!float.TryParse(setNode.GetValue("Seismic_Far_Pod_Min_Distance"), out DMSeismicHandler.farPodMinDistance))
+						DMSeismicHandler.farPodMinDistance = 2500;
+					if (!float.TryParse(setNode.GetValue("Seismic_Far_Pod_Max_Distance"), out DMSeismicHandler.farPodMaxDistance))
+						DMSeismicHandler.farPodMaxDistance = 15000;
+					if (!float.TryParse(setNode.GetValue("Seismic_Far_Pod_Threshold"), out DMSeismicHandler.farPodThreshold))
+						DMSeismicHandler.farPodThreshold = 4000;
+					if (!float.TryParse(setNode.GetValue("Seismic_Pod_Min_Angle"), out DMSeismicHandler.podMinAngle))
+						DMSeismicHandler.podMinAngle = 20;
+					if (!float.TryParse(setNode.GetValue("Seismic_Pod_Angle_Threshold"), out DMSeismicHandler.podAngleThreshold))
+						DMSeismicHandler.podAngleThreshold = 90;
 
 					DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3} ; Deadline Length: {4}",
 						DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty, DMUtils.deadline);
