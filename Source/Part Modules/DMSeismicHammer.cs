@@ -376,6 +376,9 @@ namespace DMagic.Part_Modules
 				return;
 			}
 
+			if (Anim != null && Anim.IsPlaying(hammerAnimation))
+				return;
+
 			if (!IsDeployed)
 				deployEvent();
 
