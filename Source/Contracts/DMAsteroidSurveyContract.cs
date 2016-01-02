@@ -54,8 +54,8 @@ namespace DMagic.Contracts
 			DMAsteroidSurveyContract[] astContracts = ContractSystem.Instance.GetCurrentContracts<DMAsteroidSurveyContract>();
 			int offers = 0;
 			int active = 0;
-			int maxOffers = DMUtils.maxAsteroidOffered;
-			int maxActive = DMUtils.maxAsteroidActive;
+			int maxOffers = DMContractDefs.DMAsteroid.maxOffers;
+			int maxActive = DMContractDefs.DMAsteroid.maxActive;
 
 			for (int i = 0; i < astContracts.Length; i++)
 			{
@@ -82,10 +82,7 @@ namespace DMagic.Contracts
 			hash = DMUtils.sizeHash(size);
 
 			//Make sure that the grappling device is available
-			AvailablePart aPart = PartLoader.getPartInfoByName("GrapplingDevice");
-			if (aPart == null)
-				return false;
-			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+			if (!DMUtils.partAvailable(new List<string>(1) { "GrapplingDevice" }))
 				return false;
 
 			sciList.AddRange(DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Values);
@@ -108,11 +105,25 @@ namespace DMagic.Contracts
 			this.AddParameter(DMcp);
 
 			int limit = 0;
+			int maxRequests = 1;
+
+			switch (prestige)
+			{
+				case ContractPrestige.Trivial:
+					maxRequests = DMContractDefs.DMSurvey.trivialScienceRequests;
+					break;
+				case ContractPrestige.Significant:
+					maxRequests = DMContractDefs.DMSurvey.significantScienceRequests;
+					break;
+				case ContractPrestige.Exceptional:
+					maxRequests = DMContractDefs.DMSurvey.exceptionalScienceRequests;
+					break;
+			}
 
 			//Add in all acceptable paramaters to the contract
 			foreach (DMAsteroidParameter DMAP in newParams)
 			{
-				if (limit > 3 + (int)this.prestige)
+				if (limit > maxRequests)
 					break;
 				if (DMAP != null)
 				{
@@ -164,8 +175,7 @@ namespace DMagic.Contracts
 
 		protected override string GetDescription()
 		{
-			//Return a random asteroid survey backstory; use the same format as generic backstory
-			string story = DMUtils.backStory["asteroid"][rand.Next(0, DMUtils.backStory["asteroid"].Count)];
+			string story = DMContractDefs.DMAsteroid.backStory[rand.Next(0, DMContractDefs.DMAsteroid.backStory.Count)];
 			return string.Format(story, this.agent.Name, hash);
 		}
 
@@ -181,7 +191,8 @@ namespace DMagic.Contracts
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			hash = node.GetValue("Asteroid_Size_Class");
+			node.parse("Asteroid_Size_Class", "Class B");
+
 			if (this.ParameterCount == 0)
 			{
 				DMUtils.Logging("No Parameters Loaded For This Asteroid Contract; Removing Now...");
@@ -198,7 +209,10 @@ namespace DMagic.Contracts
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { "Minmus", "Orbit" }) && GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
+			if (Planetarium.fetch.Home.orbitingBodies.Count < 2)
+				return GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
+			else
+				return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.orbitingBodies[1].name, "Orbit" }) && GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
 		}
 
 		public string AsteroidSize

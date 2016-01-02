@@ -53,8 +53,8 @@ namespace DMagic.Contracts
 			DMSurveyContract[] surveyContracts = ContractSystem.Instance.GetCurrentContracts<DMSurveyContract>();
 			int offers = 0;
 			int active = 0;
-			int maxOffers = DMUtils.maxSurveyOffered;
-			int maxActive = DMUtils.maxSurveyActive;
+			int maxOffers = DMContractDefs.DMSurvey.maxOffers;
+			int maxActive = DMContractDefs.DMSurvey.maxActive;
 
 			for (int i = 0; i < surveyContracts.Length; i++)
 			{
@@ -70,10 +70,7 @@ namespace DMagic.Contracts
 			if (active >= maxActive)
 				return false;
 
-			AvailablePart aPart = PartLoader.getPartInfoByName("dmmagBoom");
-			if (aPart == null)
-				return false;
-			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+			if (!DMUtils.partAvailable(new List<string>(1) { "dmmagBoom" }))
 				return false;
 
 			sciList.AddRange(DMUtils.availableScience[DMScienceType.Space.ToString()].Values);
@@ -113,11 +110,25 @@ namespace DMagic.Contracts
 			this.AddParameter(DMcp);
 
 			int limit = 1;
-
+			int maxRequests = 1;
+			
+			switch(prestige)
+			{
+				case ContractPrestige.Trivial:
+					maxRequests = DMContractDefs.DMSurvey.trivialScienceRequests;
+					break;
+				case ContractPrestige.Significant:
+					maxRequests = DMContractDefs.DMSurvey.significantScienceRequests;
+					break;
+				case ContractPrestige.Exceptional:
+					maxRequests = DMContractDefs.DMSurvey.exceptionalScienceRequests;
+					break;
+			}
+			
 			//Add in all acceptable paramaters to the contract
 			foreach (DMCollectScience DMC in newParams)
 			{
-				if (limit > (3 + (int)this.Prestige))
+				if (limit > maxRequests)
 					break;
 				if (DMC != null)
 				{
@@ -170,7 +181,7 @@ namespace DMagic.Contracts
 
 		protected override string GetDescription()
 		{
-			string story = DMUtils.backStory["survey"][rand.Next(0, DMUtils.backStory["survey"].Count)];
+			string story = DMContractDefs.DMSurvey.backStory[rand.Next(0, DMContractDefs.DMSurvey.backStory.Count)];
 			return string.Format(story, this.agent.Name, "orbital", body.theName);
 		}
 
@@ -186,15 +197,16 @@ namespace DMagic.Contracts
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int target;
-			if (int.TryParse(node.GetValue("Survey_Target"), out target))
-				body = FlightGlobals.Bodies[target];
-			else
+			body = node.parse("Survey_Target", (CelestialBody)null);
+
+			if (body == null)
 			{
+				DMUtils.Logging("Error while loading Orbital Survey target body; removing contract now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
 				return;
 			}
+
 			if (this.ParameterCount == 0)
 			{
 				DMUtils.Logging("No Parameters Loaded For This Survey Contract; Removing Now...");
@@ -211,7 +223,7 @@ namespace DMagic.Contracts
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Orbit" });
+			return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.name, "Orbit" });
 		}
 
 		/// <summary>
@@ -224,8 +236,16 @@ namespace DMagic.Contracts
 			if (c == null || c.GetType() != typeof(DMSurveyContract))
 				return null;
 
-			DMSurveyContract Instance = (DMSurveyContract)c;
-			return Instance.body;
+			try
+			{
+				DMSurveyContract Instance = (DMSurveyContract)c;
+				return Instance.body;
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("Error while accessing DMagic Survey Contract Target Body\n" + e);
+				return null;
+			}
 		}
 
 	}

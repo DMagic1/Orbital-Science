@@ -62,8 +62,8 @@ namespace DMagic.Contracts
 			DMAnomalyContract[] anomContracts = ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>();
 			int offers = 0;
 			int active = 0;
-			int maxOffers = DMUtils.maxAnomalyOffered;
-			int maxActive = DMUtils.maxAnomalyActive;
+			int maxOffers = DMContractDefs.DMAnomaly.maxOffers;
+			int maxActive = DMContractDefs.DMAnomaly.maxActive;
 
 			for (int i = 0; i < anomContracts.Length; i++ )
 			{
@@ -80,10 +80,7 @@ namespace DMagic.Contracts
 				return false;
 
 			//Make sure that the anomaly scanner is available
-			AvailablePart aPart = PartLoader.getPartInfoByName("dmAnomScanner");
-			if (aPart == null)
-				return false;
-			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+			if (!DMUtils.partAvailable(new List<string>(1) { "dmAnomScanner" }))
 				return false;
 
 			//Kerbin or Mun Anomalies for trivial contracts
@@ -256,7 +253,7 @@ namespace DMagic.Contracts
 
 		protected override string GetDescription()
 		{
-			string story = DMUtils.backStory["anomaly"][rand.Next(0, DMUtils.backStory["anomaly"].Count)];
+			string story = DMContractDefs.DMAnomaly.backStory[rand.Next(0, DMContractDefs.DMAnomaly.backStory.Count)];
 			return string.Format(story, this.agent.Name, body.theName);
 		}
 
@@ -276,18 +273,26 @@ namespace DMagic.Contracts
 			latRand = r.Next(-5, 5);
 			lonRand = r.Next(-5, 5);
 
-			int targetBodyID;
-			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
-			hash = anomalyString[0];
-			if (int.TryParse(anomalyString[1], out targetBodyID))
-				body = FlightGlobals.Bodies[targetBodyID];
-			else
+			body = node.parse("Target_Body", (CelestialBody)null);
+
+			if (body == null)
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Target Body");
+				DMUtils.Logging("Failed To Load Anomaly Contract Target Body...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
 				return;
 			}
+
+			hash = node.parse("Target_Anomaly", "");
+
+			if (string.IsNullOrEmpty(hash))
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract Target...");
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+				return;
+			}
+
 			if (HighLogic.LoadedSceneIsFlight)
 			{
 				if (DMScienceScenario.SciScenario != null)
@@ -295,6 +300,7 @@ namespace DMagic.Contracts
 					if (DMScienceScenario.SciScenario.anomalyList != null)
 						targetAnomaly = DMScienceScenario.SciScenario.anomalyList.getAnomalyObject(body.name, hash);
 				}
+
 				if (targetAnomaly != null)
 				{
 					lat = targetAnomaly.Lat;
@@ -310,13 +316,13 @@ namespace DMagic.Contracts
 			}
 			else
 			{
-				if (!double.TryParse(anomalyString[2], out lat))
-					lat = 0.000d;
-				if (!double.TryParse(anomalyString[3], out lon))
-					lon = 0.000d;
+				lat = node.parse("Lat", (double)0);
+				lon = node.parse("Lon", (double)0);
 			}
+
 			cardNS = NSDirection(lat);
 			cardEW = EWDirection(lon);
+
 			if (this.ParameterCount == 0)
 			{
 				DMUtils.Logging("No Parameters Loaded For This Anomaly Contract; Removing Now...");
@@ -328,12 +334,15 @@ namespace DMagic.Contracts
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2:N2}|{3:N2}", hash, body.flightGlobalsIndex, lat, lon));
+			node.AddValue("Target_Anomaly", hash);
+			node.AddValue("Target_Body", body.flightGlobalsIndex);
+			node.AddValue("Lat", lat);
+			node.AddValue("Lon", lon);
 		}
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Orbit" });
+			return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.name, "Orbit" });
 		}
 
 		/// <summary>
@@ -346,8 +355,16 @@ namespace DMagic.Contracts
 			if (c == null || c.GetType() != typeof(DMAnomalyContract))
 				return null;
 
-			DMAnomalyContract Instance = (DMAnomalyContract)c;
-			return Instance.body;
+			try
+			{
+				DMAnomalyContract Instance = (DMAnomalyContract)c;
+				return Instance.body;
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("Error while accessing DMagic Anomaly Contract Target Body\n" + e);
+				return null;
+			}
 		}
 
 		public CelestialBody Body

@@ -51,8 +51,8 @@ namespace DMagic.Contracts
 			DMMagneticSurveyContract[] magContracts = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>();
 			int offers = 0;
 			int active = 0;
-			int maxOffers = DMUtils.maxMagneticOffered;
-			int maxActive = DMUtils.maxMagneticActive;
+			int maxOffers = DMContractDefs.DMMagnetic.maxOffers;
+			int maxActive = DMContractDefs.DMMagnetic.maxActive;
 
 			for (int i = 0; i < magContracts.Length; i++)
 			{
@@ -68,11 +68,8 @@ namespace DMagic.Contracts
 			if (active >= maxActive)
 				return false;
 
-			//Make sure that the RPWS is available
-			AvailablePart aPart = PartLoader.getPartInfoByName("rpwsAnt");
-			if (aPart == null)
-				return false;
-			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+			//Make sure that the parts are available
+			if (!DMUtils.partAvailable(DMContractDefs.DMMagnetic.magParts) || !DMUtils.partAvailable(DMContractDefs.DMMagnetic.rpwsParts))
 				return false;
 
 			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, false), GetBodies_NextUnreached(4, null));
@@ -93,13 +90,19 @@ namespace DMagic.Contracts
 			double inclination = 20d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
 			if (inclination > 75) inclination = 75;
 
+			Dictionary<int, List<string>> parts = new Dictionary<int, List<string>>();
+			parts.Add(0, DMContractDefs.DMMagnetic.magParts);
+			parts.Add(1, DMContractDefs.DMMagnetic.rpwsParts);
+
 			DMLongOrbitParameter longParam = new DMLongOrbitParameter(time);
-			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(eccen, 0);
-			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(inclination, 1);
+			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(eccen, 0, longParam);
+			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(inclination, 1, longParam);
+			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, body);
 
 			this.AddParameter(longParam);
 			longParam.AddParameter(eccentricParam);
 			longParam.AddParameter(inclinedParam);
+			longParam.AddParameter(partRequest);
 
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
@@ -157,7 +160,7 @@ namespace DMagic.Contracts
 
 		protected override string GetDescription()
 		{
-			string story = DMUtils.backStory["magnetic"][rand.Next(0, DMUtils.backStory["magnetic"].Count)];
+			string story = DMContractDefs.DMMagnetic.backStory[rand.Next(0, DMContractDefs.DMMagnetic.backStory.Count)];
 			return string.Format(story, this.agent.Name, body.theName);
 		}
 
@@ -173,16 +176,16 @@ namespace DMagic.Contracts
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int target;
-			if (int.TryParse(node.GetValue("Mag_Survey_Target"), out target))
-				body = FlightGlobals.Bodies[target];
-			else
+			body = node.parse("Mag_Survey_Target", (CelestialBody)null);
+
+			if (body == null)
 			{
-				DMUtils.Logging("Failed To Load Mag Contract");
+				DMUtils.Logging("Error while loading Magnetic Field Survey Contract target body; removing contract now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
 				return;
 			}
+
 			if (this.GetParameter<DMLongOrbitParameter>() == null)
 			{
 				DMUtils.Logging("Magnetic Field Long Orbit Parameter Not Found; Removing This Contract");
@@ -206,7 +209,7 @@ namespace DMagic.Contracts
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" });
+			return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.name, "Escape" });
 		}
 
 		/// <summary>
@@ -219,8 +222,16 @@ namespace DMagic.Contracts
 			if (c == null || c.GetType() != typeof(DMMagneticSurveyContract))
 				return null;
 
-			DMMagneticSurveyContract Instance = (DMMagneticSurveyContract)c;
-			return Instance.body;
+			try
+			{
+				DMMagneticSurveyContract Instance = (DMMagneticSurveyContract)c;
+				return Instance.body;
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("Error while accessing DMagic Magnetic Survey Contract Target Body\n" + e);
+				return null;
+			}
 		}
 
 		public CelestialBody Body
