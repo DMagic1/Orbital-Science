@@ -50,10 +50,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contracts\DMAnomalyContract.cs" />
+    <Compile Include="Contracts\DMReconContract.cs" />
+    <Compile Include="DMContractDefs.cs" />
     <Compile Include="DMContractGenerators.cs" />
+    <Compile Include="DMExtensions.cs" />
     <Compile Include="DMSeismicHandler.cs" />
     <Compile Include="DMSeismometerValues.cs" />
     <Compile Include="Parameters\DMCompleteParameter.cs" />
+    <Compile Include="Parameters\DMPartRequestParameter.cs" />
+    <Compile Include="Parameters\DMReconOrbitParameter.cs" />
+    <Compile Include="Parameters\DMSpecificOrbitParameterExtended.cs" />
     <Compile Include="Part Modules\DMAsteroidScanner.cs" />
     <Compile Include="Part Modules\DMBasicScienceModule.cs" />
     <Compile Include="Part Modules\DMBathymetry.cs" />
