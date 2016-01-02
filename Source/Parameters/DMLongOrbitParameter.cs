@@ -29,6 +29,9 @@
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Contracts;
 using Contracts.Parameters;
 using DMagic.Contracts;
@@ -38,6 +41,7 @@ namespace DMagic.Parameters
 	public class DMLongOrbitParameter: ContractParameter
 	{
 		private double orbitTime, timeNeeded;
+		private DMPartRequestParameter partRequest;
 
 		public DMLongOrbitParameter()
 		{
@@ -69,7 +73,7 @@ namespace DMagic.Parameters
 
 		protected override string GetNotes()
 		{
-			return "Vessel, or vessels, must be equipped with both magnetometer and RPWS instruments; vessels do not need to remain active throughout the period specified.";
+			return "Vessels do not need to remain active throughout the period specified.";
 		}
 
 		protected override void OnSave(ConfigNode node)
@@ -80,21 +84,17 @@ namespace DMagic.Parameters
 		protected override void OnLoad(ConfigNode node)
 		{
 			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
-			if (!double.TryParse(orbitString[0], out timeNeeded))
-			{
-				DMUtils.Logging("Failed To Load Time-Needed Variables; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
-				timeNeeded = 2160000;
-			}
+			timeNeeded = DMUtils.parseValue(orbitString[0], (double)2160000, true, "Failed To Load Time-Needed Variables; Long Orbit Parameter Reset to Default Value of 100 Days");
+
 			if (timeNeeded < 1000)
 			{
-				DMUtils.Logging("Time-Needed Value Not Set Correctly; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
+				DMUtils.Logging("Time-Needed Value Not Set Correctly; Long Orbit Parameter Reset to Default Value of 100 Days");
 				timeNeeded = 2160000;
 			}
-			if (!double.TryParse(orbitString[1], out orbitTime))
-			{
-				DMUtils.Logging("Failed To Load Orbit-Time Variables; Mag Long Orbit Parameter Reset");
-				orbitTime = 0;
-			}
+
+			orbitTime = DMUtils.parseValue(orbitString[1], (double)0, true, "Failed To Load Orbit-Time Variables; Long Orbit Parameter Reset");
+
+			partRequest = GetParameter<DMPartRequestParameter>();
 		}
 
 		//Track our vessel's orbit
@@ -125,5 +125,14 @@ namespace DMagic.Parameters
 			}
 		}
 
+		public int VesselCount
+		{
+			get { return partRequest.VesselCount; }
+		}
+
+		public Vessel GetVessel(int index)
+		{
+			return partRequest.getVessel(index);
+		}
 	}
 }

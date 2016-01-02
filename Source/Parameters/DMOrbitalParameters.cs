@@ -42,30 +42,21 @@ namespace DMagic.Parameters
 {
 	public class DMOrbitalParameters: ContractParameter
 	{
-		private DMMagneticSurveyContract root;
-		private Dictionary<Guid, Vessel> suitableVessels = new Dictionary<Guid, Vessel>();
+		private DMLongOrbitParameter root;
 		private List<Vessel> removeV = new List<Vessel>();
-		private string vName;
 		private double orbitalParameter;
-		private bool updatingVesselState;
 		private int type; //type 0 is eccentricity tracker; type 1 is inclination tracker
 
 		public DMOrbitalParameters()
 		{
 		}
 
-		internal DMOrbitalParameters(double Param, int Type)
+		internal DMOrbitalParameters(double Param, int Type, DMLongOrbitParameter r)
 		{
 			orbitalParameter = Param;
 			type = Type;
+			root = r;
 			this.disableOnStateChange = false;
-		}
-
-		//Properties to be accessed by parent contract
-
-		public double OrbitalParameter
-		{
-			get { return orbitalParameter; }
 		}
 
 		protected override string GetTitle()
@@ -78,67 +69,9 @@ namespace DMagic.Parameters
 				return "Stupid things";
 		}
 
-		protected override void OnRegister()
-		{
-			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
-			GameEvents.onVesselCreate.Add(newVesselCheck);
-			GameEvents.onPartCouple.Add(dockCheck);
-		}
-
-		protected override void OnUnregister()
-		{
-			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
-			GameEvents.onVesselCreate.Remove(newVesselCheck);
-			GameEvents.onPartCouple.Remove(dockCheck);
-		}
-
 		protected override void OnSave(ConfigNode node)
 		{
-			if (HighLogic.LoadedSceneIsEditor)
-				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", type, vName, orbitalParameter));
-			else if (suitableVessels.Count > 0)
-			{
-				List<Vessel> suitableV = suitableVessels.Values.ToList();
-				vName = stringConcat(suitableV);
-				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", type, vName, orbitalParameter));
-			}
-			else
-				node.AddValue("Orbital_Parameter", string.Format("{0}|{1}|{2:N3}", type, "", orbitalParameter));
-		}
-
-		private string stringConcat(List<Vessel> source)
-		{
-			int i = source.Count;
-			if (i == 0)
-				return "";
-			string[] s = new string[i];
-			for (int j = 0; j < i; j++)
-			{
-				if (source[j] != null)
-					s[j] = source[j].id.ToString() + ",";
-			}
-			return string.Concat(s).TrimEnd(',');
-		}
-
-		private List<Guid> stringSplitGuid(string source)
-		{
-			if (source == "")
-				return new List<Guid>();
-			string[] s = source.Split(',');
-			List<Guid> id = new List<Guid>();
-			for (int j = 0; j < s.Length; j++)
-			{
-				try
-				{
-					Guid g = new Guid(s[j]);
-					id.Add(g);
-				}
-				catch (Exception e)
-				{
-					DMUtils.Logging("Guid invalid: {0}", e);
-				}
-			}
-			return id;
+			node.AddValue("Orbital_Parameter", string.Format("{0}{1:N3}", type, orbitalParameter));
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -151,216 +84,65 @@ namespace DMagic.Parameters
 				this.Parent.RemoveParameter(this);
 				return;
 			}
-			vName = orbitString[1];
-			if (!double.TryParse(orbitString[2], out orbitalParameter))
-			{
-				DMUtils.Logging("Failed To Load Orbital-Variables; Mag Orbital Parameter Reset");
-				if (type == 0)
-					orbitalParameter = 0.2;
-				else
-					orbitalParameter = 20;
-			}
-			if (!HighLogic.LoadedSceneIsEditor)
-			{
-				if (!string.IsNullOrEmpty(vName))
-				{
-					List<Guid> ids = stringSplitGuid(vName);
-					if (ids.Count > 0)
-					{
-						foreach (Guid id in ids)
-						{
-							try
-							{
-								Vessel V = FlightGlobals.Vessels.FirstOrDefault(v => v.id == id);
-								addVessel(V);
-								DMUtils.DebugLog("Vessel {0} Loaded", V.vesselName);
-							}
-							catch
-							{
-								DMUtils.Logging("Failed To Load Vessel; Mag Orbital Parameter Reset");
-								if (HighLogic.LoadedSceneIsFlight)
-								{
-									DMUtils.Logging("Checking If Currently Loaded Vessel Is Appropriate");
-									vesselOrbit(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody);
-								}
-							}
-						}
-					}
-				}
-			}
+
+			if (type == 0)
+				DMUtils.parseValue(orbitString[1], (double)0.2, true, "Failed To Load Orbital-Variables; Mag Orbital Parameter Reset");
+			else
+				DMUtils.parseValue(orbitString[1], (double)20, true, "Failed To Load Orbital-Variables; Mag Orbital Parameter Reset");
+
 			this.disableOnStateChange = false;
 
-			root = (DMMagneticSurveyContract)this.Root;
-		}
-
-		private void addVessel(Vessel v)
-		{
-			if (!suitableVessels.ContainsKey(v.id))
-				suitableVessels.Add(v.id, v);
-			else
-				DMUtils.Logging("Magnetic Survey Vessel: [{0}] Already Included In List", v.name);
-		}
-
-		private void removeVessel(Vessel v)
-		{
-			if (suitableVessels.ContainsKey(v.id))
-				suitableVessels.Remove(v.id);
-		}
-
-		private void vesselOrbit(Vessel v, CelestialBody b)
-		{
-			if (v == FlightGlobals.ActiveVessel)
+			try
 			{
-				//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
-				if (b == root.Body && v.situation == Vessel.Situations.ORBITING)
-				{
-					if (VesselEquipped(v))
-					{
-						addVessel(v);
-					}
-				}
+				root = (DMLongOrbitParameter)Parent;
 			}
-		}
-
-		private bool VesselEquipped(Vessel v)
-		{
-			if (v == null)
-				return false;
-
-			Part magPart = v.Parts.FirstOrDefault(p => p.name == "dmmagBoom" || p.name == "dmUSMagBoom");
-			Part rpwsPart = v.Parts.FirstOrDefault(r => r.name == "rpwsAnt" || r.name == "USRPWS");
-
-			if (magPart != null && rpwsPart != null)
-				return true;
-			else
-				return false;
-		}
-
-		private void dockCheck(GameEvents.FromToAction<Part, Part> Parts)
-		{
-			if (Parts.from.vessel.mainBody == root.Body)
+			catch (Exception e)
 			{
-				ContractSystem.Instance.StartCoroutine(waitForDockCheck());
-			}
-		}
-
-		IEnumerator waitForDockCheck()
-		{
-			int timer = 0;
-			updatingVesselState = true;
-
-			while (timer < 45)
-			{
-				timer++;
-				yield return null;
-			}
-
-			updatingVesselState = false;
-
-			if (VesselEquipped(FlightGlobals.ActiveVessel))
-			{
-				addVessel(FlightGlobals.ActiveVessel);
-			}
-			else
-			{
-				removeVessel(FlightGlobals.ActiveVessel);
-			}
-		}
-
-		private void newVesselCheck(Vessel v)
-		{
-			if (suitableVessels.Count > 0)
-			{
-				Vessel V = v;
-
-				if (V.Parts.Count <= 1)
-					return;
-
-				if (V.mainBody == root.Body)
-				{
-					ContractSystem.Instance.StartCoroutine(waitForNewVesselCheck(V));
-				}
-			}
-		}
-
-		IEnumerator waitForNewVesselCheck(Vessel newV)
-		{
-			int timer = 0;
-			updatingVesselState = true;
-
-			while (timer < 45)
-			{
-				timer++;
-				yield return null;
-			}
-
-			updatingVesselState = false;
-
-			//If the new vessel retains the proper instruments
-			if (VesselEquipped(newV))
-			{
-				addVessel(newV);
-			}
-			//If the currently active, hopefully old, vessel retains the proper instruments
-			else if (VesselEquipped(FlightGlobals.ActiveVessel))
-			{
-				addVessel(FlightGlobals.ActiveVessel);
-			}
-			//If the proper instruments are spread across the two vessels
-			else
-			{
-				removeVessel(FlightGlobals.ActiveVessel);
+				this.Unregister();
+				this.Parent.RemoveParameter(this);
+				DMUtils.Logging("Could not find root long orbit parameter; removing DMReconOrbit Parameter\n{0}", e);
+				return;
 			}
 		}
 
 		//Track our vessel's orbit
 		protected override void OnUpdate()
 		{
-			if (this.Root.ContractState == Contract.State.Active && !HighLogic.LoadedSceneIsEditor)
-			{
-				if (updatingVesselState)
-					return;
+			if (HighLogic.LoadedSceneIsEditor)
+				return;
 
-				if (suitableVessels.Count > 0)
-				{
-					bool complete = false;
-					removeV.Clear();
-					foreach (Vessel v in suitableVessels.Values)
-					{
-						if (v.mainBody != root.Body)
-						{
-							removeV.Add(v);
-						}
-						else if (type == 0)
-						{
-							if (v.orbit.eccentricity > orbitalParameter && v.situation == Vessel.Situations.ORBITING)
-								complete = true;
-							else if (v.situation != Vessel.Situations.ORBITING)
-								removeV.Add(v);
-						}
-						else if (type == 1)
-						{
-							if (Math.Abs(v.orbit.inclination) > orbitalParameter && Math.Abs(v.orbit.inclination) < (180 - orbitalParameter) && v.situation == Vessel.Situations.ORBITING)
-								complete = true;
-							else if (v.situation != Vessel.Situations.ORBITING)
-								removeV.Add(v);
-						}
-					}
-					if (removeV.Count > 0)
-					{
-						foreach (Vessel V in removeV)
-						{
-							removeVessel(V);
-						}
-					}
-					if (complete)
-						this.SetComplete();
-					else
-						this.SetIncomplete();
-				}
-				else
-					this.SetIncomplete();
+			if (root == null)
+			{
+				this.SetIncomplete();
+				return;
 			}
+
+			for (int i = 0; i < root.VesselCount; i++)
+			{
+				Vessel v = root.GetVessel(i);
+
+				if (v == null)
+					continue;
+
+				if (type == 0)
+				{
+					if (v.orbit.eccentricity > orbitalParameter && v.situation == Vessel.Situations.ORBITING)
+					{
+						this.SetComplete();
+						return;
+					}
+				}
+				else if (type == 1)
+				{
+					if (Math.Abs(v.orbit.inclination) > orbitalParameter && Math.Abs(v.orbit.inclination) < (180 - orbitalParameter) && v.situation == Vessel.Situations.ORBITING)
+					{
+						this.SetComplete();
+						return;
+					}
+				}
+			}
+					
+			this.SetIncomplete();
 		}
 
 	}
