@@ -32,10 +32,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Contracts;
 using DMagic.Contracts;
 using DMagic.Parameters;
+using FinePrint.Utilities;
 
 namespace DMagic
 {
@@ -43,24 +45,19 @@ namespace DMagic
 	{
 		internal static System.Random rand;
 		internal static Dictionary<string, Dictionary<string, DMScienceContainer>> availableScience;
-		internal static Dictionary<string, List<string>> backStory;
 		internal static float science = 1f;
 		internal static float reward = 1f;
 		internal static float forward = 1f;
 		internal static float penalty = 1f;
 		internal static float deadline = 1f;
-		internal static int maxSurveyOffered = 2;
-		internal static int maxSurveyActive = 4;
-		internal static int maxAsteroidOffered = 1;
-		internal static int maxAsteroidActive = 3;
-		internal static int maxAnomalyOffered = 1;
-		internal static int maxAnomalyActive = 3;
-		internal static int maxMagneticOffered = 2;
-		internal static int maxMagneticActive = 4;
 		internal static string version = "v0.9.2";
 		internal static EventData<CelestialBody, String, String> OnAnomalyScience;
 		internal static EventData<String, String> OnAsteroidScience;
 		internal static bool whiteListed = false;
+
+		private static Regex openBracket = new Regex(@"\[(?=\d+:?\w?\d?\])");
+		private static Regex closeBraket = new Regex(@"(?<=\{\d+:?\w?\d?)\]");
+		private static Regex newLines = new Regex(@"\\n");
 
 		internal static void Logging(string s, params object[] stringObjects)
 		{
@@ -98,6 +95,234 @@ namespace DMagic
 				default:
 					return Vessel.Situations.ESCAPING;
 			}
+		}
+
+		internal static double parseValue(string value, double def, bool log = false, string fail = "")
+		{
+			double d = def;
+
+			if (!double.TryParse(value, out d))
+			{
+				if (log)
+					Logging(fail);
+				return def;
+			}
+
+			return d;
+		}
+
+		internal static float parseValue(string value, float def, bool log = false, string fail = "")
+		{
+			float f = def;
+
+			if (!float.TryParse(value, out f))
+			{
+				if (log)
+					Logging(fail);
+				return def;
+			}
+
+			return f;
+		}
+
+		internal static int parseValue(string value, int def, bool log = false, string fail = "")
+		{
+			int i = def;
+
+			if (!int.TryParse(value, out i))
+			{
+				if (log)
+					Logging(fail);
+				return def;
+			}
+
+			return i;
+		}
+
+		internal static bool parseValue(string value, bool def, bool log = false, string fail = "")
+		{
+			bool b = def;
+
+			if (!bool.TryParse(value, out b))
+			{
+				if (log)
+					Logging(fail);
+				return def;
+			}
+
+			return b;
+		}
+
+		internal static string stringConcat(List<Vessel> source)
+		{
+			int i = source.Count;
+			if (i == 0)
+				return "";
+			string[] s = new string[i];
+			for (int j = 0; j < i; j++)
+			{
+				if (source[j] != null)
+					s[j] = source[j].id.ToString() + ",";
+			}
+			return string.Concat(s).TrimEnd(',');
+		}
+
+		internal static string stringConcat(Dictionary<int, List<string>> source)
+		{
+			if (source.Count == 0)
+				return "";
+
+			string[] result = new string[source.Count];
+			for (int i = 0; i < source.Count; i++)
+			{
+				List<string> group = source.ElementAt(i).Value;
+
+				if (group.Count == 0)
+				{
+					result[i] = "_";
+					continue;
+				}
+
+				string[] s = new string[group.Count];
+
+				for (int j = 0; j < group.Count; j++)
+				{
+					s[j] = source[j] + ",";
+				}
+
+				result[i] = string.Concat(s).TrimEnd(',') + "_";
+			}
+
+			return string.Concat(result).TrimEnd('_');
+		}
+
+		public static List<string> formatFixStringList(List<string> source)
+		{
+			List<string> fixedList = new List<string>();
+
+			for (int i = 0; i < source.Count(); i++)
+			{
+				string s = source[i];
+
+				s = openBracket.Replace(s, "{");
+				s = closeBraket.Replace(s, "}");
+				s = newLines.Replace(s, Environment.NewLine);
+
+				fixedList.Add(s);
+			}
+
+			return fixedList;
+		}
+
+		internal static List<Guid> stringSplitGuid(string source)
+		{
+			if (source == "")
+				return new List<Guid>();
+			string[] s = source.Split(',');
+			List<Guid> id = new List<Guid>();
+			for (int j = 0; j < s.Length; j++)
+			{
+				try
+				{
+					Guid g = new Guid(s[j]);
+					id.Add(g);
+				}
+				catch (Exception e)
+				{
+					DMUtils.Logging("Guid invalid: {0}", e);
+				}
+			}
+			return id;
+		}
+
+		internal static Dictionary<int, List<string>> stringSplit(string source)
+		{
+			Dictionary<int, List<string>> result = new Dictionary<int,List<string>>();
+
+			string[] groups = source.Split('_');
+
+			if (groups.Length == 0)
+				return result;
+
+			for (int i = 0; i < groups.Length; i++)
+			{
+				string[] s = groups[i].Split(',');
+
+				List<string> t = new List<string>();
+
+				for (int j= 0; j < s.Length; j++)
+				{
+					t.Add(s[j]);
+				}
+
+				result.Add(i, t);
+			}
+
+			return result;
+		}
+
+		internal static bool partAvailable(List<string> parts)
+		{
+			for (int i = 0; i < parts.Count; i++)
+			{
+				AvailablePart aPart = PartLoader.getPartInfoByName(parts[i]);
+				if (aPart == null)
+					continue;
+				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+					continue;
+
+				return true;
+			}
+
+			return false;
+		}
+
+		internal static bool vesselHasPart(Vessel v, List<string> titles)
+		{
+			if (v == null)
+				return false;
+
+			if (titles.Count <= 0)
+				return false;
+
+			if (v.loaded)
+			{
+				for (int i = 0; i < v.Parts.Count; i++)
+				{
+					Part p = v.Parts[i];
+
+					if (p == null)
+						continue;
+
+					for (int j = 0; j < titles.Count; j++)
+					{
+						string title = titles[j];
+
+						if (VesselUtilities.GetPartName(p) == title.Replace('_', '.'))
+							return true;
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < v.protoVessel.protoPartSnapshots.Count; i++)
+				{
+					ProtoPartSnapshot pp = v.protoVessel.protoPartSnapshots[i];
+
+					if (pp == null)
+						continue;
+
+					for (int j = 0; j < titles.Count; j++)
+					{
+						string title = titles[j];
+
+						if (pp.partName == title.Replace('_', '.'))
+							return true;
+					}
+				}
+			}
+
+			return false;
 		}
 
 		internal static float asteroidSubjectVal(float f, int i)
