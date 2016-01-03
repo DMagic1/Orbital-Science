@@ -45,11 +45,6 @@ namespace DMagic
 	{
 		internal static System.Random rand;
 		internal static Dictionary<string, Dictionary<string, DMScienceContainer>> availableScience;
-		internal static float science = 1f;
-		internal static float reward = 1f;
-		internal static float forward = 1f;
-		internal static float penalty = 1f;
-		internal static float deadline = 1f;
 		internal static string version = "v0.9.2";
 		internal static EventData<CelestialBody, String, String> OnAnomalyScience;
 		internal static EventData<String, String> OnAsteroidScience;
@@ -162,9 +157,9 @@ namespace DMagic
 			for (int j = 0; j < i; j++)
 			{
 				if (source[j] != null)
-					s[j] = source[j].id.ToString() + ",";
+					s[j] = source[j].id.ToString() + "|";
 			}
-			return string.Concat(s).TrimEnd(',');
+			return string.Concat(s).TrimEnd('|');
 		}
 
 		internal static string stringConcat(Dictionary<int, List<string>> source)
@@ -325,7 +320,7 @@ namespace DMagic
 			return false;
 		}
 
-		internal static float asteroidSubjectVal(float f, int i)
+		internal static float asteroidSubjectVal(int i)
 		{
 			switch (i)
 			{
