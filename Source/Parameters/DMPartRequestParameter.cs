@@ -106,46 +106,38 @@ namespace DMagic.Parameters
 			else
 				vessels = DMUtils.stringConcat(suitableVessels.Values.ToList());
 
-			node.AddValue("Part_Request_Values", string.Format("{0}|{1}|{2}", targetBody.flightGlobalsIndex, DMUtils.stringConcat(requiredParts), vessels));
+			node.AddValue("Body", targetBody.flightGlobalsIndex);
+			node.AddValue("Requested_Parts", DMUtils.stringConcat(requiredParts));
+			node.AddValue("Vessels", vessels);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			string[] values = node.GetValue("Part_Request_Values").Split('|');
-			if (values.Length != 3)
+			targetBody = node.parse("Body", (CelestialBody)null);
+			if (targetBody == null)
 			{
+				DMUtils.Logging("Failed To Load Target Body; DM Part Request Parameter Removed");
 				this.Unregister();
 				this.Parent.RemoveParameter(this);
 				return;
 			}
 
-			int target;
-			if (int.TryParse(values[0], out target))
+			string parts = node.parse("Requested_Parts", "");
+			if (string.IsNullOrEmpty(parts))
 			{
-				if (FlightGlobals.Bodies.Count >= target)
-					targetBody = FlightGlobals.Bodies[target];
-				else
-				{
-					DMUtils.Logging("No Celestial Body Found For Index: [{0}] For DM Part Request Parameter; Removing Now...", target);
-					this.Unregister();
-					this.Parent.RemoveParameter(this);
-					return;
-				}
-			}
-			else
-			{
+				DMUtils.Logging("Failed To Required Parts List; DM Part Request Parameter Removed");
 				this.Unregister();
 				this.Parent.RemoveParameter(this);
 				return;
 			}
 
-			requiredParts = DMUtils.stringSplit(values[1]);
+			requiredParts = DMUtils.stringSplit(parts);
 
-			if (HighLogic.LoadedSceneIsEditor)
-				vesselNames = values[2];
-			else
+			vesselNames = node.parse("Vessels", "");
+			if (!string.IsNullOrEmpty(vesselNames) && !HighLogic.LoadedSceneIsEditor)
 			{
-				List<Guid> ids = DMUtils.stringSplitGuid(values[2]);
+
+				List<Guid> ids = node.parse("Vessels", new List<Guid>());
 				if (ids.Count > 0)
 				{
 					foreach (Guid id in ids)

@@ -51,7 +51,7 @@ namespace DMagic.Parameters
 
 		protected override string GetNotes()
 		{
-			return childOrbitParameter.BaseNotes + "\nNote that the target orbit will not disappear until the full contract has been completed.";
+			return childOrbitParameter.BaseNotes + "\nThe target orbit will not disappear until the full contract has been completed.";
 		}
 
 		private void setupOrbit()
@@ -71,6 +71,9 @@ namespace DMagic.Parameters
 
 		protected override void OnUpdate()
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 
@@ -111,46 +114,33 @@ namespace DMagic.Parameters
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			string[] values = node.GetValue("Recon_Values").Split('|');
-
-			if (values.Length != 10)
+			body = node.parse("Body", (CelestialBody)null);
+			if (body == null)
 			{
-				loadFail("Error while loading DMReconOrbitParameter; Removing Now...");
+				loadFail("Failed To Load Target Body; DMRecon Parameter Removed");
 				return;
 			}
 
-			int target;
-			if (int.TryParse(values[0], out target))
+			int oType = node.parse("OrbitType", (int)1000);
+			if (oType == 1000)
 			{
-				if (FlightGlobals.Bodies.Count >= target)
-					body = FlightGlobals.Bodies[target];
-				else
-				{
-					loadFail(string.Format("No Celestial Body Found For Index: [{0}] For Recon Orbit Parameter; Removing Now...", target));
-					return;
-				}
-			}
-			else
-			{
-				loadFail("");
+				loadFail("Failed To Orbit Type; DMRecon Parameter Removed");
 				return;
 			}
+			type = (OrbitType)oType;
 
-			int t = DMUtils.parseValue(values[1], (int)2);
-			type = (OrbitType)t;
-
-			inc = DMUtils.parseValue(values[2], (double)75);
-			ecc = DMUtils.parseValue(values[3], (double)0);
-			sma = DMUtils.parseValue(values[4], (double)0);
-			aop = DMUtils.parseValue(values[5], (double)0);
-			mae = DMUtils.parseValue(values[6], (double)0);
-			epo = DMUtils.parseValue(values[7], (double)0);
-			lan = DMUtils.parseValue(values[8], (double)0);
-			deviation = DMUtils.parseValue(values[9], (double)10);
+			inc = node.parse("Inclination", (double)63.5);
+			ecc = node.parse("Eccentricity", (double)0);
+			sma = node.parse("SemiMajorAxis", (double)0);
+			aop = node.parse("ArgOfPeriapsis", (double)0);
+			mae = node.parse("MeanAnomalyAtEpoch", (double)0);
+			epo = node.parse("Epoch", (double)0);
+			lan = node.parse("LAN", (double)0);
+			deviation = node.parse("Deviation", (double)10);
 
 			if (this.ParameterCount <= 0)
 			{
-				loadFail("");
+				loadFail("No child parameters found; removing DMReconOrbit Parameter");
 				return;
 			}
 
@@ -181,7 +171,16 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Recon_Values", string.Format("{0}|{1}|{2:N5}|{3:N5}|{4:N5}|{5:N5}|{6:N5}|{7:N5}|{8:N5}|{9:N5}", body.flightGlobalsIndex, (int)type, inc, ecc, sma, aop, mae, epo, lan, deviation));
+			node.AddValue("Body", body.flightGlobalsIndex);
+			node.AddValue("OrbitalType", (int)type);
+			node.AddValue("Inclination", inc.ToString("N5"));
+			node.AddValue("Eccentricity", ecc.ToString("N5"));
+			node.AddValue("SemiMajorAxis", sma.ToString("N5"));
+			node.AddValue("ArgOfPeriapsis", aop.ToString("N5"));
+			node.AddValue("LAN", lan.ToString("N5"));
+			node.AddValue("MeanAnomalyAtEpoch", mae.ToString("N5"));
+			node.AddValue("Epoch", epo.ToString("N5"));
+			node.AddValue("Deviation", deviation.ToString("N5"));
 		}
 
 		private void loadFail(string message)

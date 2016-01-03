@@ -118,26 +118,32 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2}", (int)situation, collected, name));
+			node.AddValue("Name", name);
+			node.AddValue("Situation", (int)situation);
+			node.AddValue("Collected", collected);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int sitID;
-			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
-			if (int.TryParse(anomalyString[0], out sitID))
-				situation = (ExperimentSituations)sitID;
-			else
+			int sitID = node.parse("Situation", (int)65);
+			if (sitID >= 65 || sitID <= 0)
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract Situation Value; Parameter Set To Complete");
 				this.SetComplete();
 			}
-			if (!bool.TryParse(anomalyString[1], out collected))
+			situation = (ExperimentSituations)sitID;
+
+			collected = node.parse("Collected", (bool)true);
+			if (collected)
+				this.SetComplete();
+
+			name = node.parse("Name", "");
+			if (string.IsNullOrEmpty(name))
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Collected State; Parameter Set To Complete");
+				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Set To Complete");
 				this.SetComplete();
 			}
-			name = anomalyString[2];
+
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
@@ -146,7 +152,7 @@ namespace DMagic.Parameters
 			}
 			else
 				partName = scienceContainer.SciPart;
-
+			
 			root = (DMAnomalyContract)this.Root;
 		}
 

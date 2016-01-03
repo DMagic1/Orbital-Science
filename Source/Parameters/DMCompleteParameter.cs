@@ -98,24 +98,22 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Parent_Parameter_Type", string.Format("{0}|{1}", type, subParamCountToComplete));
+			node.AddValue("Type", type);
+			node.AddValue("Count_To_Complete", subParamCountToComplete);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			string[] values = node.GetValue("Parent_Parameter_Type").Split('|');
-			if (!int.TryParse(values[0], out type))
+			type = node.parse("Type", (int)1000);
+			if (type == 1000)
 			{
 				DMUtils.Logging("Failed To Load Parent Parameter Variables; Parent Parameter Removed");
 				this.Unregister();
 				this.Parent.RemoveParameter(this);
 				return;
 			}
-			if (!int.TryParse(values[1], out subParamCountToComplete))
-			{
-				DMUtils.Logging("Failed To Load Parent Parameter Variables; Reset To Default");
-				subParamCountToComplete = 2;
-			}
+
+			subParamCountToComplete = node.parse("Count_To_Complete", (int)2);
 		}
 
 		private int SubParamCompleted()

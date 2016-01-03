@@ -71,13 +71,14 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Orbital_Parameter", string.Format("{0}{1:N3}", type, orbitalParameter));
+			node.AddValue("Type", type);
+			node.AddValue("Orbital_Parameter", orbitalParameter.ToString("N3"));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
-			if (!int.TryParse(orbitString[0], out type))
+			type = node.parse("Type", (int)1000);
+			if (type == 1000)
 			{
 				DMUtils.Logging("Failed To Load Type-Variables; Mag Orbital Parameter Removed");
 				this.Unregister();
@@ -86,9 +87,9 @@ namespace DMagic.Parameters
 			}
 
 			if (type == 0)
-				DMUtils.parseValue(orbitString[1], (double)0.2, true, "Failed To Load Orbital-Variables; Mag Orbital Parameter Reset");
+				orbitalParameter = node.parse("Orbital_Parameter", (double)0.2);
 			else
-				DMUtils.parseValue(orbitString[1], (double)20, true, "Failed To Load Orbital-Variables; Mag Orbital Parameter Reset");
+				orbitalParameter = node.parse("Orbital_Parameter", (double)20);
 
 			this.disableOnStateChange = false;
 
@@ -108,6 +109,9 @@ namespace DMagic.Parameters
 		//Track our vessel's orbit
 		protected override void OnUpdate()
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 

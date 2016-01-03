@@ -78,51 +78,63 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Orbital_Parameter", string.Format("{0:N1}|{1:N1}", timeNeeded, orbitTime));
+			node.AddValue("Time_Needed", timeNeeded.ToString("N2"));
+			node.AddValue("Time_Completed", orbitTime.ToString("N2"));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
-			timeNeeded = DMUtils.parseValue(orbitString[0], (double)2160000, true, "Failed To Load Time-Needed Variables; Long Orbit Parameter Reset to Default Value of 100 Days");
+			timeNeeded = node.parse("Time_Needed", (double)2160000);
 
-			if (timeNeeded < 1000)
+			orbitTime = node.parse("Time_Completed", (double)-1);
+			if (orbitTime < 0)
 			{
-				DMUtils.Logging("Time-Needed Value Not Set Correctly; Long Orbit Parameter Reset to Default Value of 100 Days");
-				timeNeeded = 2160000;
+				DMUtils.Logging("Failed To Load Orbit-Time Variables; Long Orbit Parameter Reset");
+				orbitTime = 0;
 			}
 
-			orbitTime = DMUtils.parseValue(orbitString[1], (double)0, true, "Failed To Load Orbit-Time Variables; Long Orbit Parameter Reset");
-
-			partRequest = GetParameter<DMPartRequestParameter>();
+			try
+			{
+				partRequest = GetParameter<DMPartRequestParameter>();
+			}
+			catch (Exception e)
+			{
+				this.Unregister();
+				this.Parent.RemoveParameter(this);
+				DMUtils.Logging("Could not find child part request parameter; removing DMLongOrbit Parameter\n{0}", e);
+				return;
+			}
 		}
 
 		//Track our vessel's orbit
 		protected override void OnUpdate()
 		{
-			if (this.Root.ContractState == Contract.State.Active && !HighLogic.LoadedSceneIsEditor)
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (HighLogic.LoadedSceneIsEditor)
+				return;
+
+			if (AllChildParametersComplete())
 			{
-				if (AllChildParametersComplete())
+				if (orbitTime <= 0)
 				{
-					if (orbitTime <= 0)
+					orbitTime = Planetarium.GetUniversalTime();
+				}
+				else
+				{
+					if ((Planetarium.GetUniversalTime() - orbitTime) >= timeNeeded)
 					{
-						orbitTime = Planetarium.GetUniversalTime();
-					}
-					else
-					{
-						if ((Planetarium.GetUniversalTime() - orbitTime) >= timeNeeded)
-						{
-							this.DisableOnStateChange = true;
-							foreach (ContractParameter cP in this.AllParameters)
-								cP.DisableOnStateChange = true;
-							this.SetComplete();
-						}
+						this.DisableOnStateChange = true;
+						foreach (ContractParameter cP in this.AllParameters)
+							cP.DisableOnStateChange = true;
+						this.SetComplete();
 					}
 				}
-				//if the vessel falls out of the specified orbit reset the timer
-				else
-					orbitTime = 0;
 			}
+			//if the vessel falls out of the specified orbit reset the timer
+			else
+				orbitTime = 0;
 		}
 
 		public int VesselCount
