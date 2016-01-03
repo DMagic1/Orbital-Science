@@ -11,32 +11,44 @@ namespace DMagic
 		{
 			public static class Expire
 			{
-				public static int MinimumExpireDays = 1;
+				public static int MinimumExpireDays = 5;
 
-				public static int MaximumExpireDays = 7;
+				public static int MaximumExpireDays = 15;
 
-				public static int DeadlineDays = 2982;
+				public static float DeadlineYears = 1.5f;
 			}
 
 			public static class Funds
 			{
-				public static double BaseAdvance = 31000f;
+				public static float BaseAdvance = 20000;
 
-				public static double BaseReward = 79000f;
+				public static float BaseReward = 24000;
 
-				public static double BaseFailure;
+				public static float BaseFailure = 20000;
+
+				public static float ParamReward = 12000;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static class Science
 			{
-				public static float BaseReward;
+				public static float BaseReward = 0;
+
+				public static float ParamReward = 6;
+
+				public static float SecondaryReward = 0.25f;
 			}
 
 			public static class Reputation
 			{
-				public static float BaseReward = 22f;
+				public static float BaseReward = 8;
 
-				public static float BaseFailure = 11f;
+				public static float BaseFailure = 9;
+
+				public static float ParamReward = 0;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static int maxOffers = 2;
@@ -53,28 +65,38 @@ namespace DMagic
 
 				public static int MaximumExpireDays = 7;
 
-				public static int DeadlineDays = 2982;
+				public static float DeadlineYears = 3.8f;
 			}
 
 			public static class Funds
 			{
-				public static double BaseAdvance = 31000f;
+				public static float BaseAdvance = 8000;
 
-				public static double BaseReward = 79000f;
+				public static float BaseReward = 9500;
 
-				public static double BaseFailure;
+				public static float BaseFailure = 7000;
+
+				public static float ParamReward = 5000;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static class Science
 			{
-				public static float BaseReward;
+				public static float BaseReward = 0;
+
+				public static float ParamReward = 0.25f;
 			}
 
 			public static class Reputation
 			{
-				public static float BaseReward = 22f;
+				public static float BaseReward = 1.5f;
 
-				public static float BaseFailure = 11f;
+				public static float BaseFailure = 1.5f;
+
+				public static float ParamReward = 0;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static int maxOffers = 2;
@@ -91,32 +113,42 @@ namespace DMagic
 		{
 			public static class Expire
 			{
-				public static int MinimumExpireDays = 1;
+				public static int MinimumExpireDays = 5;
 
-				public static int MaximumExpireDays = 7;
+				public static int MaximumExpireDays = 15;
 
-				public static int DeadlineDays = 2982;
+				public static float DeadlineYears = 1.7f;
 			}
 
 			public static class Funds
 			{
-				public static double BaseAdvance = 31000f;
+				public static float BaseAdvance = 8500;
 
-				public static double BaseReward = 79000f;
+				public static float BaseReward = 10500;
 
-				public static double BaseFailure;
+				public static float BaseFailure = 7500;
+
+				public static float ParamReward = 3500;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static class Science
 			{
-				public static float BaseReward;
+				public static float BaseReward = 0;
+
+				public static float ParamReward = 0.2f;
 			}
 
 			public static class Reputation
 			{
-				public static float BaseReward = 22f;
+				public static float BaseReward = 1.9f;
 
-				public static float BaseFailure = 11f;
+				public static float BaseFailure = 1.5f;
+
+				public static float ParamReward = 0;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static int maxOffers = 2;
@@ -133,44 +165,54 @@ namespace DMagic
 		{
 			public static class Expire
 			{
-				public static int MinimumExpireDays = 1;
+				public static int MinimumExpireDays = 5;
 
-				public static int MaximumExpireDays = 7;
+				public static int MaximumExpireDays = 15;
 
-				public static int DeadlineDays = 2982;
+				public static float DeadlineModifier = 3.7f;
 			}
 
 			public static class Funds
 			{
-				public static double BaseAdvance = 31000f;
+				public static float BaseAdvance = 35000;
 
-				public static double BaseReward = 79000f;
+				public static float BaseReward = 40000;
 
-				public static double BaseFailure;
+				public static float BaseFailure = 28000;
+
+				public static float ParamReward = 5000;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static class Science
 			{
-				public static float BaseReward;
+				public static float BaseReward = 15;
+
+				public static float ParamReward = 2f;
 			}
 
 			public static class Reputation
 			{
-				public static float BaseReward = 22f;
+				public static float BaseReward = 8f;
 
-				public static float BaseFailure = 11f;
+				public static float BaseFailure = 7f;
+
+				public static float ParamReward = 0;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static int maxOffers = 2;
 			public static int maxActive = 4;
 
 			public static double trivialEccentricityMultiplier = 0.2;
-			public static double significantEccentricityMultiplier = 0.2;
-			public static double exceptionalEccentricityMultiplier = 0.2;
+			public static double significantEccentricityMultiplier = 0.35;
+			public static double exceptionalEccentricityMultiplier = 0.5;
 
-			public static double trivialInclinationMultiplier = 0.2;
-			public static double significantInclinationMultiplier = 0.2;
-			public static double exceptionalInclinationMultiplier = 0.2;
+			public static double trivialInclinationMultiplier = 20;
+			public static double significantInclinationMultiplier = 40;
+			public static double exceptionalInclinationMultiplier = 60;
 
 			public static List<string> magParts = new List<string>(2) { "dmmagBoom", "dmUSMagBoom" };
 			public static List<string> rpwsParts = new List<string>(2) { "rpwsAnt", "USRPWS" };
@@ -182,32 +224,42 @@ namespace DMagic
 		{
 			public static class Expire
 			{
-				public static int MinimumExpireDays = 1;
+				public static int MinimumExpireDays = 5;
 
-				public static int MaximumExpireDays = 7;
+				public static int MaximumExpireDays = 15;
 
-				public static int DeadlineDays = 2982;
+				public static float DeadlineModifier = 3.7f;
 			}
 
 			public static class Funds
 			{
-				public static double BaseAdvance = 31000f;
+				public static float BaseAdvance = 35000;
 
-				public static double BaseReward = 79000f;
+				public static float BaseReward = 40000;
 
-				public static double BaseFailure;
+				public static float BaseFailure = 28000;
+
+				public static float ParamReward = 5000;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static class Science
 			{
-				public static float BaseReward;
+				public static float BaseReward = 20;
+
+				public static float ParamReward = 2f;
 			}
 
 			public static class Reputation
 			{
-				public static float BaseReward = 22f;
+				public static float BaseReward = 10;
 
-				public static float BaseFailure = 11f;
+				public static float BaseFailure = 12f;
+
+				public static float ParamReward = 0;
+
+				public static float ParamFailure = 0;
 			}
 
 			public static int maxOffers = 2;
