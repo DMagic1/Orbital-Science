@@ -84,10 +84,29 @@ namespace DMagic.Contracts
 			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, rpwsContainer);
 			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, rpwsContainer);
 
+			double eccMod = 0.2;
+			double incMod = 20;
+
+			switch(prestige)
+			{
+				case ContractPrestige.Trivial:
+					eccMod = DMContractDefs.DMMagnetic.trivialEccentricityMultiplier;
+					incMod = DMContractDefs.DMMagnetic.trivialInclinationMultiplier;
+					break;
+				case ContractPrestige.Significant:
+					eccMod = DMContractDefs.DMMagnetic.significantEccentricityMultiplier;
+					incMod = DMContractDefs.DMMagnetic.significantInclinationMultiplier;
+					break;
+				case ContractPrestige.Exceptional:
+					eccMod = DMContractDefs.DMMagnetic.exceptionalEccentricityMultiplier;
+					incMod = DMContractDefs.DMMagnetic.exceptionalInclinationMultiplier;
+					break;
+			}
+
 			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 17) / 10d);
-			double eccen = 0.15d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
+			double eccen = eccMod * ((double)rand.Next(8, 13) / 10d);
 			if (eccen > 0.7) eccen = 0.7;
-			double inclination = 20d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
+			double inclination = incMod * ((double)rand.Next(7, 14) / 10d);
 			if (inclination > 75) inclination = 75;
 
 			Dictionary<int, List<string>> parts = new Dictionary<int, List<string>>();
@@ -117,9 +136,11 @@ namespace DMagic.Contracts
 					return false;
 				else
 				{
+					float modifier = ((float)rand.Next(85, 116) / 100f);
 					DMcp.addToSubParams(DMCS, "MagFieldScience");
-					DMCS.SetFunds(5000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-					DMCS.SetScience(2f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
+					DMCS.SetFunds(DMContractDefs.DMMagnetic.Funds.ParamReward * modifier, DMContractDefs.DMMagnetic.Funds.ParamFailure * modifier, body);
+					DMCS.SetScience(DMContractDefs.DMMagnetic.Science.ParamReward * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
+					DMCS.SetReputation(DMContractDefs.DMMagnetic.Reputation.ParamReward * modifier, DMContractDefs.DMMagnetic.Reputation.ParamFailure * modifier, null);
 				}
 			}
 
@@ -129,12 +150,18 @@ namespace DMagic.Contracts
 			float primaryModifier = ((float)rand.Next(80, 121) / 100f);
 			float diffModifier = 1 + ((float)this.Prestige * 0.5f);
 
+			float Mod = primaryModifier * diffModifier;
+
 			this.agent = AgentList.Instance.GetAgent("DMagic");
-			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
-			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
-			base.SetReputation(8f * diffModifier * DMUtils.reward * primaryModifier, 7f * diffModifier * DMUtils.penalty * primaryModifier, null);
-			base.SetFunds(35000 * diffModifier * DMUtils.forward * primaryModifier, 40000 * diffModifier * DMUtils.reward * primaryModifier, 28000 * diffModifier * DMUtils.penalty * primaryModifier, body);
-			base.SetScience(10f * diffModifier * DMUtils.science * primaryModifier, body);
+
+			if (this.agent == null)
+				this.agent = AgentList.Instance.GetAgentRandom();
+
+			base.SetExpiry(DMContractDefs.DMMagnetic.Expire.MinimumExpireDays, DMContractDefs.DMMagnetic.Expire.MaximumExpireDays);
+			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * DMContractDefs.DMMagnetic.Expire.DeadlineModifier * (this.GetDestinationWeight(body) / 1.8f) * primaryModifier, null);
+			base.SetReputation(DMContractDefs.DMMagnetic.Reputation.BaseReward * Mod, DMContractDefs.DMMagnetic.Reputation.BaseFailure * Mod, null);
+			base.SetFunds(DMContractDefs.DMMagnetic.Funds.BaseAdvance * Mod, DMContractDefs.DMMagnetic.Funds.BaseReward * Mod, DMContractDefs.DMMagnetic.Funds.BaseFailure * Mod, body);
+			base.SetScience(DMContractDefs.DMMagnetic.Science.BaseReward * Mod, body);
 			return true;
 		}
 

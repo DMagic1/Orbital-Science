@@ -134,8 +134,9 @@ namespace DMagic.Contracts
 				{
 					DMcp.addToSubParams(DMC, "CollectScience");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(DMC.Situation), DMC.Body) * ((float)rand.Next(85, 116) / 100f);
-					DMC.SetScience(DMC.Container.Exp.baseValue * 0.2f * DMUtils.science * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
-					DMC.SetFunds(3500f * DMUtils.reward * locationMod, body);
+					DMC.SetScience(DMC.Container.Exp.baseValue * DMContractDefs.DMSurvey.Science.ParamReward * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
+					DMC.SetFunds(DMContractDefs.DMSurvey.Funds.ParamReward * locationMod, DMContractDefs.DMSurvey.Funds.ParamFailure * locationMod, body);
+					DMC.SetReputation(DMContractDefs.DMSurvey.Reputation.ParamReward * locationMod, DMContractDefs.DMSurvey.Reputation.ParamFailure * locationMod, null);
 					limit++;
 				}
 			}
@@ -151,11 +152,18 @@ namespace DMagic.Contracts
 			else
 				this.agent = AgentList.Instance.GetAgentRandom();
 
+			if (this.agent == null)
+				this.agent = AgentList.Instance.GetAgentRandom();
+
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParams[0].Situation), newParams[0].Body) * ((float)rand.Next(85, 116) / 100f);
-			base.SetExpiry(10f * DMUtils.deadline, 20f * DMUtils.deadline);
-			base.SetDeadlineYears(1.7f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
-			base.SetReputation(1.9f * DMcp.ParameterCount * DMUtils.reward * primaryLocationMod, 1.5f * DMcp.ParameterCount * DMUtils.penalty * primaryLocationMod, null);
-			base.SetFunds(8500 * DMcp.ParameterCount * DMUtils.forward * primaryLocationMod, 10500 * DMcp.ParameterCount * DMUtils.reward * primaryLocationMod, 7500 * DMcp.ParameterCount * DMUtils.penalty * primaryLocationMod, body);
+
+			float Mod = primaryLocationMod * DMcp.ParameterCount;
+
+			base.SetExpiry(DMContractDefs.DMSurvey.Expire.MinimumExpireDays, DMContractDefs.DMSurvey.Expire.MaximumExpireDays);
+			base.SetDeadlineYears(DMContractDefs.DMSurvey.Expire.DeadlineYears * ((float)rand.Next(80, 121)) / 100f, body);
+			base.SetReputation(DMContractDefs.DMSurvey.Reputation.BaseReward * primaryLocationMod, DMContractDefs.DMSurvey.Reputation.BaseFailure * primaryLocationMod, null);
+			base.SetFunds(DMContractDefs.DMSurvey.Funds.BaseAdvance * Mod, DMContractDefs.DMSurvey.Funds.BaseReward * Mod, DMContractDefs.DMSurvey.Funds.BaseFailure * Mod, body);
+			base.SetScience(DMContractDefs.DMSurvey.Science.BaseReward * primaryLocationMod, null);
 			return true;
 		}
 

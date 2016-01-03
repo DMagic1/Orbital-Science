@@ -159,8 +159,10 @@ namespace DMagic.Contracts
 			this.AddParameter(newParam, "AnomalyScience");
 
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParam.Situation), newParam.Body) * ((float)rand.Next(85, 116) / 100f);
-			newParam.SetFunds(12000f * DMUtils.reward * primaryLocationMod, body);
-			newParam.SetScience(6f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
+
+			newParam.SetFunds(DMContractDefs.DMAnomaly.Funds.ParamReward * primaryLocationMod, DMContractDefs.DMAnomaly.Funds.ParamFailure * primaryLocationMod, body);
+			newParam.SetScience(DMContractDefs.DMAnomaly.Science.ParamReward * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
+			newParam.SetReputation(DMContractDefs.DMAnomaly.Reputation.ParamReward * primaryLocationMod, DMContractDefs.DMAnomaly.Reputation.ParamFailure * primaryLocationMod, null);
 
 			//Add the science collection parent parameter
 			DMCompleteParameter DMcp = new DMCompleteParameter(3, 1);
@@ -172,8 +174,9 @@ namespace DMagic.Contracts
 				{
 					DMcp.addToSubParams(aP, "CollectAnomalyScience");
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), body) * ((float)rand.Next(85, 116) / 100f);
-					aP.SetFunds(7000f * DMUtils.reward * locationMod, body);
-					aP.SetScience(aP.Container.Exp.baseValue * 0.25f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
+					aP.SetFunds((DMContractDefs.DMAnomaly.Funds.ParamReward / 2) * locationMod, (DMContractDefs.DMAnomaly.Funds.ParamFailure / 2) * locationMod, body);
+					aP.SetScience(aP.Container.Exp.baseValue * DMContractDefs.DMAnomaly.Science.SecondaryReward * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
+					aP.SetReputation(DMContractDefs.DMAnomaly.Reputation.ParamReward * locationMod, DMContractDefs.DMAnomaly.Reputation.ParamFailure * locationMod, null);
 				}
 			}
 
@@ -181,10 +184,11 @@ namespace DMagic.Contracts
 				return false;
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
-			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
-			base.SetDeadlineYears(1.5f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
-			base.SetReputation(8f * DMUtils.reward * primaryLocationMod, 9f * DMUtils.penalty * primaryLocationMod, null);
-			base.SetFunds(20000f * DMUtils.forward * primaryLocationMod, 24000f * DMUtils.reward * primaryLocationMod, 20000f * DMUtils.penalty * primaryLocationMod, body);
+			base.SetExpiry(DMContractDefs.DMAnomaly.Expire.MinimumExpireDays, DMContractDefs.DMAnomaly.Expire.MaximumExpireDays);
+			base.SetDeadlineYears(DMContractDefs.DMAnomaly.Expire.DeadlineYears * ((float)rand.Next(80, 121)) / 100f, body);
+			base.SetReputation(DMContractDefs.DMAnomaly.Reputation.BaseReward * primaryLocationMod, DMContractDefs.DMAnomaly.Reputation.BaseFailure * primaryLocationMod, null);
+			base.SetScience(DMContractDefs.DMAnomaly.Science.BaseReward, null);
+			base.SetFunds(DMContractDefs.DMAnomaly.Funds.BaseAdvance * primaryLocationMod, DMContractDefs.DMAnomaly.Funds.BaseReward * primaryLocationMod, DMContractDefs.DMAnomaly.Funds.BaseFailure * primaryLocationMod, body);
 			return true;
 		}
 

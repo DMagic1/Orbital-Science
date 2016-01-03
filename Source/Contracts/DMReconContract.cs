@@ -116,16 +116,18 @@ namespace DMagic.Contracts
 			float primaryModifier = ((float)rand.Next(80, 121) / 100f);
 			float diffModifier = 1 + ((float)this.Prestige * 0.5f);
 
+			float Mod = primaryModifier * diffModifier;
+
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 
 			if (this.agent == null)
 				this.agent = AgentList.Instance.GetAgentRandom();
 
-			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
-			base.SetDeadlineDays((float)(time / KSPUtil.KerbinDay) * 3.9f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
-			base.SetReputation(8f * diffModifier * DMUtils.reward * primaryModifier, 7f * diffModifier * DMUtils.penalty * primaryModifier, null);
-			base.SetFunds(35000 * diffModifier * DMUtils.forward * primaryModifier, 40000 * diffModifier * DMUtils.reward * primaryModifier, 28000 * diffModifier * DMUtils.penalty * primaryModifier, body);
-			base.SetScience(15f * diffModifier * DMUtils.science * primaryModifier, body);
+			base.SetExpiry(DMContractDefs.DMRecon.Expire.MinimumExpireDays, DMContractDefs.DMRecon.Expire.MaximumExpireDays);
+			base.SetDeadlineDays((float)(time / KSPUtil.KerbinDay) * DMContractDefs.DMRecon.Expire.DeadlineModifier * (this.GetDestinationWeight(body) / 1.8f) * primaryModifier, null);
+			base.SetReputation(DMContractDefs.DMRecon.Reputation.BaseReward * Mod, DMContractDefs.DMRecon.Reputation.BaseFailure * Mod, null);
+			base.SetFunds(DMContractDefs.DMRecon.Funds.BaseAdvance * Mod, DMContractDefs.DMRecon.Funds.BaseReward * Mod, DMContractDefs.DMRecon.Funds.BaseFailure * Mod, body);
+			base.SetScience(DMContractDefs.DMRecon.Science.BaseReward * Mod, body);
 			return true;
 		}
 
