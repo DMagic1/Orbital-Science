@@ -22,8 +22,14 @@ namespace DMagic.Parameters
 
 		protected override void OnUpdate()
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (HighLogic.LoadedSceneIsEditor)
+				return;
+
 			if (base.state != ParameterState.Incomplete)
-				base.SetIncomplete();
+				base.SetComplete();
 
 			return;
 		}
