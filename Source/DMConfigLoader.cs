@@ -198,9 +198,9 @@ namespace DMagic
 				DMContractDefs.DMAsteroid.maxOffers = DMAsteroidNode.parse("maxOffers", (int)2);
 				DMContractDefs.DMAsteroid.maxActive = DMAsteroidNode.parse("maxActive", (int)3);
 
-				DMContractDefs.DMAsteroid.trivialScienceRequests = DMAsteroidNode.parse("Max_Trivial_Science_Requests", (int)4);
-				DMContractDefs.DMAsteroid.significantScienceRequests = DMAsteroidNode.parse("Max_Significant_Science_Requests", (int)6);
-				DMContractDefs.DMAsteroid.exceptionalScienceRequests = DMAsteroidNode.parse("Max_Exceptional_Science_Requests", (int)8);
+				DMContractDefs.DMAsteroid.trivialScienceRequests = DMAsteroidNode.parse("Max_Trivial_Science_Requests", (int)3);
+				DMContractDefs.DMAsteroid.significantScienceRequests = DMAsteroidNode.parse("Max_Significant_Science_Requests", (int)4);
+				DMContractDefs.DMAsteroid.exceptionalScienceRequests = DMAsteroidNode.parse("Max_Exceptional_Science_Requests", (int)6);
 
 				DMContractDefs.DMAsteroid.backStory = DMAsteroidNode.parse("Backstory", '|', new List<string>(1) { "Something, Something, Something..." });
 
