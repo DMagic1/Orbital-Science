@@ -163,27 +163,33 @@ namespace DMagic
 
 				if (AnomalyExpireNode != null)
 				{
-					DMContractDefs.DMAnomaly.Expire.MinimumExpireDays = AnomalyExpireNode.parse("MinimumExpireDays", (int)1);
-					DMContractDefs.DMAnomaly.Expire.MaximumExpireDays = AnomalyExpireNode.parse("MaximumExpireDays", (int)7);
-					DMContractDefs.DMAnomaly.Expire.DeadlineDays = AnomalyExpireNode.parse("DeadlineDays", (int)1000);
+					DMContractDefs.DMAnomaly.Expire.MinimumExpireDays = AnomalyExpireNode.parse("MinimumExpireDays", (int)5);
+					DMContractDefs.DMAnomaly.Expire.MaximumExpireDays = AnomalyExpireNode.parse("MaximumExpireDays", (int)15);
+					DMContractDefs.DMAnomaly.Expire.DeadlineYears = AnomalyExpireNode.parse("DeadlineYears", (float)1.5);
 				}
 
 				if (AnomalyFundsNode != null)
 				{
-					DMContractDefs.DMAnomaly.Funds.BaseAdvance = AnomalyFundsNode.parse("BaseAdvance", (double)100);
-					DMContractDefs.DMAnomaly.Funds.BaseReward = AnomalyFundsNode.parse("BaseReward", (double)100);
-					DMContractDefs.DMAnomaly.Funds.BaseFailure = AnomalyFundsNode.parse("BaseFailure", (double)100);
+					DMContractDefs.DMAnomaly.Funds.BaseAdvance = AnomalyFundsNode.parse("BaseAdvance", (float)20000);
+					DMContractDefs.DMAnomaly.Funds.BaseReward = AnomalyFundsNode.parse("BaseReward", (float)24000);
+					DMContractDefs.DMAnomaly.Funds.BaseFailure = AnomalyFundsNode.parse("BaseFailure", (float)24000);
+					DMContractDefs.DMAnomaly.Funds.ParamReward = AnomalyFundsNode.parse("ParamReward", (float)12000);
+					DMContractDefs.DMAnomaly.Funds.ParamFailure = AnomalyFundsNode.parse("ParamFailure", (float)0);
 				}
 
 				if (AnomalySciNode != null)
 				{
-					DMContractDefs.DMAnomaly.Science.BaseReward = AnomalySciNode.parse("BaseReward", (float)10);
+					DMContractDefs.DMAnomaly.Science.BaseReward = AnomalySciNode.parse("BaseReward", (float)0);
+					DMContractDefs.DMAnomaly.Science.ParamReward = AnomalySciNode.parse("ParamReward", (float)6);
+					DMContractDefs.DMAnomaly.Science.SecondaryReward = AnomalySciNode.parse("SecondaryReward", (float)0.25);
 				}
 
 				if (AnomalyRepNode != null)
 				{
-					DMContractDefs.DMAnomaly.Reputation.BaseReward = AnomalyRepNode.parse("BaseReward", (float)5);
-					DMContractDefs.DMAnomaly.Reputation.BaseFailure = AnomalyRepNode.parse("BaseFailure", (float)5);
+					DMContractDefs.DMAnomaly.Reputation.BaseReward = AnomalyRepNode.parse("BaseReward", (float)8);
+					DMContractDefs.DMAnomaly.Reputation.BaseFailure = AnomalyRepNode.parse("BaseFailure", (float)9);
+					DMContractDefs.DMAnomaly.Reputation.ParamReward = AnomalyRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMAnomaly.Reputation.ParamFailure = AnomalyRepNode.parse("ParamFailure", (float)0);
 				}
 			}
 
@@ -207,27 +213,32 @@ namespace DMagic
 
 				if (AsteroidExpireNode != null)
 				{
-					DMContractDefs.DMAsteroid.Expire.MinimumExpireDays = AsteroidExpireNode.parse("MinimumExpireDays", (int)1);
-					DMContractDefs.DMAsteroid.Expire.MaximumExpireDays = AsteroidExpireNode.parse("MaximumExpireDays", (int)7);
-					DMContractDefs.DMAsteroid.Expire.DeadlineDays = AsteroidExpireNode.parse("DeadlineDays", (int)1000);
+					DMContractDefs.DMAsteroid.Expire.MinimumExpireDays = AsteroidExpireNode.parse("MinimumExpireDays", (int)5);
+					DMContractDefs.DMAsteroid.Expire.MaximumExpireDays = AsteroidExpireNode.parse("MaximumExpireDays", (int)15);
+					DMContractDefs.DMAsteroid.Expire.DeadlineYears = AsteroidExpireNode.parse("DeadlineYears", (float)3.8f);
 				}
 
 				if (AsteroidFundsNode != null)
 				{
-					DMContractDefs.DMAsteroid.Funds.BaseAdvance = AsteroidFundsNode.parse("BaseAdvance", (double)100);
-					DMContractDefs.DMAsteroid.Funds.BaseReward = AsteroidFundsNode.parse("BaseReward", (double)100);
-					DMContractDefs.DMAsteroid.Funds.BaseFailure = AsteroidFundsNode.parse("BaseFailure", (double)100);
+					DMContractDefs.DMAsteroid.Funds.BaseAdvance = AsteroidFundsNode.parse("BaseAdvance", (float)8000);
+					DMContractDefs.DMAsteroid.Funds.BaseReward = AsteroidFundsNode.parse("BaseReward", (float)9500);
+					DMContractDefs.DMAsteroid.Funds.BaseFailure = AsteroidFundsNode.parse("BaseFailure", (float)7000);
+					DMContractDefs.DMAsteroid.Funds.ParamReward = AsteroidFundsNode.parse("ParamReward", (float)5000);
+					DMContractDefs.DMAsteroid.Funds.ParamFailure = AsteroidFundsNode.parse("ParamFailure", (float)0);
 				}
 
 				if (AsteroidSciNode != null)
 				{
-					DMContractDefs.DMAsteroid.Science.BaseReward = AsteroidSciNode.parse("BaseReward", (float)10);
+					DMContractDefs.DMAsteroid.Science.BaseReward = AsteroidSciNode.parse("BaseReward", (float)0);
+					DMContractDefs.DMAsteroid.Science.ParamReward = AsteroidSciNode.parse("ParamReward", (float)0.25);
 				}
 
 				if (AsteroidRepNode != null)
 				{
-					DMContractDefs.DMAsteroid.Reputation.BaseReward = AsteroidRepNode.parse("BaseReward", (float)5);
-					DMContractDefs.DMAsteroid.Reputation.BaseFailure = AsteroidRepNode.parse("BaseFailure", (float)5);
+					DMContractDefs.DMAsteroid.Reputation.BaseReward = AsteroidRepNode.parse("BaseReward", (float)1.5);
+					DMContractDefs.DMAsteroid.Reputation.BaseFailure = AsteroidRepNode.parse("BaseFailure", (float)1.5);
+					DMContractDefs.DMAsteroid.Reputation.ParamReward = AsteroidRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMAsteroid.Reputation.ParamFailure = AsteroidRepNode.parse("ParamFailure", (float)0);
 				}
 			}
 
@@ -240,9 +251,9 @@ namespace DMagic
 				DMContractDefs.DMMagnetic.significantEccentricityMultiplier = DMMagNode.parse("Significant_Eccentricity_Modifier", (double)0.35);
 				DMContractDefs.DMMagnetic.exceptionalEccentricityMultiplier = DMMagNode.parse("Exceptional_Eccentricity_Modifier", (double)0.5);
 
-				DMContractDefs.DMMagnetic.trivialInclinationMultiplier = DMMagNode.parse("Trivial_Inclination_Modifier", (double)15);
-				DMContractDefs.DMMagnetic.significantInclinationMultiplier = DMMagNode.parse("Significant_Inclination_Modifier", (double)35);
-				DMContractDefs.DMMagnetic.exceptionalInclinationMultiplier = DMMagNode.parse("Exceptional_Inclination_Modifier", (double)55);
+				DMContractDefs.DMMagnetic.trivialInclinationMultiplier = DMMagNode.parse("Trivial_Inclination_Modifier", (double)20);
+				DMContractDefs.DMMagnetic.significantInclinationMultiplier = DMMagNode.parse("Significant_Inclination_Modifier", (double)40);
+				DMContractDefs.DMMagnetic.exceptionalInclinationMultiplier = DMMagNode.parse("Exceptional_Inclination_Modifier", (double)60);
 
 				DMContractDefs.DMMagnetic.magParts = DMMagNode.parse("Magnetometer_Parts", ',', new List<string>(2) { "dmmagBoom", "dmUSMagBoom" });
 				DMContractDefs.DMMagnetic.rpwsParts = DMMagNode.parse("RPWS_Parts", ',', new List<string>(2) { "rpwsAnt", "USRPWS" });
@@ -258,27 +269,32 @@ namespace DMagic
 
 				if (MagExpireNode != null)
 				{
-					DMContractDefs.DMMagnetic.Expire.MinimumExpireDays = MagExpireNode.parse("MinimumExpireDays", (int)1);
-					DMContractDefs.DMMagnetic.Expire.MaximumExpireDays = MagExpireNode.parse("MaximumExpireDays", (int)7);
-					DMContractDefs.DMMagnetic.Expire.DeadlineDays = MagExpireNode.parse("DeadlineDays", (int)1000);
+					DMContractDefs.DMMagnetic.Expire.MinimumExpireDays = MagExpireNode.parse("MinimumExpireDays", (int)5);
+					DMContractDefs.DMMagnetic.Expire.MaximumExpireDays = MagExpireNode.parse("MaximumExpireDays", (int)15);
+					DMContractDefs.DMMagnetic.Expire.DeadlineModifier = MagExpireNode.parse("DeadlineModifier", (float)3.7);
 				}
 
 				if (MagFundsNode != null)
 				{
-					DMContractDefs.DMMagnetic.Funds.BaseAdvance = MagFundsNode.parse("BaseAdvance", (double)100);
-					DMContractDefs.DMMagnetic.Funds.BaseReward = MagFundsNode.parse("BaseReward", (double)100);
-					DMContractDefs.DMMagnetic.Funds.BaseFailure = MagFundsNode.parse("BaseFailure", (double)100);
+					DMContractDefs.DMMagnetic.Funds.BaseAdvance = MagFundsNode.parse("BaseAdvance", (float)35000);
+					DMContractDefs.DMMagnetic.Funds.BaseReward = MagFundsNode.parse("BaseReward", (float)40000);
+					DMContractDefs.DMMagnetic.Funds.BaseFailure = MagFundsNode.parse("BaseFailure", (float)28000);
+					DMContractDefs.DMMagnetic.Funds.ParamReward = MagFundsNode.parse("ParamReward", (float)5000);
+					DMContractDefs.DMMagnetic.Funds.ParamFailure = MagFundsNode.parse("ParamFailure", (float)0);
 				}
 
 				if (MagSciNode != null)
 				{
-					DMContractDefs.DMMagnetic.Science.BaseReward = MagSciNode.parse("BaseReward", (float)10);
+					DMContractDefs.DMMagnetic.Science.BaseReward = MagSciNode.parse("BaseReward", (float)15);
+					DMContractDefs.DMMagnetic.Science.ParamReward = MagSciNode.parse("ParamReward", (float)2);
 				}
 
 				if (MagRepNode != null)
 				{
-					DMContractDefs.DMMagnetic.Reputation.BaseReward = MagRepNode.parse("BaseReward", (float)5);
-					DMContractDefs.DMMagnetic.Reputation.BaseFailure = MagRepNode.parse("BaseFailure", (float)5);
+					DMContractDefs.DMMagnetic.Reputation.BaseReward = MagRepNode.parse("BaseReward", (float)8);
+					DMContractDefs.DMMagnetic.Reputation.BaseFailure = MagRepNode.parse("BaseFailure", (float)7);
+					DMContractDefs.DMMagnetic.Reputation.ParamReward = MagRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMMagnetic.Reputation.ParamFailure = MagRepNode.parse("ParamFailure", (float)0);
 				}
 			}
 
@@ -302,27 +318,32 @@ namespace DMagic
 
 				if (ReconExpireNode != null)
 				{
-					DMContractDefs.DMRecon.Expire.MinimumExpireDays = ReconExpireNode.parse("MinimumExpireDays", (int)1);
-					DMContractDefs.DMRecon.Expire.MaximumExpireDays = ReconExpireNode.parse("MaximumExpireDays", (int)7);
-					DMContractDefs.DMRecon.Expire.DeadlineDays = ReconExpireNode.parse("DeadlineDays", (int)1000);
+					DMContractDefs.DMRecon.Expire.MinimumExpireDays = ReconExpireNode.parse("MinimumExpireDays", (int)5);
+					DMContractDefs.DMRecon.Expire.MaximumExpireDays = ReconExpireNode.parse("MaximumExpireDays", (int)15);
+					DMContractDefs.DMRecon.Expire.DeadlineModifier = ReconExpireNode.parse("DeadlineModifier", (float)3.7);
 				}
 
 				if (ReconFundsNode != null)
 				{
-					DMContractDefs.DMRecon.Funds.BaseAdvance = ReconFundsNode.parse("BaseAdvance", (double)100);
-					DMContractDefs.DMRecon.Funds.BaseReward = ReconFundsNode.parse("BaseReward", (double)100);
-					DMContractDefs.DMRecon.Funds.BaseFailure = ReconFundsNode.parse("BaseFailure", (double)100);
+					DMContractDefs.DMRecon.Funds.BaseAdvance = ReconFundsNode.parse("BaseAdvance", (float)35000);
+					DMContractDefs.DMRecon.Funds.BaseReward = ReconFundsNode.parse("BaseReward", (float)40000);
+					DMContractDefs.DMRecon.Funds.BaseFailure = ReconFundsNode.parse("BaseFailure", (float)28000);
+					DMContractDefs.DMRecon.Funds.ParamReward = ReconFundsNode.parse("ParamReward", (float)5000);
+					DMContractDefs.DMRecon.Funds.ParamFailure = ReconFundsNode.parse("ParamFailure", (float)0);
 				}
 
 				if (ReconSciNode != null)
 				{
-					DMContractDefs.DMRecon.Science.BaseReward = ReconSciNode.parse("BaseReward", (float)10);
+					DMContractDefs.DMRecon.Science.BaseReward = ReconSciNode.parse("BaseReward", (float)20);
+					DMContractDefs.DMRecon.Science.ParamReward = ReconSciNode.parse("ParamReward", (float)2);
 				}
 
 				if (ReconRepNode != null)
 				{
-					DMContractDefs.DMRecon.Reputation.BaseReward = ReconRepNode.parse("BaseReward", (float)5);
-					DMContractDefs.DMRecon.Reputation.BaseFailure = ReconRepNode.parse("BaseFailure", (float)5);
+					DMContractDefs.DMRecon.Reputation.BaseReward = ReconRepNode.parse("BaseReward", (float)10);
+					DMContractDefs.DMRecon.Reputation.BaseFailure = ReconRepNode.parse("BaseFailure", (float)12);
+					DMContractDefs.DMRecon.Reputation.ParamReward = ReconRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMRecon.Reputation.ParamFailure = ReconRepNode.parse("ParamFailure", (float)0);
 				}
 			}
 
@@ -346,27 +367,32 @@ namespace DMagic
 
 				if (SurveyExpireNode != null)
 				{
-					DMContractDefs.DMSurvey.Expire.MinimumExpireDays = SurveyExpireNode.parse("MinimumExpireDays", (int)1);
-					DMContractDefs.DMSurvey.Expire.MaximumExpireDays = SurveyExpireNode.parse("MaximumExpireDays", (int)7);
-					DMContractDefs.DMSurvey.Expire.DeadlineDays = SurveyExpireNode.parse("DeadlineDays", (int)1000);
+					DMContractDefs.DMSurvey.Expire.MinimumExpireDays = SurveyExpireNode.parse("MinimumExpireDays", (int)5);
+					DMContractDefs.DMSurvey.Expire.MaximumExpireDays = SurveyExpireNode.parse("MaximumExpireDays", (int)15);
+					DMContractDefs.DMSurvey.Expire.DeadlineYears = SurveyExpireNode.parse("DeadlineYears", (float)1.7);
 				}
 
 				if (SurveyFundsNode != null)
 				{
-					DMContractDefs.DMSurvey.Funds.BaseAdvance = SurveyFundsNode.parse("BaseAdvance", (double)100);
-					DMContractDefs.DMSurvey.Funds.BaseReward = SurveyFundsNode.parse("BaseReward", (double)100);
-					DMContractDefs.DMSurvey.Funds.BaseFailure = SurveyFundsNode.parse("BaseFailure", (double)100);
+					DMContractDefs.DMSurvey.Funds.BaseAdvance = SurveyFundsNode.parse("BaseAdvance", (float)8500);
+					DMContractDefs.DMSurvey.Funds.BaseReward = SurveyFundsNode.parse("BaseReward", (float)10500);
+					DMContractDefs.DMSurvey.Funds.BaseFailure = SurveyFundsNode.parse("BaseFailure", (float)7500);
+					DMContractDefs.DMSurvey.Funds.ParamReward = SurveyFundsNode.parse("ParamReward", (float)3500);
+					DMContractDefs.DMSurvey.Funds.ParamFailure = SurveyFundsNode.parse("ParamFailure", (float)0);
 				}
 
 				if (SurveySciNode != null)
 				{
-					DMContractDefs.DMSurvey.Science.BaseReward = SurveySciNode.parse("BaseReward", (float)10);
+					DMContractDefs.DMSurvey.Science.BaseReward = SurveySciNode.parse("BaseReward", (float)0);
+					DMContractDefs.DMSurvey.Science.ParamReward = SurveySciNode.parse("ParamReward", (float)0.2);
 				}
 
 				if (SurveyRepNode != null)
 				{
-					DMContractDefs.DMSurvey.Reputation.BaseReward = SurveyRepNode.parse("BaseReward", (float)5);
-					DMContractDefs.DMSurvey.Reputation.BaseFailure = SurveyRepNode.parse("BaseFailure", (float)5);
+					DMContractDefs.DMSurvey.Reputation.BaseReward = SurveyRepNode.parse("BaseReward", (float)1.9);
+					DMContractDefs.DMSurvey.Reputation.BaseFailure = SurveyRepNode.parse("BaseFailure", (float)1.5);
+					DMContractDefs.DMSurvey.Reputation.ParamReward = SurveyRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMSurvey.Reputation.ParamFailure = SurveyRepNode.parse("ParamFailure", (float)0);
 				}
 			}
 		}
