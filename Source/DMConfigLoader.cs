@@ -152,6 +152,10 @@ namespace DMagic
 				DMContractDefs.DMAnomaly.maxOffers = DMAnomalyNode.parse("maxOffers", (int)2);
 				DMContractDefs.DMAnomaly.maxActive = DMAnomalyNode.parse("maxActive", (int)3);
 
+				DMContractDefs.DMAnomaly.TrivialReconLevelRequirement = DMAnomalyNode.parse("Trivial_Recon_Level_Requirement", (int)0);
+				DMContractDefs.DMAnomaly.SignificantReconLevelRequirement = DMAnomalyNode.parse("Significant_Recon_Level_Requirement", (int)1);
+				DMContractDefs.DMAnomaly.ExceptionalReconLevelRequirement = DMAnomalyNode.parse("Exceptional_Recon_Level_Requirement", (int)1);
+
 				DMContractDefs.DMAnomaly.backStory = DMAnomalyNode.parse("Backstory", '|', new List<string>(1) { "Something, Something, Something..." });
 
 				DMContractDefs.DMAnomaly.backStory = DMUtils.formatFixStringList(DMContractDefs.DMAnomaly.backStory);

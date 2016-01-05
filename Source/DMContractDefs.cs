@@ -54,6 +54,10 @@ namespace DMagic
 			public static int maxOffers = 2;
 			public static int maxActive = 3;
 
+			public static int TrivialReconLevelRequirement = 0;
+			public static int SignificantReconLevelRequirement = 1;
+			public static int ExceptionalReconLevelRequirement = 1;
+
 			public static List<string> backStory = new List<string>(1) { "Something, Something, Something..." };
 		}
 
