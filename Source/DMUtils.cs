@@ -92,62 +92,6 @@ namespace DMagic
 			}
 		}
 
-		internal static double parseValue(string value, double def, bool log = false, string fail = "")
-		{
-			double d = def;
-
-			if (!double.TryParse(value, out d))
-			{
-				if (log)
-					Logging(fail);
-				return def;
-			}
-
-			return d;
-		}
-
-		internal static float parseValue(string value, float def, bool log = false, string fail = "")
-		{
-			float f = def;
-
-			if (!float.TryParse(value, out f))
-			{
-				if (log)
-					Logging(fail);
-				return def;
-			}
-
-			return f;
-		}
-
-		internal static int parseValue(string value, int def, bool log = false, string fail = "")
-		{
-			int i = def;
-
-			if (!int.TryParse(value, out i))
-			{
-				if (log)
-					Logging(fail);
-				return def;
-			}
-
-			return i;
-		}
-
-		internal static bool parseValue(string value, bool def, bool log = false, string fail = "")
-		{
-			bool b = def;
-
-			if (!bool.TryParse(value, out b))
-			{
-				if (log)
-					Logging(fail);
-				return def;
-			}
-
-			return b;
-		}
-
 		internal static string stringConcat(List<Vessel> source)
 		{
 			int i = source.Count;
@@ -207,27 +151,6 @@ namespace DMagic
 			}
 
 			return fixedList;
-		}
-
-		internal static List<Guid> stringSplitGuid(string source)
-		{
-			if (source == "")
-				return new List<Guid>();
-			string[] s = source.Split(',');
-			List<Guid> id = new List<Guid>();
-			for (int j = 0; j < s.Length; j++)
-			{
-				try
-				{
-					Guid g = new Guid(s[j]);
-					id.Add(g);
-				}
-				catch (Exception e)
-				{
-					DMUtils.Logging("Guid invalid: {0}", e);
-				}
-			}
-			return id;
 		}
 
 		internal static Dictionary<int, List<string>> stringSplit(string source)
