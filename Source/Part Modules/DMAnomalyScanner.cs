@@ -48,6 +48,7 @@ namespace DMagic.Part_Modules
 		private bool anomCloseRange, anomInRange, camDeployed, rotating, closeRange, fullyDeployed = false;
 		private Animation animSecondary;
 		private Transform cam, dish;
+		private DMAnomalyStorage currentAnomalies;
 		private const string camTransform = "camBase";
 		private const string dishTransform = "radarBaseArmNode0";
 
@@ -91,13 +92,16 @@ namespace DMagic.Part_Modules
 					}
 				}
 
-				if (DMScienceScenario.SciScenario.anomalyList != null)
-				{
+				//if (DMScienceScenario.SciScenario.anomalyList != null)
+				//{
 					if (IsDeployed)
-						DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
-					else if (DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
-						DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
-				}
+						DMAnomalyList.ScannerUpdating = true;
+					//DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
+					else if (DMAnomalyList.ScannerUpdating)
+					//else if (DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
+						DMAnomalyList.ScannerUpdating = false;
+						//DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
+				//}
 
 				if (!fullyDeployed && rotating)
 					spinDishDown();
@@ -106,11 +110,12 @@ namespace DMagic.Part_Modules
 
 		new private void OnDestroy()
 		{
-			if (DMScienceScenario.SciScenario != null)
-			{
-				if (DMScienceScenario.SciScenario.anomalyList != null)
-					DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
-			}
+			DMAnomalyList.ScannerUpdating = false;
+			//if (DMScienceScenario.SciScenario != null)
+			//{
+			//	if (DMScienceScenario.SciScenario.anomalyList != null)
+			//		DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
+			//}
 		}
 
 		#region animators
@@ -234,44 +239,55 @@ namespace DMagic.Part_Modules
 		{
 			bool anomInRange = false;
 
-			foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
+			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
+
+			if (currentAnomalies != null)
 			{
-				DMAnomalyList.updateAnomaly(vessel, anom);
-				if (anom.VDistance < 50000)
+				for (int i = 0; i < currentAnomalies.AnomalyCount; i++)
+				//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
 				{
-					if (anom.VHorizontal < (11000 * (1 - anom.VHeight / 6000)))
+					DMAnomalyObject anom = currentAnomalies.getAnomaly(i);
+
+					if (anom == null)
+						continue;
+
+					DMAnomalyList.updateAnomaly(vessel, anom);
+					if (anom.VDistance < 50000)
 					{
-						anomInRange = true;
-						if (anom.VHorizontal < (10000 * (1 - anom.VHeight / 5000)))
+						if (anom.VHorizontal < (11000 * (1 - anom.VHeight / 6000)))
 						{
-							if (!camDeployed)
+							anomInRange = true;
+							if (anom.VHorizontal < (10000 * (1 - anom.VHeight / 5000)))
 							{
-								newSecondaryAnimator(camAnimate, 1f, 0f, WrapMode.Default);
-								camDeployed = true;
-								if (anom.VDistance < 250)
+								if (!camDeployed)
 								{
-									newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
-									closeRange = true;
-									break;
+									newSecondaryAnimator(camAnimate, 1f, 0f, WrapMode.Default);
+									camDeployed = true;
+									if (anom.VDistance < 250)
+									{
+										newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
+										closeRange = true;
+										break;
+									}
+									else
+									{
+										closeRange = false;
+									}
 								}
-								else
+								if (camDeployed)
 								{
-									closeRange = false;
-								}
-							}
-							if (camDeployed)
-							{
-								camRotate(anom.WorldLocation);
-								if (anom.VDistance < 250 && closeRange == false)
-								{
-									newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
-									closeRange = true;
-									break;
-								}
-								if (anom.VDistance >= 275 && closeRange == true)
-								{
-									animSecondary[foundAnimate].wrapMode = WrapMode.Default;
-									closeRange = false;
+									camRotate(anom.WorldLocation);
+									if (anom.VDistance < 250 && closeRange == false)
+									{
+										newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
+										closeRange = true;
+										break;
+									}
+									if (anom.VDistance >= 275 && closeRange == true)
+									{
+										animSecondary[foundAnimate].wrapMode = WrapMode.Default;
+										closeRange = false;
+									}
 								}
 							}
 						}
@@ -292,8 +308,20 @@ namespace DMagic.Part_Modules
 			anomCloseRange = false;
 			anomInRange = false;
 			closestAnom = "";
-			foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
+
+			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
+
+			if (currentAnomalies == null)
+				return;
+
+			for (int i = 0; i < currentAnomalies.AnomalyCount; i++)
+			//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
 			{
+				DMAnomalyObject anom = currentAnomalies.getAnomaly(i);
+
+				if (anom == null)
+					continue;
+
 				DMAnomalyList.updateAnomaly(vessel, anom);
 				if (anom.VDistance < 100000)
 				{

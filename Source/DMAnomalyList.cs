@@ -39,114 +39,152 @@ namespace DMagic
 {
 	public class DMAnomalyList : MonoBehaviour
 	{
-		private Dictionary<string, Dictionary<string, DMAnomalyObject>> anomalies = new Dictionary<string, Dictionary<string, DMAnomalyObject>>();
-		private List<DMAnomalyObject> currentBodyAnomalies = new List<DMAnomalyObject>();
-		private bool scannerUpdating;
-		private bool loaded = false;
+		//private Dictionary<string, Dictionary<string, DMAnomalyObject>> anomalies = new Dictionary<string, Dictionary<string, DMAnomalyObject>>();
+		//private List<DMAnomalyObject> currentBodyAnomalies = new List<DMAnomalyObject>();
+		private static bool scannerUpdating;
+		//private bool loaded = false;
+		private static Dictionary<string, DMAnomalyStorage> anomalies = new Dictionary<string, DMAnomalyStorage>();
 
-		private void Start()
-		{
-			GameEvents.onVesselSOIChanged.Add(SOIChange);
-		}
+		//private void Start()
+		//{
+		//	GameEvents.onVesselSOIChanged.Add(SOIChange);
+		//}
 
-		private void OnDestroy()
-		{
-			GameEvents.onVesselSOIChanged.Remove(SOIChange);
-		}
+		//private void OnDestroy()
+		//{
+		//	GameEvents.onVesselSOIChanged.Remove(SOIChange);
+		//}
 
-		private void Update()
+		//private void Update()
+		//{
+		//	if (HighLogic.LoadedSceneHasPlanetarium && !loaded)
+		//	{
+		//		pqsBuild(FlightGlobals.currentMainBody);
+		//		loaded = true;
+		//	}
+		//}
+
+		//public List<DMAnomalyObject> anomObjects()
+		//{
+		//	return currentBodyAnomalies;
+		//}
+
+		public static DMAnomalyObject getAnomalyObject(string body, string city)
 		{
-			if (HighLogic.LoadedSceneHasPlanetarium && !loaded)
+			if (!anomalies.ContainsKey(body))
 			{
-				pqsBuild(FlightGlobals.currentMainBody);
-				loaded = true;
+				DMUtils.Logging("No anomaly of name [{0}] found for body [{1}]", city, body);
+				return null;
 			}
+
+			return anomalies[body].getAnomaly(city);
+
+			//if (anomalies.ContainsKey(body))
+			//{
+
+			//	if (anomalies[body].ContainsKey(city))
+			//		return anomalies[body][city];
+			//	else
+			//		DMUtils.Logging("No anomaly of name [{0}] found for body [{1}]", city, body);
+			//}
+			//else
+			//	DMUtils.Logging("No anomalies found for body [{0}]", body);
+
+			//return null;
 		}
 
-		public List<DMAnomalyObject> anomObjects()
+		public static DMAnomalyStorage getAnomalyStorage(int index)
 		{
-			return currentBodyAnomalies;
-		}
-
-		public DMAnomalyObject getAnomalyObject(string body, string city)
-		{
-			if (anomalies.ContainsKey(body))
-			{
-				if (anomalies[body].ContainsKey(city))
-					return anomalies[body][city];
-				else
-					DMUtils.Logging("No anomaly of name [{0}] found for body [{1}]", city, body);
-			}
-			else
-				DMUtils.Logging("No anomalies found for body [{0}]", body);
+			if (anomalies.Count > index)
+				return anomalies.ElementAt(index).Value;
 
 			return null;
 		}
 
-		public bool ScannerUpdating
+		public static DMAnomalyStorage getAnomalyStorage(string body)
+		{
+			if (anomalies.ContainsKey(body))
+				return anomalies[body];
+
+			return null;
+		}
+
+		public static bool ScannerUpdating
 		{
 			get { return scannerUpdating; }
 			internal set { scannerUpdating = value; }
 		}
 
-		private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
+		public int AnomalyCount
 		{
-			StartCoroutine(updateCoordinates(VB.to));
+			get { return anomalies.Count; }
 		}
 
-		private IEnumerator updateCoordinates(CelestialBody b)
-		{
-			yield return new WaitForSeconds(3);
+		//private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
+		//{
+		//	StartCoroutine(updateCoordinates(VB.to));
+		//}
 
-			currentBodyAnomalies.Clear();
+		public static void updateCoordinates(CelestialBody b)
+		{
+			//yield return new WaitForSeconds(3);
+
+			//currentBodyAnomalies.Clear();
 
 			if (anomalies.ContainsKey(b.name))
 			{
-				foreach (var anom in anomalies[b.name].Values)
+				for (int i = 0; i < anomalies[b.name].AnomalyCount; i++)
 				{
-					anom.WorldLocation = anom.City.transform.position;
+					DMAnomalyObject anom = anomalies[b.name].getAnomaly(i);
+
+					if (anom == null)
+						continue;
+
+					anom.WorldLocation = b.GetWorldSurfacePosition(anom.Lat, anom.Lon, anom.Alt);
+					//anom.WorldLocation = anom.City.transform.position;
 					anom.Lat = b.GetLatitude(anom.WorldLocation);
 					anom.Lon = b.GetLongitude(anom.WorldLocation);
 				}
 
-				currentBodyAnomalies = anomalies[b.name].Values.ToList();
+				//currentBodyAnomalies = anomalies[b.name].Values.ToList();
 			}
-			else
-				currentBodyAnomalies = new List<DMAnomalyObject>();
+			//else
+			//	currentBodyAnomalies = new List<DMAnomalyObject>();
 		}
 
-		private void pqsBuild(CelestialBody b)
-		{
-			PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
-			foreach (PQSCity anomalyObject in Cities)
-			{
-				if (!anomalies.ContainsKey(anomalyObject.transform.parent.name))
-				{
-					Dictionary<string, DMAnomalyObject> anomDict = new Dictionary<string, DMAnomalyObject>();
-					DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
-					anomDict.Add(anomalyObject.name, obj);
-					anomalies.Add(anomalyObject.transform.parent.name, anomDict);
+		//private void pqsBuild(CelestialBody b)
+		//{
+		//	PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
+		//	foreach (PQSCity anomalyObject in Cities)
+		//	{
+		//		if (!anomalies.ContainsKey(anomalyObject.transform.parent.name))
+		//		{
+		//			Dictionary<string, DMAnomalyObject> anomDict = new Dictionary<string, DMAnomalyObject>();
+		//			DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
+		//			anomDict.Add(anomalyObject.name, obj);
+		//			anomalies.Add(anomalyObject.transform.parent.name, anomDict);
 
-				}
-				else if (!anomalies[anomalyObject.transform.parent.name].ContainsKey(anomalyObject.name))
-				{
-					DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
-					anomalies[anomalyObject.transform.parent.name].Add(anomalyObject.name, obj);
-				}
-			}
+		//		}
+		//		else if (!anomalies[anomalyObject.transform.parent.name].ContainsKey(anomalyObject.name))
+		//		{
+		//			DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
+		//			anomalies[anomalyObject.transform.parent.name].Add(anomalyObject.name, obj);
+		//		}
+		//	}
 
-			currentBodyAnomalies.Clear();
+		//	currentBodyAnomalies.Clear();
 
-			if (anomalies.ContainsKey(b.name))
-				currentBodyAnomalies = anomalies[b.name].Values.ToList();
-			else
-				currentBodyAnomalies = new List<DMAnomalyObject>();
-		}
+		//	if (anomalies.ContainsKey(b.name))
+		//		currentBodyAnomalies = anomalies[b.name].Values.ToList();
+		//	else
+		//		currentBodyAnomalies = new List<DMAnomalyObject>();
+		//}
 
-		internal static void updateAnomaly(Vessel v, DMAnomalyObject a)
+		public static void updateAnomaly(Vessel v, DMAnomalyObject a)
 		{
 			Vector3d vPos = v.transform.position;
-			a.WorldLocation = a.City.transform.position;
+			//a.WorldLocation = a.City.transform.position;
+			a.WorldLocation = v.mainBody.GetWorldSurfacePosition(a.Lat, a.Lon, a.Alt);
 
 			a.Lat = v.mainBody.GetLatitude(a.WorldLocation);
 			a.Lon = v.mainBody.GetLongitude(a.WorldLocation);
@@ -165,7 +203,7 @@ namespace DMagic
 			a.VHorizontal = Math.Sqrt((a.VDistance * a.VDistance) - (a.VHeight * a.VHeight));
 		}
 
-		internal static void bearing(Vessel v, DMAnomalyObject a)
+		public static void bearing(Vessel v, DMAnomalyObject a)
 		{
 			a.Bearing = DMUtils.bearing(v.latitude, v.longitude, a.Lat, a.Lon);
 		}
