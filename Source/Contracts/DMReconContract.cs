@@ -256,5 +256,10 @@ namespace DMagic.Contracts
 			}
 		}
 
+		public CelestialBody Body
+		{
+			get { return body; }
+		}
+
 	}
 }
