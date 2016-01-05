@@ -37,21 +37,21 @@ namespace DMagic
 {
 	public class DMAnomalyObject
 	{
-		private PQSCity city;
+		//private PQSCity city;
 		private Vector3d worldLocation;
 		private CelestialBody body;
-		private double lat, lon;
+		private double lat, lon, alt;
 		private double Vdistance, Vheight, Vhorizontal;
 		private double bearing;
 		private string name;
 
 		public DMAnomalyObject(PQSCity City)
 		{
-			city = City;
-			name = city.name;
+			//city = City;
+			name = City.name;
 			try
 			{
-				body = FlightGlobals.Bodies.FirstOrDefault(b => b.name == city.transform.parent.name);
+				body = FlightGlobals.Bodies.FirstOrDefault(b => b.name == City.transform.parent.name);
 			}
 			catch (Exception e)
 			{
@@ -59,11 +59,26 @@ namespace DMagic
 			}
 			if (body != null)
 			{
-				worldLocation = city.transform.position;
+				worldLocation = City.transform.position;
 				lat = clampLat(body.GetLatitude(worldLocation));
 				lon = clampLon(body.GetLongitude(worldLocation));
+				alt = body.GetAltitude(worldLocation);
 			}
 		}
+
+		public DMAnomalyObject(string n, CelestialBody b, double la, double lo)
+		{
+			name = n;
+			body = b;
+			lat = la;
+			lon = lo;
+		}
+
+		//public void addPQSCity(PQSCity c)
+		//{
+		//	city = c;
+		//	worldLocation = c.transform.position;
+		//}
 
 		private double clampLat(double l)
 		{
@@ -75,10 +90,10 @@ namespace DMagic
 			return (l + 360 + 180) % 360 - 180;
 		}
 
-		public PQSCity City
-		{
-			get { return city; }
-		}
+		//public PQSCity City
+		//{
+		//	get { return city; }
+		//}
 
 		public Vector3d WorldLocation
 		{
@@ -107,6 +122,11 @@ namespace DMagic
 			{
 				lon = clampLon(value);
 			}
+		}
+
+		public double Alt
+		{
+			get { return alt; }
 		}
 
 		public double VDistance
