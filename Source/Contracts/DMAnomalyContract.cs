@@ -83,6 +83,24 @@ namespace DMagic.Contracts
 			if (!DMUtils.partAvailable(new List<string>(1) { "dmAnomScanner" }))
 				return false;
 
+			int reconLevelRequirement = 0;
+
+			switch(this.prestige)
+			{
+				case ContractPrestige.Trivial:
+					reconLevelRequirement = DMContractDefs.DMAnomaly.TrivialReconLevelRequirement;
+					break;
+				case ContractPrestige.Significant:
+					reconLevelRequirement = DMContractDefs.DMAnomaly.SignificantReconLevelRequirement;
+					break;
+
+				case ContractPrestige.Exceptional:
+					reconLevelRequirement = DMContractDefs.DMAnomaly.ExceptionalReconLevelRequirement;
+					break;
+			}
+
+			List<CelestialBody> customReachedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(c => (int)c.Prestige >= reconLevelRequirement).Select(c => c.Body).ToList();
+
 			//Kerbin or Mun Anomalies for trivial contracts
 			if (this.Prestige == ContractPrestige.Trivial)
 			{
@@ -299,11 +317,11 @@ namespace DMagic.Contracts
 
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				if (DMScienceScenario.SciScenario != null)
-				{
-					if (DMScienceScenario.SciScenario.anomalyList != null)
-						targetAnomaly = DMScienceScenario.SciScenario.anomalyList.getAnomalyObject(body.name, hash);
-				}
+				//if (DMScienceScenario.SciScenario != null)
+				//{
+				//	if (DMScienceScenario.SciScenario.anomalyList != null)
+						targetAnomaly = DMAnomalyList.getAnomalyObject(body.name, hash);
+				//}
 
 				if (targetAnomaly != null)
 				{
