@@ -9,10 +9,10 @@ namespace DMagic
 	{
 		private CelestialBody body;
 		private bool scanned;
-		private bool updated;
+		//private bool updated;
 		private Dictionary<string, DMAnomalyObject> anomalies = new Dictionary<string, DMAnomalyObject>();
 
-		public DMAnomalyStorage(CelestialBody b, bool s)
+		public DMAnomalyStorage(CelestialBody b, bool s = true)
 		{
 			body = b;
 			scanned = s;
@@ -34,12 +34,12 @@ namespace DMagic
 		//	anom.addPQSCity(city);
 		//}
 
-		public void scanBody()
+		public bool scanBody()
 		{
 			scanned = true;
 
 			if (body.pqsController == null)
-				return;
+				return false;
 
 			PQSCity[] Cities = body.pqsController.GetComponentsInChildren<PQSCity>();
 
@@ -57,6 +57,8 @@ namespace DMagic
 
 				addAnomaly(anom);
 			}
+
+			return true;
 		}
 
 		public DMAnomalyObject getAnomaly(string name)
@@ -85,11 +87,11 @@ namespace DMagic
 			get { return scanned; }
 		}
 
-		public bool Updated
-		{
-			get { return updated; }
-			set { updated = value; }
-		}
+		//public bool Updated
+		//{
+		//	get { return updated; }
+		//	set { updated = value; }
+		//}
 
 		public int AnomalyCount
 		{
