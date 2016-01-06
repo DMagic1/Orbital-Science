@@ -157,21 +157,16 @@ namespace DMagic.Contracts
 			return string.Format("{0}{1}", body.name, prestige);
 		}
 
-		protected override string GetNotes()
-		{
-			return base.GetNotes();
-		}
-
 		protected override string GetSynopsys()
 		{
 			switch(prestige)
 			{
 				case ContractPrestige.Trivial:
-					return "";
+					return string.Format("We want you to conduct a detailed orbital reconnaissance survey of {0} using a long-term research vessel.", body.theName);
 				case ContractPrestige.Significant:
-					return "";
+					return string.Format("The intitial orbital survey of {0} has revealed several interesting findings; we now want you to conduct a long-term radio reconnaissance survey.", body.theName);
 				default:
-					return "";
+					return string.Format("Very high resolution, stereographic images of {0}'s surface are required to complete our reconnaissance survey; place a long-term research vessel into orbit.", body.theName);
 			}
 		}
 
@@ -200,11 +195,11 @@ namespace DMagic.Contracts
 			switch (prestige)
 			{
 				case ContractPrestige.Trivial:
-					return string.Format("");
+					return string.Format("Well done. You've completed an initial orbital survey of {0}; we'll begin analyzing the data immediately.", body.theName);
 				case ContractPrestige.Significant:
-					return string.Format("");
+					return string.Format("Well done. This radio signal survey of {0} has provided us with much valuable data; we'll begin analyzing it for follow up studies immediately.", body.theName);
 				default:
-					return string.Format("");
+					return string.Format("Well done. This completes our orbital reconnaissance surveys of {0}.", body.theName);
 			}
 		}
 
