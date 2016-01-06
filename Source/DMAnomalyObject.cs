@@ -66,12 +66,13 @@ namespace DMagic
 			}
 		}
 
-		public DMAnomalyObject(string n, CelestialBody b, double la, double lo)
+		public DMAnomalyObject(string n, CelestialBody b, double la, double lo, double a)
 		{
 			name = n;
 			body = b;
 			lat = la;
 			lon = lo;
+			alt = a;
 		}
 
 		//public void addPQSCity(PQSCity c)
