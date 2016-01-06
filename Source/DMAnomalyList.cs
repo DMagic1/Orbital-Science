@@ -109,13 +109,18 @@ namespace DMagic
 			return null;
 		}
 
+		public static void clearAnomalies()
+		{
+			anomalies.Clear();
+		}
+
 		public static bool ScannerUpdating
 		{
 			get { return scannerUpdating; }
 			internal set { scannerUpdating = value; }
 		}
 
-		public int AnomalyCount
+		public static int AnomalyCount
 		{
 			get { return anomalies.Count; }
 		}
