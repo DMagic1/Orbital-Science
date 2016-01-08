@@ -184,16 +184,31 @@ namespace DMagic.Scenario
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
+				GameEvents.OnPQSCityLoaded.Add(scanBodyAnomalies);
 				//anomalyList = gameObject.AddComponent<DMAnomalyList>();
 				updateRemainingData();
 			}
 		}
 
-		//private void OnDestroy()
-		//{
-		//	if (anomalyList != null)
-		//		Destroy(anomalyList);
-		//}
+		private void scanBodyAnomalies(CelestialBody b, string s)
+		{
+			DMAnomalyStorage anom = DMAnomalyList.getAnomalyStorage(b.name);
+
+			if (anom == null)
+				return;
+
+			if (anom.Scanned)
+				return;
+
+			anom.scanBody();
+		}
+
+		private void OnDestroy()
+		{
+			GameEvents.OnPQSCityLoaded.Remove(scanBodyAnomalies);
+			//if (anomalyList != null)
+			//	Destroy(anomalyList);
+		}
 
 		private void addDMScience(DMScienceData data)
 		{
