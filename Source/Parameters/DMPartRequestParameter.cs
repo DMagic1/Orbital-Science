@@ -23,6 +23,7 @@ namespace DMagic.Parameters
 		{
 			requiredParts = parts;
 			targetBody = body;
+			getPartTitles();
 			this.disableOnStateChange = false;
 		}
 
@@ -73,9 +74,9 @@ namespace DMagic.Parameters
 			string[] parts = new string[partTitles.Count];
 
 			for (int i = 0; i < partTitles.Count; i++)
-				parts[i] = partTitles[i] + ",";			
+				parts[i] = " " + partTitles[i] + ",";			
 
-			return string.Format("Have the following parts onboard: {0}", string.Concat(parts).TrimEnd(','));
+			return string.Format("Have the following parts onboard: {0}", string.Concat(parts).TrimEnd(',').TrimStart(' '));
 		}
 
 		protected override void OnUpdate()
@@ -132,6 +133,8 @@ namespace DMagic.Parameters
 			}
 
 			requiredParts = DMUtils.stringSplit(parts);
+
+			getPartTitles();
 
 			vesselNames = node.parse("Vessels", "");
 			if (!string.IsNullOrEmpty(vesselNames) && !HighLogic.LoadedSceneIsEditor)
