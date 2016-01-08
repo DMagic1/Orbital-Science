@@ -95,7 +95,8 @@ namespace DMagic.Parameters
 
 			try
 			{
-				partRequest = GetParameter<DMPartRequestParameter>();
+				DMUtils.DebugLog("Loading Part Request Paramater...\nChecking {0} Parameters", this.ParameterCount);
+				partRequest = this.GetParameter<DMPartRequestParameter>("DMMagPartRequest");
 			}
 			catch (Exception e)
 			{
@@ -104,6 +105,11 @@ namespace DMagic.Parameters
 				DMUtils.Logging("Could not find child part request parameter; removing DMLongOrbit Parameter\n{0}", e);
 				return;
 			}
+		}
+
+		public void setPartRequest(DMPartRequestParameter param)
+		{
+			partRequest = param;
 		}
 
 		//Track our vessel's orbit
@@ -139,7 +145,16 @@ namespace DMagic.Parameters
 
 		public int VesselCount
 		{
-			get { return partRequest.VesselCount; }
+			get
+			{
+				if (partRequest == null)
+				{
+					DMUtils.DebugLog("Part request param null");
+					return 0;
+				}
+
+				return partRequest.VesselCount;
+			}
 		}
 
 		public Vessel GetVessel(int index)
