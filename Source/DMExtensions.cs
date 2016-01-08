@@ -11,7 +11,10 @@ namespace DMagic
 		public static string parse(this ConfigNode node, string name, string original)
 		{
 			if (node.HasValue(name))
+			{
+				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, node.GetValue(name));
 				return node.GetValue(name);
+			}
 
 			return original;
 		}
@@ -24,7 +27,10 @@ namespace DMagic
 			int i = original;
 
 			if (int.TryParse(node.GetValue(name), out i))
+			{
+				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, i);
 				return i;
+			}
 
 			return original;
 		}
@@ -50,7 +56,10 @@ namespace DMagic
 			float f = original;
 
 			if (float.TryParse(node.GetValue(name), out f))
+			{
+				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, f);
 				return f;
+			}
 
 			return original;
 		}
@@ -76,7 +85,10 @@ namespace DMagic
 			double d = original;
 
 			if (double.TryParse(node.GetValue(name), out d))
+			{
+				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, d);
 				return d;
+			}
 
 			return original;
 		}
@@ -89,7 +101,10 @@ namespace DMagic
 			bool b = original;
 
 			if (bool.TryParse(node.GetValue(name), out b))
+			{
+				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, b);
 				return b;
+			}
 
 			return original;
 		}
@@ -98,6 +113,8 @@ namespace DMagic
 		{
 			if (!node.HasValue(name))
 				return original;
+
+			DMUtils.DebugLog("Parsing value [{0}] = {1}", name, node.GetValue(name));
 
 			return node.GetValue(name).Split(separator).ToList();
 		}
@@ -231,10 +248,13 @@ namespace DMagic
 			if (!int.TryParse(s, out body))
 				return c;
 
-			if (FlightGlobals.Bodies.Count >= body)
+			if (FlightGlobals.Bodies.Count > body)
 				c = FlightGlobals.Bodies[body];
 			else
+			{
+				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, c.theName);
 				return original;
+			}
 
 			return c;
 		}
