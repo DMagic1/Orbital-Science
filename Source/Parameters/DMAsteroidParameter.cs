@@ -148,7 +148,17 @@ namespace DMagic.Parameters
 			else
 				partName = scienceContainer.SciPart;
 
-			root = (DMAsteroidSurveyContract)this.Root;
+			try
+			{
+				root = (DMAsteroidSurveyContract)this.Root;
+			}
+			catch (Exception e)
+			{
+				this.Unregister();
+				this.Parent.RemoveParameter(this);
+				DMUtils.Logging("Could not find root asteroid contract; removing DMAsteroid Parameter\n{0}", e);
+				return;
+			}
 		}
 
 		private void asteroidMonitor(string size, string exp)

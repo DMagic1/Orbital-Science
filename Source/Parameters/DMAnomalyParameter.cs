@@ -152,8 +152,18 @@ namespace DMagic.Parameters
 			}
 			else
 				partName = scienceContainer.SciPart;
-			
-			root = (DMAnomalyContract)this.Root;
+
+			try
+			{
+				root = (DMAnomalyContract)this.Root;
+			}
+			catch (Exception e)
+			{
+				this.Unregister();
+				this.Parent.RemoveParameter(this);
+				DMUtils.Logging("Could not find root anomaly contract; removing DMAnomalyParameter\n{0}", e);
+				return;
+			}
 		}
 
 		private void monitorAnomScience(CelestialBody B, string s, string name)
