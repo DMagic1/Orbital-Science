@@ -118,7 +118,7 @@ namespace DMagic
 
 				if (group.Count == 0)
 				{
-					result[i] = "_";
+					result[i] = "|";
 					continue;
 				}
 
@@ -126,13 +126,13 @@ namespace DMagic
 
 				for (int j = 0; j < group.Count; j++)
 				{
-					s[j] = source[j] + ",";
+					s[j] = group[j] + ",";
 				}
 
-				result[i] = string.Concat(s).TrimEnd(',') + "_";
+				result[i] = string.Concat(s).TrimEnd(',') + "|";
 			}
 
-			return string.Concat(result).TrimEnd('_');
+			return string.Concat(result).TrimEnd('|');
 		}
 
 		public static List<string> formatFixStringList(List<string> source)
@@ -157,7 +157,7 @@ namespace DMagic
 		{
 			Dictionary<int, List<string>> result = new Dictionary<int,List<string>>();
 
-			string[] groups = source.Split('_');
+			string[] groups = source.Split('|');
 
 			if (groups.Length == 0)
 				return result;
