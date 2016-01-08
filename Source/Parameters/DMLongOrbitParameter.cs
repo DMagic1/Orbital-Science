@@ -30,6 +30,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Contracts;
@@ -93,17 +94,43 @@ namespace DMagic.Parameters
 				orbitTime = 0;
 			}
 
+			ContractSystem.Instance.StartCoroutine(loadChildParameter());
+		}
+
+		private IEnumerator loadChildParameter()
+		{
+			int timer = 0;
+			while (this.ParameterCount < 3 && timer < 200)
+			{
+				timer++;
+				yield return null;
+			}
+
+			if (timer >= 200)
+			{
+				this.Unregister();
+				this.Parent.RemoveParameter(this);
+				DMUtils.Logging("Could not find child part request parameter; timed out; removing DMLongOrbit Parameter");
+				yield break;
+			}
+
 			try
 			{
-				DMUtils.DebugLog("Loading Part Request Paramater...\nChecking {0} Parameters", this.ParameterCount);
-				partRequest = this.GetParameter<DMPartRequestParameter>("DMMagPartRequest");
+				partRequest = this.GetParameter<DMPartRequestParameter>();
 			}
 			catch (Exception e)
 			{
 				this.Unregister();
 				this.Parent.RemoveParameter(this);
 				DMUtils.Logging("Could not find child part request parameter; removing DMLongOrbit Parameter\n{0}", e);
-				return;
+				yield break;
+			}
+
+			if (partRequest == null)
+			{
+				this.Unregister();
+				this.Parent.RemoveParameter(this);
+				DMUtils.Logging("Could not find child part request parameter; removing DMLongOrbit Parameter");
 			}
 		}
 
@@ -145,16 +172,7 @@ namespace DMagic.Parameters
 
 		public int VesselCount
 		{
-			get
-			{
-				if (partRequest == null)
-				{
-					DMUtils.DebugLog("Part request param null");
-					return 0;
-				}
-
-				return partRequest.VesselCount;
-			}
+			get { return partRequest.VesselCount; }
 		}
 
 		public Vessel GetVessel(int index)

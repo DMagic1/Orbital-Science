@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -13,16 +14,9 @@ namespace DMagic.Parameters
 	{
 		private DMSpecificOrbitParameterExtended childOrbitParameter;
 		private CelestialBody body;
-		OrbitType type;
-		double inc;
-		double ecc;
-		double sma;
-		double lan;
-		double aop;
-		double mae;
-		double epo;
-		double deviation;
-		OrbitDriver orbitDriver;
+		private OrbitType type;
+		private double inc, ecc, sma, lan, aop, mae, epo, deviation;
+		private OrbitDriver orbitDriver;
 		private DMLongOrbitParameter root;
 
 		public DMReconOrbitParameter() { }
@@ -138,22 +132,6 @@ namespace DMagic.Parameters
 			lan = node.parse("LAN", (double)0);
 			deviation = node.parse("Deviation", (double)10);
 
-			if (this.ParameterCount <= 0)
-			{
-				loadFail("No child parameters found; removing DMReconOrbit Parameter");
-				return;
-			}
-
-			try
-			{
-				childOrbitParameter = (DMSpecificOrbitParameterExtended)this.GetParameter(0);
-			}
-			catch (Exception e)
-			{
-				loadFail("Could not find child specific orbit parameter; removing DMReconOrbit Parameter\n" + e.ToString());
-				return;
-			}
-
 			try
 			{
 				root = (DMLongOrbitParameter)Parent;
@@ -164,9 +142,40 @@ namespace DMagic.Parameters
 				return;
 			}
 
+			ContractSystem.Instance.StartCoroutine(loadChildParameter());
+
 			disableOnStateChange = false;
 
 			setupOrbit();
+		}
+
+		private IEnumerator loadChildParameter()
+		{
+			int timer = 0;
+			while (this.ParameterCount < 1 && timer < 200)
+			{
+				timer++;
+				yield return null;
+			}
+
+			if (timer >= 200)
+			{
+				loadFail("Could not find child specific orbit parameter; timed out; removing DMReconOrbit Parameter");
+				yield break;
+			}
+
+			try
+			{
+				childOrbitParameter = this.GetParameter<DMSpecificOrbitParameterExtended>();
+			}
+			catch (Exception e)
+			{
+				loadFail("Could not find child specific orbit parameter; removing DMReconOrbit Parameter\n" + e.ToString());
+				yield break;
+			}
+
+			if (childOrbitParameter == null)
+				loadFail("Could not find child specific orbit parameter; removing DMReconOrbit Parameter");
 		}
 
 		protected override void OnSave(ConfigNode node)
