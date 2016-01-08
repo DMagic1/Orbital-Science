@@ -46,21 +46,23 @@ namespace DMagic.Contracts
 				case ContractPrestige.Trivial:
 					customReachedBodies.AddRange(GetBodies_Reached(true, false));
 					customReachedBodies.AddRange(GetBodies_NextUnreached(2, null));
-					customReachedBodies.RemoveAll(b => b.pqsController == null);
-
-					body = customReachedBodies[rand.Next(0, customReachedBodies.Count)];
+					//customReachedBodies.RemoveAll(b => b.pqsController == null);
 					break;
 				case ContractPrestige.Significant:
 					customReachedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Trivial).Select(r => r.body).ToList();
-
-					body = customReachedBodies[rand.Next(0, customReachedBodies.Count)];
 					break;
 				case ContractPrestige.Exceptional:
 					customReachedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Significant).Select(r => r.body).ToList();
-
-					body = customReachedBodies[rand.Next(0, customReachedBodies.Count)];
 					break;
 			}
+
+			if (customReachedBodies.Count <= 0)
+			{
+				DMUtils.DebugLog("No Recon Bodies Found...");
+				return false;
+			}
+
+			body = customReachedBodies[rand.Next(0, customReachedBodies.Count)];
 
 			if (body == null)
 				return false;
@@ -105,8 +107,10 @@ namespace DMagic.Contracts
 			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, body);
 			DMReconOrbitParameter reconParam = new DMReconOrbitParameter(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation, longOrbit);
 
+			longOrbit.setPartRequest(partRequest);
+
 			longOrbit.AddParameter(reconParam);
-			longOrbit.AddParameter(partRequest);
+			longOrbit.AddParameter(partRequest, "DMReconPartRequest");
 
 			reconParam.AddParameter(new DMSpecificOrbitParameterExtended(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, deviation));
 
