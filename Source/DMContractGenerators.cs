@@ -44,7 +44,6 @@ namespace DMagic
 		//Use for magnetic field survey
 		internal static DMCollectScience fetchScienceContract(CelestialBody Body, ExperimentSituations Situation, DMScienceContainer DMScience)
 		{
-			AvailablePart aPart;
 			string name;
 
 			//Choose science container based on a given science experiment
@@ -56,10 +55,7 @@ namespace DMagic
 			//Determine if the science part is available if applicable
 			if (DMScience.SciPart != "None")
 			{
-				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
-				if (aPart == null)
-					return null;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+				if (!DMUtils.partAvailable(new List<string>(1) { DMScience.SciPart }))
 					return null;
 			}
 
@@ -77,7 +73,6 @@ namespace DMagic
 			CelestialBody body;
 			ExperimentSituations targetSituation;
 			ScienceSubject sub;
-			AvailablePart aPart;
 			string name;
 			string biome = "";
 
@@ -86,10 +81,7 @@ namespace DMagic
 			//Determine if the science part is available if applicable
 			if (DMScience.SciPart != "None")
 			{
-				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
-				if (aPart == null)
-					return null;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+				if (!DMUtils.partAvailable(new List<string>(1) { DMScience.SciPart }))
 					return null;
 			}
 
@@ -146,7 +138,6 @@ namespace DMagic
 		{
 			ExperimentSituations targetSituation;
 			ScienceSubject sub;
-			AvailablePart aPart;
 			string name;
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
@@ -154,10 +145,7 @@ namespace DMagic
 			//Determine if the science part is available if applicable
 			if (DMScience.SciPart != "None")
 			{
-				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
-				if (aPart == null)
-					return null;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+				if (!DMUtils.partAvailable(new List<string>(1) { DMScience.SciPart }))
 					return null;
 			}
 
@@ -210,7 +198,6 @@ namespace DMagic
 		internal static DMAsteroidParameter fetchAsteroidParameter(DMScienceContainer DMScience)
 		{
 			ExperimentSituations targetSituation;
-			AvailablePart aPart;
 			string name;
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
@@ -218,10 +205,7 @@ namespace DMagic
 			//Determine if the science part is available if applicable
 			if (DMScience.SciPart != "None")
 			{
-				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
-				if (aPart == null)
-					return null;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+				if (!DMUtils.partAvailable(new List<string>(1) { DMScience.SciPart }))
 					return null;
 			}
 
@@ -286,7 +270,6 @@ namespace DMagic
 
 		internal static DMAnomalyParameter fetchAnomalyParameter(CelestialBody Body, DMScienceContainer DMScience)
 		{
-			AvailablePart aPart;
 			ExperimentSituations targetSituation;
 			List<ExperimentSituations> situations;
 			string name;
@@ -299,10 +282,7 @@ namespace DMagic
 			//Determine if the science part is available if applicable
 			if (DMScience.SciPart != "None")
 			{
-				aPart = PartLoader.getPartInfoByName(DMScience.SciPart);
-				if (aPart == null)
-					return null;
-				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+				if (!DMUtils.partAvailable(new List<string>(1) { DMScience.SciPart }))
 					return null;
 			}
 
