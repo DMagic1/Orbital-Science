@@ -5,24 +5,27 @@ using System.Linq;
 using UnityEngine;
 using Contracts;
 using FinePrint.Contracts.Parameters;
+using FinePrint;
+using FinePrint.Utilities;
 
 namespace DMagic.Parameters
 {
-	public class DMPartRequestParameter : ContractParameter
+	public class DMPartRequestParameter : WaypointParameter
 	{
 		private Dictionary<Guid, Vessel> suitableVessels = new Dictionary<Guid, Vessel>();
+		private Dictionary<Vessel, Waypoint> wps = new Dictionary<Vessel, Waypoint>();
 		private Dictionary<int, List<string>> requiredParts = new Dictionary<int, List<string>>();
 		private List<string> partTitles = new List<string>();
-		private CelestialBody targetBody;
 		private string vesselNames;
 		private bool updatingVesselState;
+		private bool waypointsOn;
 
 		public DMPartRequestParameter() { }
 
 		public DMPartRequestParameter(Dictionary<int, List<string>> parts, CelestialBody body)
 		{
 			requiredParts = parts;
-			targetBody = body;
+			TargetBody = body;
 			getPartTitles();
 			this.disableOnStateChange = false;
 		}
@@ -64,6 +67,8 @@ namespace DMagic.Parameters
 			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
 			GameEvents.onVesselCreate.Remove(newVesselCheck);
 			GameEvents.onPartCouple.Remove(dockCheck);
+			suitableVessels.Clear();
+			CleanupWaypoints();
 		}
 
 		protected override string GetTitle()
@@ -107,15 +112,15 @@ namespace DMagic.Parameters
 			else
 				vessels = DMUtils.stringConcat(suitableVessels.Values.ToList());
 
-			node.AddValue("Body", targetBody.flightGlobalsIndex);
+			node.AddValue("Body", TargetBody.flightGlobalsIndex);
 			node.AddValue("Requested_Parts", DMUtils.stringConcat(requiredParts));
 			node.AddValue("Vessels", vessels);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			targetBody = node.parse("Body", (CelestialBody)null);
-			if (targetBody == null)
+			TargetBody = node.parse("Body", (CelestialBody)null);
+			if (TargetBody == null)
 			{
 				DMUtils.Logging("Failed To Load Target Body; DM Part Request Parameter Removed");
 				this.Unregister();
@@ -168,12 +173,82 @@ namespace DMagic.Parameters
 			this.disableOnStateChange = false;
 		}
 
+		public override void UpdateWaypoints(bool focused)
+		{
+			for (int i = 0; i < wps.Count; i++)
+			{
+				var pair = wps.ElementAt(i);
+
+				if (pair.Key == null)
+					continue;
+
+				Waypoint wp = pair.Value;
+
+				if (wp == null)
+				{
+					wp = setupNewWaypoint(pair.Key);
+					wps[pair.Key] = wp;
+				}
+
+				Orbit o;
+
+				if (pair.Key.loaded)
+					o = pair.Key.orbit;
+				else
+					o = pair.Key.protoVessel.orbitSnapShot.Load();
+
+				wp.celestialName = TargetBody.GetName();
+				wp.isOnSurface = false;
+				wp.orbitPosition = o.getPositionAtUT(Planetarium.GetUniversalTime());
+			}
+		}
+
+		public override void CleanupWaypoints()
+		{
+			if (!waypointsOn)
+				return;
+
+			foreach (Waypoint w in wps.Values)
+			{
+				if (w == null)
+					continue;
+
+				WaypointManager.RemoveWaypoint(w);
+			}
+		}
+
+		private Waypoint setupNewWaypoint(Vessel v)
+		{
+			Waypoint wp = new Waypoint();
+
+			wp.celestialName = TargetBody.GetName();
+			wp.latitude = 0;
+			wp.longitude = 0;
+			wp.altitude = 0;
+			wp.index = 0;
+			wp.id = "";
+			wp.size = new Vector2(32, 32);
+			wp.seed = SystemUtilities.SuperSeed(this.Root);
+			wp.isOnSurface = false;
+			wp.isNavigatable = false;
+			wp.enableMarker = false;
+			wp.enableTooltip = false;
+			wp.landLocked = false;
+			wp.name = v.vesselName;
+			wp.contractReference = this.Root;
+
+			return wp;
+		}
+
 		private void addVessel(Vessel v)
 		{
 			if (!suitableVessels.ContainsKey(v.id))
 				suitableVessels.Add(v.id, v);
 			else
 				DMUtils.Logging("Vessel: [{0}] Already Included In DM Part Request List", v.name);
+
+			if (!wps.ContainsKey(v))
+				wps.Add(v, setupNewWaypoint(v));
 		}
 
 		private void removeVessel(Vessel v)
@@ -206,7 +281,7 @@ namespace DMagic.Parameters
 
 		private void vesselOrbit(Vessel v, CelestialBody b)
 		{
-			if (b != targetBody)
+			if (b != TargetBody)
 				return;
 
 			if (vesselEquipped(v, b))
@@ -215,7 +290,7 @@ namespace DMagic.Parameters
 
 		private void dockCheck(GameEvents.FromToAction<Part, Part> Parts)
 		{
-			if (Parts.from.vessel.mainBody == targetBody)
+			if (Parts.from.vessel.mainBody == TargetBody)
 				ContractSystem.Instance.StartCoroutine(waitForDockCheck());
 		}
 
@@ -232,7 +307,7 @@ namespace DMagic.Parameters
 
 			updatingVesselState = false;
 
-			if (vesselEquipped(FlightGlobals.ActiveVessel, targetBody))
+			if (vesselEquipped(FlightGlobals.ActiveVessel, TargetBody))
 				addVessel(FlightGlobals.ActiveVessel);
 			else
 				removeVessel(FlightGlobals.ActiveVessel);
@@ -247,7 +322,7 @@ namespace DMagic.Parameters
 				if (V.Parts.Count <= 1)
 					return;
 
-				if (V.mainBody == targetBody)
+				if (V.mainBody == TargetBody)
 					ContractSystem.Instance.StartCoroutine(waitForNewVesselCheck(V));
 			}
 		}
@@ -266,10 +341,10 @@ namespace DMagic.Parameters
 			updatingVesselState = false;
 
 			//If the new vessel retains the proper instruments
-			if (vesselEquipped(newV, targetBody))
+			if (vesselEquipped(newV, TargetBody))
 				addVessel(newV);
 			//If the currently active, hopefully old, vessel retains the proper instruments
-			else if (vesselEquipped(FlightGlobals.ActiveVessel, targetBody))
+			else if (vesselEquipped(FlightGlobals.ActiveVessel, TargetBody))
 				addVessel(FlightGlobals.ActiveVessel);
 			//If the proper instruments are spread across the two vessels
 			else
