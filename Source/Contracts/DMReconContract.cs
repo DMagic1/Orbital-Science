@@ -12,7 +12,7 @@ using FinePrint.Contracts.Parameters;
 
 namespace DMagic.Contracts
 {
-	public class DMReconContract : Contract
+	public class DMReconContract : Contract, IUpdateWaypoints
 	{
 		private CelestialBody body;
 		private System.Random rand = DMUtils.rand;
@@ -110,7 +110,7 @@ namespace DMagic.Contracts
 			longOrbit.setPartRequest(partRequest);
 
 			longOrbit.AddParameter(reconParam);
-			longOrbit.AddParameter(partRequest, "DMReconPartRequest");
+			longOrbit.AddParameter(partRequest);
 
 			reconParam.AddParameter(new DMSpecificOrbitParameterExtended(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, deviation));
 

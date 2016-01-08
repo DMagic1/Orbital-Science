@@ -36,11 +36,12 @@ using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
+using FinePrint.Utilities;
 using DMagic.Parameters;
 
 namespace DMagic.Contracts
 {
-	public class DMMagneticSurveyContract: Contract
+	public class DMMagneticSurveyContract: Contract, IUpdateWaypoints
 	{
 		private CelestialBody body;
 		private DMCollectScience[] magParams = new DMCollectScience[4];
@@ -123,7 +124,7 @@ namespace DMagic.Contracts
 			this.AddParameter(longParam);
 			longParam.AddParameter(eccentricParam);
 			longParam.AddParameter(inclinedParam);
-			longParam.AddParameter(partRequest, "DMMagPartRequest");
+			longParam.AddParameter(partRequest);
 
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
