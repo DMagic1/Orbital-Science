@@ -48,7 +48,21 @@ namespace DMagic
 			initializeUtils();
 			findAssemblies(WhiteList);
 			configLoad();
+			configLoad2();
 			hackWaypointIcons();
+			GameEvents.OnPQSCityLoaded.Add(scanBodyAnomalies);
+			GameEvents.OnPQSCityUnloaded.Add(removePQS);
+			DontDestroyOnLoad(this);
+		}
+
+		private void scanBodyAnomalies(CelestialBody b, string s)
+		{
+			DMUtils.DebugLog("PQS City [{0}] loaded for {1}", s, b.theName);
+		}
+
+		private void removePQS(CelestialBody b, string s)
+		{
+			DMUtils.DebugLog("PQS City [{0}] unloaded for {1}", s, b.theName);
 		}
 
 		private void configLoad2()
@@ -62,13 +76,6 @@ namespace DMagic
 			{
 				if (node == null)
 					continue;
-				string name = "";
-				string part = "";
-				string agent = "";
-				int sitMask = 0;
-				int bioMask = 0;
-				int type = 0;
-				float transmit = 0;
 				DMScienceContainer DMscience = null;
 				ScienceExperiment exp = null;
 
@@ -84,29 +91,29 @@ namespace DMagic
 				}
 				if (exp != null)
 				{
-					name = node.parse("name", "null");
+					string name = node.parse("name", "null");
 					if (name == "null")
 						continue;
 
-					sitMask = node.parse("sitMask", (int)1000);
+					int sitMask = node.parse("sitMask", (int)1000);
 					if (sitMask == 1000)
 						continue;
 
-					bioMask = node.parse("bioMask", (int)1000);
+					int bioMask = node.parse("bioMask", (int)1000);
 					if (bioMask == 1000)
 						continue;
 
-					type = node.parse("type", (int)1000);
+					int type = node.parse("type", (int)1000);
 					if (type == 1000)
 						continue;
 
-					transmit = node.parse("xmitDataScalar", (float)1000);
+					float transmit = node.parse("xmitDataScalar", (float)1000);
 					if (transmit >= 1000)
 						continue;
 
-					part = node.parse("part", "None");
+					string part = node.parse("part", "None");
 
-					part = node.parse("agent", "Any");
+					string agent = node.parse("agent", "Any");
 
 					if (DMUtils.whiteListed)
 					{
