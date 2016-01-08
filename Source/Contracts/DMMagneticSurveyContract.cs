@@ -118,10 +118,12 @@ namespace DMagic.Contracts
 			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(inclination, 1, longParam);
 			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, body);
 
+			longParam.setPartRequest(partRequest);
+
 			this.AddParameter(longParam);
 			longParam.AddParameter(eccentricParam);
 			longParam.AddParameter(inclinedParam);
-			longParam.AddParameter(partRequest);
+			longParam.AddParameter(partRequest, "DMMagPartRequest");
 
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
