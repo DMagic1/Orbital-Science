@@ -219,6 +219,8 @@ namespace DMagic.Parameters
 
 		private Waypoint setupNewWaypoint(Vessel v)
 		{
+			waypointsOn = true;
+
 			Waypoint wp = new Waypoint();
 
 			wp.celestialName = TargetBody.GetName();
@@ -226,7 +228,7 @@ namespace DMagic.Parameters
 			wp.longitude = 0;
 			wp.altitude = 0;
 			wp.index = 0;
-			wp.id = "";
+			wp.id = "vessel";
 			wp.size = new Vector2(32, 32);
 			wp.seed = SystemUtilities.SuperSeed(this.Root);
 			wp.isOnSurface = false;
@@ -237,7 +239,24 @@ namespace DMagic.Parameters
 			wp.name = v.vesselName;
 			wp.contractReference = this.Root;
 
+			WaypointManager.AddWaypoint(wp);
+
 			return wp;
+		}
+
+		private void removeWaypoint(Vessel v)
+		{
+			if (wps.ContainsKey(v))
+			{
+				Waypoint wp = wps[v];
+
+				WaypointManager.RemoveWaypoint(wp);
+
+				wps.Remove(v);
+			}
+
+			if (wps.Count <= 0)
+				waypointsOn = false;
 		}
 
 		private void addVessel(Vessel v)
@@ -247,14 +266,19 @@ namespace DMagic.Parameters
 			else
 				DMUtils.Logging("Vessel: [{0}] Already Included In DM Part Request List", v.name);
 
-			if (!wps.ContainsKey(v))
-				wps.Add(v, setupNewWaypoint(v));
+			if (HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
+			{
+				if (!wps.ContainsKey(v))
+					wps.Add(v, setupNewWaypoint(v));
+			}
 		}
 
 		private void removeVessel(Vessel v)
 		{
 			if (suitableVessels.ContainsKey(v.id))
 				suitableVessels.Remove(v.id);
+
+			removeWaypoint(v);
 		}
 
 		private bool vesselEquipped(Vessel v, CelestialBody b)
