@@ -132,7 +132,7 @@ namespace DMagic.Contracts
 					break;
 				if (DMC != null)
 				{
-					DMcp.addToSubParams(DMC, "CollectScience");
+					DMcp.addToSubParams(DMC);
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(DMC.Situation), DMC.Body) * ((float)rand.Next(85, 116) / 100f);
 					DMC.SetScience(DMC.Container.Exp.baseValue * DMContractDefs.DMSurvey.Science.ParamReward * DMUtils.fixSubjectVal(DMC.Situation, 1f, body), null);
 					DMC.SetFunds(DMContractDefs.DMSurvey.Funds.ParamReward * locationMod, DMContractDefs.DMSurvey.Funds.ParamFailure * locationMod, body);

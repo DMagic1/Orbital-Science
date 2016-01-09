@@ -140,7 +140,7 @@ namespace DMagic.Contracts
 				else
 				{
 					float modifier = ((float)rand.Next(85, 116) / 100f);
-					DMcp.addToSubParams(DMCS, "MagFieldScience");
+					DMcp.addToSubParams(DMCS);
 					DMCS.SetFunds(DMContractDefs.DMMagnetic.Funds.ParamReward * modifier, DMContractDefs.DMMagnetic.Funds.ParamFailure * modifier, body);
 					DMCS.SetScience(DMContractDefs.DMMagnetic.Science.ParamReward * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
 					DMCS.SetReputation(DMContractDefs.DMMagnetic.Reputation.ParamReward * modifier, DMContractDefs.DMMagnetic.Reputation.ParamFailure * modifier, null);

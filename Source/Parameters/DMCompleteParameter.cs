@@ -55,9 +55,9 @@ namespace DMagic.Parameters
 			minus = i;
 		}
 
-		public void addToSubParams(ContractParameter cp, string id)
+		public void addToSubParams(ContractParameter cp)
 		{
-			AddParameter(cp, id);
+			AddParameter(cp);
 			subParamCountToComplete = ParameterCount - minus;
 		}
 

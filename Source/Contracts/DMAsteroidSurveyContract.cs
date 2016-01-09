@@ -127,7 +127,7 @@ namespace DMagic.Contracts
 					break;
 				if (DMAP != null)
 				{
-					DMcp.addToSubParams(DMAP, "CollectAsteroidScience");
+					DMcp.addToSubParams(DMAP);
 					float modifier = ((float)rand.Next(85, 116) / 100f);
 					DMAP.SetScience(DMAP.Container.Exp.baseValue * DMContractDefs.DMAsteroid.Science.ParamReward * DMUtils.asteroidSubjectVal(size), null);
 					DMAP.SetFunds(DMContractDefs.DMAsteroid.Funds.ParamReward * DMUtils.asteroidSubjectVal(size) * modifier, DMContractDefs.DMAsteroid.Funds.ParamFailure * DMUtils.asteroidSubjectVal(size) * modifier, null);
