@@ -195,12 +195,13 @@ namespace DMagic.Scenario
 			DMAnomalyStorage anom = DMAnomalyList.getAnomalyStorage(b.name);
 
 			if (anom == null)
-				return;
+				anom = new DMAnomalyStorage(b, false);
 
 			if (anom.Scanned)
 				return;
 
-			anom.scanBody();
+			if (anom.scanBody())
+				DMAnomalyList.addAnomalyStorage(b.name, anom);
 		}
 
 		private void OnDestroy()
