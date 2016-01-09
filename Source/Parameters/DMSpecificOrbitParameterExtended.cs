@@ -28,8 +28,8 @@ namespace DMagic.Parameters
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 
-			if (base.state != ParameterState.Incomplete)
-				base.SetComplete();
+			if (this.state != ParameterState.Incomplete)
+				this.SetIncomplete();
 
 			return;
 		}
