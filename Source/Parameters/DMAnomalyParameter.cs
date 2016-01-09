@@ -220,7 +220,7 @@ namespace DMagic.Parameters
 
 		private void anomalyScience(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
-			if (sub.id.Contains(string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.Body.name, situation)))
+			if (sub.id.Contains(string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.name, situation)))
 			{
 				if (collected)
 					base.SetComplete();
