@@ -58,7 +58,6 @@ namespace DMagic.Contracts
 
 			if (customReachedBodies.Count <= 0)
 			{
-				DMUtils.DebugLog("No Recon Bodies Found...");
 				return false;
 			}
 
@@ -70,10 +69,11 @@ namespace DMagic.Contracts
 			double time = 0;
 
 			OrbitType orbitType = OrbitType.POLAR;
-			double deviation = 10;
 
 			Dictionary<int, List<string>> parts = new Dictionary<int, List<string>>();
 			Orbit o = new Orbit();
+
+			double incMod = (rand.NextDouble() * 10) - 5;
 
 			switch(prestige)
 			{
@@ -81,7 +81,7 @@ namespace DMagic.Contracts
 					parts.Add(0, DMContractDefs.DMRecon.reconTrivialParts);
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconTrivialParts))
 						return false;
-					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.5, ContractDefs.Satellite.TrivialInclinationDifficulty);
+					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
 					time = 1080000d * (double)(prestige + 1) * ((double)rand.Next(6, 17) / 10d);
 					break;
 				case ContractPrestige.Significant:
@@ -92,30 +92,37 @@ namespace DMagic.Contracts
 						orbitType = OrbitType.KOLNIYA;
 					else
 						orbitType = OrbitType.TUNDRA;
-					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.5, ContractDefs.Satellite.TrivialInclinationDifficulty);time = 3240000d * (double)(prestige + 1) * ((double)rand.Next(6, 17) / 10d);
+					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.5, ContractDefs.Satellite.TrivialInclinationDifficulty);
+					time = 3240000d * (double)(prestige + 1) * ((double)rand.Next(6, 17) / 10d);
+					incMod = 0;
 					break;
 				case ContractPrestige.Exceptional:
 					parts.Add(0, DMContractDefs.DMRecon.reconExceptionalParts);
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconExceptionalParts))
 						return false;
-					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.5, ContractDefs.Satellite.TrivialInclinationDifficulty);
+					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
 					time = 2160000d * (double)(prestige + 1) * ((double)rand.Next(6, 17) / 10d);
 					break;
 			}
+
+
+			o.inclination += incMod;
 
 			DMLongOrbitParameter longOrbit = new DMLongOrbitParameter(time);
 			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, body);
 			DMReconOrbitParameter reconParam = new DMReconOrbitParameter(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation, longOrbit);
 
-			longOrbit.setPartRequest(partRequest);
-
+			this.AddParameter(longOrbit);
 			longOrbit.AddParameter(reconParam);
 			longOrbit.AddParameter(partRequest);
+			longOrbit.setPartRequest(partRequest);
 
-			reconParam.AddParameter(new DMSpecificOrbitParameterExtended(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, deviation));
+			reconParam.AddParameter(new DMSpecificOrbitParameterExtended(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation));
 
 			if (this.ParameterCount == 0)
 				return false;
+
+			DMUtils.DebugLog("Recon Params Checked...");
 
 			float primaryModifier = ((float)rand.Next(80, 121) / 100f);
 			float diffModifier = 1 + ((float)this.Prestige * 0.5f);
