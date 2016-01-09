@@ -16,6 +16,7 @@ namespace DMagic.Parameters
 		private CelestialBody body;
 		private OrbitType type;
 		private double inc, ecc, sma, lan, aop, mae, epo, deviation;
+		private bool orbitSetup;
 		private OrbitDriver orbitDriver;
 		private DMLongOrbitParameter root;
 
@@ -67,6 +68,8 @@ namespace DMagic.Parameters
 			orbitDriver.orbit.meanAnomalyAtEpoch = mae;
 			orbitDriver.orbit.epoch = epo;
 			orbitDriver.orbit.Init();
+
+			orbitSetup = true;
 		}
 
 		protected override void OnUpdate()
@@ -76,6 +79,12 @@ namespace DMagic.Parameters
 
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
+
+			if (!orbitSetup)
+			{
+				this.SetIncomplete();
+				return;
+			}
 
 			if (orbitDriver.orbit == null)
 			{
@@ -98,7 +107,6 @@ namespace DMagic.Parameters
 
 				if (VesselUtilities.VesselAtOrbit(orbitDriver.orbit, deviation, v))
 				{
-					//DMUtils.DebugLog("Recon Vessel [{0}] At Orbit; Set Complete...", v.vesselName);
 					this.SetComplete();
 					return;
 				}
