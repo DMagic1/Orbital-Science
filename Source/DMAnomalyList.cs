@@ -69,6 +69,12 @@ namespace DMagic
 		//	return currentBodyAnomalies;
 		//}
 
+		public static void addAnomalyStorage(string body, DMAnomalyStorage anom)
+		{
+			if (!anomalies.ContainsKey(body))
+				anomalies.Add(body, anom);
+		}
+
 		public static DMAnomalyObject getAnomalyObject(string body, string city)
 		{
 			if (!anomalies.ContainsKey(body))
@@ -123,6 +129,26 @@ namespace DMagic
 		public static int AnomalyCount
 		{
 			get { return anomalies.Count; }
+		}
+
+		public static List<CelestialBody> getScannedBodies
+		{
+			get
+			{
+				List<CelestialBody> bodies = new List<CelestialBody>();
+
+				for (int i = 0; i < anomalies.Count; i++)
+				{
+					CelestialBody c = FlightGlobals.Bodies.FirstOrDefault(a => a.name == anomalies.ElementAt(i).Key);
+
+					if (c == null)
+						continue;
+
+					bodies.Add(c);
+				}
+
+				return bodies;
+			}
 		}
 
 		//private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
