@@ -19,13 +19,15 @@ namespace DMagic.Parameters
 		private string vesselNames;
 		private bool updatingVesselState;
 		private bool waypointsOn;
+		private bool useWaypoints;
 
 		public DMPartRequestParameter() { }
 
-		public DMPartRequestParameter(Dictionary<int, List<string>> parts, CelestialBody body)
+		public DMPartRequestParameter(Dictionary<int, List<string>> parts, bool b, CelestialBody body)
 		{
 			requiredParts = parts;
 			TargetBody = body;
+			useWaypoints = b;
 			getPartTitles();
 			this.disableOnStateChange = false;
 		}
@@ -113,6 +115,7 @@ namespace DMagic.Parameters
 				vessels = DMUtils.stringConcat(suitableVessels.Values.ToList());
 
 			node.AddValue("Body", TargetBody.flightGlobalsIndex);
+			node.AddValue("Use_Waypoints", useWaypoints);
 			node.AddValue("Requested_Parts", DMUtils.stringConcat(requiredParts));
 			node.AddValue("Vessels", vessels);
 		}
@@ -127,6 +130,8 @@ namespace DMagic.Parameters
 				this.Parent.RemoveParameter(this);
 				return;
 			}
+
+			useWaypoints = node.parse("Use_Waypoints", true);
 
 			string parts = node.parse("Requested_Parts", "");
 			if (string.IsNullOrEmpty(parts))
@@ -175,6 +180,9 @@ namespace DMagic.Parameters
 
 		public override void UpdateWaypoints(bool focused)
 		{
+			if (!useWaypoints)
+				return;
+
 			for (int i = 0; i < wps.Count; i++)
 			{
 				var pair = wps.ElementAt(i);
@@ -205,7 +213,7 @@ namespace DMagic.Parameters
 
 		public override void CleanupWaypoints()
 		{
-			if (!waypointsOn)
+			if (!waypointsOn || !useWaypoints)
 				return;
 
 			foreach (Waypoint w in wps.Values)
@@ -219,6 +227,9 @@ namespace DMagic.Parameters
 
 		private Waypoint setupNewWaypoint(Vessel v)
 		{
+			if (!useWaypoints)
+				return null;
+
 			waypointsOn = true;
 
 			Waypoint wp = new Waypoint();
@@ -266,6 +277,9 @@ namespace DMagic.Parameters
 			else
 				DMUtils.Logging("Vessel: [{0}] Already Included In DM Part Request List", v.name);
 
+			if (!useWaypoints)
+				return;
+
 			if (HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
 			{
 				if (!wps.ContainsKey(v))
@@ -277,6 +291,9 @@ namespace DMagic.Parameters
 		{
 			if (suitableVessels.ContainsKey(v.id))
 				suitableVessels.Remove(v.id);
+
+			if (!useWaypoints)
+				return;
 
 			removeWaypoint(v);
 		}

@@ -218,6 +218,8 @@ namespace DMagic
 			public static double significantInclinationMultiplier = 40;
 			public static double exceptionalInclinationMultiplier = 60;
 
+			public static bool useVesselWaypoints = true;
+
 			public static List<string> magParts = new List<string>(2) { "dmmagBoom", "dmUSMagBoom" };
 			public static List<string> rpwsParts = new List<string>(2) { "rpwsAnt", "USRPWS" };
 
@@ -268,6 +270,8 @@ namespace DMagic
 
 			public static int maxOffers = 2;
 			public static int maxActive = 4;
+
+			public static bool useVesselWaypoints = true;
 
 			public static List<string> reconTrivialParts = new List<string>(1) { "dmReconSmall" };
 			public static List<string> reconSignificantParts = new List<string>(1) { "dmSIGINT" };

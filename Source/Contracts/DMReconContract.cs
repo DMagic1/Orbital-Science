@@ -109,7 +109,7 @@ namespace DMagic.Contracts
 			o.inclination += incMod;
 
 			DMLongOrbitParameter longOrbit = new DMLongOrbitParameter(time);
-			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, body);
+			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, DMContractDefs.DMRecon.useVesselWaypoints, body);
 			DMReconOrbitParameter reconParam = new DMReconOrbitParameter(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation, longOrbit);
 
 			this.AddParameter(longOrbit);

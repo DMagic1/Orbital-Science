@@ -266,6 +266,8 @@ namespace DMagic
 				DMContractDefs.DMMagnetic.significantInclinationMultiplier = DMMagNode.parse("Significant_Inclination_Modifier", (double)40);
 				DMContractDefs.DMMagnetic.exceptionalInclinationMultiplier = DMMagNode.parse("Exceptional_Inclination_Modifier", (double)60);
 
+				DMContractDefs.DMMagnetic.useVesselWaypoints = DMMagNode.parse("Use_Vessel_Waypoints", (bool)true);
+
 				DMContractDefs.DMMagnetic.magParts = DMMagNode.parse("Magnetometer_Parts", ',', new List<string>(2) { "dmmagBoom", "dmUSMagBoom" });
 				DMContractDefs.DMMagnetic.rpwsParts = DMMagNode.parse("RPWS_Parts", ',', new List<string>(2) { "rpwsAnt", "USRPWS" });
 
@@ -313,6 +315,8 @@ namespace DMagic
 			{
 				DMContractDefs.DMRecon.maxOffers = DMReconNode.parse("maxOffers", (int)2);
 				DMContractDefs.DMRecon.maxActive = DMReconNode.parse("maxActive", (int)4);
+
+				DMContractDefs.DMRecon.useVesselWaypoints = DMReconNode.parse("Use_Vessel_Waypoints", (bool)true);
 
 				DMContractDefs.DMRecon.reconTrivialParts = DMReconNode.parse("Trivial_Parts", ',', new List<string>(1) { "dmReconSmall" });
 				DMContractDefs.DMRecon.reconSignificantParts = DMReconNode.parse("Significant_Parts", ',', new List<string>(1) { "dmSIGINT" });

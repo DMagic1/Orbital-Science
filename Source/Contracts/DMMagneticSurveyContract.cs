@@ -117,7 +117,7 @@ namespace DMagic.Contracts
 			DMLongOrbitParameter longParam = new DMLongOrbitParameter(time);
 			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(eccen, 0, longParam);
 			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(inclination, 1, longParam);
-			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, body);
+			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, DMContractDefs.DMMagnetic.useVesselWaypoints, body);
 
 			this.AddParameter(longParam);
 			longParam.AddParameter(eccentricParam);
