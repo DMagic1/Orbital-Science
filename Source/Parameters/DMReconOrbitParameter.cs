@@ -40,11 +40,17 @@ namespace DMagic.Parameters
 
 		protected override string GetTitle()
 		{
+			if (childOrbitParameter == null)
+				return string.Format("Reach the designated orbit around {0} within reasonable deviation", body.theName);
+
 			return childOrbitParameter.BaseTitle;
 		}
 
 		protected override string GetNotes()
 		{
+			if (childOrbitParameter == null)
+				return "";
+
 			return childOrbitParameter.BaseNotes + "\nThe target orbit will not disappear until the full contract has been completed.";
 		}
 
@@ -71,12 +77,6 @@ namespace DMagic.Parameters
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 
-			if (orbitDriver == null)
-			{
-				this.SetIncomplete();
-				return;
-			}
-
 			if (orbitDriver.orbit == null)
 			{
 				this.SetIncomplete();
@@ -98,6 +98,7 @@ namespace DMagic.Parameters
 
 				if (VesselUtilities.VesselAtOrbit(orbitDriver.orbit, deviation, v))
 				{
+					//DMUtils.DebugLog("Recon Vessel [{0}] At Orbit; Set Complete...", v.vesselName);
 					this.SetComplete();
 					return;
 				}
@@ -118,7 +119,7 @@ namespace DMagic.Parameters
 			int oType = node.parse("OrbitType", (int)1000);
 			if (oType == 1000)
 			{
-				loadFail("Failed To Orbit Type; DMRecon Parameter Removed");
+				loadFail("Failed To Load Orbit Type; DMRecon Parameter Removed");
 				return;
 			}
 			type = (OrbitType)oType;
@@ -152,7 +153,7 @@ namespace DMagic.Parameters
 		private IEnumerator loadChildParameter()
 		{
 			int timer = 0;
-			while (this.ParameterCount < 1 && timer < 200)
+			while (this.GetParameter<DMSpecificOrbitParameterExtended>() == null && timer < 200)
 			{
 				timer++;
 				yield return null;
@@ -181,15 +182,15 @@ namespace DMagic.Parameters
 		protected override void OnSave(ConfigNode node)
 		{
 			node.AddValue("Body", body.flightGlobalsIndex);
-			node.AddValue("OrbitalType", (int)type);
-			node.AddValue("Inclination", inc.ToString("N5"));
-			node.AddValue("Eccentricity", ecc.ToString("N5"));
-			node.AddValue("SemiMajorAxis", sma.ToString("N5"));
-			node.AddValue("ArgOfPeriapsis", aop.ToString("N5"));
-			node.AddValue("LAN", lan.ToString("N5"));
-			node.AddValue("MeanAnomalyAtEpoch", mae.ToString("N5"));
-			node.AddValue("Epoch", epo.ToString("N5"));
-			node.AddValue("Deviation", deviation.ToString("N5"));
+			node.AddValue("OrbitType", (int)type);
+			node.AddValue("Inclination", inc.ToString("F0"));
+			node.AddValue("Eccentricity", ecc.ToString("F15"));
+			node.AddValue("SemiMajorAxis", sma.ToString("F7"));
+			node.AddValue("ArgOfPeriapsis", aop.ToString("F12"));
+			node.AddValue("LAN", lan.ToString("F12"));
+			node.AddValue("MeanAnomalyAtEpoch", mae.ToString("F12"));
+			node.AddValue("Epoch", epo.ToString("F0"));
+			node.AddValue("Deviation", deviation.ToString("F0"));
 		}
 
 		private void loadFail(string message)
