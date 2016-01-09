@@ -100,7 +100,7 @@ namespace DMagic.Parameters
 		private IEnumerator loadChildParameter()
 		{
 			int timer = 0;
-			while (this.ParameterCount < 3 && timer < 200)
+			while (this.GetParameter<DMPartRequestParameter>() == null && timer < 200)
 			{
 				timer++;
 				yield return null;
@@ -148,6 +148,9 @@ namespace DMagic.Parameters
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 
+			if (partRequest == null)
+				return;
+
 			if (AllChildParametersComplete())
 			{
 				if (orbitTime <= 0)
@@ -172,7 +175,13 @@ namespace DMagic.Parameters
 
 		public int VesselCount
 		{
-			get { return partRequest.VesselCount; }
+			get
+			{
+				if (partRequest == null)
+					return 0;
+
+				return partRequest.VesselCount;
+			}
 		}
 
 		public Vessel GetVessel(int index)
