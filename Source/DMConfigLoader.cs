@@ -258,6 +258,10 @@ namespace DMagic
 				DMContractDefs.DMMagnetic.maxOffers = DMMagNode.parse("maxOffers", (int)2);
 				DMContractDefs.DMMagnetic.maxActive = DMMagNode.parse("maxActive", (int)4);
 
+				DMContractDefs.DMMagnetic.trivialTimeModifier = DMMagNode.parse("Trivial_Mission_Length", (double)100);
+				DMContractDefs.DMMagnetic.significantTimeModifier = DMMagNode.parse("Significant_Mission_Length", (double)150);
+				DMContractDefs.DMMagnetic.exceptionalTimeModifier = DMMagNode.parse("Exceptional_Mission_Length", (double)200);
+
 				DMContractDefs.DMMagnetic.trivialEccentricityMultiplier = DMMagNode.parse("Trivial_Eccentricity_Modifier", (double)0.2);
 				DMContractDefs.DMMagnetic.significantEccentricityMultiplier = DMMagNode.parse("Significant_Eccentricity_Modifier", (double)0.35);
 				DMContractDefs.DMMagnetic.exceptionalEccentricityMultiplier = DMMagNode.parse("Exceptional_Eccentricity_Modifier", (double)0.5);
@@ -315,6 +319,10 @@ namespace DMagic
 			{
 				DMContractDefs.DMRecon.maxOffers = DMReconNode.parse("maxOffers", (int)2);
 				DMContractDefs.DMRecon.maxActive = DMReconNode.parse("maxActive", (int)4);
+
+				DMContractDefs.DMRecon.trivialTimeModifier = DMReconNode.parse("Trivial_Mission_Length", (double)50);
+				DMContractDefs.DMRecon.significantTimeModifier = DMReconNode.parse("Significant_Mission_Length", (double)100);
+				DMContractDefs.DMRecon.exceptionalTimeModifier = DMReconNode.parse("Exceptional_Mission_Length", (double)150);
 
 				DMContractDefs.DMRecon.useVesselWaypoints = DMReconNode.parse("Use_Vessel_Waypoints", (bool)true);
 

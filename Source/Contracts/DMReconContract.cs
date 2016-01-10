@@ -46,7 +46,6 @@ namespace DMagic.Contracts
 				case ContractPrestige.Trivial:
 					customReachedBodies.AddRange(GetBodies_Reached(true, false));
 					customReachedBodies.AddRange(GetBodies_NextUnreached(2, null));
-					//customReachedBodies.RemoveAll(b => b.pqsController == null);
 					break;
 				case ContractPrestige.Significant:
 					customReachedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Trivial).Select(r => r.body).ToList();
@@ -57,9 +56,7 @@ namespace DMagic.Contracts
 			}
 
 			if (customReachedBodies.Count <= 0)
-			{
 				return false;
-			}
 
 			body = customReachedBodies[rand.Next(0, customReachedBodies.Count)];
 
@@ -74,6 +71,7 @@ namespace DMagic.Contracts
 			Orbit o = new Orbit();
 
 			double incMod = (rand.NextDouble() * 10) - 5;
+			double timeMod = 1080000;
 
 			switch(prestige)
 			{
@@ -82,7 +80,7 @@ namespace DMagic.Contracts
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconTrivialParts))
 						return false;
 					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
-					time = 1080000d * (double)(prestige + 1) * ((double)rand.Next(6, 17) / 10d);
+					timeMod = DMContractDefs.DMRecon.trivialTimeModifier * 6 * 3600;
 					break;
 				case ContractPrestige.Significant:
 					parts.Add(0, DMContractDefs.DMRecon.reconSignificantParts);
@@ -93,7 +91,7 @@ namespace DMagic.Contracts
 					else
 						orbitType = OrbitType.TUNDRA;
 					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.5, ContractDefs.Satellite.TrivialInclinationDifficulty);
-					time = 3240000d * (double)(prestige + 1) * ((double)rand.Next(6, 17) / 10d);
+					timeMod = DMContractDefs.DMRecon.significantTimeModifier * 6 * 3600;
 					incMod = 0;
 					break;
 				case ContractPrestige.Exceptional:
@@ -101,28 +99,26 @@ namespace DMagic.Contracts
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconExceptionalParts))
 						return false;
 					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
-					time = 2160000d * (double)(prestige + 1) * ((double)rand.Next(6, 17) / 10d);
+					timeMod = DMContractDefs.DMRecon.exceptionalTimeModifier * 6 * 3600;
 					break;
 			}
 
-
+			time = timeMod * ((double)rand.Next(6, 17) / 10d);
 			o.inclination += incMod;
 
 			DMLongOrbitParameter longOrbit = new DMLongOrbitParameter(time);
 			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, DMContractDefs.DMRecon.useVesselWaypoints, body);
-			DMReconOrbitParameter reconParam = new DMReconOrbitParameter(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation, longOrbit);
+			DMSpecificOrbitParameter reconParam = new DMSpecificOrbitParameter(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation, longOrbit);
 
 			this.AddParameter(longOrbit);
 			longOrbit.AddParameter(reconParam);
 			longOrbit.AddParameter(partRequest);
 			longOrbit.setPartRequest(partRequest);
 
-			reconParam.AddParameter(new DMSpecificOrbitParameterExtended(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation));
+			reconParam.AddParameter(new DMDummySpecificOrbitParameter(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation));
 
 			if (this.ParameterCount == 0)
 				return false;
-
-			DMUtils.DebugLog("Recon Params Checked...");
 
 			float primaryModifier = ((float)rand.Next(80, 121) / 100f);
 			float diffModifier = 1 + ((float)this.Prestige * 0.5f);

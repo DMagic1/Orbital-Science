@@ -210,6 +210,10 @@ namespace DMagic
 			public static int maxOffers = 2;
 			public static int maxActive = 4;
 
+			public static double trivialTimeModifier = 100;
+			public static double significantTimeModifier = 150;
+			public static double exceptionalTimeModifier = 200;
+
 			public static double trivialEccentricityMultiplier = 0.2;
 			public static double significantEccentricityMultiplier = 0.35;
 			public static double exceptionalEccentricityMultiplier = 0.5;
@@ -270,6 +274,10 @@ namespace DMagic
 
 			public static int maxOffers = 2;
 			public static int maxActive = 4;
+
+			public static double trivialTimeModifier = 50;
+			public static double significantTimeModifier = 100;
+			public static double exceptionalTimeModifier = 150;
 
 			public static bool useVesselWaypoints = true;
 

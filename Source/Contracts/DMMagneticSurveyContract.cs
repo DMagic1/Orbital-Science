@@ -87,24 +87,28 @@ namespace DMagic.Contracts
 
 			double eccMod = 0.2;
 			double incMod = 20;
+			double timeMod = 2160000;
 
 			switch(prestige)
 			{
 				case ContractPrestige.Trivial:
 					eccMod = DMContractDefs.DMMagnetic.trivialEccentricityMultiplier;
 					incMod = DMContractDefs.DMMagnetic.trivialInclinationMultiplier;
+					timeMod = DMContractDefs.DMMagnetic.trivialTimeModifier * 6 * 3600;
 					break;
 				case ContractPrestige.Significant:
 					eccMod = DMContractDefs.DMMagnetic.significantEccentricityMultiplier;
 					incMod = DMContractDefs.DMMagnetic.significantInclinationMultiplier;
+					timeMod = DMContractDefs.DMMagnetic.significantTimeModifier * 6 * 3600;
 					break;
 				case ContractPrestige.Exceptional:
 					eccMod = DMContractDefs.DMMagnetic.exceptionalEccentricityMultiplier;
 					incMod = DMContractDefs.DMMagnetic.exceptionalInclinationMultiplier;
+					timeMod = DMContractDefs.DMMagnetic.exceptionalTimeModifier * 6 * 3600;
 					break;
 			}
 
-			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 17) / 10d);
+			double time = timeMod * ((double)rand.Next(6, 17) / 10d);
 			double eccen = eccMod * ((double)rand.Next(8, 13) / 10d);
 			if (eccen > 0.7) eccen = 0.7;
 			double inclination = incMod * ((double)rand.Next(7, 14) / 10d);
