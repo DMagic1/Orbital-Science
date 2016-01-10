@@ -239,7 +239,7 @@ namespace DMagic.Parameters
 			wp.longitude = 0;
 			wp.altitude = 0;
 			wp.index = 0;
-			wp.id = "vessel";
+			wp.id = "dmVessel";
 			wp.size = new Vector2(32, 32);
 			wp.seed = SystemUtilities.SuperSeed(this.Root);
 			wp.isOnSurface = false;
