@@ -10,9 +10,9 @@ using FinePrint.Contracts.Parameters;
 
 namespace DMagic.Parameters
 {
-	public class DMReconOrbitParameter : ContractParameter
+	public class DMSpecificOrbitParameter : ContractParameter
 	{
-		private DMSpecificOrbitParameterExtended childOrbitParameter;
+		private DMDummySpecificOrbitParameter childOrbitParameter;
 		private CelestialBody body;
 		private OrbitType type;
 		private double inc, ecc, sma, lan, aop, mae, epo, deviation;
@@ -20,9 +20,9 @@ namespace DMagic.Parameters
 		private OrbitDriver orbitDriver;
 		private DMLongOrbitParameter root;
 
-		public DMReconOrbitParameter() { }
+		public DMSpecificOrbitParameter() { }
 
-		public DMReconOrbitParameter(OrbitType orbitType, double inclination, double eccentricity, double semi, double la, double argumentOfPeriapsis, double meanAnomalyAtEpoch, double epoch, CelestialBody targetBody, double deviationWindow, DMLongOrbitParameter r)
+		public DMSpecificOrbitParameter(OrbitType orbitType, double inclination, double eccentricity, double semi, double la, double argumentOfPeriapsis, double meanAnomalyAtEpoch, double epoch, CelestialBody targetBody, double deviationWindow, DMLongOrbitParameter r)
 		{
 			type = orbitType;
 			body = targetBody;
@@ -50,7 +50,7 @@ namespace DMagic.Parameters
 		protected override string GetNotes()
 		{
 			if (childOrbitParameter == null)
-				return "";
+				return "The target orbit will not disappear until the full contract has been completed.";
 
 			return childOrbitParameter.BaseNotes + "\nThe target orbit will not disappear until the full contract has been completed.";
 		}
@@ -120,19 +120,19 @@ namespace DMagic.Parameters
 			body = node.parse("Body", (CelestialBody)null);
 			if (body == null)
 			{
-				loadFail("Failed To Load Target Body; DMRecon Parameter Removed");
+				loadFail("Failed To Load Target Body; DMSpecific Orbit Parameter Removed");
 				return;
 			}
 
 			int oType = node.parse("OrbitType", (int)1000);
 			if (oType == 1000)
 			{
-				loadFail("Failed To Load Orbit Type; DMRecon Parameter Removed");
+				loadFail("Failed To Load Orbit Type; DMSpecific Orbit Parameter Removed");
 				return;
 			}
 			type = (OrbitType)oType;
 
-			inc = node.parse("Inclination", (double)63.5);
+			inc = node.parse("Inclination", (double)90);
 			ecc = node.parse("Eccentricity", (double)0);
 			sma = node.parse("SemiMajorAxis", (double)0);
 			aop = node.parse("ArgOfPeriapsis", (double)0);
@@ -147,7 +147,7 @@ namespace DMagic.Parameters
 			}
 			catch (Exception e)
 			{
-				loadFail("Could not find root long orbit parameter; removing DMReconOrbit Parameter\n" + e.ToString());
+				loadFail("Could not find root long orbit parameter; removing DMSpecific Orbit Parameter\n" + e.ToString());
 				return;
 			}
 
@@ -161,7 +161,7 @@ namespace DMagic.Parameters
 		private IEnumerator loadChildParameter()
 		{
 			int timer = 0;
-			while (this.GetParameter<DMSpecificOrbitParameterExtended>() == null && timer < 200)
+			while (this.GetParameter<DMDummySpecificOrbitParameter>() == null && timer < 200)
 			{
 				timer++;
 				yield return null;
@@ -169,22 +169,22 @@ namespace DMagic.Parameters
 
 			if (timer >= 200)
 			{
-				loadFail("Could not find child specific orbit parameter; timed out; removing DMReconOrbit Parameter");
+				loadFail("Could not find child specific orbit parameter; timed out; removing DMSpecific Orbit Parameter");
 				yield break;
 			}
 
 			try
 			{
-				childOrbitParameter = this.GetParameter<DMSpecificOrbitParameterExtended>();
+				childOrbitParameter = this.GetParameter<DMDummySpecificOrbitParameter>();
 			}
 			catch (Exception e)
 			{
-				loadFail("Could not find child specific orbit parameter; removing DMReconOrbit Parameter\n" + e.ToString());
+				loadFail("Could not find child specific orbit parameter; removing DMSpecific Orbit Parameter\n" + e.ToString());
 				yield break;
 			}
 
 			if (childOrbitParameter == null)
-				loadFail("Could not find child specific orbit parameter; removing DMReconOrbit Parameter");
+				loadFail("Could not find child specific orbit parameter; removing DMSpecific Orbit Parameter");
 		}
 
 		protected override void OnSave(ConfigNode node)

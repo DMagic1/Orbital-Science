@@ -8,14 +8,14 @@ using FinePrint.Contracts.Parameters;
 
 namespace DMagic.Parameters
 {
-	public class DMSpecificOrbitParameterExtended : SpecificOrbitParameter
+	public class DMDummySpecificOrbitParameter : SpecificOrbitParameter
 	{
 		private string baseTitle = "";
 		private string baseNotes = "";
 
-		public DMSpecificOrbitParameterExtended() { }
+		public DMDummySpecificOrbitParameter() { }
 
-		public DMSpecificOrbitParameterExtended(OrbitType orbitType, double inclination, double eccentricity, double sma, double lan, double argumentOfPeriapsis, double meanAnomalyAtEpoch, double epoch, CelestialBody targetBody, double deviationWindow) : base(orbitType, inclination, eccentricity, sma, lan, argumentOfPeriapsis, meanAnomalyAtEpoch, epoch, targetBody, deviationWindow)
+		public DMDummySpecificOrbitParameter(OrbitType orbitType, double inclination, double eccentricity, double sma, double lan, double argumentOfPeriapsis, double meanAnomalyAtEpoch, double epoch, CelestialBody targetBody, double deviationWindow) : base(orbitType, inclination, eccentricity, sma, lan, argumentOfPeriapsis, meanAnomalyAtEpoch, epoch, targetBody, deviationWindow)
 		{
 			
 		}
