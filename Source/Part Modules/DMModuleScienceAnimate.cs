@@ -83,6 +83,8 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public bool oneWayAnimation = false;
 		[KSPField]
+		public bool oneShot = false;
+		[KSPField]
 		public string resourceExperiment = "ElectricCharge";
 		[KSPField]
 		public float resourceExpCost = 0;
@@ -256,7 +258,7 @@ namespace DMagic.Part_Modules
 			if (keepDeployedMode == 0) retractEvent();
 		}
 
-		private void FixedUpdate()
+		protected virtual void FixedUpdate()
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
