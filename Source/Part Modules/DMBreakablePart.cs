@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DMagic.Part_Modules
 {
-	class DMBreakablePart : DMModuleScienceAnimate
+	public class DMBreakablePart : DMModuleScienceAnimate
 	{
 		private List<GameObject> breakableObjects = new List<GameObject>();
 		private Transform baseTransform;
@@ -14,6 +14,10 @@ namespace DMagic.Part_Modules
 		public bool broken;
 		[KSPField]
 		public string baseTransfromName = "";
+		[KSPField]
+		public float componentDrag = 0.5f;
+		[KSPField]
+		public float componentMass = 0.001f;
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -31,6 +35,14 @@ namespace DMagic.Part_Modules
 		public override void OnFixedUpdate()
 		{
 			base.OnFixedUpdate();
+		}
+
+		public override void deployEvent()
+		{
+			base.deployEvent();
+
+			if (broken && oneShot && !oneWayAnimation)
+				base.Events["retractEvent"].active = true;
 		}
 
 		private void setTransformState(bool on)
@@ -60,12 +72,20 @@ namespace DMagic.Part_Modules
 				if (r == null)
 					continue;
 
-				r.angularVelocity = part.rigidbody.angularVelocity;
-				r.velocity = part.rigidbody.velocity;
-				r.mass = 0.001f;
+				Vector3 randomAngular = new Vector3();
+				r.angularVelocity = part.rigidbody.angularVelocity + randomAngular;
+				Vector3 randomVel = new Vector3();
+				Vector3 localCOM = vessel.findWorldCenterOfMass() - part.rigidbody.worldCenterOfMass;
+				r.velocity = part.rigidbody.velocity + randomVel + Vector3.Cross(localCOM, rigidbody.angularVelocity);
+				r.mass = componentMass;
 				r.useGravity = false;
 				o.transform.parent = null;
+				physicalObject p = o.AddComponent<physicalObject>();
+				r.drag = componentDrag;
 			}
+
+			if (IsDeployed && oneShot && !oneWayAnimation)
+				base.Events["retractEvent"].active = true;
 		}
 
 		private void getChildren(Transform t)
@@ -73,11 +93,9 @@ namespace DMagic.Part_Modules
 			if (t == null)
 				return;
 
-			var tEnum = t.GetEnumerator();
-
-			while (tEnum.MoveNext())
+			for (int i = 0; i < t.childCount; i++)
 			{
-				Transform tChild = (Transform)tEnum.Current;
+				Transform tChild = t.GetChild(i);
 
 				if (tChild == null)
 					continue;
