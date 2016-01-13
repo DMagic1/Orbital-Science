@@ -431,7 +431,7 @@ namespace DMagic.Part_Modules
 			}
 			enableIAnimators();
 			Events["deployEvent"].active = oneWayAnimation;
-			Events["retractEvent"].active = showEndEvent;
+			Events["retractEvent"].active = showEndEvent && !oneShot;
 		}
 
 		private void enableIAnimators()
