@@ -223,6 +223,9 @@ namespace DMagic.Parameters
 
 				WaypointManager.RemoveWaypoint(w);
 			}
+
+			waypointsOn = false;
+			wps.Clear();
 		}
 
 		private Waypoint setupNewWaypoint(Vessel v)
