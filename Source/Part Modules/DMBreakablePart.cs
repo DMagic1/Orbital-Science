@@ -7,11 +7,13 @@ namespace DMagic.Part_Modules
 {
 	public class DMBreakablePart : DMModuleScienceAnimate
 	{
-		private List<GameObject> breakableObjects = new List<GameObject>();
+		protected List<GameObject> breakableObjects = new List<GameObject>();
 		private Transform baseTransform;
 
 		[KSPField(isPersistant = true)]
 		public bool broken;
+		[KSPField]
+		public bool breakable = true;
 		[KSPField]
 		public string baseTransfromName = "";
 		[KSPField]
@@ -35,6 +37,9 @@ namespace DMagic.Part_Modules
 		public override void OnFixedUpdate()
 		{
 			base.OnFixedUpdate();
+
+			if (!breakable)
+				return;
 		}
 
 		public override void deployEvent()
@@ -45,9 +50,15 @@ namespace DMagic.Part_Modules
 				base.Events["retractEvent"].active = true;
 		}
 
-		private void setTransformState(bool on)
+		protected virtual void setTransformState(bool on)
 		{
+			if (!breakable)
+				return;
+
 			if (baseTransform == null)
+				return;
+
+			if (baseTransform.gameObject == null)
 				return;
 
 			baseTransform.gameObject.SetActive(on);
@@ -58,7 +69,7 @@ namespace DMagic.Part_Modules
 			if (broken)
 				return;
 
-			getChildren(baseTransform);
+			getGameObjects();
 
 			for (int i = 0; i < breakableObjects.Count; i++)
 			{
@@ -88,6 +99,11 @@ namespace DMagic.Part_Modules
 				base.Events["retractEvent"].active = true;
 		}
 
+		protected virtual void getGameObjects()
+		{
+			getChildren(baseTransform);
+		}
+
 		private void getChildren(Transform t)
 		{
 			if (t == null)
@@ -105,7 +121,7 @@ namespace DMagic.Part_Modules
 				if (obj == null)
 					continue;
 
-				if (obj.GetComponent<MeshRenderer>() == null)
+				if (obj.GetComponent<SkinnedMeshRenderer>() == null && obj.GetComponent<MeshRenderer>() == null)
 					continue;
 
 				breakableObjects.Add(obj);
