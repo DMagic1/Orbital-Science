@@ -86,6 +86,11 @@ namespace DMagic.Parameters
 			return string.Format("Have the following parts onboard: {0}", string.Concat(parts).TrimEnd(',').TrimStart(' '));
 		}
 
+		protected override string GetNotes()
+		{
+			return base.GetNotes();
+		}
+
 		protected override void OnUpdate()
 		{
 			if (this.Root.ContractState != Contract.State.Active)
