@@ -15,6 +15,10 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public bool breakable = true;
 		[KSPField]
+		public bool fixable = true;
+		[KSPField]
+		public int fixLevel = 1;
+		[KSPField]
 		public string baseTransfromName = "";
 		[KSPField]
 		public float componentDrag = 0.5f;
@@ -32,6 +36,9 @@ namespace DMagic.Part_Modules
 			{
 				setTransformState(false);
 			}
+
+			Events["fixPart"].active = fixable && breakable;
+			Events["fixPart"].unfocusedRange = interactionRange;
 		}
 
 		public override void OnFixedUpdate()
@@ -46,7 +53,7 @@ namespace DMagic.Part_Modules
 		{
 			base.deployEvent();
 
-			if (broken && oneShot && !oneWayAnimation)
+			if (broken && !oneWayAnimation)
 				base.Events["retractEvent"].active = true;
 		}
 
@@ -128,6 +135,24 @@ namespace DMagic.Part_Modules
 
 				getChildren(tChild);
 			}
+		}
+
+		[KSPEvent(guiActive = false, guiActiveUnfocused = true, externalToEVAOnly = true, unfocusedRange = 5f, active = true)]
+		public void fixPart()
+		{
+			if (!fixable)
+				return;
+
+			if (!breakable)
+				return;
+
+			if (!broken)
+			{
+				Events["fixPart"].active = false;
+				return;
+			}
+
+			onFix();
 		}
 
 		protected void onBreak()
