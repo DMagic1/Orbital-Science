@@ -22,7 +22,7 @@ namespace DMagic.Part_Modules
 
 		private void assignTransforms()
 		{
-			for (int i = 0; i < 5; i++)
+			for (int i = 0; i < dishTransformNames.Length; i++)
 			{
 				string s = dishTransformNames[i];
 
@@ -36,6 +36,16 @@ namespace DMagic.Part_Modules
 
 				dishTransforms.Add(t);
 			}
+		}
+
+		protected override bool canConduct()
+		{
+			if (!base.canConduct())
+				return false;
+
+			scanPlanet(vessel.mainBody);
+
+			return true;
 		}
 
 		public void scanPlanet(CelestialBody b)
