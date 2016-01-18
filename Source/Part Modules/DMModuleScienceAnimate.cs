@@ -1208,7 +1208,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private void DumpAllData(List<ScienceData> data)
+		protected virtual void DumpAllData(List<ScienceData> data)
 		{
 			foreach(ScienceData d in data)
 				experimentsReturned++;
@@ -1228,7 +1228,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private void DumpInitialData(ScienceData data)
+		protected virtual void DumpInitialData(ScienceData data)
 		{
 			if (scienceReports.Contains(data))
 			{
