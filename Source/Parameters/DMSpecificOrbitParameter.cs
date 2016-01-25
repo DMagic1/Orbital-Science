@@ -12,12 +12,9 @@ namespace DMagic.Parameters
 {
 	public class DMSpecificOrbitParameter : SpecificOrbitParameter
 	{
-		private DMDummySpecificOrbitParameter childOrbitParameter;
 		private CelestialBody body;
 		private OrbitType type;
 		private double inc, ecc, sma, lan, aop, mae, epo, deviation;
-		//private bool orbitSetup;
-		//private OrbitDriver orbitDriver;
 		private bool orbitLoaded;
 		private DMLongOrbitParameter root;
 
@@ -39,24 +36,6 @@ namespace DMagic.Parameters
 			disableOnStateChange = false;
 			setupOrbit();
 			testOrbit();
-		}
-
-		protected override string GetTitle()
-		{
-			return base.GetTitle();
-			//if (childOrbitParameter == null)
-			//	return string.Format("Reach the designated orbit around {0} within reasonable deviation", body.theName);
-
-			//return childOrbitParameter.BaseTitle;
-		}
-
-		protected override string GetNotes()
-		{
-			return base.GetNotes();
-			//if (childOrbitParameter == null)
-			//	return "The target orbit will not disappear until the full contract has been completed.";
-
-			//return childOrbitParameter.BaseNotes + "\nThe target orbit will not disappear until the full contract has been completed.";
 		}
 
 		private void setupOrbit()
@@ -162,12 +141,6 @@ namespace DMagic.Parameters
 			}
 
 			orbitLoaded = testOrbit();
-
-			//ContractSystem.Instance.StartCoroutine(loadChildParameter());
-
-			//disableOnStateChange = false;
-
-			//setupOrbit();
 		}
 
 		private bool testOrbit()
@@ -182,50 +155,7 @@ namespace DMagic.Parameters
 				Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deacivating/n" + e.ToString());
 				return false;
 			}
-		}
-
-		private IEnumerator loadChildParameter()
-		{
-			int timer = 0;
-			while (this.GetParameter<DMDummySpecificOrbitParameter>() == null && timer < 200)
-			{
-				timer++;
-				yield return null;
-			}
-
-			if (timer >= 200)
-			{
-				loadFail("Could not find child specific orbit parameter; timed out; removing DMSpecific Orbit Parameter");
-				yield break;
-			}
-
-			try
-			{
-				childOrbitParameter = this.GetParameter<DMDummySpecificOrbitParameter>();
-			}
-			catch (Exception e)
-			{
-				loadFail("Could not find child specific orbit parameter; removing DMSpecific Orbit Parameter\n" + e.ToString());
-				yield break;
-			}
-
-			if (childOrbitParameter == null)
-				loadFail("Could not find child specific orbit parameter; removing DMSpecific Orbit Parameter");
-		}
-
-		//protected override void OnSave(ConfigNode node)
-		//{
-		//	node.AddValue("Body", body.flightGlobalsIndex);
-		//	node.AddValue("OrbitType", (int)type);
-		//	node.AddValue("Inclination", inc.ToString("F0"));
-		//	node.AddValue("Eccentricity", ecc.ToString("F15"));
-		//	node.AddValue("SemiMajorAxis", sma.ToString("F7"));
-		//	node.AddValue("ArgOfPeriapsis", aop.ToString("F12"));
-		//	node.AddValue("LAN", lan.ToString("F12"));
-		//	node.AddValue("MeanAnomalyAtEpoch", mae.ToString("F12"));
-		//	node.AddValue("Epoch", epo.ToString("F0"));
-		//	node.AddValue("Deviation", deviation.ToString("F0"));
-		//}
+		}		
 
 		private void loadFail(string message)
 		{
