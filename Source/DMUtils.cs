@@ -183,7 +183,7 @@ namespace DMagic
 		{
 			for (int i = 0; i < parts.Count; i++)
 			{
-				AvailablePart aPart = PartLoader.getPartInfoByName(parts[i]);
+				AvailablePart aPart = PartLoader.getPartInfoByName(parts[i].Replace('_','.'));
 				if (aPart == null)
 					continue;
 				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
@@ -297,6 +297,16 @@ namespace DMagic
 			else
 				D /= KSPUtil.EarthDay;
 			return D;
+		}
+
+		internal static double fixLatShift(double lat)
+		{
+			return (lat + 180 + 90) % 180 - 90;
+		}
+
+		internal static double fixLonShift(double lon)
+		{
+			return (lon + 360 + 180) % 360 - 180;
 		}
 
 		#region Debug Logging
