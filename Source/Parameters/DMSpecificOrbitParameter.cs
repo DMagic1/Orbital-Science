@@ -10,19 +10,20 @@ using FinePrint.Contracts.Parameters;
 
 namespace DMagic.Parameters
 {
-	public class DMSpecificOrbitParameter : ContractParameter
+	public class DMSpecificOrbitParameter : SpecificOrbitParameter
 	{
 		private DMDummySpecificOrbitParameter childOrbitParameter;
 		private CelestialBody body;
 		private OrbitType type;
 		private double inc, ecc, sma, lan, aop, mae, epo, deviation;
-		private bool orbitSetup;
-		private OrbitDriver orbitDriver;
+		//private bool orbitSetup;
+		//private OrbitDriver orbitDriver;
+		private bool orbitLoaded;
 		private DMLongOrbitParameter root;
 
 		public DMSpecificOrbitParameter() { }
 
-		public DMSpecificOrbitParameter(OrbitType orbitType, double inclination, double eccentricity, double semi, double la, double argumentOfPeriapsis, double meanAnomalyAtEpoch, double epoch, CelestialBody targetBody, double deviationWindow, DMLongOrbitParameter r)
+		public DMSpecificOrbitParameter(OrbitType orbitType, double inclination, double eccentricity, double semi, double la, double argumentOfPeriapsis, double meanAnomalyAtEpoch, double epoch, CelestialBody targetBody, double deviationWindow, DMLongOrbitParameter r) : base(orbitType, inclination, eccentricity, semi, la, argumentOfPeriapsis, meanAnomalyAtEpoch, epoch, targetBody, deviationWindow)
 		{
 			type = orbitType;
 			body = targetBody;
@@ -37,22 +38,25 @@ namespace DMagic.Parameters
 			root = r;
 			disableOnStateChange = false;
 			setupOrbit();
+			testOrbit();
 		}
 
 		protected override string GetTitle()
 		{
-			if (childOrbitParameter == null)
-				return string.Format("Reach the designated orbit around {0} within reasonable deviation", body.theName);
+			return base.GetTitle();
+			//if (childOrbitParameter == null)
+			//	return string.Format("Reach the designated orbit around {0} within reasonable deviation", body.theName);
 
-			return childOrbitParameter.BaseTitle;
+			//return childOrbitParameter.BaseTitle;
 		}
 
 		protected override string GetNotes()
 		{
-			if (childOrbitParameter == null)
-				return "The target orbit will not disappear until the full contract has been completed.";
+			return base.GetNotes();
+			//if (childOrbitParameter == null)
+			//	return "The target orbit will not disappear until the full contract has been completed.";
 
-			return childOrbitParameter.BaseNotes + "\nThe target orbit will not disappear until the full contract has been completed.";
+			//return childOrbitParameter.BaseNotes + "\nThe target orbit will not disappear until the full contract has been completed.";
 		}
 
 		private void setupOrbit()
@@ -69,7 +73,7 @@ namespace DMagic.Parameters
 			orbitDriver.orbit.epoch = epo;
 			orbitDriver.orbit.Init();
 
-			orbitSetup = true;
+			orbitLoaded = true;
 		}
 
 		protected override void OnUpdate()
@@ -80,7 +84,7 @@ namespace DMagic.Parameters
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 
-			if (!orbitSetup)
+			if (!orbitLoaded)
 			{
 				this.SetIncomplete();
 				return;
@@ -105,7 +109,7 @@ namespace DMagic.Parameters
 				if (v == null)
 					continue;
 
-				if (VesselUtilities.VesselAtOrbit(orbitDriver.orbit, deviation, v))
+				if (VesselUtilities.VesselAtOrbit(orbitDriver.orbit, deviationWindow, v))
 				{
 					this.SetComplete();
 					return;
@@ -117,29 +121,7 @@ namespace DMagic.Parameters
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			body = node.parse("Body", (CelestialBody)null);
-			if (body == null)
-			{
-				loadFail("Failed To Load Target Body; DMSpecific Orbit Parameter Removed");
-				return;
-			}
-
-			int oType = node.parse("OrbitType", (int)1000);
-			if (oType == 1000)
-			{
-				loadFail("Failed To Load Orbit Type; DMSpecific Orbit Parameter Removed");
-				return;
-			}
-			type = (OrbitType)oType;
-
-			inc = node.parse("Inclination", (double)90);
-			ecc = node.parse("Eccentricity", (double)0);
-			sma = node.parse("SemiMajorAxis", (double)0);
-			aop = node.parse("ArgOfPeriapsis", (double)0);
-			mae = node.parse("MeanAnomalyAtEpoch", (double)0);
-			epo = node.parse("Epoch", (double)0);
-			lan = node.parse("LAN", (double)0);
-			deviation = node.parse("Deviation", (double)10);
+			base.OnLoad(node);
 
 			try
 			{
@@ -151,11 +133,55 @@ namespace DMagic.Parameters
 				return;
 			}
 
-			ContractSystem.Instance.StartCoroutine(loadChildParameter());
+			if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
+			{
+				body = node.parse("TargetBody", (CelestialBody)null);
+				if (body == null)
+				{
+					loadFail("Failed To Load Target Body; DMSpecific Orbit Parameter Removed");
+					return;
+				}
 
-			disableOnStateChange = false;
+				int oType = node.parse("orbitType", (int)1000);
+				if (oType == 1000)
+				{
+					loadFail("Failed To Load Orbit Type; DMSpecific Orbit Parameter Removed");
+					return;
+				}
+				type = (OrbitType)oType;
 
-			setupOrbit();
+				inc = node.parse("inclination", (double)90);
+				ecc = node.parse("eccentricity", (double)0);
+				sma = node.parse("sma", (double)0);
+				aop = node.parse("argumentOfPeriapsis", (double)0);
+				mae = node.parse("meanAnomalyAtEpoch", (double)0);
+				epo = node.parse("epoch", (double)0);
+				lan = node.parse("lan", (double)0);
+				deviation = node.parse("deviationWindow", (double)10);
+				setupOrbit();
+			}
+
+			orbitLoaded = testOrbit();
+
+			//ContractSystem.Instance.StartCoroutine(loadChildParameter());
+
+			//disableOnStateChange = false;
+
+			//setupOrbit();
+		}
+
+		private bool testOrbit()
+		{
+			try
+			{
+				double d = orbitDriver.orbit.inclination;
+				return true;
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deacivating/n" + e.ToString());
+				return false;
+			}
 		}
 
 		private IEnumerator loadChildParameter()
@@ -187,19 +213,19 @@ namespace DMagic.Parameters
 				loadFail("Could not find child specific orbit parameter; removing DMSpecific Orbit Parameter");
 		}
 
-		protected override void OnSave(ConfigNode node)
-		{
-			node.AddValue("Body", body.flightGlobalsIndex);
-			node.AddValue("OrbitType", (int)type);
-			node.AddValue("Inclination", inc.ToString("F0"));
-			node.AddValue("Eccentricity", ecc.ToString("F15"));
-			node.AddValue("SemiMajorAxis", sma.ToString("F7"));
-			node.AddValue("ArgOfPeriapsis", aop.ToString("F12"));
-			node.AddValue("LAN", lan.ToString("F12"));
-			node.AddValue("MeanAnomalyAtEpoch", mae.ToString("F12"));
-			node.AddValue("Epoch", epo.ToString("F0"));
-			node.AddValue("Deviation", deviation.ToString("F0"));
-		}
+		//protected override void OnSave(ConfigNode node)
+		//{
+		//	node.AddValue("Body", body.flightGlobalsIndex);
+		//	node.AddValue("OrbitType", (int)type);
+		//	node.AddValue("Inclination", inc.ToString("F0"));
+		//	node.AddValue("Eccentricity", ecc.ToString("F15"));
+		//	node.AddValue("SemiMajorAxis", sma.ToString("F7"));
+		//	node.AddValue("ArgOfPeriapsis", aop.ToString("F12"));
+		//	node.AddValue("LAN", lan.ToString("F12"));
+		//	node.AddValue("MeanAnomalyAtEpoch", mae.ToString("F12"));
+		//	node.AddValue("Epoch", epo.ToString("F0"));
+		//	node.AddValue("Deviation", deviation.ToString("F0"));
+		//}
 
 		private void loadFail(string message)
 		{

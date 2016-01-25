@@ -115,7 +115,7 @@ namespace DMagic.Contracts
 			longOrbit.AddParameter(partRequest);
 			longOrbit.setPartRequest(partRequest);
 
-			reconParam.AddParameter(new DMDummySpecificOrbitParameter(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation));
+			//reconParam.AddParameter(new DMDummySpecificOrbitParameter(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation));
 
 			if (this.ParameterCount == 0)
 				return false;
