@@ -83,21 +83,25 @@ namespace DMagic.Contracts
 				return false;
 
 			int reconLevelRequirement = 0;
-			int level = 0;
+			float levelLow = 0;
+			float levelHigh = 1;
 
 			switch(this.prestige)
 			{
 				case ContractPrestige.Trivial:
 					reconLevelRequirement = DMContractDefs.DMAnomaly.TrivialReconLevelRequirement;
-					level = 0;
+					levelLow = DMContractDefs.DMAnomaly.TrivialAnomalyLevel;
+					levelHigh = DMContractDefs.DMAnomaly.SignificantAnomalyLevel;
 					break;
 				case ContractPrestige.Significant:
 					reconLevelRequirement = DMContractDefs.DMAnomaly.SignificantReconLevelRequirement;
-					level = 1;
+					levelLow = DMContractDefs.DMAnomaly.SignificantAnomalyLevel;
+					levelHigh = DMContractDefs.DMAnomaly.ExceptionalAnomalyLevel;
 					break;
 				case ContractPrestige.Exceptional:
 					reconLevelRequirement = DMContractDefs.DMAnomaly.ExceptionalReconLevelRequirement;
-					level = 2;
+					levelLow = DMContractDefs.DMAnomaly.ExceptionalAnomalyLevel;
+					levelHigh = 1f;
 					break;
 			}
 
@@ -114,7 +118,7 @@ namespace DMagic.Contracts
 				if (stor == null)
 					continue;
 
-				if (stor.Level == level)
+				if (stor.Level >= levelLow && stor.Level < levelHigh)
 					anomalies.Add(stor);
 			}
 
