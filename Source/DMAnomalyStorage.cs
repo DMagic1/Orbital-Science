@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using FinePrint.Utilities;
 
 namespace DMagic
 {
@@ -9,13 +10,14 @@ namespace DMagic
 	{
 		private CelestialBody body;
 		private bool scanned;
-		private int level;
+		private float level;
 		private Dictionary<string, DMAnomalyObject> anomalies = new Dictionary<string, DMAnomalyObject>();
 
 		public DMAnomalyStorage(CelestialBody b, bool s = true)
 		{
 			body = b;
 			scanned = s;
+			level = CelestialUtilities.PlanetScienceRanking(b);
 		}
 
 		public void addAnomaly(DMAnomalyObject anom)
@@ -87,7 +89,7 @@ namespace DMagic
 			get { return anomalies.Count; }
 		}
 
-		public int Level
+		public float Level
 		{
 			get { return level; }
 		}
