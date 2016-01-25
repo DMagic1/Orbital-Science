@@ -226,6 +226,41 @@ namespace DMagic.Part_Modules
 			return true;
 		}
 
+		protected override ExperimentSituations getSituation()
+		{
+			switch (vessel.situation)
+			{
+				case Vessel.Situations.LANDED:
+				case Vessel.Situations.PRELAUNCH:
+					return ExperimentSituations.SrfLanded;
+				case Vessel.Situations.SPLASHED:
+					return ExperimentSituations.SrfSplashed;
+				default:
+					if (vessel.altitude < vessel.mainBody.atmosphereDepth && vessel.mainBody.atmosphere)
+					{
+						if (vessel.altitude < vessel.mainBody.scienceValues.flyingAltitudeThreshold)
+							return ExperimentSituations.FlyingLow;
+						else
+							return ExperimentSituations.FlyingHigh;
+					}
+					if (vessel.altitude < vessel.mainBody.scienceValues.spaceAltitudeThreshold * 5)
+						return ExperimentSituations.InSpaceLow;
+					else
+						return ExperimentSituations.InSpaceHigh;
+			}
+		}
+
+		protected override string getBiome(ExperimentSituations s)
+		{
+			if ((bioMask & (int)s) == 0)
+				return "";
+
+			if (DMUtils.fixLatShift(vessel.latitude) > 0)
+				return "NorthernHemisphere";
+			else
+				return "SouthernHemisphere";
+		}
+
 		public void scanPlanet(CelestialBody b)
 		{
 			DMAnomalyStorage anom = DMAnomalyList.getAnomalyStorage(b.name);
