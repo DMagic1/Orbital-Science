@@ -87,9 +87,23 @@ namespace DMagic.Contracts
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconSignificantParts))
 						return false;
 					if (SystemUtilities.CoinFlip(rand))
-						orbitType = OrbitType.KOLNIYA;
+					{
+						if (CelestialUtilities.CanBodyBeKolniya(body))
+							orbitType = OrbitType.KOLNIYA;
+						else if (CelestialUtilities.CanBodyBeTundra(body))
+							orbitType = OrbitType.TUNDRA;
+						else
+							orbitType = OrbitType.POLAR;
+					}
 					else
-						orbitType = OrbitType.TUNDRA;
+					{
+						if (CelestialUtilities.CanBodyBeTundra(body))
+							orbitType = OrbitType.TUNDRA;
+						else if (CelestialUtilities.CanBodyBeKolniya(body))
+							orbitType = OrbitType.KOLNIYA;
+						else
+							orbitType = OrbitType.POLAR;
+					}
 					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.5, ContractDefs.Satellite.TrivialInclinationDifficulty);
 					timeMod = DMContractDefs.DMRecon.significantTimeModifier * 6 * 3600;
 					incMod = 0;
@@ -114,8 +128,6 @@ namespace DMagic.Contracts
 			longOrbit.AddParameter(reconParam);
 			longOrbit.AddParameter(partRequest);
 			longOrbit.setPartRequest(partRequest);
-
-			//reconParam.AddParameter(new DMDummySpecificOrbitParameter(orbitType, o.inclination, o.eccentricity, o.semiMajorAxis, o.LAN, o.argumentOfPeriapsis, o.meanAnomalyAtEpoch, o.epoch, body, ContractDefs.Satellite.SignificantDeviation));
 
 			if (this.ParameterCount == 0)
 				return false;
