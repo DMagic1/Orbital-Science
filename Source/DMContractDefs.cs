@@ -58,6 +58,10 @@ namespace DMagic
 			public static int SignificantReconLevelRequirement = 1;
 			public static int ExceptionalReconLevelRequirement = 1;
 
+			public static float TrivialAnomalyLevel = 0f;
+			public static float SignificantAnomalyLevel = 0.3f;
+			public static float ExceptionalAnomalyLevel = 0.6f;
+
 			public static List<string> backStory = new List<string>(1) { "Something, Something, Something..." };
 		}
 

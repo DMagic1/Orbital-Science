@@ -163,6 +163,10 @@ namespace DMagic
 				DMContractDefs.DMAnomaly.SignificantReconLevelRequirement = DMAnomalyNode.parse("Significant_Recon_Level_Requirement", (int)1);
 				DMContractDefs.DMAnomaly.ExceptionalReconLevelRequirement = DMAnomalyNode.parse("Exceptional_Recon_Level_Requirement", (int)1);
 
+				DMContractDefs.DMAnomaly.TrivialAnomalyLevel = DMAnomalyNode.parse("Trivial_Anomaly_Level_Requirement", (float)0);
+				DMContractDefs.DMAnomaly.SignificantAnomalyLevel = DMAnomalyNode.parse("Significant_Anomaly_Level_Requirement", (float)0.3f);
+				DMContractDefs.DMAnomaly.ExceptionalAnomalyLevel = DMAnomalyNode.parse("Exceptional_Anomaly_Level_Requirement", (float)0.6f);
+
 				DMContractDefs.DMAnomaly.backStory = DMAnomalyNode.parse("Backstory", '|', new List<string>(1) { "Something, Something, Something..." });
 
 				DMContractDefs.DMAnomaly.backStory = DMUtils.formatFixStringList(DMContractDefs.DMAnomaly.backStory);
