@@ -347,7 +347,7 @@ namespace DMagic
 				{
 					DMContractDefs.DMRecon.Expire.MinimumExpireDays = ReconExpireNode.parse("MinimumExpireDays", (int)5);
 					DMContractDefs.DMRecon.Expire.MaximumExpireDays = ReconExpireNode.parse("MaximumExpireDays", (int)15);
-					DMContractDefs.DMRecon.Expire.DeadlineModifier = ReconExpireNode.parse("DeadlineModifier", (float)3.7);
+					DMContractDefs.DMRecon.Expire.DeadlineModifier = ReconExpireNode.parse("DeadlineModifier", (float)3.9);
 				}
 
 				if (ReconFundsNode != null)

@@ -242,7 +242,7 @@ namespace DMagic
 
 				public static int MaximumExpireDays = 15;
 
-				public static float DeadlineModifier = 3.7f;
+				public static float DeadlineModifier = 3.9f;
 			}
 
 			public static class Funds
