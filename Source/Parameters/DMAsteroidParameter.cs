@@ -55,7 +55,8 @@ namespace DMagic.Parameters
 			scienceLocation = Location;
 			name = Name;
 			collected = false;
-			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			partName = scienceContainer.SciPart;
 		}
 
@@ -125,15 +126,20 @@ namespace DMagic.Parameters
 			{
 				DMUtils.Logging("Failed To Load Situation Variables; Asteroid Parameter Set To Complete");
 				this.SetComplete();
+				return;
 			}
 			scienceLocation = (ExperimentSituations)targetLocation;
 
 			collected = node.parse("Collected", (bool)true);
-			if (collected)
-				this.SetComplete();
 
 			name = node.parse("Name", "");
 			if (string.IsNullOrEmpty(name))
+			{
+				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Set To Complete");
+				this.SetComplete();
+			}
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
 			{
 				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Set To Complete");
 				this.SetComplete();

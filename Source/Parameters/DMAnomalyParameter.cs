@@ -134,11 +134,15 @@ namespace DMagic.Parameters
 			situation = (ExperimentSituations)sitID;
 
 			collected = node.parse("Collected", (bool)true);
-			if (collected)
-				this.SetComplete();
 
 			name = node.parse("Name", "");
 			if (string.IsNullOrEmpty(name))
+			{
+				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Set To Complete");
+				this.SetComplete();
+			}
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
 			{
 				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Set To Complete");
 				this.SetComplete();
