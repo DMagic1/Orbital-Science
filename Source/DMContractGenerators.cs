@@ -29,9 +29,11 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Contracts;
+using FinePrint.Utilities;
 using DMagic.Contracts;
 using DMagic.Parameters;
 
@@ -47,6 +49,9 @@ namespace DMagic
 			string name;
 
 			//Choose science container based on a given science experiment
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				return null;
+
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
 			if (DMScience.Exp == null)
@@ -76,6 +81,9 @@ namespace DMagic
 			string name;
 			string biome = "";
 
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				return null;
+
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
 			//Determine if the science part is available if applicable
@@ -85,7 +93,71 @@ namespace DMagic
 					return null;
 			}
 
-			body = DMUtils.nextTargetBody(c, cR, cUR);
+			List<CelestialBody> bodies = new List<CelestialBody>();
+			Func<CelestialBody, bool> cb = null;
+
+			switch (c)
+			{
+				case Contract.ContractPrestige.Trivial:
+					cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Sun)
+							return false;
+
+						if (b.scienceValues.RecoveryValue > 4)
+							return false;
+
+						return true;
+					};
+					bodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.ORBIT, true, cb));
+					break;
+				case Contract.ContractPrestige.Significant:
+					cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Sun)
+							return false;
+
+						if (b == Planetarium.fetch.Home)
+							return false;
+
+						if (b.scienceValues.RecoveryValue > 8)
+							return false;
+
+						return true;
+					};
+					bodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.FLYBY, true, cb));
+					bodies.AddRange(ProgressUtilities.GetNextUnreached(2, cb));
+					break;
+				case Contract.ContractPrestige.Exceptional:
+					cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Home)
+							return false;
+
+						if (Planetarium.fetch.Home.orbitingBodies.Count > 0)
+						{
+							foreach (CelestialBody B in Planetarium.fetch.Home.orbitingBodies)
+							{
+								if (b == B)
+									return false;
+							}
+						}
+
+						if (b.scienceValues.RecoveryValue < 4)
+							return false;
+
+						return true;
+					};
+					bodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.FLYBY, true, cb));
+					bodies.AddRange(ProgressUtilities.GetNextUnreached(4, cb));
+					break;
+			}
+
+			if (bodies.Count <= 0)
+				return null;
+
+			body = bodies[rand.Next(0, bodies.Count)];
+
 			if (body == null)
 				return null;
 
@@ -139,6 +211,9 @@ namespace DMagic
 			ExperimentSituations targetSituation;
 			ScienceSubject sub;
 			string name;
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				return null;
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
@@ -199,6 +274,9 @@ namespace DMagic
 		{
 			ExperimentSituations targetSituation;
 			string name;
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				return null;
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
@@ -273,6 +351,9 @@ namespace DMagic
 			ExperimentSituations targetSituation;
 			List<ExperimentSituations> situations;
 			string name;
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				return null;
 
 			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
 
