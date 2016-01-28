@@ -543,7 +543,7 @@ namespace DMagic.Part_Modules
 			//Transform translation does not take the part scale into account, so we need to convert the distance back into the unscaled dimensions
 			distance /= scale;
 
-			//If the hammer is to close to the surface we risk flipping the vessel over, so check for a minimum distance here
+			//If the hammer is too close to the surface we risk flipping the vessel over, so check for a minimum distance here
 			if (!values.OnAsteroid && distance < -0.5f)
 			{
 				DMUtils.DebugLog("Hammer Failed: Distance To Close: {0:N3}", distance);
@@ -602,7 +602,7 @@ namespace DMagic.Part_Modules
 			//If this is a real run gather science data, then reset the flag
 			if (!dry)
 				getScienceData(values.OnAsteroid, showData, s);
-
+			
 			//After the experiment has been collected reverse the rotation and translation
 			if (angle > 0)
 			{
