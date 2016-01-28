@@ -44,8 +44,18 @@ namespace DMagic.Contracts
 			switch(prestige)
 			{
 				case ContractPrestige.Trivial:
-					customReachedBodies.AddRange(GetBodies_Reached(true, false));
-					customReachedBodies.AddRange(GetBodies_NextUnreached(2, null));
+					Func<CelestialBody, bool> cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Sun)
+							return false;
+
+						if (b.pqsController == null)
+							return false;
+
+						return true;
+					};
+					customReachedBodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.ORBIT, true, cb));
+					customReachedBodies.AddRange(ProgressUtilities.GetNextUnreached(2, cb));
 					break;
 				case ContractPrestige.Significant:
 					customReachedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Trivial).Select(r => r.body).ToList();
@@ -143,7 +153,7 @@ namespace DMagic.Contracts
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(DMContractDefs.DMRecon.Expire.MinimumExpireDays, DMContractDefs.DMRecon.Expire.MaximumExpireDays);
-			base.SetDeadlineDays((float)(time / KSPUtil.KerbinDay) * DMContractDefs.DMRecon.Expire.DeadlineModifier * (this.GetDestinationWeight(body) / 1.8f) * primaryModifier, null);
+			base.SetDeadlineDays((float)(time / KSPUtil.KerbinDay) * DMContractDefs.DMRecon.Expire.DeadlineModifier * (this.GetDestinationWeight(body) / 1.4f) * primaryModifier, null);
 			base.SetReputation(DMContractDefs.DMRecon.Reputation.BaseReward * Mod, DMContractDefs.DMRecon.Reputation.BaseFailure * Mod, null);
 			base.SetFunds(DMContractDefs.DMRecon.Funds.BaseAdvance * Mod, DMContractDefs.DMRecon.Funds.BaseReward * Mod, DMContractDefs.DMRecon.Funds.BaseFailure * Mod, body);
 			base.SetScience(DMContractDefs.DMRecon.Science.BaseReward * Mod, body);

@@ -73,12 +73,91 @@ namespace DMagic.Contracts
 			if (!DMUtils.partAvailable(DMContractDefs.DMMagnetic.magParts) || !DMUtils.partAvailable(DMContractDefs.DMMagnetic.rpwsParts))
 				return false;
 
-			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, false), GetBodies_NextUnreached(4, null));
+			List<CelestialBody> bodies = new List<CelestialBody>();
+			Func<CelestialBody, bool> cb = null;
+
+			switch (prestige)
+			{
+				case ContractPrestige.Trivial:
+					cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Sun)
+							return false;
+
+						if (b.scienceValues.RecoveryValue > 4)
+							return false;
+
+						return true;
+					};
+					bodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.ORBIT, true, cb));
+					break;
+				case ContractPrestige.Significant:
+					cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Sun)
+							return false;
+
+						if (b == Planetarium.fetch.Home)
+							return false;
+
+						if (b.scienceValues.RecoveryValue > 8)
+							return false;
+
+						return true;
+					};
+					bodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.FLYBY, true, cb));
+					bodies.AddRange(ProgressUtilities.GetNextUnreached(2, cb));
+					break;
+				case ContractPrestige.Exceptional:
+					cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Home)
+							return false;
+
+						if (Planetarium.fetch.Home.orbitingBodies.Count > 0)
+						{
+							foreach (CelestialBody B in Planetarium.fetch.Home.orbitingBodies)
+							{
+								if (b == B)
+									return false;
+							}
+						}
+
+						if (b.scienceValues.RecoveryValue < 4)
+							return false;
+
+						return true;
+					};
+					bodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.FLYBY, true, cb));
+					bodies.AddRange(ProgressUtilities.GetNextUnreached(4, cb));
+					break;
+			}
+
+			if (bodies.Count <= 0)
+				return false;
+
+			body = bodies[rand.Next(0, bodies.Count)];
+
 			if (body == null)
 				return false;
 
-			DMScienceContainer magContainer = DMUtils.availableScience["All"].FirstOrDefault(m => m.Key == "Magnetometer Scan").Value;
-			DMScienceContainer rpwsContainer = DMUtils.availableScience["All"].FirstOrDefault(r => r.Key == "Radio Plasma Wave Scan").Value;
+			DMScienceContainer magContainer = null;
+			DMScienceContainer rpwsContainer = null;
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				return false;
+
+			if (DMUtils.availableScience["All"].ContainsKey("Magnetometer Scan"))
+				magContainer = DMUtils.availableScience["All"]["Magnetometer Scan"];
+
+			if (DMUtils.availableScience["All"].ContainsKey("Radio Plasma Wave Scan"))
+				magContainer = DMUtils.availableScience["All"]["Radio Plasma Wave Scan"];
+
+			if (magContainer == null)
+				return false;
+
+			if (rpwsContainer == null)
+				return false;
 
 			magParams[0] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, magContainer);
 			magParams[1] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, magContainer);
