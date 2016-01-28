@@ -203,10 +203,8 @@ namespace DMagic.Parameters
 			int targetSituation = node.parse("Situation", (int)65);
 			if (targetSituation >= 65 || targetSituation <= 0)
 			{
-				DMUtils.Logging("Failed To Load Situation Variables; Collect Science Parameter Removed");
-				this.Unregister();
-				this.Parent.RemoveParameter(this);
-				return;
+				DMUtils.Logging("Failed To Load Situation Variables; Collect Science Parameter Set To Complete");
+				this.SetComplete();
 			}
 			scienceLocation = (ExperimentSituations)targetSituation;
 
@@ -214,10 +212,8 @@ namespace DMagic.Parameters
 
 			if (body == null)
 			{
-				DMUtils.Logging("Failed To Load Target Body; Collect Science Parameter Removed");
-				this.Unregister();
-				this.Parent.RemoveParameter(this);
-				return;
+				DMUtils.Logging("Failed To Load Target Body; Collect Science Parameter Set To Complete");
+				this.SetComplete();
 			}
 
 			type = node.parse("Type", (int)1000);
@@ -230,19 +226,21 @@ namespace DMagic.Parameters
 			name = node.parse("Name", "");
 			if (string.IsNullOrEmpty(name))
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Removed");
-				this.Unregister();
-				this.Parent.RemoveParameter(this);
-				return;
+				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Set To Complete");
+				this.SetComplete();
+			}
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
+			{
+				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Set To Complete");
+				this.SetComplete();
 			}
 
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Removed");
-				this.Unregister();
-				this.Parent.RemoveParameter(this);
-				return;
+				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Set To Complete");
+				this.SetComplete();
 			}
 			else
 				partName = scienceContainer.SciPart;
