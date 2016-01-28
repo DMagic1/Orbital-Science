@@ -15,6 +15,7 @@ namespace DMagic.Part_Modules
 
 		private Animation loopingAnim;
 		private bool windingDown;
+		private bool windingUp;
 		private Dictionary<int, GameObject> cannisters = new Dictionary<int, GameObject>();
 
 		public override void OnStart(PartModule.StartState state)
@@ -152,9 +153,13 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator startLooping(float time)
 		{
+			windingUp = true;
+
 			yield return new WaitForSeconds(time);
 
 			startLoopingAnimation(1f);
+
+			windingUp = false;
 		}
 
 		private void startLoopingAnimation(float speed)
@@ -170,7 +175,7 @@ namespace DMagic.Part_Modules
 
 		public override void retractEvent()
 		{
-			if (windingDown)
+			if (windingUp)
 				return;
 
 			StartCoroutine(stopLooping());
