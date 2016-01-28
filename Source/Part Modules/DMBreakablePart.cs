@@ -15,6 +15,8 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public bool breakable = true;
 		[KSPField]
+		public float breakingForce = 5;
+		[KSPField]
 		public bool fixable = true;
 		[KSPField]
 		public int fixLevel = 1;
