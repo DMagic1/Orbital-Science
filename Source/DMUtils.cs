@@ -321,39 +321,6 @@ namespace DMagic
 
 		#region Random parameters
 
-		//Select target celestial body based on contract prestige
-		internal static CelestialBody nextTargetBody(Contract.ContractPrestige c, List<CelestialBody> cR, List<CelestialBody> cUR)
-		{
-			//Select Kerbin system for trivial
-			if (c == Contract.ContractPrestige.Trivial)
-				return FlightGlobals.Bodies[rand.Next(1, 4)];
-			//Select already visited planets for significant, add Mun and Minmus if they aren't already present
-			else if (c == Contract.ContractPrestige.Significant)
-			{
-				if (!cR.Contains(FlightGlobals.Bodies[2]))
-					cR.Add(FlightGlobals.Bodies[2]);
-				if (!cR.Contains(FlightGlobals.Bodies[3]))
-					cR.Add(FlightGlobals.Bodies[3]);
-				if (cR.Count == 0)
-					return null;
-				return cR[rand.Next(0, cR.Count)];
-			}
-			//Select unreached body; remove Kerbin system, return already reached bodies if all have been visited
-			else if (c == Contract.ContractPrestige.Exceptional)
-			{
-				if (cUR.Count == 0)
-					cUR = cR;
-				if (cUR.Contains(FlightGlobals.Bodies[1]))
-					cUR.Remove(FlightGlobals.Bodies[1]);
-				if (cUR.Contains(FlightGlobals.Bodies[2]))
-					cUR.Remove(FlightGlobals.Bodies[2]);
-				if (cUR.Contains(FlightGlobals.Bodies[3]))
-					cUR.Remove(FlightGlobals.Bodies[3]);
-				return cUR[rand.Next(0, cUR.Count)];
-			}
-			return null;
-		}
-
 		//Return a list of valid experiment situations based on the experiment parameters
 		internal static List<ExperimentSituations> availableSituations(ScienceExperiment exp, int i, CelestialBody b)
 		{
