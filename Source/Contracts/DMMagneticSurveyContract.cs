@@ -147,11 +147,11 @@ namespace DMagic.Contracts
 			if (!DMUtils.availableScience.ContainsKey("All"))
 				return false;
 
-			if (DMUtils.availableScience["All"].ContainsKey("Magnetometer Scan"))
-				magContainer = DMUtils.availableScience["All"]["Magnetometer Scan"];
+			if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMMagnetic.magnetometerExperimentTitle))
+				magContainer = DMUtils.availableScience["All"][DMContractDefs.DMMagnetic.magnetometerExperimentTitle];
 
-			if (DMUtils.availableScience["All"].ContainsKey("Radio Plasma Wave Scan"))
-				magContainer = DMUtils.availableScience["All"]["Radio Plasma Wave Scan"];
+			if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMMagnetic.rpwsExperimentTitle))
+				magContainer = DMUtils.availableScience["All"][DMContractDefs.DMMagnetic.rpwsExperimentTitle];
 
 			if (magContainer == null)
 				return false;

@@ -40,32 +40,24 @@ namespace DMagic
 	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
 	internal class DMConfigLoader: MonoBehaviour
 	{
+		private static bool loaded;
 		private string[] WhiteList = new string[1] { "ScienceAlert" };
 		private const string iconURL = "DMagicOrbitalScience/Icons/Waypoints/";
 
 		private void Start()
 		{
+			if (loaded)
+				return;
+
 			initializeUtils();
 			findAssemblies(WhiteList);
+			seismicLoad();
 			configLoad();
-			configLoad2();
 			hackWaypointIcons();
-			GameEvents.OnPQSCityLoaded.Add(scanBodyAnomalies);
-			GameEvents.OnPQSCityUnloaded.Add(removePQS);
-			DontDestroyOnLoad(this);
+			loaded = true;
 		}
 
-		private void scanBodyAnomalies(CelestialBody b, string s)
-		{
-			DMUtils.DebugLog("PQS City [{0}] loaded for {1}", s, b.theName);
-		}
-
-		private void removePQS(CelestialBody b, string s)
-		{
-			DMUtils.DebugLog("PQS City [{0}] unloaded for {1}", s, b.theName);
-		}
-
-		private void configLoad2()
+		private void configLoad()
 		{
 			ConfigNode DMcontractDefs = GameDatabase.Instance.GetConfigNode("DMagicOrbitalScience/Resources/DMContracts/DMContracts");
 
@@ -86,7 +78,7 @@ namespace DMagic
 				}
 				catch (Exception e)
 				{
-					Debug.LogError("[DM] Whoops. Something really wrong happened here; stopping this contract experiment from loading..." + e);
+					Debug.LogError("[DM] Whoops. Something really wrong happened here, a duplicate science experiment definition may be present somewhere; stopping this contract experiment from loading..." + e);
 					continue;
 				}
 				if (exp != null)
@@ -126,20 +118,20 @@ namespace DMagic
 					foreach (var sciType in Enum.GetValues(typeof(DMScienceType)))
 					{
 						string typeString = ((DMScienceType)sciType).ToString();
-						if (!string.IsNullOrEmpty(typeString))
+						if (string.IsNullOrEmpty(typeString))
+							continue;
+
+						if (DMUtils.availableScience.ContainsKey(typeString))
 						{
-							if (DMUtils.availableScience.ContainsKey(typeString))
+							if ((DMScienceType)sciType == DMScienceType.All)
 							{
-								if ((DMScienceType)sciType == DMScienceType.All)
-								{
-									if (!DMUtils.availableScience[typeString].ContainsKey(name))
-										DMUtils.availableScience[typeString].Add(name, DMscience);
-								}
-								else if (((DMScienceType)type & (DMScienceType)sciType) == (DMScienceType)sciType)
-								{
-									if (!DMUtils.availableScience[typeString].ContainsKey(name))
-										DMUtils.availableScience[typeString].Add(name, DMscience);
-								}
+								if (!DMUtils.availableScience[typeString].ContainsKey(name))
+									DMUtils.availableScience[typeString].Add(name, DMscience);
+							}
+							else if (((DMScienceType)type & (DMScienceType)sciType) == (DMScienceType)sciType)
+							{
+								if (!DMUtils.availableScience[typeString].ContainsKey(name))
+									DMUtils.availableScience[typeString].Add(name, DMscience);
 							}
 						}
 					}
@@ -274,6 +266,9 @@ namespace DMagic
 				DMContractDefs.DMMagnetic.significantInclinationMultiplier = DMMagNode.parse("Significant_Inclination_Modifier", (double)40);
 				DMContractDefs.DMMagnetic.exceptionalInclinationMultiplier = DMMagNode.parse("Exceptional_Inclination_Modifier", (double)60);
 
+				DMContractDefs.DMMagnetic.magnetometerExperimentTitle = DMMagNode.parse("Magnetometer_Experiment_Title", "Magnetometer Scan");
+				DMContractDefs.DMMagnetic.rpwsExperimentTitle = DMMagNode.parse("RPWS_Experiment_Title", "Radio Plasma Wave Scan");
+
 				DMContractDefs.DMMagnetic.useVesselWaypoints = DMMagNode.parse("Use_Vessel_Waypoints", (bool)true);
 
 				DMContractDefs.DMMagnetic.magParts = DMMagNode.parse("Magnetometer_Parts", ',', new List<string>(2) { "dmmagBoom", "dmUSMagBoom" });
@@ -329,6 +324,10 @@ namespace DMagic
 				DMContractDefs.DMRecon.exceptionalTimeModifier = DMReconNode.parse("Exceptional_Mission_Length", (double)150);
 
 				DMContractDefs.DMRecon.useVesselWaypoints = DMReconNode.parse("Use_Vessel_Waypoints", (bool)true);
+
+				DMContractDefs.DMRecon.trivialExperimentTitle = DMReconNode.parse("Trivial_Experiment_Title", "");
+				DMContractDefs.DMRecon.significantExperimentTitle = DMReconNode.parse("Significant_Experiment_Title", "");
+				DMContractDefs.DMRecon.exceptionalExperimentTitle = DMReconNode.parse("Exceptional_Experiment_Title", "");
 
 				DMContractDefs.DMRecon.reconTrivialParts = DMReconNode.parse("Trivial_Parts", ',', new List<string>(1) { "dmReconSmall" });
 				DMContractDefs.DMRecon.reconSignificantParts = DMReconNode.parse("Significant_Parts", ',', new List<string>(1) { "dmSIGINT" });
@@ -424,34 +423,25 @@ namespace DMagic
 			}
 		}
 
-		private void configLoad()
+		private void seismicLoad()
 		{
-			//Load in global multipliers
-			foreach (ConfigNode setNode in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_SETTINGS"))
+			ConfigNode seismicNode = GameDatabase.Instance.GetConfigNode("DMagicOrbitalScience/Resources/DMSeismicSettings/DM_SEISMIC_SETTINGS");
+
+			if (seismicNode != null)
 			{
-				if (setNode != null)
-				{
-					if (!float.TryParse(setNode.GetValue("Seismic_Near_Pod_Min_Distance"), out DMSeismicHandler.nearPodMinDistance))
-						DMSeismicHandler.nearPodMinDistance = 10;
-					if (!float.TryParse(setNode.GetValue("Seismic_Near_Pod_Max_Distance"), out DMSeismicHandler.nearPodMaxDistance))
-						DMSeismicHandler.nearPodMaxDistance = 2500;
-					if (!float.TryParse(setNode.GetValue("Seismic_Near_Pod_Threshold"), out DMSeismicHandler.nearPodThreshold))
-						DMSeismicHandler.nearPodThreshold = 500;
-					if (!float.TryParse(setNode.GetValue("Seismic_Far_Pod_Min_Distance"), out DMSeismicHandler.farPodMinDistance))
-						DMSeismicHandler.farPodMinDistance = 2500;
-					if (!float.TryParse(setNode.GetValue("Seismic_Far_Pod_Max_Distance"), out DMSeismicHandler.farPodMaxDistance))
-						DMSeismicHandler.farPodMaxDistance = 15000;
-					if (!float.TryParse(setNode.GetValue("Seismic_Far_Pod_Threshold"), out DMSeismicHandler.farPodThreshold))
-						DMSeismicHandler.farPodThreshold = 4000;
-					if (!float.TryParse(setNode.GetValue("Seismic_Pod_Min_Angle"), out DMSeismicHandler.podMinAngle))
-						DMSeismicHandler.podMinAngle = 20;
-					if (!float.TryParse(setNode.GetValue("Seismic_Pod_Angle_Threshold"), out DMSeismicHandler.podAngleThreshold))
-						DMSeismicHandler.podAngleThreshold = 90;
-					break;
-				}
-				else
-					DMUtils.Logging("Broken Config.....");
+				DMSeismicHandler.nearPodMinDistance = seismicNode.parse("Seismic_Near_Pod_Min_Distance", 10f);
+				DMSeismicHandler.nearPodMaxDistance = seismicNode.parse("Seismic_Near_Pod_Max_Distance", 2500f);
+				DMSeismicHandler.nearPodThreshold = seismicNode.parse("Seismic_Near_Pod_Threshold", 500f);
+
+				DMSeismicHandler.farPodMinDistance = seismicNode.parse("Seismic_Far_Pod_Min_Distance", 2500f);
+				DMSeismicHandler.farPodMaxDistance = seismicNode.parse("Seismic_Far_Pod_Max_Distance", 15000f);
+				DMSeismicHandler.farPodThreshold = seismicNode.parse("Seismic_Far_Pod_Threshold", 4000f);
+
+				DMSeismicHandler.podMinAngle = seismicNode.parse("Seismic_Pod_Min_Angle", 20f);
+				DMSeismicHandler.podAngleThreshold = seismicNode.parse("Seismic_Pod_Angle_Threshold", 90f);
 			}
+			else
+				DMUtils.Logging("Broken Seismic Config...");
 		}
 
 		private void initializeUtils()
@@ -478,15 +468,11 @@ namespace DMagic
 			foreach (var sciType in Enum.GetValues(typeof(DMScienceType)))
 			{
 				string type = ((DMScienceType)sciType).ToString();
-				if (!string.IsNullOrEmpty(type))
-				{
-					if (!DMUtils.availableScience.ContainsKey(type))
-						DMUtils.availableScience[type] = new Dictionary<string, DMScienceContainer>();
-					else
-						DMUtils.Logging("");
-				}
-				else
-					DMUtils.Logging("");
+				if (string.IsNullOrEmpty(type))
+					continue;
+
+				if (!DMUtils.availableScience.ContainsKey(type))
+					DMUtils.availableScience[type] = new Dictionary<string, DMScienceContainer>();
 			}
 		}
 

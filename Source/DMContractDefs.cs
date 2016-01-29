@@ -226,6 +226,9 @@ namespace DMagic
 			public static double significantInclinationMultiplier = 40;
 			public static double exceptionalInclinationMultiplier = 60;
 
+			public static string magnetometerExperimentTitle = "Magnetometer Scan";
+			public static string rpwsExperimentTitle = "Radio Plasma Wave Scan";
+
 			public static bool useVesselWaypoints = true;
 
 			public static List<string> magParts = new List<string>(2) { "dmmagBoom", "dmUSMagBoom" };
@@ -288,6 +291,10 @@ namespace DMagic
 			public static List<string> reconTrivialParts = new List<string>(1) { "dmReconSmall" };
 			public static List<string> reconSignificantParts = new List<string>(1) { "dmSIGINT" };
 			public static List<string> reconExceptionalParts = new List<string>(1) { "dmReconLarge" };
+
+			public static string trivialExperimentTitle = "";
+			public static string significantExperimentTitle = "";
+			public static string exceptionalExperimentTitle = "";
 
 			public static List<string> backStory = new List<string>(1) { "Something, Something, Something..." };
 		}
