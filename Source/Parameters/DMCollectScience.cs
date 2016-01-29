@@ -45,7 +45,7 @@ namespace DMagic.Parameters
 		private DMScienceContainer scienceContainer;
 		private float returnedScience;
 		private string subject, name, biomeName, partName;
-		private int type; //type 0: standard survey; type 1: biological survey; type 2: anomaly
+		private int type; //type 0: standard survey; type 1: long term survey; type 2: anomaly
 
 		public DMCollectScience()
 		{
