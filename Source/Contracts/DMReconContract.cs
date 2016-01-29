@@ -15,6 +15,7 @@ namespace DMagic.Contracts
 	public class DMReconContract : Contract, IUpdateWaypoints
 	{
 		private CelestialBody body;
+		private DMCollectScience[] sciParams = new DMCollectScience[2];
 		private System.Random rand = DMUtils.rand;
 
 		protected override bool Generate()
@@ -83,12 +84,21 @@ namespace DMagic.Contracts
 			double incMod = (rand.NextDouble() * 10) - 5;
 			double timeMod = 1080000;
 
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				return false;
+
+			DMScienceContainer container = null;
+
 			switch(prestige)
 			{
 				case ContractPrestige.Trivial:
 					parts.Add(0, DMContractDefs.DMRecon.reconTrivialParts);
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconTrivialParts))
 						return false;
+
+					if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMRecon.trivialExperimentTitle))
+						container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.trivialExperimentTitle];
+
 					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
 					timeMod = DMContractDefs.DMRecon.trivialTimeModifier * 6 * 3600;
 					break;
@@ -96,6 +106,10 @@ namespace DMagic.Contracts
 					parts.Add(0, DMContractDefs.DMRecon.reconSignificantParts);
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconSignificantParts))
 						return false;
+
+					if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMRecon.significantExperimentTitle))
+						container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.significantExperimentTitle];
+
 					if (SystemUtilities.CoinFlip(rand))
 					{
 						if (CelestialUtilities.CanBodyBeKolniya(body))
@@ -122,10 +136,17 @@ namespace DMagic.Contracts
 					parts.Add(0, DMContractDefs.DMRecon.reconExceptionalParts);
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconExceptionalParts))
 						return false;
+
+					if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMRecon.exceptionalExperimentTitle))
+						container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.exceptionalExperimentTitle];
+
 					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
 					timeMod = DMContractDefs.DMRecon.exceptionalTimeModifier * 6 * 3600;
 					break;
 			}
+
+			if (container == null)
+				return false;
 
 			time = timeMod * ((double)rand.Next(6, 17) / 10d);
 			o.inclination += incMod;
@@ -138,6 +159,27 @@ namespace DMagic.Contracts
 			longOrbit.AddParameter(reconParam);
 			longOrbit.AddParameter(partRequest);
 			longOrbit.setPartRequest(partRequest);
+
+			sciParams[0] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, "SouthernHemisphere", container);
+			sciParams[1] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, "NorthernHemisphere", container);
+
+			//Add the science collection parent parameter
+			DMCompleteParameter DMcp = new DMCompleteParameter(1, 0);
+			this.AddParameter(DMcp);
+
+			foreach (DMCollectScience DMCS in sciParams)
+			{
+				if (DMCS == null)
+					return false;
+				else
+				{
+					float modifier = ((float)rand.Next(85, 116) / 100f);
+					DMcp.addToSubParams(DMCS);
+					DMCS.SetFunds(DMContractDefs.DMRecon.Funds.ParamReward * modifier, DMContractDefs.DMRecon.Funds.ParamFailure * modifier, body);
+					DMCS.SetScience(DMContractDefs.DMRecon.Science.ParamReward * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
+					DMCS.SetReputation(DMContractDefs.DMRecon.Reputation.ParamReward * modifier, DMContractDefs.DMRecon.Reputation.ParamFailure * modifier, null);
+				}
+			}
 
 			if (this.ParameterCount == 0)
 				return false;

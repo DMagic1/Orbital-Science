@@ -66,6 +66,30 @@ namespace DMagic
 
 			return new DMCollectScience(Body, Situation, "", name, 1);
 		}
+
+		//Use for recon survey
+		internal static DMCollectScience fetchScienceContract(CelestialBody Body, ExperimentSituations Situation, string biome, DMScienceContainer DMScience)
+		{
+			string name;
+
+			//Choose science container based on a given science experiment
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				return null;
+
+			name = DMUtils.availableScience["All"].FirstOrDefault(n => n.Value == DMScience).Key;
+
+			if (DMScience.Exp == null)
+				return null;
+
+			//Determine if the science part is available if applicable
+			if (DMScience.SciPart != "None")
+			{
+				if (!DMUtils.partAvailable(new List<string>(1) { DMScience.SciPart }))
+					return null;
+			}
+
+			return new DMCollectScience(Body, Situation, biome, name, 1);
+		}
 	}
 
 	static class DMSurveyGenerator
