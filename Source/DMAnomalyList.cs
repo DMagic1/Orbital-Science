@@ -37,37 +37,10 @@ using UnityEngine;
 
 namespace DMagic
 {
-	public class DMAnomalyList : MonoBehaviour
+	public static class DMAnomalyList
 	{
-		//private Dictionary<string, Dictionary<string, DMAnomalyObject>> anomalies = new Dictionary<string, Dictionary<string, DMAnomalyObject>>();
-		//private List<DMAnomalyObject> currentBodyAnomalies = new List<DMAnomalyObject>();
 		private static bool scannerUpdating;
-		//private bool loaded = false;
 		private static Dictionary<string, DMAnomalyStorage> anomalies = new Dictionary<string, DMAnomalyStorage>();
-
-		//private void Start()
-		//{
-		//	GameEvents.onVesselSOIChanged.Add(SOIChange);
-		//}
-
-		//private void OnDestroy()
-		//{
-		//	GameEvents.onVesselSOIChanged.Remove(SOIChange);
-		//}
-
-		//private void Update()
-		//{
-		//	if (HighLogic.LoadedSceneHasPlanetarium && !loaded)
-		//	{
-		//		pqsBuild(FlightGlobals.currentMainBody);
-		//		loaded = true;
-		//	}
-		//}
-
-		//public List<DMAnomalyObject> anomObjects()
-		//{
-		//	return currentBodyAnomalies;
-		//}
 
 		public static void addAnomalyStorage(string body, DMAnomalyStorage anom)
 		{
@@ -84,19 +57,6 @@ namespace DMagic
 			}
 
 			return anomalies[body].getAnomaly(city);
-
-			//if (anomalies.ContainsKey(body))
-			//{
-
-			//	if (anomalies[body].ContainsKey(city))
-			//		return anomalies[body][city];
-			//	else
-			//		DMUtils.Logging("No anomaly of name [{0}] found for body [{1}]", city, body);
-			//}
-			//else
-			//	DMUtils.Logging("No anomalies found for body [{0}]", body);
-
-			//return null;
 		}
 
 		public static DMAnomalyStorage getAnomalyStorage(int index)
@@ -151,17 +111,8 @@ namespace DMagic
 			}
 		}
 
-		//private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
-		//{
-		//	StartCoroutine(updateCoordinates(VB.to));
-		//}
-
 		public static void updateCoordinates(CelestialBody b)
 		{
-			//yield return new WaitForSeconds(3);
-
-			//currentBodyAnomalies.Clear();
-
 			if (anomalies.ContainsKey(b.name))
 			{
 				for (int i = 0; i < anomalies[b.name].AnomalyCount; i++)
@@ -172,49 +123,15 @@ namespace DMagic
 						continue;
 
 					anom.WorldLocation = b.GetWorldSurfacePosition(anom.Lat, anom.Lon, anom.Alt);
-					//anom.WorldLocation = anom.City.transform.position;
 					anom.Lat = b.GetLatitude(anom.WorldLocation);
 					anom.Lon = b.GetLongitude(anom.WorldLocation);
 				}
-
-				//currentBodyAnomalies = anomalies[b.name].Values.ToList();
 			}
-			//else
-			//	currentBodyAnomalies = new List<DMAnomalyObject>();
 		}
-
-		//private void pqsBuild(CelestialBody b)
-		//{
-		//	PQSCity[] Cities = FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
-		//	foreach (PQSCity anomalyObject in Cities)
-		//	{
-		//		if (!anomalies.ContainsKey(anomalyObject.transform.parent.name))
-		//		{
-		//			Dictionary<string, DMAnomalyObject> anomDict = new Dictionary<string, DMAnomalyObject>();
-		//			DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
-		//			anomDict.Add(anomalyObject.name, obj);
-		//			anomalies.Add(anomalyObject.transform.parent.name, anomDict);
-
-		//		}
-		//		else if (!anomalies[anomalyObject.transform.parent.name].ContainsKey(anomalyObject.name))
-		//		{
-		//			DMAnomalyObject obj = new DMAnomalyObject(anomalyObject);
-		//			anomalies[anomalyObject.transform.parent.name].Add(anomalyObject.name, obj);
-		//		}
-		//	}
-
-		//	currentBodyAnomalies.Clear();
-
-		//	if (anomalies.ContainsKey(b.name))
-		//		currentBodyAnomalies = anomalies[b.name].Values.ToList();
-		//	else
-		//		currentBodyAnomalies = new List<DMAnomalyObject>();
-		//}
 
 		public static void updateAnomaly(Vessel v, DMAnomalyObject a)
 		{
 			Vector3d vPos = v.transform.position;
-			//a.WorldLocation = a.City.transform.position;
 			a.WorldLocation = v.mainBody.GetWorldSurfacePosition(a.Lat, a.Lon, a.Alt);
 
 			a.Lat = v.mainBody.GetLatitude(a.WorldLocation);
