@@ -49,6 +49,7 @@ namespace DMagic.Part_Modules
 		private Animation animSecondary;
 		private Transform cam, dish;
 		private DMAnomalyStorage currentAnomalies;
+		private DMAnomalyObject currentAnomaly;
 		private const string camTransform = "camBase";
 		private const string dishTransform = "radarBaseArmNode0";
 
@@ -65,6 +66,8 @@ namespace DMagic.Part_Modules
 			{
 				cam = part.FindModelTransform(camTransform);
 				dish = part.FindModelTransform(dishTransform);
+				GameEvents.OnPQSCityLoaded.Add(PQSloaded);
+				GameEvents.OnPQSCityUnloaded.Add(PQSunloaded);
 			}
 		}
 
@@ -74,9 +77,6 @@ namespace DMagic.Part_Modules
 
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				if (DMScienceScenario.SciScenario == null)
-					return;
-
 				if (IsDeployed)
 				{
 					if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
@@ -92,16 +92,10 @@ namespace DMagic.Part_Modules
 					}
 				}
 
-				//if (DMScienceScenario.SciScenario.anomalyList != null)
-				//{
-					if (IsDeployed)
-						DMAnomalyList.ScannerUpdating = true;
-					//DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = true;
-					else if (DMAnomalyList.ScannerUpdating)
-					//else if (DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
-						DMAnomalyList.ScannerUpdating = false;
-						//DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
-				//}
+				if (IsDeployed)
+					DMAnomalyList.ScannerUpdating = true;
+				else if (DMAnomalyList.ScannerUpdating)
+					DMAnomalyList.ScannerUpdating = false;
 
 				if (!fullyDeployed && rotating)
 					spinDishDown();
@@ -111,11 +105,13 @@ namespace DMagic.Part_Modules
 		new private void OnDestroy()
 		{
 			DMAnomalyList.ScannerUpdating = false;
-			//if (DMScienceScenario.SciScenario != null)
-			//{
-			//	if (DMScienceScenario.SciScenario.anomalyList != null)
-			//		DMScienceScenario.SciScenario.anomalyList.ScannerUpdating = false;
-			//}
+			if (!HighLogic.LoadedSceneIsEditor)
+			{
+				GameEvents.OnPQSCityLoaded.Remove(PQSloaded);
+				GameEvents.OnPQSCityUnloaded.Remove(PQSunloaded);
+			}
+			
+			DMAnomalyList.ScannerUpdating = false;
 		}
 
 		#region animators
@@ -234,6 +230,41 @@ namespace DMagic.Part_Modules
 		#endregion
 
 		#region anomaly detection
+		
+		private void PQSloaded(CelestialBody body, string name)
+		{
+			if (body == null)
+				return;
+
+			if (string.IsNullOrEmpty(name))
+				return;
+
+			if (body.pqsController == null)
+				return;
+
+			PQSCity[] Cities = body.pqsController.GetComponentsInChildren<PQSCity>();
+
+			for (int i = 0; i < Cities.Length; i++)
+			{
+				PQSCity city = Cities[i];
+
+				if (city == null)
+					continue;
+
+				if (city.transform.parent.name != body.name)
+					continue;
+
+				if (city.name != name)
+					continue;
+
+				currentAnomaly = new DMAnomalyObject(city);
+			}
+		}
+
+		private void PQSunloaded(CelestialBody body, string name)
+		{
+			currentAnomaly = null;
+		}
 
 		private void inRange()
 		{
@@ -241,59 +272,24 @@ namespace DMagic.Part_Modules
 
 			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
 
-			if (currentAnomalies != null)
+			if (currentAnomalies == null)
+			{
+				if (currentAnomaly == null)
+					return;
+
+				checkAnomalyDistance(currentAnomaly);
+			}
+			else
 			{
 				for (int i = 0; i < currentAnomalies.AnomalyCount; i++)
-				//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
 				{
 					DMAnomalyObject anom = currentAnomalies.getAnomaly(i);
 
-					if (anom == null)
-						continue;
-
-					DMAnomalyList.updateAnomaly(vessel, anom);
-					if (anom.VDistance < 50000)
-					{
-						if (anom.VHorizontal < (11000 * (1 - anom.VHeight / 6000)))
-						{
-							anomInRange = true;
-							if (anom.VHorizontal < (10000 * (1 - anom.VHeight / 5000)))
-							{
-								if (!camDeployed)
-								{
-									newSecondaryAnimator(camAnimate, 1f, 0f, WrapMode.Default);
-									camDeployed = true;
-									if (anom.VDistance < 250)
-									{
-										newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
-										closeRange = true;
-										break;
-									}
-									else
-									{
-										closeRange = false;
-									}
-								}
-								if (camDeployed)
-								{
-									camRotate(anom.WorldLocation);
-									if (anom.VDistance < 250 && closeRange == false)
-									{
-										newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
-										closeRange = true;
-										break;
-									}
-									if (anom.VDistance >= 275 && closeRange == true)
-									{
-										animSecondary[foundAnimate].wrapMode = WrapMode.Default;
-										closeRange = false;
-									}
-								}
-							}
-						}
-					}
+					if (checkAnomalyDistance(anom))
+						break;
 				}
 			}
+
 			if (!anomInRange && camDeployed)
 			{
 				animSecondary[foundAnimate].wrapMode = WrapMode.Default;
@@ -301,6 +297,59 @@ namespace DMagic.Part_Modules
 				newSecondaryAnimator(camAnimate, -1f, 1f, WrapMode.Default);
 				camDeployed = false;
 			}
+		}
+
+		private bool checkAnomalyDistance(DMAnomalyObject a)
+		{
+			if (a == null)
+				return false;
+
+			DMAnomalyList.updateAnomaly(vessel, a);
+
+			if (a.VDistance >= 50000)
+				return false;
+
+			if (a.VHorizontal >= (11000 * (1 - a.VHeight / 6000)))
+				return false;
+
+			anomInRange = true;
+
+			if (a.VHorizontal >= (10000 * (1 - a.VHeight / 5000)))
+				return false;
+
+			if (!camDeployed)
+			{
+				newSecondaryAnimator(camAnimate, 1f, 0f, WrapMode.Default);
+				camDeployed = true;
+				if (a.VDistance < 250)
+				{
+					newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
+					closeRange = true;
+					return true;
+				}
+				else
+				{
+					closeRange = false;
+				}
+			}
+
+			if (camDeployed)
+			{
+				camRotate(a.WorldLocation);
+				if (a.VDistance < 250 && closeRange == false)
+				{
+					newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
+					closeRange = true;
+					return true;
+				}
+				if (a.VDistance >= 275 && closeRange == true)
+				{
+					animSecondary[foundAnimate].wrapMode = WrapMode.Default;
+					closeRange = false;
+				}
+			}
+
+			return false;
 		}
 
 		private void getAnomValues()
@@ -312,42 +361,66 @@ namespace DMagic.Part_Modules
 			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
 
 			if (currentAnomalies == null)
-				return;
-
-			for (int i = 0; i < currentAnomalies.AnomalyCount; i++)
-			//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
 			{
-				DMAnomalyObject anom = currentAnomalies.getAnomaly(i);
+				if (currentAnomaly == null)
+					return;
 
-				if (anom == null)
-					continue;
-
-				DMAnomalyList.updateAnomaly(vessel, anom);
-				if (anom.VDistance < 100000)
+				checkAnomalyForScience(currentAnomaly);
+			}
+			else
+			{
+				for (int i = 0; i < currentAnomalies.AnomalyCount; i++)
 				{
-					if (anom.VHorizontal < (30000 * (1 - anom.VHeight / 15000)))	//Determine cutoff distance on sliding scale based on altitude above the anomaly.
-					{
-						DMAnomalyList.bearing(vessel, anom);			//Calculate the bearing to the anomaly from the current vessel position.
-						string anomDirection = direction(anom.Bearing);			//Get cardinal directions based on the bearing.
-						anomInRange = true;
-						DMUtils.Logging("Anomaly: {0} is at bearing: {1:N1} deg at a distance of {2:N1}m.", anom.Name, anom.Bearing, anom.VDistance);
-						if (anom.VDistance < 250)           //Scanning range distance for science experiment.
-						{
-							closestAnom = anom.Name;
-							anomCloseRange = true;
-							break;
-						}
-						else if (anom.VHeight > 10000)				//Use alternate message when more than 10km above the anomaly.
-						{
-							ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km below current position, get closer for a better signal", anom.VDistance / 1000 + RandomDouble((2 * (anom.VDistance / 1000) / 30), (4 * (anom.VDistance / 1000) / 30))), 6f, ScreenMessageStyle.UPPER_CENTER);
-						}
-						else
-						{
-							ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km away to the {1}, get closer for a better signal.", anom.VDistance / 1000 + RandomDouble((2 * (anom.VDistance / 1000) / 30), (4 * (anom.VDistance / 1000) / 30)), anomDirection), 6f, ScreenMessageStyle.UPPER_CENTER);
-						}
-					}
+					DMAnomalyObject anom = currentAnomalies.getAnomaly(i);
+
+					if (checkAnomalyForScience(anom))
+						break;					
 				}
 			}
+		}
+
+		private bool checkAnomalyForScience(DMAnomalyObject a)
+		{
+			if (a == null)
+				return false;
+
+			DMAnomalyList.updateAnomaly(vessel, a);
+
+			if (a.VDistance >= 50000)
+				return false;
+
+			//Determine cutoff distance on sliding scale based on altitude above the anomaly.
+			if (a.VHorizontal >= (30000 * (1 - a.VHeight / 15000)))
+				return false;
+
+			//Calculate the bearing to the anomaly from the current vessel position.
+			DMAnomalyList.bearing(vessel, a);
+
+			//Get cardinal directions based on the bearing.
+			string anomDirection = direction(a.Bearing);
+
+			anomInRange = true;
+
+			DMUtils.Logging("Anomaly: {0} is at bearing: {1:N1} deg at a distance of {2:N1}m.", a.Name, a.Bearing, a.VDistance);
+
+			//Scanning range distance for science experiment.
+			if (a.VDistance < 250)
+			{
+				closestAnom = a.Name;
+				anomCloseRange = true;
+				return true;
+			}
+			//Use alternate message when more than 10km above the anomaly.
+			else if (a.VHeight > 10000)
+			{
+				ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km below current position, get closer for a better signal", a.VDistance / 1000 + RandomDouble((2 * (a.VDistance / 1000) / 30), (4 * (a.VDistance / 1000) / 30))), 6f, ScreenMessageStyle.UPPER_CENTER);
+			}
+			else
+			{
+				ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km away to the {1}, get closer for a better signal.", a.VDistance / 1000 + RandomDouble((2 * (a.VDistance / 1000) / 30), (4 * (a.VDistance / 1000) / 30)), anomDirection), 6f, ScreenMessageStyle.UPPER_CENTER);
+			}
+
+			return false;
 		}
 
 		//Random number to fudge the distance estimate in the screen messages above; extent of fudging based on total distance to the anomaly, +- 2km at 30km away.
@@ -384,6 +457,7 @@ namespace DMagic.Part_Modules
 					deployEvent();
 
 				getAnomValues();
+
 				if (anomInRange)
 				{
 					if (anomCloseRange)
