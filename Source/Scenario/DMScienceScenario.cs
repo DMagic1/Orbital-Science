@@ -44,9 +44,6 @@ namespace DMagic.Scenario
 			get { return instance; }
 		}
 
-		//Anomaly tracking object
-		//internal DMAnomalyList anomalyList;
-
 		//Master List for saved asteroid science data
 		private Dictionary<string, DMScienceData> recoveredDMScience = new Dictionary<string,DMScienceData>();
 
@@ -184,8 +181,7 @@ namespace DMagic.Scenario
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				GameEvents.OnPQSCityLoaded.Add(scanBodyAnomalies);
-				//anomalyList = gameObject.AddComponent<DMAnomalyList>();
+				//GameEvents.OnPQSCityLoaded.Add(scanBodyAnomalies);
 				updateRemainingData();
 			}
 		}
@@ -207,8 +203,6 @@ namespace DMagic.Scenario
 		private void OnDestroy()
 		{
 			GameEvents.OnPQSCityLoaded.Remove(scanBodyAnomalies);
-			//if (anomalyList != null)
-			//	Destroy(anomalyList);
 		}
 
 		private void addDMScience(DMScienceData data)
