@@ -60,7 +60,6 @@
     <Compile Include="Parameters\DMCompleteParameter.cs" />
     <Compile Include="Parameters\DMPartRequestParameter.cs" />
     <Compile Include="Parameters\DMSpecificOrbitParameter.cs" />
-    <Compile Include="Parameters\DMDummySpecificOrbitParameter.cs" />
     <Compile Include="Part Modules\DMAsteroidScanner.cs" />
     <Compile Include="Part Modules\DMBasicScienceModule.cs" />
     <Compile Include="Part Modules\DMBathymetry.cs" />
