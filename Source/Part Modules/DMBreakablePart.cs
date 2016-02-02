@@ -40,6 +40,7 @@ namespace DMagic.Part_Modules
 	{
 		protected List<GameObject> breakableObjects = new List<GameObject>();
 		private Transform baseTransform;
+		private Transform forwardTransform;
 
 		[KSPField(isPersistant = true)]
 		public bool broken;
@@ -54,6 +55,8 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public string baseTransfromName = "";
 		[KSPField]
+		public string forwardTransformName = "";
+		[KSPField]
 		public float componentDrag = 0.5f;
 		[KSPField]
 		public float componentMass = 0.001f;
@@ -64,6 +67,9 @@ namespace DMagic.Part_Modules
 
 			if (!string.IsNullOrEmpty(baseTransfromName))
 				baseTransform = part.FindModelTransform(baseTransfromName);
+
+			if (!string.IsNullOrEmpty(forwardTransformName))
+				forwardTransform = part.FindModelTransform(forwardTransformName);
 
 			if (broken)
 			{
@@ -80,6 +86,8 @@ namespace DMagic.Part_Modules
 
 			if (!breakable)
 				return;
+
+			checkForces();
 		}
 
 		public override void deployEvent()
@@ -104,9 +112,44 @@ namespace DMagic.Part_Modules
 			baseTransform.gameObject.SetActive(on);
 		}
 
+		private void checkForces()
+		{
+			if (!HighLogic.LoadedSceneIsFlight)
+				return;
+
+			if (!IsDeployed)
+				return;
+
+			if (forwardTransform == null)
+				return;
+
+			if (anim != null)
+			{
+				if (anim.IsPlaying(animationName))
+					return;
+			}
+
+			if (part.ShieldedFromAirstream)
+				return;
+
+			float velocity = Mathf.Abs(Vector3.Dot(vessel.srf_velocity.normalized, forwardTransform.forward.normalized));
+			if (velocity < 0.0001f)
+				velocity = 0.0001f;
+			float pressure = velocity * (float)(part.dynamicPressurekPa + part.submergedDynamicPressurekPa);
+			if (pressure > breakingForce)
+			{
+				DMUtils.Logging("Breakable Part {0} - Breaking Force Exceded", part.partName);
+				breakObjects();
+			}
+
+		}
+
 		private void breakObjects()
 		{
 			if (broken)
+				return;
+
+			if (part.packed)
 				return;
 
 			getGameObjects();
@@ -123,9 +166,9 @@ namespace DMagic.Part_Modules
 				if (r == null)
 					continue;
 
-				Vector3 randomAngular = new Vector3();
+				Vector3 randomAngular = new Vector3((float)DMUtils.rand.NextDouble() * 2, (float)DMUtils.rand.NextDouble() * 2, (float)DMUtils.rand.NextDouble() * 2);
 				r.angularVelocity = part.rigidbody.angularVelocity + randomAngular;
-				Vector3 randomVel = new Vector3();
+				Vector3 randomVel = new Vector3(((float)DMUtils.rand.NextDouble() * 6) - 3, ((float)DMUtils.rand.NextDouble() * 6) - 3, ((float)DMUtils.rand.NextDouble() * 6) - 3);
 				Vector3 localCOM = vessel.findWorldCenterOfMass() - part.rigidbody.worldCenterOfMass;
 				r.velocity = part.rigidbody.velocity + randomVel + Vector3.Cross(localCOM, rigidbody.angularVelocity);
 				r.mass = componentMass;
@@ -161,7 +204,7 @@ namespace DMagic.Part_Modules
 				if (obj == null)
 					continue;
 
-				if (obj.GetComponent<SkinnedMeshRenderer>() == null && obj.GetComponent<MeshRenderer>() == null)
+				if (obj.GetComponent<Collider>() == null)
 					continue;
 
 				breakableObjects.Add(obj);
