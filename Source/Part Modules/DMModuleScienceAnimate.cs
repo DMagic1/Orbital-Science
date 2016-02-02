@@ -686,7 +686,7 @@ namespace DMagic.Part_Modules
 			runExperiment(vesselSit, s);
 		}
 
-		protected void runExperiment(ExperimentSituations sit, bool silent)
+		protected virtual void runExperiment(ExperimentSituations sit, bool silent)
 		{
 			ScienceData data = makeScience(scienceBoost, sit);
 			if (data == null)

@@ -38,7 +38,7 @@ namespace DMagic.Part_Modules
 {
 	public class DMSIGINT : DMBreakablePart, IDMSurvey
 	{
-		private readonly string[] dishTransformNames = new string[5] { "dish000", "dish001", "dish002", "dish003", "focalColumn" };
+		private readonly string[] dishTransformNames = new string[6] { "dish000", "dish001", "dish002", "dish003", "focalColumn", "feedHorn" };
 
 		private List<Transform> dishTransforms = new List<Transform>();
 
@@ -69,14 +69,11 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		protected override bool canConduct()
+		protected override void runExperiment(ExperimentSituations sit, bool silent)
 		{
-			if (!base.canConduct())
-				return false;
+			base.runExperiment(sit, silent);
 
 			scanPlanet(vessel.mainBody);
-
-			return true;
 		}
 
 		protected override ExperimentSituations getSituation()
@@ -145,7 +142,7 @@ namespace DMagic.Part_Modules
 				if (obj == null)
 					continue;
 
-				if (obj.GetComponent<SkinnedMeshRenderer>() == null && obj.GetComponent<MeshRenderer>() == null)
+				if (obj.GetComponent<Collider>() == null)
 					continue;
 
 				breakableObjects.Add(obj);
