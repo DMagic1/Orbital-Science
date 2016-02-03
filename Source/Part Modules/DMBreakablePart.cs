@@ -166,9 +166,9 @@ namespace DMagic.Part_Modules
 				if (r == null)
 					continue;
 
-				Vector3 randomAngular = new Vector3((float)DMUtils.rand.NextDouble() * 2, (float)DMUtils.rand.NextDouble() * 2, (float)DMUtils.rand.NextDouble() * 2);
+				Vector3 randomAngular = new Vector3((float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3);
 				r.angularVelocity = part.rigidbody.angularVelocity + randomAngular;
-				Vector3 randomVel = new Vector3(((float)DMUtils.rand.NextDouble() * 6) - 3, ((float)DMUtils.rand.NextDouble() * 6) - 3, ((float)DMUtils.rand.NextDouble() * 6) - 3);
+				Vector3 randomVel = new Vector3(((float)DMUtils.rand.NextDouble() * 4) - 2, ((float)DMUtils.rand.NextDouble() * 4) - 2, ((float)DMUtils.rand.NextDouble() * 4) - 2);
 				Vector3 localCOM = vessel.findWorldCenterOfMass() - part.rigidbody.worldCenterOfMass;
 				r.velocity = part.rigidbody.velocity + randomVel + Vector3.Cross(localCOM, rigidbody.angularVelocity);
 				r.mass = componentMass;
