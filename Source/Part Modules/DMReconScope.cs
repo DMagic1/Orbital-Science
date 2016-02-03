@@ -55,6 +55,8 @@ namespace DMagic.Part_Modules
 
 			if (!string.IsNullOrEmpty(loopingAnimName))
 				loopingAnim = part.FindModelAnimators(loopingAnimName)[0];
+
+			setCannisterObjects();
 		}
 
 		private void setCannisterObjects()
@@ -64,17 +66,23 @@ namespace DMagic.Part_Modules
 
 			for (int i = 0; i < experimentLimit; i++)
 			{
-				string s = filmCannisterName + "00" + i.ToString();
+				DMUtils.DebugLog("Assigning Cannister Transfrom {0} For {1}", i, filmCannisterName);
+
+				string s = filmCannisterName + ".00" + i.ToString();
 
 				Transform t = part.FindModelTransform(s);
 
 				if (t == null)
 					continue;
 
+				DMUtils.DebugLog("Cannister Transfrom Found...");
+
 				GameObject g = t.gameObject;
 
 				if (g == null)
 					continue;
+
+				DMUtils.DebugLog("Cannister Object Found...");
 
 				if (cannisters.ContainsKey(i))
 					continue;
@@ -120,9 +128,9 @@ namespace DMagic.Part_Modules
 			g.SetActive(false);
 		}
 
-		new protected void DumpData(ScienceData data)
+		protected override void DumpDataOverride(ScienceData data)
 		{
-			base.DumpData(data);
+			base.DumpDataOverride(data);
 
 			int i = experimentsReturned - 1;
 
@@ -137,7 +145,7 @@ namespace DMagic.Part_Modules
 			g.SetActive(false);
 		}
 
-		new public void ReturnData(ScienceData data)
+		override protected void ReturnDataOverRide(ScienceData data)
 		{
 			base.ReturnData(data);
 

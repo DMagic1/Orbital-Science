@@ -880,7 +880,8 @@ namespace DMagic.Part_Modules
 				failMessage = customFailMessage;
 				return false;
 			}
-			else if (FlightGlobals.ActiveVessel.isEVA)
+
+			if (FlightGlobals.ActiveVessel.isEVA)
 			{
 				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, scienceExp, ref usageReqMessage))
 				{
@@ -1188,6 +1189,11 @@ namespace DMagic.Part_Modules
 
 		new public void ReturnData(ScienceData data)
 		{
+			ReturnDataOverRide(data);
+		}
+
+		protected virtual void ReturnDataOverRide(ScienceData data)
+		{
 			if (data == null)
 				return;
 
@@ -1217,7 +1223,12 @@ namespace DMagic.Part_Modules
 			data.Clear();
 		}
 
-		new protected void DumpData(ScienceData data)
+		new public void DumpData(ScienceData data)
+		{
+			DumpDataOverride(data);
+		}
+
+		protected virtual void DumpDataOverride(ScienceData data)
 		{
 			if (storedScienceReports.Contains(data))
 			{
