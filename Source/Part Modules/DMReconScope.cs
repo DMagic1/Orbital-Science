@@ -56,6 +56,9 @@ namespace DMagic.Part_Modules
 			if (!string.IsNullOrEmpty(loopingAnimName))
 				loopingAnim = part.FindModelAnimators(loopingAnimName)[0];
 
+			if (IsDeployed)
+				startLoopingAnimation(1f);
+
 			setCannisterObjects();
 		}
 
@@ -66,8 +69,6 @@ namespace DMagic.Part_Modules
 
 			for (int i = 0; i < experimentLimit; i++)
 			{
-				DMUtils.DebugLog("Assigning Cannister Transfrom {0} For {1}", i, filmCannisterName);
-
 				string s = filmCannisterName + ".00" + i.ToString();
 
 				Transform t = part.FindModelTransform(s);
@@ -75,19 +76,18 @@ namespace DMagic.Part_Modules
 				if (t == null)
 					continue;
 
-				DMUtils.DebugLog("Cannister Transfrom Found...");
-
 				GameObject g = t.gameObject;
 
 				if (g == null)
 					continue;
 
-				DMUtils.DebugLog("Cannister Object Found...");
-
 				if (cannisters.ContainsKey(i))
 					continue;
 
 				cannisters.Add(i, g);
+
+				if (experimentsReturned > i)
+					g.SetActive(false);
 			}
 		}
 
@@ -118,7 +118,7 @@ namespace DMagic.Part_Modules
 			int i = experimentsReturned - 1;
 
 			if (!cannisters.ContainsKey(i))
-				return; ;
+				return;
 
 			GameObject g = cannisters[i];
 
@@ -135,7 +135,7 @@ namespace DMagic.Part_Modules
 			int i = experimentsReturned - 1;
 
 			if (!cannisters.ContainsKey(i))
-				return; ;
+				return;
 
 			GameObject g = cannisters[i];
 
@@ -152,7 +152,7 @@ namespace DMagic.Part_Modules
 			int i = experimentsReturned;
 
 			if (!cannisters.ContainsKey(i))
-				return; ;
+				return;
 
 			GameObject g = cannisters[i];
 
@@ -169,7 +169,7 @@ namespace DMagic.Part_Modules
 			for (int i = 0; i < cannisters.Count; i++)
 			{
 				if (!cannisters.ContainsKey(i))
-					continue; ;
+					continue;
 
 				GameObject g = cannisters[i];
 
