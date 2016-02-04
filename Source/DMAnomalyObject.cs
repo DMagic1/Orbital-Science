@@ -37,7 +37,6 @@ namespace DMagic
 {
 	public class DMAnomalyObject
 	{
-		//private PQSCity city;
 		private Vector3d worldLocation;
 		private CelestialBody body;
 		private double lat, lon, alt;
@@ -47,7 +46,6 @@ namespace DMagic
 
 		public DMAnomalyObject(PQSCity City)
 		{
-			//city = City;
 			name = City.name;
 			try
 			{
@@ -75,12 +73,6 @@ namespace DMagic
 			alt = a;
 		}
 
-		//public void addPQSCity(PQSCity c)
-		//{
-		//	city = c;
-		//	worldLocation = c.transform.position;
-		//}
-
 		private double clampLat(double l)
 		{
 			return (l + 180 + 90) % 180 - 90;
@@ -90,11 +82,6 @@ namespace DMagic
 		{
 			return (l + 360 + 180) % 360 - 180;
 		}
-
-		//public PQSCity City
-		//{
-		//	get { return city; }
-		//}
 
 		public Vector3d WorldLocation
 		{
