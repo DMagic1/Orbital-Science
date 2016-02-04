@@ -173,6 +173,9 @@ namespace DMagic.Scenario
 
 						anomStorage.addAnomaly(new DMAnomalyObject(name, body, lat, lon, alt));
 					}
+
+					if (anomStorage.AnomalyCount > 0)
+						DMAnomalyList.addAnomalyStorage(body.name, anomStorage);
 				}
 			}
 		}
@@ -180,29 +183,7 @@ namespace DMagic.Scenario
 		private void Start()
 		{
 			if (HighLogic.LoadedSceneIsFlight)
-			{
-				//GameEvents.OnPQSCityLoaded.Add(scanBodyAnomalies);
 				updateRemainingData();
-			}
-		}
-
-		private void scanBodyAnomalies(CelestialBody b, string s)
-		{
-			DMAnomalyStorage anom = DMAnomalyList.getAnomalyStorage(b.name);
-
-			if (anom == null)
-				anom = new DMAnomalyStorage(b, false);
-
-			if (anom.Scanned)
-				return;
-
-			if (anom.scanBody())
-				DMAnomalyList.addAnomalyStorage(b.name, anom);
-		}
-
-		private void OnDestroy()
-		{
-			GameEvents.OnPQSCityLoaded.Remove(scanBodyAnomalies);
 		}
 
 		private void addDMScience(DMScienceData data)
