@@ -47,6 +47,7 @@ namespace DMagic.Parameters
 		private OrbitType type;
 		private double inc, ecc, sma, lan, aop, mae, epo, deviation;
 		private bool orbitLoaded;
+		private bool orbitTested;
 		private DMLongOrbitParameter root;
 
 		public DMSpecificOrbitParameter() { }
@@ -93,6 +94,12 @@ namespace DMagic.Parameters
 
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
+
+			if (!orbitTested)
+			{
+				orbitLoaded = testOrbit();
+				orbitTested = true;
+			}
 
 			if (!orbitLoaded)
 			{
@@ -143,7 +150,7 @@ namespace DMagic.Parameters
 				return;
 			}
 
-			if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
+			if (HighLogic.LoadedScene == GameScenes.SPACECENTER && this.Root.ContractState == Contract.State.Active)
 			{
 				body = node.parse("TargetBody", (CelestialBody)null);
 				if (body == null)
@@ -171,7 +178,8 @@ namespace DMagic.Parameters
 				setupOrbit();
 			}
 
-			orbitLoaded = testOrbit();
+			if (this.Root.ContractState == Contract.State.Active)
+				orbitLoaded = testOrbit();
 		}
 
 		private bool testOrbit()
@@ -179,11 +187,13 @@ namespace DMagic.Parameters
 			try
 			{
 				double d = orbitDriver.orbit.inclination;
+				orbitTested = true;
+				DMUtils.DebugLog("Orbit Checks Out...");
 				return true;
 			}
 			catch (Exception e)
 			{
-				Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deacivating/n" + e.ToString());
+				Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deactivating\n" + e.StackTrace);
 				return false;
 			}
 		}		

@@ -183,7 +183,7 @@ namespace DMagic.Parameters
 			getPartTitles();
 
 			vesselNames = node.parse("Vessels", "");
-			if (!string.IsNullOrEmpty(vesselNames) && !HighLogic.LoadedSceneIsEditor)
+			if (!string.IsNullOrEmpty(vesselNames) && !HighLogic.LoadedSceneIsEditor && this.Root.ContractState == Contract.State.Active)
 			{
 
 				List<Guid> ids = node.parse("Vessels", new List<Guid>());
@@ -361,6 +361,9 @@ namespace DMagic.Parameters
 
 		private void vesselOrbit(Vessel v, CelestialBody b)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
 			if (b != TargetBody)
 				return;
 
@@ -370,6 +373,9 @@ namespace DMagic.Parameters
 
 		private void dockCheck(GameEvents.FromToAction<Part, Part> Parts)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
 			if (Parts.from.vessel.mainBody == TargetBody)
 				ContractSystem.Instance.StartCoroutine(waitForDockCheck());
 		}
@@ -395,6 +401,9 @@ namespace DMagic.Parameters
 
 		private void newVesselCheck(Vessel v)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
 			if (suitableVessels.Count > 0)
 			{
 				Vessel V = v;

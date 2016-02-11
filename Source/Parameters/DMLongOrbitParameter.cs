@@ -94,7 +94,8 @@ namespace DMagic.Parameters
 				orbitTime = 0;
 			}
 
-			ContractSystem.Instance.StartCoroutine(loadChildParameter());
+			if (this.Root.ContractState == Contract.State.Active)
+				ContractSystem.Instance.StartCoroutine(loadChildParameter());
 		}
 
 		private IEnumerator loadChildParameter()
