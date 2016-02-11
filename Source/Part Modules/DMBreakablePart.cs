@@ -30,6 +30,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -87,6 +88,9 @@ namespace DMagic.Part_Modules
 			if (!breakable)
 				return;
 
+			if (broken)
+				return;
+
 			checkForces();
 		}
 
@@ -138,10 +142,15 @@ namespace DMagic.Part_Modules
 			float pressure = velocity * (float)(part.dynamicPressurekPa + part.submergedDynamicPressurekPa);
 			if (pressure > breakingForce)
 			{
-				DMUtils.Logging("Breakable Part {0} - Breaking Force Exceded", part.partName);
-				breakObjects();
+				DMUtils.Logging("Breakable Part {0} - Breaking Force Exceded", part.name);
+				onBreak();
 			}
+		}
 
+		[KSPEvent(guiActive = true, active = true, guiName = "Break")]
+		public void breakStuff()
+		{
+			onBreak();
 		}
 
 		private void breakObjects()
@@ -151,6 +160,8 @@ namespace DMagic.Part_Modules
 
 			if (part.packed)
 				return;
+
+			DMUtils.DebugLog("Breaking Objects...");
 
 			getGameObjects();
 
@@ -166,11 +177,14 @@ namespace DMagic.Part_Modules
 				if (r == null)
 					continue;
 
-				Vector3 randomAngular = new Vector3((float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3);
+				DMUtils.DebugLog("Breaking Object [{0}]...", o.name);
+
+				Vector3 randomAngular = new Vector3((float)DMUtils.rand.NextDouble(), (float)DMUtils.rand.NextDouble(), (float)DMUtils.rand.NextDouble());
 				r.angularVelocity = part.rigidbody.angularVelocity + randomAngular;
 				Vector3 randomVel = new Vector3(((float)DMUtils.rand.NextDouble() * 4) - 2, ((float)DMUtils.rand.NextDouble() * 4) - 2, ((float)DMUtils.rand.NextDouble() * 4) - 2);
 				Vector3 localCOM = vessel.findWorldCenterOfMass() - part.rigidbody.worldCenterOfMass;
 				r.velocity = part.rigidbody.velocity + randomVel + Vector3.Cross(localCOM, rigidbody.angularVelocity);
+				DMUtils.DebugLog("New Velocity: [{0:F4}]", r.velocity.magnitude);
 				r.mass = componentMass;
 				r.useGravity = false;
 				o.transform.parent = null;
@@ -178,8 +192,17 @@ namespace DMagic.Part_Modules
 				r.drag = componentDrag;
 			}
 
+			StartCoroutine(breakablePartsRemove());
+
 			if (IsDeployed && oneShot && !oneWayAnimation)
 				base.Events["retractEvent"].active = true;
+		}
+
+		private IEnumerator breakablePartsRemove()
+		{
+			yield return new WaitForSeconds(1);
+
+			setTransformState(false);
 		}
 
 		protected virtual void getGameObjects()
@@ -204,7 +227,7 @@ namespace DMagic.Part_Modules
 				if (obj == null)
 					continue;
 
-				if (obj.GetComponent<Collider>() == null)
+				if (obj.GetComponent<MeshRenderer>() == null && obj.GetComponent<SkinnedMeshRenderer>() == null)
 					continue;
 
 				breakableObjects.Add(obj);
@@ -213,7 +236,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		[KSPEvent(guiActive = false, guiActiveUnfocused = true, externalToEVAOnly = true, unfocusedRange = 5f, active = true)]
+		[KSPEvent(guiActive = true, guiName = "Fix", active = true)]
 		public void fixPart()
 		{
 			if (!fixable)

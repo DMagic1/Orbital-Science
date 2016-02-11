@@ -38,17 +38,18 @@ namespace DMagic.Part_Modules
 {
 	public class DMSIGINT : DMBreakablePart, IDMSurvey
 	{
-		private readonly string[] dishTransformNames = new string[6] { "dish000", "dish001", "dish002", "dish003", "focalColumn", "feedHorn" };
+		private readonly string[] dishTransformNames = new string[7] { "dish_Armature.000", "dish_Armature.001", "dish_Armature.002", "dish_Armature.003", "focalColumn", "dishCenter", "focalHead" };
+		private readonly string[] dishMeshNames = new string[7] { "dish_Mesh.000", "dish_Mesh.001", "dish_Mesh.002", "dish_Mesh.003", "focalColumn", "dishCenter", "focalHead" };
 
 		private List<Transform> dishTransforms = new List<Transform>();
+		private List<GameObject> dishObjects = new List<GameObject>();
 
 		public override void OnStart(PartModule.StartState state)
 		{
-			base.OnStart(state);
-
 			assignTransforms();
+			assignObjects();
 
-			parseTransfrom(part.transform);
+			base.OnStart(state);
 		}
 
 		private void assignTransforms()
@@ -66,6 +67,29 @@ namespace DMagic.Part_Modules
 					continue;
 
 				dishTransforms.Add(t);
+			}
+		}
+
+		private void assignObjects()
+		{
+			for (int i = 0; i < dishMeshNames.Length; i++)
+			{
+				string s = dishMeshNames[i];
+
+				if (string.IsNullOrEmpty(s))
+					continue;
+
+				Transform t = part.FindModelTransform(s);
+
+				if (t == null)
+					continue;
+
+				GameObject obj = t.gameObject;
+
+				if (obj == null)
+					continue;
+
+				dishObjects.Add(obj);
 			}
 		}
 
@@ -142,9 +166,6 @@ namespace DMagic.Part_Modules
 				if (obj == null)
 					continue;
 
-				if (obj.GetComponent<Collider>() == null)
-					continue;
-
 				breakableObjects.Add(obj);
 			}			
 		}
@@ -154,34 +175,18 @@ namespace DMagic.Part_Modules
 			if (!breakable)
 				return;
 
-			for (int i = 0; i < dishTransforms.Count; i++)
+			DMUtils.DebugLog("Setting Transform State To {0}", on);
+
+			for (int i = 0; i < dishObjects.Count; i++)
 			{
-				Transform t = dishTransforms[i];
+				GameObject obj = dishObjects[i];
 
-				if (t == null)
+				if (obj == null)
 					continue;
 
-				if (t.gameObject == null)
-					continue;
+				DMUtils.DebugLog("Setting False...");
 
-				t.gameObject.SetActive(on);
-			}
-		}
-
-		private void parseTransfrom(Transform t)
-		{
-			DMUtils.Logging("Parsing Transfrom [{0}]", t.name);
-
-			for (int i = 0; i < t.childCount; i++)
-			{
-				Transform tChild = t.GetChild(i);
-
-				if (tChild == null)
-					continue;
-
-				DMUtils.Logging("Transfrom [{0}] Child [{1}] Of Parent [{2}]", tChild.name, i, t.name);
-
-				parseTransfrom(tChild);
+				obj.SetActive(on);
 			}
 		}
 	}
