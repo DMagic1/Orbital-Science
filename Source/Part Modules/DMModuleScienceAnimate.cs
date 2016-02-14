@@ -888,11 +888,9 @@ namespace DMagic.Part_Modules
 					failMessage = usageReqMessage;
 					return false;
 				}
-				else
-					return true;
 			}
-			else
-				return true;
+
+			return true;
 		}
 
 		private ScienceData makeScience(float boost, ExperimentSituations vesselSituation)
