@@ -149,8 +149,6 @@ namespace DMagic.Part_Modules
 			if (p.from != part)
 				return;
 
-			DMUtils.DebugLog("This part coupled...");
-
 			StartCoroutine(waitOnVessel());
 		}
 
@@ -183,8 +181,6 @@ namespace DMagic.Part_Modules
 			if (values == null)
 				return;
 
-			DMUtils.DebugLog("Assigning New Vessel Ref To Seismic Sensor: {0}", v.vesselName);
-
 			values.VesselRef = v;
 
 			if (!values.Armed)
@@ -201,8 +197,6 @@ namespace DMagic.Part_Modules
 
 			if (values == null)
 				return;
-
-			DMUtils.DebugLog("This vessel modified...");
 
 			values.OnAsteroid = DMAsteroidScience.AsteroidGrappled;
 		}
@@ -391,18 +385,17 @@ namespace DMagic.Part_Modules
 				failMessage = customFailMessage;
 				return false;
 			}
-			else if (FlightGlobals.ActiveVessel.isEVA)
+
+			if (FlightGlobals.ActiveVessel.isEVA)
 			{
 				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
 				{
 					failMessage = usageReqMessage;
 					return false;
 				}
-				else
-					return true;
 			}
-			else
-				return true;
+
+			return true;
 		}
 
 		#endregion
