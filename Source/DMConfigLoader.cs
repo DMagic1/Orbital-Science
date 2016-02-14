@@ -54,6 +54,7 @@ namespace DMagic
 			seismicLoad();
 			configLoad();
 			hackWaypointIcons();
+			fixPartIcons();
 			loaded = true;
 		}
 
@@ -501,6 +502,86 @@ namespace DMagic
 					DMUtils.Logging("DMagic Icon [{0}] Inserted Into FinePrint Database", s);
 				}
 			}
+		}
+
+		//This is borrowed from xEvilReeperx's partIconFixer, which is released under the MIT license:
+		//https://bitbucket.org/xEvilReeperx/ksp_particonfixer/src/060facfd8887512a77795a0fd36d029669d098eb/EditorPartIconFix/PartIconFixer.cs?at=master&fileviewer=file-view-default#PartIconFixer.cs-270:430
+		private void fixPartIcons()
+		{
+			AvailablePart p = PartLoader.getPartInfoByName("dmSIGINT");
+
+			if (p == null)
+				return;
+
+			GameObject iconPrefab = p.iconPrefab;
+
+			if (iconPrefab == null)
+				return;
+
+			Bounds b = calculateBounds(iconPrefab);
+
+			float max = Mathf.Max(b.size.x, b.size.y, b.size.z);
+
+			float factor = 40 / max;
+
+			factor /= 40;
+
+			iconPrefab.transform.GetChild(0).localScale *= factor;
+
+			p.iconScale = 1 / max;
+
+			iconPrefab.transform.GetChild(0).localPosition = Vector3.zero;
+		}
+
+		private Bounds calculateBounds(GameObject obj)
+		{
+			List<Renderer> renderers = obj.GetComponentsInChildren<Renderer>(true).ToList();
+
+			if (renderers.Count == 0)
+				return default(Bounds);
+
+			List<Bounds> boundsList = new List<Bounds>();
+
+			for(int i = 0; i < renderers.Count; i++)
+			{
+				Renderer r = renderers[i];
+
+				if (r == null)
+					continue;
+
+				if (r is SkinnedMeshRenderer)
+				{
+					SkinnedMeshRenderer smr = r as SkinnedMeshRenderer;
+
+					Mesh mesh = new Mesh();
+					smr.BakeMesh(mesh);
+
+					Matrix4x4 m = Matrix4x4.TRS(smr.transform.position, smr.transform.rotation, Vector3.one);
+
+					var verts = mesh.vertices;
+
+					Bounds smrBounds = new Bounds(m.MultiplyPoint3x4(verts[0]), Vector3.zero);
+
+					for (int j = 1; j < verts.Length; j++)
+						smrBounds.Encapsulate(m.MultiplyPoint3x4(verts[j]));
+
+					Destroy(mesh);
+
+					boundsList.Add(smrBounds);
+				}
+				else if (r is MeshRenderer)
+				{
+					r.gameObject.GetComponent<MeshFilter>().sharedMesh.RecalculateBounds();
+					boundsList.Add(r.bounds);
+				}
+			}
+
+			Bounds bounds = boundsList[0];
+
+			for (int i = 1; i < boundsList.Count; i++)
+				bounds.Encapsulate(boundsList[i]);
+
+			return bounds;
 		}
 
 	}
