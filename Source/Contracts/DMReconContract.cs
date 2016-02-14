@@ -123,23 +123,37 @@ namespace DMagic.Contracts
 			switch(prestige)
 			{
 				case ContractPrestige.Trivial:
-					parts.Add(0, DMContractDefs.DMRecon.reconTrivialParts);
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconTrivialParts))
 						return false;
 
-					if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMRecon.trivialExperimentTitle))
-						container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.trivialExperimentTitle];
+					parts.Add(0, DMContractDefs.DMRecon.reconTrivialParts);
+
+					if (!DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMRecon.trivialExperimentTitle))
+						return false;
+
+					container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.trivialExperimentTitle];
 
 					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
+
+					double st = o.semiMajorAxis - o.referenceBody.Radius;
+
+					double mt = o.referenceBody.scienceValues.spaceAltitudeThreshold * 5 * .95;
+
+					if (st > mt)
+						o.semiMajorAxis = mt + o.referenceBody.Radius + ((rand.NextDouble() * 20000) - 10000);
+
 					timeMod = DMContractDefs.DMRecon.trivialTimeModifier * 6 * 3600;
 					break;
 				case ContractPrestige.Significant:
-					parts.Add(0, DMContractDefs.DMRecon.reconSignificantParts);
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconSignificantParts))
 						return false;
 
-					if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMRecon.significantExperimentTitle))
-						container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.significantExperimentTitle];
+					parts.Add(0, DMContractDefs.DMRecon.reconSignificantParts);
+
+					if (!DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMRecon.significantExperimentTitle))
+						return false;
+
+					container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.significantExperimentTitle];
 
 					if (SystemUtilities.CoinFlip(rand))
 					{
@@ -164,14 +178,25 @@ namespace DMagic.Contracts
 					incMod = 0;
 					break;
 				case ContractPrestige.Exceptional:
-					parts.Add(0, DMContractDefs.DMRecon.reconExceptionalParts);
 					if (!DMUtils.partAvailable(DMContractDefs.DMRecon.reconExceptionalParts))
 						return false;
 
-					if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMRecon.exceptionalExperimentTitle))
-						container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.exceptionalExperimentTitle];
+					parts.Add(0, DMContractDefs.DMRecon.reconExceptionalParts);
+
+					if (!DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMRecon.exceptionalExperimentTitle))
+						return false;
+
+					container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.exceptionalExperimentTitle];
 
 					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
+
+					double se = o.semiMajorAxis - o.referenceBody.Radius;
+
+					double me = o.referenceBody.scienceValues.spaceAltitudeThreshold * 5 * .95;
+
+					if (se > me)
+						o.semiMajorAxis = me + o.referenceBody.Radius + ((rand.NextDouble() * 20000) - 10000);
+
 					timeMod = DMContractDefs.DMRecon.exceptionalTimeModifier * 6 * 3600;
 					break;
 			}
