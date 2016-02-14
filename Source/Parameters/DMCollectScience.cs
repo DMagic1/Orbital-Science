@@ -203,8 +203,8 @@ namespace DMagic.Parameters
 			int targetSituation = node.parse("Situation", (int)65);
 			if (targetSituation >= 65 || targetSituation <= 0)
 			{
-				DMUtils.Logging("Failed To Load Situation Variables; Collect Science Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Situation Variables; Collect Science Parameter Removed");
+				return;
 			}
 			scienceLocation = (ExperimentSituations)targetSituation;
 
@@ -212,35 +212,35 @@ namespace DMagic.Parameters
 
 			if (body == null)
 			{
-				DMUtils.Logging("Failed To Load Target Body; Collect Science Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Target Body; Collect Science Parameter Removed");
+				return;
 			}
 
 			type = node.parse("Type", (int)1000);
 			if (type == 1000)
 			{
-				DMUtils.Logging("Failed To Load Contract Type Value; Collect Science Parameter Reset");
+				removeThis("Failed To Load Contract Type Value; Collect Science Parameter Reset");
 				type = 1;
 			}
 
 			name = node.parse("Name", "");
 			if (string.IsNullOrEmpty(name))
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Science Container Variables; Collect Science Parameter Removed");
+				return;
 			}
 
 			if (!DMUtils.availableScience.ContainsKey("All"))
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Science Container Variables; Collect Science Parameter Removed");
+				return;
 			}
 
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Science Container Variables; Collect Science Parameter Removed");
+				return;
 			}
 			else
 				partName = scienceContainer.SciPart;
@@ -250,6 +250,13 @@ namespace DMagic.Parameters
 			returnedScience = node.parse("Returned_Science", (float)0);
 
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.Exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
+		}
+
+		private void removeThis(string message)
+		{
+			this.Unregister();
+			this.Parent.RemoveParameter(this);
+			DMUtils.Logging(message);
 		}
 
 		private void anomalyReceive(CelestialBody Body, string exp, string biome)

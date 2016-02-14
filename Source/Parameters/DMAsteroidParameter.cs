@@ -57,7 +57,9 @@ namespace DMagic.Parameters
 			collected = false;
 			if (!DMUtils.availableScience.ContainsKey("All"))
 				DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.SciPart;
+
+			if (scienceContainer != null)
+				partName = scienceContainer.SciPart;
 		}
 
 		/// <summary>
@@ -124,8 +126,7 @@ namespace DMagic.Parameters
 			int targetLocation = node.parse("Situation", (int)65);
 			if (targetLocation >= 65 || targetLocation <= 0)
 			{
-				DMUtils.Logging("Failed To Load Situation Variables; Asteroid Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Situation Variables; Asteroid Parameter Removed");
 				return;
 			}
 			scienceLocation = (ExperimentSituations)targetLocation;
@@ -135,21 +136,21 @@ namespace DMagic.Parameters
 			name = node.parse("Name", "");
 			if (string.IsNullOrEmpty(name))
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Science Container Variables; Asteroid Parameter Removed");
+				return;
 			}
 
 			if (!DMUtils.availableScience.ContainsKey("All"))
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Science Container Variables; Asteroid Parameter Removed");
+				return;
 			}
 
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Science Container Variables; Asteroid Parameter Removed");
+				return;
 			}
 			else
 				partName = scienceContainer.SciPart;
@@ -160,11 +161,16 @@ namespace DMagic.Parameters
 			}
 			catch (Exception e)
 			{
-				this.Unregister();
-				this.Parent.RemoveParameter(this);
-				DMUtils.Logging("Could not find root asteroid contract; removing DMAsteroid Parameter\n{0}", e);
+				removeThis("Could not find root asteroid contract; removing DMAsteroid Parameter\n" + e);
 				return;
 			}
+		}
+
+		private void removeThis(string message)
+		{
+			this.Unregister();
+			this.Parent.RemoveParameter(this);
+			DMUtils.Logging(message);
 		}
 
 		private void asteroidMonitor(string size, string exp)

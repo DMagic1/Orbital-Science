@@ -128,8 +128,8 @@ namespace DMagic.Parameters
 			int sitID = node.parse("Situation", (int)65);
 			if (sitID >= 65 || sitID <= 0)
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Situation Value; Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Anomaly Contract Situation Value; Parameter Removed");
+				return;
 			}
 			situation = (ExperimentSituations)sitID;
 
@@ -138,21 +138,21 @@ namespace DMagic.Parameters
 			name = node.parse("Name", "");
 			if (string.IsNullOrEmpty(name))
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Anomaly Contract Science Container Variables; Removed");
+				return;
 			}
 
 			if (!DMUtils.availableScience.ContainsKey("All"))
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Anomaly Contract Science Container Variables; Parameter Removed");
+				return;
 			}
 
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Anomaly Contract Science Container Variables; Parameter Removed");
+				return;
 			}
 			else
 				partName = scienceContainer.SciPart;
@@ -163,11 +163,16 @@ namespace DMagic.Parameters
 			}
 			catch (Exception e)
 			{
-				this.Unregister();
-				this.Parent.RemoveParameter(this);
-				DMUtils.Logging("Could not find root anomaly contract; removing DMAnomalyParameter\n{0}", e);
+				removeThis("Could not find root anomaly contract; removing DMAnomalyParameter\n" +  e);
 				return;
 			}
+		}
+
+		private void removeThis(string message)
+		{
+			this.Unregister();
+			this.Parent.RemoveParameter(this);
+			DMUtils.Logging(message);
 		}
 
 		private void monitorAnomScience(CelestialBody B, string s, string name)
