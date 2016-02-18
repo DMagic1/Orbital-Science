@@ -175,6 +175,9 @@ namespace DMagic.Parameters
 
 		private void asteroidMonitor(string size, string exp)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
 			if (!collected)
 			{
 				if (size == root.AsteroidSize && exp == scienceContainer.Exp.id)
@@ -187,6 +190,12 @@ namespace DMagic.Parameters
 
 		private void scienceRecieve(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (sub == null)
+				return;
+
 			if (sub.id.Contains(string.Format("{0}@Asteroid{1}{2}", scienceContainer.Exp.id, scienceLocation, "")))
 			{
 				if (collected)

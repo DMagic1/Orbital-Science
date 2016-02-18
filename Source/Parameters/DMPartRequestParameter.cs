@@ -364,6 +364,12 @@ namespace DMagic.Parameters
 			if (this.Root.ContractState != Contract.State.Active)
 				return;
 
+			if (v == null)
+				return;
+
+			if (b == null)
+				return;
+
 			if (b != TargetBody)
 				return;
 
@@ -374,6 +380,15 @@ namespace DMagic.Parameters
 		private void dockCheck(GameEvents.FromToAction<Part, Part> Parts)
 		{
 			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (Parts.from == null)
+				return;
+
+			if (Parts.from.vessel == null)
+				return;
+
+			if (Parts.from.vessel.mainBody == null)
 				return;
 
 			if (Parts.from.vessel.mainBody == TargetBody)
@@ -402,6 +417,9 @@ namespace DMagic.Parameters
 		private void newVesselCheck(Vessel v)
 		{
 			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (v == null)
 				return;
 
 			if (suitableVessels.Count > 0)

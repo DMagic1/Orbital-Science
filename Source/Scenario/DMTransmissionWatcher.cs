@@ -60,6 +60,9 @@ namespace DMagic.Scenario
 
 		private void scienceReceived(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
+			if (sub == null)
+				return;
+
 			if (HighLogic.LoadedSceneIsFlight)
 			{
 				DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);

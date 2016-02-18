@@ -123,6 +123,12 @@ namespace DMagic.Parameters
 
 		private void onParamChange(Contract c, ContractParameter p)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (c == null)
+				return;
+
 			if (c != this.Root)
 				return;
 	

@@ -60,6 +60,9 @@ namespace DMagic.Scenario
 
 		private void RecoveryWatcher(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
+			if (sub == null)
+				return;
+
 			if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
 			{
 				float DMScience = sci;

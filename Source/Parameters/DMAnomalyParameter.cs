@@ -177,6 +177,12 @@ namespace DMagic.Parameters
 
 		private void monitorAnomScience(CelestialBody B, string s, string name)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (B == null)
+				return;
+
 			if (FlightGlobals.currentMainBody == B)
 			{
 				if (s == scienceContainer.Exp.id)
@@ -229,6 +235,12 @@ namespace DMagic.Parameters
 
 		private void anomalyScience(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (sub == null)
+				return;
+
 			if (sub.id.Contains(string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.name, situation)))
 			{
 				if (collected)

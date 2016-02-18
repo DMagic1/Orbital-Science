@@ -261,12 +261,24 @@ namespace DMagic.Parameters
 
 		private void anomalyReceive(CelestialBody Body, string exp, string biome)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (Body == null)
+				return;
+
 			if (body == Body && exp == scienceContainer.Exp.id && biomeName.Replace(" ", "") == biome)
 				ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void scienceReceive(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (sub == null)
+				return;
+
 			if (type == 0 || type == 2)
 			{
 				if (!string.IsNullOrEmpty(biomeName))
