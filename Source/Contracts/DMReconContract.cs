@@ -88,6 +88,10 @@ namespace DMagic.Contracts
 					};
 					customReachedBodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.ORBIT, true, cb));
 					customReachedBodies.AddRange(ProgressUtilities.GetNextUnreached(2, cb));
+					var activeBodies = ContractSystem.Instance.GetCurrentActiveContracts<DMReconContract>().Select(r => r.body).ToList();
+					customReachedBodies.RemoveAll(a => activeBodies.Contains(a));
+					var completedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Select(r => r.body).ToList();
+					customReachedBodies.RemoveAll(a => completedBodies.Contains(a));
 					break;
 				case ContractPrestige.Significant:
 					customReachedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Trivial).Select(r => r.body).ToList();
@@ -133,14 +137,14 @@ namespace DMagic.Contracts
 
 					container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.trivialExperimentTitle];
 
-					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
+					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.15, ContractDefs.Satellite.TrivialInclinationDifficulty);
 
 					double st = o.semiMajorAxis - o.referenceBody.Radius;
 
 					double mt = o.referenceBody.scienceValues.spaceAltitudeThreshold * 5 * .95;
 
 					if (st > mt)
-						o.semiMajorAxis = mt + o.referenceBody.Radius + ((rand.NextDouble() * 20000) - 10000);
+						o.semiMajorAxis = (mt * Math.Max(0.4, rand.NextDouble())) + o.referenceBody.Radius;
 
 					timeMod = DMContractDefs.DMRecon.trivialTimeModifier * 6 * 3600;
 					break;
@@ -188,14 +192,14 @@ namespace DMagic.Contracts
 
 					container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.exceptionalExperimentTitle];
 
-					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.09, ContractDefs.Satellite.TrivialInclinationDifficulty);
+					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.15, ContractDefs.Satellite.TrivialInclinationDifficulty);
 
 					double se = o.semiMajorAxis - o.referenceBody.Radius;
 
 					double me = o.referenceBody.scienceValues.spaceAltitudeThreshold * 5 * .95;
 
 					if (se > me)
-						o.semiMajorAxis = me + o.referenceBody.Radius + ((rand.NextDouble() * 20000) - 10000);
+						o.semiMajorAxis = (me * Math.Max(0.4, rand.NextDouble())) + o.referenceBody.Radius;
 
 					timeMod = DMContractDefs.DMRecon.exceptionalTimeModifier * 6 * 3600;
 					break;
