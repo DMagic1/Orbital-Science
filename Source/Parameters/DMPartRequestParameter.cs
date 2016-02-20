@@ -119,7 +119,7 @@ namespace DMagic.Parameters
 
 		protected override string GetNotes()
 		{
-			return base.GetNotes();
+			return "Only vessels in orbit around the target planet are tracked.";
 		}
 
 		protected override void OnUpdate()
