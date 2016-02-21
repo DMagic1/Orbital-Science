@@ -175,7 +175,7 @@ namespace DMagic.Scenario
 					}
 
 					if (anomStorage.AnomalyCount > 0)
-						DMAnomalyList.addAnomalyStorage(body.name, anomStorage);
+						DMAnomalyList.addAnomalyStorage(body.bodyName, anomStorage);
 				}
 			}
 		}
