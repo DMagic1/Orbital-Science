@@ -45,6 +45,7 @@ namespace DMagic.Parameters
 		private DMScienceContainer scienceContainer;
 		private string name, partName;
 		private bool collected;
+		private bool registered;
 
 		public DMAsteroidParameter()
 		{
@@ -55,7 +56,7 @@ namespace DMagic.Parameters
 			scienceLocation = Location;
 			name = Name;
 			collected = false;
-			if (!DMUtils.availableScience.ContainsKey("All"))
+			if (DMUtils.availableScience.ContainsKey("All"))
 				DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 
 			if (scienceContainer != null)
@@ -104,12 +105,20 @@ namespace DMagic.Parameters
 
 		protected override void OnRegister()
 		{
+			if (registered)
+				return;
+
 			GameEvents.OnScienceRecieved.Add(scienceRecieve);
 			DMUtils.OnAsteroidScience.Add(asteroidMonitor);
+
+			registered = true;
 		}
 
 		protected override void OnUnregister()
 		{
+			if (!registered)
+				return;
+
 			GameEvents.OnScienceRecieved.Remove(scienceRecieve);
 			DMUtils.OnAsteroidScience.Remove(asteroidMonitor);
 		}

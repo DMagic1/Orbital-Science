@@ -44,6 +44,7 @@ namespace DMagic.Parameters
 		private int type;
 		private int minus;
 		private int subParamCountToComplete;
+		private bool registered;
 
 		public DMCompleteParameter()
 		{
@@ -89,10 +90,15 @@ namespace DMagic.Parameters
 		protected override void OnRegister()
 		{
 			GameEvents.Contract.onParameterChange.Add(onParamChange);
+
+			registered = true;
 		}
 
 		protected override void OnUnregister()
 		{
+			if (!registered)
+				return;
+
 			GameEvents.Contract.onParameterChange.Remove(onParamChange);
 		}
 

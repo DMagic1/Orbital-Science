@@ -46,6 +46,7 @@ namespace DMagic.Parameters
 		private float returnedScience;
 		private string subject, name, biomeName, partName;
 		private int type; //type 0: standard survey; type 1: long term survey; type 2: anomaly
+		private bool registered;
 
 		public DMCollectScience()
 		{
@@ -59,8 +60,13 @@ namespace DMagic.Parameters
 			biomeName = BiomeName;
 			type = Type;
 			returnedScience = 0f;
-			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.SciPart;
+
+			if (DMUtils.availableScience.ContainsKey("All"))
+				DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+
+			if (scienceContainer != null)
+				partName = scienceContainer.SciPart;
+
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.Exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 		}
 
@@ -176,13 +182,21 @@ namespace DMagic.Parameters
 
 		protected override void OnRegister()
 		{
+			if (registered)
+				return;
+
 			GameEvents.OnScienceRecieved.Add(scienceReceive);
 			if (type == 2)
 				DMUtils.OnAnomalyScience.Add(anomalyReceive);
+
+			registered = true;
 		}
 
 		protected override void OnUnregister()
 		{
+			if (!registered)
+				return;
+
 			GameEvents.OnScienceRecieved.Remove(scienceReceive);
 			if (type == 2)
 				DMUtils.OnAnomalyScience.Remove(anomalyReceive);

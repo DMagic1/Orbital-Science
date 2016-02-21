@@ -51,6 +51,7 @@ namespace DMagic.Parameters
 		private bool updatingVesselState;
 		private bool waypointsOn;
 		private bool useWaypoints;
+		private bool registered;
 
 		public DMPartRequestParameter() { }
 
@@ -90,18 +91,27 @@ namespace DMagic.Parameters
 
 		protected override void OnRegister()
 		{
+			if (registered)
+				return;
+
 			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
 			GameEvents.onVesselCreate.Add(newVesselCheck);
 			GameEvents.onPartCouple.Add(dockCheck);
+
+			registered = true;
 		}
 
 		protected override void OnUnregister()
 		{
+			suitableVessels.Clear();
+			CleanupWaypoints();
+
+			if (!registered)
+				return;
+
 			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
 			GameEvents.onVesselCreate.Remove(newVesselCheck);
 			GameEvents.onPartCouple.Remove(dockCheck);
-			suitableVessels.Clear();
-			CleanupWaypoints();
 		}
 
 		protected override string GetTitle()

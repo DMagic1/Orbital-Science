@@ -46,7 +46,8 @@ namespace DMagic.Parameters
 		private DMScienceContainer scienceContainer;
 		private DMAnomalyContract root;
 		private string name, partName;
-		private bool collected = false;
+		private bool collected;
+		private bool registered;
 
 		public DMAnomalyParameter()
 		{
@@ -56,8 +57,11 @@ namespace DMagic.Parameters
 		{
 			situation = Situation;
 			name = Name;
-			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.SciPart;
+			if (DMUtils.availableScience.ContainsKey("All"))
+				DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+
+			if (scienceContainer != null)
+				partName = scienceContainer.SciPart;
 		}
 
 		/// <summary>
@@ -106,12 +110,20 @@ namespace DMagic.Parameters
 
 		protected override void OnRegister()
 		{
+			if (registered)
+				return;
+
 			GameEvents.OnScienceRecieved.Add(anomalyScience);
 			DMUtils.OnAnomalyScience.Add(monitorAnomScience);
+
+			registered = true;
 		}
 
 		protected override void OnUnregister()
 		{
+			if (!registered)
+				return;
+
 			GameEvents.OnScienceRecieved.Remove(anomalyScience);
 			DMUtils.OnAnomalyScience.Remove(monitorAnomScience);
 		}
@@ -241,11 +253,21 @@ namespace DMagic.Parameters
 			if (sub == null)
 				return;
 
-			if (sub.id.Contains(string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.name, situation)))
-			{
-				if (collected)
-					base.SetComplete();
-			}
+			if (!collected)
+				return;
+
+			string id = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.name, situation);
+
+			if (sub.id.Contains(id))
+				base.SetComplete();
+
+			if (situation == ExperimentSituations.InSpaceLow)
+				id = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.name, ExperimentSituations.InSpaceHigh);
+			else
+				return;
+
+			if (sub.id.Contains(id))
+				base.SetComplete();
 		}
 	}
 }
