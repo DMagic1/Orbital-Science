@@ -43,7 +43,7 @@ namespace DMagic
 		{
 			if (node.HasValue(name))
 			{
-				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, node.GetValue(name));
+				//DMUtils.DebugLog("Parsing value [{0}] = {1}", name, node.GetValue(name));
 				return node.GetValue(name);
 			}
 
@@ -59,7 +59,7 @@ namespace DMagic
 
 			if (int.TryParse(node.GetValue(name), out i))
 			{
-				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, i);
+				//DMUtils.DebugLog("Parsing value [{0}] = {1}", name, i);
 				return i;
 			}
 
@@ -88,7 +88,7 @@ namespace DMagic
 
 			if (float.TryParse(node.GetValue(name), out f))
 			{
-				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, f);
+				//DMUtils.DebugLog("Parsing value [{0}] = {1}", name, f);
 				return f;
 			}
 
@@ -117,7 +117,7 @@ namespace DMagic
 
 			if (double.TryParse(node.GetValue(name), out d))
 			{
-				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, d);
+				//DMUtils.DebugLog("Parsing value [{0}] = {1}", name, d);
 				return d;
 			}
 
@@ -133,7 +133,7 @@ namespace DMagic
 
 			if (bool.TryParse(node.GetValue(name), out b))
 			{
-				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, b);
+				//DMUtils.DebugLog("Parsing value [{0}] = {1}", name, b);
 				return b;
 			}
 
@@ -145,7 +145,7 @@ namespace DMagic
 			if (!node.HasValue(name))
 				return original;
 
-			DMUtils.DebugLog("Parsing value [{0}] = {1}", name, node.GetValue(name));
+			//DMUtils.DebugLog("Parsing value [{0}] = {1}", name, node.GetValue(name));
 
 			return node.GetValue(name).Split(separator).ToList();
 		}
@@ -283,7 +283,7 @@ namespace DMagic
 				c = FlightGlobals.Bodies[body];
 			else
 			{
-				DMUtils.DebugLog("Parsing value [{0}] = {1}", name, c.theName);
+				//DMUtils.DebugLog("Parsing value [{0}] = {1}", name, c.theName);
 				return original;
 			}
 
