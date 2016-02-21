@@ -147,17 +147,15 @@ namespace DMagic.Contracts
 			if (!DMUtils.availableScience.ContainsKey("All"))
 				return false;
 
-			if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMMagnetic.magnetometerExperimentTitle))
-				magContainer = DMUtils.availableScience["All"][DMContractDefs.DMMagnetic.magnetometerExperimentTitle];
+			if (!DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMMagnetic.magnetometerExperimentTitle))
+				return false;
+			
+			magContainer = DMUtils.availableScience["All"][DMContractDefs.DMMagnetic.magnetometerExperimentTitle];
 
-			if (DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMMagnetic.rpwsExperimentTitle))
-				magContainer = DMUtils.availableScience["All"][DMContractDefs.DMMagnetic.rpwsExperimentTitle];
-
-			if (magContainer == null)
+			if (!DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMMagnetic.rpwsExperimentTitle))
 				return false;
 
-			if (rpwsContainer == null)
-				return false;
+			rpwsContainer = DMUtils.availableScience["All"][DMContractDefs.DMMagnetic.rpwsExperimentTitle];
 
 			magParams[0] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, magContainer);
 			magParams[1] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, magContainer);
@@ -222,6 +220,9 @@ namespace DMagic.Contracts
 					return false;
 				else
 				{
+					if (DMCS.Container == null)
+						continue;
+
 					float modifier = ((float)rand.Next(85, 116) / 100f);
 					DMcp.addToSubParams(DMCS);
 					DMCS.SetFunds(DMContractDefs.DMMagnetic.Funds.ParamReward * modifier, DMContractDefs.DMMagnetic.Funds.ParamFailure * modifier, body);

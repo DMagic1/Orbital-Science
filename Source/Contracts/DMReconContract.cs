@@ -95,9 +95,17 @@ namespace DMagic.Contracts
 					break;
 				case ContractPrestige.Significant:
 					customReachedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Trivial).Select(r => r.body).ToList();
+					var activeSigBodies = ContractSystem.Instance.GetCurrentActiveContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Significant).Select(r => r.body).ToList();
+					customReachedBodies.RemoveAll(a => activeSigBodies.Contains(a));
+					var completedSigBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Significant).Select(r => r.body).ToList();
+					customReachedBodies.RemoveAll(a => completedSigBodies.Contains(a));
 					break;
 				case ContractPrestige.Exceptional:
 					customReachedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Significant).Select(r => r.body).ToList();
+					var activeExcBodies = ContractSystem.Instance.GetCurrentActiveContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Exceptional).Select(r => r.body).ToList();
+					customReachedBodies.RemoveAll(a => activeExcBodies.Contains(a));
+					var completedExcBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(r => r.prestige == ContractPrestige.Exceptional).Select(r => r.body).ToList();
+					customReachedBodies.RemoveAll(a => completedExcBodies.Contains(a));
 					break;
 			}
 
@@ -233,6 +241,9 @@ namespace DMagic.Contracts
 					return false;
 				else
 				{
+					if (DMCS.Container == null)
+						continue;
+
 					float modifier = ((float)rand.Next(85, 116) / 100f);
 					DMcp.addToSubParams(DMCS);
 					DMCS.SetFunds(DMContractDefs.DMRecon.Funds.ParamReward * modifier, DMContractDefs.DMRecon.Funds.ParamFailure * modifier, body);

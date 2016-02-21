@@ -71,14 +71,18 @@ namespace DMagic.Contracts
 			if (active >= maxActive)
 				return false;
 
-			if (this.Prestige == ContractPrestige.Trivial)
-				return false;
-			else if (this.Prestige == ContractPrestige.Significant)
-				size = rand.Next(0, 3);
-			else if (this.Prestige == ContractPrestige.Exceptional)
-				size = rand.Next(2, 4);
-			else
-				return false;
+			switch (prestige)
+			{
+				case ContractPrestige.Trivial:
+					return false;
+				case ContractPrestige.Significant:
+					size = rand.Next(0, 3);
+					break;
+				case ContractPrestige.Exceptional:
+					size = rand.Next(2, 4);
+					break;
+			}
+
 			hash = DMUtils.sizeHash(size);
 
 			//Make sure that the grappling device is available
@@ -110,13 +114,13 @@ namespace DMagic.Contracts
 			switch (prestige)
 			{
 				case ContractPrestige.Trivial:
-					maxRequests = DMContractDefs.DMSurvey.trivialScienceRequests;
+					maxRequests = DMContractDefs.DMAsteroid.trivialScienceRequests;
 					break;
 				case ContractPrestige.Significant:
-					maxRequests = DMContractDefs.DMSurvey.significantScienceRequests;
+					maxRequests = DMContractDefs.DMAsteroid.significantScienceRequests;
 					break;
 				case ContractPrestige.Exceptional:
-					maxRequests = DMContractDefs.DMSurvey.exceptionalScienceRequests;
+					maxRequests = DMContractDefs.DMAsteroid.exceptionalScienceRequests;
 					break;
 			}
 
@@ -127,6 +131,9 @@ namespace DMagic.Contracts
 					break;
 				if (DMAP != null)
 				{
+					if (DMAP.Container == null)
+						continue;
+
 					DMcp.addToSubParams(DMAP);
 					float modifier = ((float)rand.Next(85, 116) / 100f);
 					DMAP.SetScience(DMAP.Container.Exp.baseValue * DMContractDefs.DMAsteroid.Science.ParamReward * DMUtils.asteroidSubjectVal(size), null);
@@ -199,7 +206,7 @@ namespace DMagic.Contracts
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			node.parse("Asteroid_Size_Class", "Class B");
+			hash = node.parse("Asteroid_Size_Class", "Class B");
 
 			if (this.ParameterCount == 0)
 			{

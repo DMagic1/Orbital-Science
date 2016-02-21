@@ -129,6 +129,8 @@ namespace DMagic.Contracts
 			if (targetAnomaly == null)
 				return false;
 
+			body = targetAnomaly.Body.bodyName;
+
 			r = new System.Random(this.MissionSeed);
 			latRand = r.Next(-5, 5);
 			lonRand = r.Next(-5, 5);
@@ -173,6 +175,9 @@ namespace DMagic.Contracts
 			{
 				if (aP != null)
 				{
+					if (aP.Container == null)
+						continue;
+
 					DMcp.addToSubParams(aP);
 					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), targetAnomaly.Body) * ((float)rand.Next(85, 116) / 100f);
 					aP.SetFunds((DMContractDefs.DMAnomaly.Funds.ParamReward / 2) * locationMod, (DMContractDefs.DMAnomaly.Funds.ParamFailure / 2) * locationMod, targetAnomaly.Body);
