@@ -102,10 +102,7 @@ namespace DMagic.Parameters
 			}
 
 			if (!orbitLoaded)
-			{
-				this.SetIncomplete();
 				return;
-			}
 
 			if (orbitDriver.orbit == null)
 			{
