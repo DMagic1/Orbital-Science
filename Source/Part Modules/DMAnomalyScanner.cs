@@ -45,7 +45,7 @@ namespace DMagic.Part_Modules
 		public float resourceCost = 0f;
 
 		private string closestAnom = null;
-		private bool anomCloseRange, anomInRange, camDeployed, rotating, closeRange, fullyDeployed = false;
+		private bool anomCloseRange, anomInRange, anomScienceInRange, camDeployed, rotating, closeRange, fullyDeployed = false;
 		private Animation animSecondary;
 		private Transform cam, dish;
 		private DMAnomalyStorage currentAnomalies;
@@ -116,11 +116,11 @@ namespace DMagic.Part_Modules
 
 		#region animators
 
-		public void newSecondaryAnimator(string animName, float dishSpeed, float dishTime, WrapMode wrap)
+		public void newSecondaryAnimator(string animName, float speed, float dishTime, WrapMode wrap)
 		{
 			if (animSecondary != null)
 			{
-				animSecondary[animName].speed = dishSpeed;
+				animSecondary[animName].speed = speed;
 				animSecondary[animName].normalizedTime = dishTime;
 				animSecondary[animName].wrapMode = wrap;
 				anim.Blend(animName, 1f);
@@ -200,6 +200,7 @@ namespace DMagic.Part_Modules
 		//Rotate camera on its y-axis to look at the anomaly.
 		private void camRotate(Vector3 anom)
 		{
+			DMUtils.DebugLog("Rotating Camera To [{0}]", anom);
 			Vector3 localAnom = transform.InverseTransformPoint(anom);
 			Vector3 toTarget = localAnom - part.transform.position;
 			toTarget.y = 0;
@@ -268,7 +269,7 @@ namespace DMagic.Part_Modules
 
 		private void inRange()
 		{
-			bool anomInRange = false;
+			anomInRange = false;
 
 			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
 
@@ -321,16 +322,6 @@ namespace DMagic.Part_Modules
 			{
 				newSecondaryAnimator(camAnimate, 1f, 0f, WrapMode.Default);
 				camDeployed = true;
-				if (a.VDistance < 250)
-				{
-					newSecondaryAnimator(foundAnimate, 1f, 0f, WrapMode.PingPong);
-					closeRange = true;
-					return true;
-				}
-				else
-				{
-					closeRange = false;
-				}
 			}
 
 			if (camDeployed)
@@ -355,7 +346,7 @@ namespace DMagic.Part_Modules
 		private void getAnomValues()
 		{
 			anomCloseRange = false;
-			anomInRange = false;
+			anomScienceInRange = false;
 			closestAnom = "";
 
 			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
@@ -399,7 +390,7 @@ namespace DMagic.Part_Modules
 			//Get cardinal directions based on the bearing.
 			string anomDirection = direction(a.Bearing);
 
-			anomInRange = true;
+			anomScienceInRange = true;
 
 			DMUtils.Logging("Anomaly: {0} is at bearing: {1:N1} deg at a distance of {2:N1}m.", a.Name, a.Bearing, a.VDistance);
 
@@ -413,7 +404,7 @@ namespace DMagic.Part_Modules
 			//Use alternate message when more than 10km above the anomaly.
 			else if (a.VHeight > 10000)
 			{
-				ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km below current position, get closer for a better signal", a.VDistance / 1000 + RandomDouble((2 * (a.VDistance / 1000) / 30), (4 * (a.VDistance / 1000) / 30))), 6f, ScreenMessageStyle.UPPER_CENTER);
+				ScreenMessages.PostScreenMessage(string.Format("Anomalous signal detected approximately {0:N1} km below current position, get closer for a better signal.", a.VDistance / 1000 + RandomDouble((2 * (a.VDistance / 1000) / 30), (4 * (a.VDistance / 1000) / 30))), 6f, ScreenMessageStyle.UPPER_CENTER);
 			}
 			else
 			{
@@ -458,7 +449,7 @@ namespace DMagic.Part_Modules
 
 				getAnomValues();
 
-				if (anomInRange)
+				if (anomScienceInRange)
 				{
 					if (anomCloseRange)
 						runExperiment(getSituation(), silent);
