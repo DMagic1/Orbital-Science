@@ -131,11 +131,14 @@ namespace DMagic
 
 		public static void updateAnomaly(Vessel v, DMAnomalyObject a)
 		{
+			if (v == null)
+				return;
+
+			if (a == null)
+				return;
+
 			Vector3d vPos = v.transform.position;
 			a.WorldLocation = v.mainBody.GetWorldSurfacePosition(a.Lat, a.Lon, a.Alt);
-
-			a.Lat = v.mainBody.GetLatitude(a.WorldLocation);
-			a.Lon = v.mainBody.GetLongitude(a.WorldLocation);
 
 			//Calculate vectors from CBody position to object positions
 			Vector3d anomBody = v.mainBody.position - a.WorldLocation;
