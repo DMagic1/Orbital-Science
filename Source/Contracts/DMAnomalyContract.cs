@@ -124,7 +124,9 @@ namespace DMagic.Contracts
 
 			var allAnom = anomalies.SelectMany(a => a.getAllAnomalies);
 
-			targetAnomaly = allAnom.Where(a => a.Name != "KSC" && a.Name != "KSC2" && a.Name != "IslandAirfield").ElementAt(rand.Next(0, allAnom.Count()));
+			var reducedAnom = allAnom.Where(a => a.Name != "KSC" && a.Name != "KSC2" && a.Name != "IslandAirfield");
+
+			targetAnomaly = reducedAnom.ElementAt(rand.Next(0, reducedAnom.Count()));
 
 			if (targetAnomaly == null)
 				return false;
