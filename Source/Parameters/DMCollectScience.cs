@@ -197,6 +197,8 @@ namespace DMagic.Parameters
 			if (!registered)
 				return;
 
+			registered = false;
+
 			GameEvents.OnScienceRecieved.Remove(scienceReceive);
 			if (type == 2)
 				DMUtils.OnAnomalyScience.Remove(anomalyReceive);

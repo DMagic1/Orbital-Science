@@ -109,6 +109,8 @@ namespace DMagic.Parameters
 			if (!registered)
 				return;
 
+			registered = false;
+
 			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
 			GameEvents.onVesselCreate.Remove(newVesselCheck);
 			GameEvents.onPartCouple.Remove(dockCheck);

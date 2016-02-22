@@ -119,6 +119,8 @@ namespace DMagic.Parameters
 			if (!registered)
 				return;
 
+			registered = false;
+
 			GameEvents.OnScienceRecieved.Remove(scienceRecieve);
 			DMUtils.OnAsteroidScience.Remove(asteroidMonitor);
 		}

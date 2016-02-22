@@ -99,6 +99,8 @@ namespace DMagic.Parameters
 			if (!registered)
 				return;
 
+			registered = false;
+
 			GameEvents.Contract.onParameterChange.Remove(onParamChange);
 		}
 

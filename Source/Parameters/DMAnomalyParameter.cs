@@ -124,6 +124,8 @@ namespace DMagic.Parameters
 			if (!registered)
 				return;
 
+			registered = false;
+
 			GameEvents.OnScienceRecieved.Remove(anomalyScience);
 			DMUtils.OnAnomalyScience.Remove(monitorAnomScience);
 		}
