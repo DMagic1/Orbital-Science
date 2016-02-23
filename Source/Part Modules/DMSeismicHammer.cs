@@ -444,7 +444,7 @@ namespace DMagic.Part_Modules
 			}
 
 			//Take any changes to the rescale factor into account
-			float scale = part.rescaleFactor * scaleModifier;
+			float scale = part.rescaleFactor * scaleModifier * part.transform.GetChild(0).localScale.y;
 
 			if (rayImpact(values.OnAsteroid, ExtensionTransform, scale, 5.7f, out distance))
 			{

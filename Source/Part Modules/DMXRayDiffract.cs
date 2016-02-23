@@ -62,7 +62,7 @@ namespace DMagic.Part_Modules
 			Transform t = part.FindModelTransform(drillTransform);
 			Vector3 p = t.position;
 			Ray r = new Ray(p, -1f * t.forward);
-			float scale = part.rescaleFactor;
+			float scale = part.rescaleFactor * part.transform.GetChild(0).localScale.y;
 
 			Physics.Raycast(r, out hit, drillLength * scale);
 			if (hit.collider != null)
