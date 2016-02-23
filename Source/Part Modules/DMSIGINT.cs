@@ -50,6 +50,43 @@ namespace DMagic.Part_Modules
 			assignObjects();
 
 			base.OnStart(state);
+
+			if (state != StartState.Editor)
+				return;
+
+			setTransformState(false);
+
+			DMUtils.DebugLog("Turning off skinned mesh components...");
+
+			for (int i = 0; i < dishObjects.Count; i++)
+			{
+				GameObject obj = dishObjects[i];
+
+				if (obj == null)
+					continue;
+
+				DMUtils.DebugLog("looking for skinned mesh components...");
+
+				List<Renderer> renderers = obj.GetComponentsInChildren<Renderer>(true).ToList();
+
+				if (renderers.Count == 0)
+					return;
+
+				for (int j = 0; j < renderers.Count; j++)
+				{
+					Renderer r = renderers[j];
+
+					if (r == null)
+						continue;
+
+					DMUtils.DebugLog("Setting skinned mesh component null...");
+
+					if (r is SkinnedMeshRenderer)
+					{
+						r = null;
+					}
+				}
+			}
 		}
 
 		private void assignTransforms()
@@ -91,6 +128,20 @@ namespace DMagic.Part_Modules
 
 				dishObjects.Add(obj);
 			}
+		}
+
+		public override void editorDeployEvent()
+		{
+			Events["editorDeployEvent"].active = false;
+			Events["editorRetractEvent"].active = false;
+			return;
+		}
+
+		public override void editorRetractEvent()
+		{
+			Events["editorDeployEvent"].active = false;
+			Events["editorRetractEvent"].active = false;
+			return;
 		}
 
 		protected override void runExperiment(ExperimentSituations sit, bool silent)
