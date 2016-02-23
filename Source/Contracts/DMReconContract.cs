@@ -260,7 +260,11 @@ namespace DMagic.Contracts
 
 			float Mod = primaryModifier * diffModifier;
 
-			this.agent = AgentList.Instance.GetAgent("DMagic");
+			int t = rand.Next(0, 4);
+			if (t == 0)
+				this.agent = AgentList.Instance.GetAgent("DMagic");
+			else
+				this.agent = AgentList.Instance.GetAgentRandom();
 
 			if (this.agent == null)
 				this.agent = AgentList.Instance.GetAgentRandom();
