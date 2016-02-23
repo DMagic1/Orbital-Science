@@ -165,7 +165,11 @@ namespace DMagic.Part_Modules
 
 		public override string GetInfo()
 		{
-			return base.GetInfo();
+			string info = base.GetInfo();
+
+			info += string.Format("Transmission: {0:P0}\n", transmitValue);
+
+			return info;
 		}
 
 		protected virtual void EventsCheck()

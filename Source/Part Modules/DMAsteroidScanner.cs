@@ -384,6 +384,7 @@ namespace DMagic.Part_Modules
 		public override string GetInfo()
 		{
 			string info = base.GetInfo();
+			info += string.Format("Transmission: {0:P0}\n", transmitValue);
 			if (resourceCost > 0f && PartResourceLibrary.Instance.GetDefinition(experimentResource) != null)
 			{
 				info += string.Format("Requires:\n-{0}: {1}/s\n", experimentResource, resourceCost);

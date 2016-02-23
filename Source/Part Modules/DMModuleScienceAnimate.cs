@@ -282,17 +282,18 @@ namespace DMagic.Part_Modules
 		public override string GetInfo()
 		{
 			string info = base.GetInfo();
+			info += string.Format("\nTransmission: {0:P0}\n", xmitDataScalar);
 			if (!rerunnable)
 			{
-				info += string.Format("\nMax Samples: {0}\n", experimentLimit);
-				info += string.Format("Scientist Level For Reset: {0}", resetLevel);
+				info += string.Format("Max Samples: {0}\n", experimentLimit);
+				info += string.Format("Scientist Level For Reset: {0}\n", resetLevel);
 			}
 			if (resourceExpCost > 0)
 			{
 				float time = waitForAnimationTime;
 				if (time == -1 && anim != null && !string.IsNullOrEmpty(animationName))
 					time = anim[animationName].length;
-				info += string.Format("\nRequires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
+				info += string.Format("Requires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
 			}
 			return info;
 		}
@@ -519,7 +520,7 @@ namespace DMagic.Part_Modules
 		}
 
 		[KSPEvent(guiActiveEditor = true, guiName = "Deploy", active = true)]
-		public void editorDeployEvent()
+		public virtual void editorDeployEvent()
 		{
 			deployEvent();
 			IsDeployed = false;
@@ -528,7 +529,7 @@ namespace DMagic.Part_Modules
 		}
 
 		[KSPEvent(guiActiveEditor = true, guiName = "Retract", active = false)]
-		public void editorRetractEvent()
+		public virtual void editorRetractEvent()
 		{
 			retractEvent();
 			Events["editorDeployEvent"].active = true;
