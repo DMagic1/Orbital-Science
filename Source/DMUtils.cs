@@ -57,7 +57,7 @@ namespace DMagic
 		internal static void Logging(string s, params object[] stringObjects)
 		{
 			s = string.Format(s, stringObjects);
-			string finalLog = string.Format("[DM] {0}", s);
+			string finalLog = string.Format("[DMOS] {0}", s);
 			Debug.Log(finalLog);
 		}
 
