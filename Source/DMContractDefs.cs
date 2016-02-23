@@ -42,9 +42,9 @@ namespace DMagic
 		{
 			public static class Expire
 			{
-				public static int MinimumExpireDays = 5;
+				public static int MinimumExpireDays = 4;
 
-				public static int MaximumExpireDays = 15;
+				public static int MaximumExpireDays = 10;
 
 				public static float DeadlineYears = 1.5f;
 			}
@@ -57,7 +57,7 @@ namespace DMagic
 
 				public static float BaseFailure = 20000;
 
-				public static float ParamReward = 12000;
+				public static float ParamReward = 8000;
 
 				public static float ParamFailure = 0;
 			}
@@ -66,16 +66,16 @@ namespace DMagic
 			{
 				public static float BaseReward = 0;
 
-				public static float ParamReward = 6;
+				public static float ParamReward = 5;
 
 				public static float SecondaryReward = 0.25f;
 			}
 
 			public static class Reputation
 			{
-				public static float BaseReward = 8;
+				public static float BaseReward = 7;
 
-				public static float BaseFailure = 9;
+				public static float BaseFailure = 6;
 
 				public static float ParamReward = 0;
 
@@ -100,9 +100,9 @@ namespace DMagic
 		{
 			public static class Expire
 			{
-				public static int MinimumExpireDays = 1;
+				public static int MinimumExpireDays = 4;
 
-				public static int MaximumExpireDays = 7;
+				public static int MaximumExpireDays = 10;
 
 				public static float DeadlineYears = 3.8f;
 			}
@@ -129,9 +129,9 @@ namespace DMagic
 
 			public static class Reputation
 			{
-				public static float BaseReward = 1.5f;
+				public static float BaseReward = 8;
 
-				public static float BaseFailure = 1.5f;
+				public static float BaseFailure = 6;
 
 				public static float ParamReward = 0;
 
@@ -152,9 +152,9 @@ namespace DMagic
 		{
 			public static class Expire
 			{
-				public static int MinimumExpireDays = 5;
+				public static int MinimumExpireDays = 4;
 
-				public static int MaximumExpireDays = 15;
+				public static int MaximumExpireDays = 10;
 
 				public static float DeadlineYears = 1.7f;
 			}
@@ -167,7 +167,7 @@ namespace DMagic
 
 				public static float BaseFailure = 7500;
 
-				public static float ParamReward = 3500;
+				public static float ParamReward = 3000;
 
 				public static float ParamFailure = 0;
 			}
@@ -176,14 +176,14 @@ namespace DMagic
 			{
 				public static float BaseReward = 0;
 
-				public static float ParamReward = 0.2f;
+				public static float ParamReward = 0.25f;
 			}
 
 			public static class Reputation
 			{
-				public static float BaseReward = 1.9f;
+				public static float BaseReward = 12;
 
-				public static float BaseFailure = 1.5f;
+				public static float BaseFailure = 10;
 
 				public static float ParamReward = 0;
 
@@ -204,38 +204,38 @@ namespace DMagic
 		{
 			public static class Expire
 			{
-				public static int MinimumExpireDays = 5;
+				public static int MinimumExpireDays = 4;
 
-				public static int MaximumExpireDays = 15;
+				public static int MaximumExpireDays = 10;
 
 				public static float DeadlineModifier = 3.7f;
 			}
 
 			public static class Funds
 			{
-				public static float BaseAdvance = 35000;
+				public static float BaseAdvance = 21000;
 
-				public static float BaseReward = 40000;
+				public static float BaseReward = 25000;
 
-				public static float BaseFailure = 28000;
+				public static float BaseFailure = 23000;
 
-				public static float ParamReward = 5000;
+				public static float ParamReward = 4000;
 
 				public static float ParamFailure = 0;
 			}
 
 			public static class Science
 			{
-				public static float BaseReward = 15;
+				public static float BaseReward = 24;
 
-				public static float ParamReward = 2f;
+				public static float ParamReward = 2;
 			}
 
 			public static class Reputation
 			{
-				public static float BaseReward = 8f;
+				public static float BaseReward = 8;
 
-				public static float BaseFailure = 7f;
+				public static float BaseFailure = 7;
 
 				public static float ParamReward = 0;
 
@@ -272,38 +272,38 @@ namespace DMagic
 		{
 			public static class Expire
 			{
-				public static int MinimumExpireDays = 5;
+				public static int MinimumExpireDays = 4;
 
-				public static int MaximumExpireDays = 15;
+				public static int MaximumExpireDays = 10;
 
 				public static float DeadlineModifier = 3.9f;
 			}
 
 			public static class Funds
 			{
-				public static float BaseAdvance = 35000;
+				public static float BaseAdvance = 50000;
 
-				public static float BaseReward = 40000;
+				public static float BaseReward = 60000;
 
-				public static float BaseFailure = 28000;
+				public static float BaseFailure = 38000;
 
-				public static float ParamReward = 5000;
+				public static float ParamReward = 8000;
 
 				public static float ParamFailure = 0;
 			}
 
 			public static class Science
 			{
-				public static float BaseReward = 20;
+				public static float BaseReward = 10;
 
-				public static float ParamReward = 2f;
+				public static float ParamReward = 2;
 			}
 
 			public static class Reputation
 			{
-				public static float BaseReward = 10;
+				public static float BaseReward = 12;
 
-				public static float BaseFailure = 12f;
+				public static float BaseFailure = 10;
 
 				public static float ParamReward = 0;
 
