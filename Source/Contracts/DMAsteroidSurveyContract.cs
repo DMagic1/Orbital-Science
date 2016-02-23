@@ -136,8 +136,8 @@ namespace DMagic.Contracts
 
 					DMcp.addToSubParams(DMAP);
 					float modifier = ((float)rand.Next(85, 116) / 100f);
-					DMAP.SetScience(DMAP.Container.Exp.baseValue * DMContractDefs.DMAsteroid.Science.ParamReward * DMUtils.asteroidSubjectVal(size), null);
-					DMAP.SetFunds(DMContractDefs.DMAsteroid.Funds.ParamReward * DMUtils.asteroidSubjectVal(size) * modifier, DMContractDefs.DMAsteroid.Funds.ParamFailure * DMUtils.asteroidSubjectVal(size) * modifier, null);
+					DMAP.SetScience(DMAP.Container.Exp.baseValue * DMContractDefs.DMAsteroid.Science.ParamReward * (DMUtils.asteroidSubjectVal(size) / 2), null);
+					DMAP.SetFunds(DMContractDefs.DMAsteroid.Funds.ParamReward * modifier, DMContractDefs.DMAsteroid.Funds.ParamFailure * DMUtils.asteroidSubjectVal(size) * modifier, null);
 					DMAP.SetReputation(DMContractDefs.DMAsteroid.Reputation.ParamReward * modifier, DMContractDefs.DMAsteroid.Reputation.ParamFailure * modifier, null);
 					limit++;
 				}
@@ -148,7 +148,7 @@ namespace DMagic.Contracts
 
 			float primaryModifier = ((float)rand.Next(85, 116) / 100f);
 
-			float Mod = primaryModifier * (DMcp.ParameterCount * (size + 1));
+			float Mod = primaryModifier * DMcp.ParameterCount;
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
 
@@ -158,7 +158,7 @@ namespace DMagic.Contracts
 			base.SetExpiry(DMContractDefs.DMAsteroid.Expire.MinimumExpireDays, DMContractDefs.DMAsteroid.Expire.MaximumExpireDays);
 			base.SetDeadlineYears(DMContractDefs.DMAsteroid.Expire.DeadlineYears * primaryModifier, null);
 			base.SetReputation(DMContractDefs.DMAsteroid.Reputation.BaseReward * primaryModifier, DMContractDefs.DMAsteroid.Reputation.BaseFailure * primaryModifier, null);
-			base.SetFunds(DMContractDefs.DMAsteroid.Funds.BaseAdvance *Mod, DMContractDefs.DMAsteroid.Funds.BaseReward * Mod, DMContractDefs.DMAsteroid.Funds.BaseFailure * Mod, null);
+			base.SetFunds(DMContractDefs.DMAsteroid.Funds.BaseAdvance * Mod, DMContractDefs.DMAsteroid.Funds.BaseReward * Mod, DMContractDefs.DMAsteroid.Funds.BaseFailure * Mod, null);
 			base.SetScience(DMContractDefs.DMAsteroid.Science.BaseReward * primaryModifier, null);
 			return true;
 		}
