@@ -56,8 +56,11 @@ namespace DMagic.Part_Modules
 
 			setTransformState(false);
 
-			DMUtils.DebugLog("Turning off skinned mesh components...");
+			disableEditorSkinnedMesh();
+		}
 
+		private void disableEditorSkinnedMesh()
+		{
 			for (int i = 0; i < dishObjects.Count; i++)
 			{
 				GameObject obj = dishObjects[i];
@@ -65,25 +68,20 @@ namespace DMagic.Part_Modules
 				if (obj == null)
 					continue;
 
-				DMUtils.DebugLog("looking for skinned mesh components...");
-
-				List<Renderer> renderers = obj.GetComponentsInChildren<Renderer>(true).ToList();
+				List<SkinnedMeshRenderer> renderers = obj.GetComponentsInChildren<SkinnedMeshRenderer>(true).ToList();
 
 				if (renderers.Count == 0)
 					return;
 
 				for (int j = 0; j < renderers.Count; j++)
 				{
-					Renderer r = renderers[j];
+					SkinnedMeshRenderer r = renderers[j];
 
 					if (r == null)
 						continue;
 
-					if (r is SkinnedMeshRenderer)
-					{
-						DMUtils.DebugLog("Setting skinned mesh component null...");
-						r = null;
-					}
+					DMUtils.DebugLog("Setting skinned mesh component null...");
+					r = null;
 				}
 			}
 		}
@@ -225,16 +223,12 @@ namespace DMagic.Part_Modules
 			if (!breakable)
 				return;
 
-			DMUtils.DebugLog("Setting Transform State To {0}", on);
-
 			for (int i = 0; i < dishObjects.Count; i++)
 			{
 				GameObject obj = dishObjects[i];
 
 				if (obj == null)
 					continue;
-
-				DMUtils.DebugLog("Setting False...");
 
 				obj.SetActive(on);
 			}
