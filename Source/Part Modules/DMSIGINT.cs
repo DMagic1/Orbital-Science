@@ -79,10 +79,9 @@ namespace DMagic.Part_Modules
 					if (r == null)
 						continue;
 
-					DMUtils.DebugLog("Setting skinned mesh component null...");
-
 					if (r is SkinnedMeshRenderer)
 					{
+						DMUtils.DebugLog("Setting skinned mesh component null...");
 						r = null;
 					}
 				}
