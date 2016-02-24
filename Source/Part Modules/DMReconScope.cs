@@ -187,6 +187,9 @@ namespace DMagic.Part_Modules
 
 			base.deployEvent();
 
+			if (HighLogic.LoadedSceneIsEditor)
+				return;
+
 			StartCoroutine(startLooping(waitForAnimationTime));
 		}
 
@@ -237,6 +240,9 @@ namespace DMagic.Part_Modules
 
 		private void stopLoopingAnimation()
 		{
+			if (HighLogic.LoadedSceneIsEditor)
+				return;
+
 			if (loopingAnim == null)
 				return;
 
@@ -246,6 +252,9 @@ namespace DMagic.Part_Modules
 
 		private float getTimeRemaining()
 		{
+			if (HighLogic.LoadedSceneIsEditor)
+				return 0;
+
 			float f = 0;
 
 			if (loopingAnim == null)
