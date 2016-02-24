@@ -191,6 +191,8 @@ namespace DMagic.Part_Modules
 
 		private void Update()
 		{
+			DMUtils.DebugLog("Hammer Local Scale [{0}]", part.transform.GetChild(0).localScale.y);
+
 			EventsCheck();
 
 			if (!HighLogic.LoadedSceneIsFlight)
@@ -444,13 +446,13 @@ namespace DMagic.Part_Modules
 			}
 
 			//Take any changes to the rescale factor into account
-			float scale = part.rescaleFactor * scaleModifier * part.transform.GetChild(0).localScale.y;
+			float scale = part.rescaleFactor * scaleModifier * part.transform.localScale.y;
 
-			if (rayImpact(values.OnAsteroid, ExtensionTransform, scale, 5.7f, out distance))
+			if (rayImpact(values.OnAsteroid, ExtensionTransform, scale, 2.45f + 1.41f, out distance))
 			{
 				useDistance = true;
 
-				distance -= (2f * scale);
+				distance -= (1.41f * scale);
 			}
 
 			//Calculate the angle on the Z axis
@@ -517,7 +519,7 @@ namespace DMagic.Part_Modules
 			if (!useDistance)
 			{
 				//After the transform is rotated and pointing at the surface draw a ray from the extension transform; check for impacts on the terrain
-				if (!rayImpact(values.OnAsteroid, ExtensionTransform, scale, 3.7f, out distance))
+				if (!rayImpact(values.OnAsteroid, ExtensionTransform, scale, 2.45f, out distance))
 				{
 					//If no impact is detected within the distance limit stop the animation, reverse the rotation, and cancel the coroutine
 					DMUtils.DebugLog("Hammer Failed: Distance: {0:N3}", distance);
@@ -550,7 +552,7 @@ namespace DMagic.Part_Modules
 			DMUtils.DebugLog("Hammer Hit: Distance: {0:N3}", distance);
 
 			//We have to subtract the length of the impact hammer from the impact distance, leaving only the extension transform length
-			distance -= (1.5f * scale);
+			distance = distance - (0.75f * scale) - (0.6f * scale);
 
 			//Transform translation does not take the part scale into account, so we need to convert the distance back into the unscaled dimensions
 			distance /= scale;
