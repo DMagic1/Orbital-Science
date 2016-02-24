@@ -33,6 +33,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace DMagic.Part_Modules
@@ -121,6 +122,12 @@ namespace DMagic.Part_Modules
 			if (!HighLogic.LoadedSceneIsFlight)
 				return;
 
+			if (vessel == null)
+				return;
+
+			if (vessel.atmDensity <= 0)
+				return;
+
 			if (!IsDeployed)
 				return;
 
@@ -133,7 +140,10 @@ namespace DMagic.Part_Modules
 					return;
 			}
 
-			if (part.ShieldedFromAirstream)
+			if (vessel.HoldPhysics)
+				return;
+
+			if (shieldedState())
 				return;
 
 			float velocity = Mathf.Abs(Vector3.Dot(vessel.srf_velocity.normalized, forwardTransform.forward.normalized));
@@ -144,6 +154,48 @@ namespace DMagic.Part_Modules
 			{
 				DMUtils.Logging("Breakable Part {0} - Breaking Force Exceded", part.name);
 				onBreak();
+			}
+		}
+
+		//Handle FAR shielded state; from RemoteTech:
+		//https://github.com/RemoteTechnologiesGroup/RemoteTech/blob/develop/src/RemoteTech/Modules/ModuleRTAntenna.cs#L427-L481
+		private bool shieldedState()
+		{
+			PartModule FARPartModule = GetFARModule();
+
+			if (FARPartModule != null)
+			{
+				try
+				{
+					FieldInfo fi = FARPartModule.GetType().GetField("isShielded");
+					return (bool)(fi.GetValue(FARPartModule));
+				}
+				catch (Exception e)
+				{
+					DMUtils.Logging("GetShieldedState: {0}", e);
+				}
+			}
+
+			return part.ShieldedFromAirstream;
+		}
+
+		private PartModule GetFARModule()
+		{
+			if (part.Modules.Contains("FARBasicDragModel"))
+			{
+				return part.Modules["FARBasicDragModel"];
+			}
+			else if (part.Modules.Contains("FARWingAerodynamicModel"))
+			{
+				return part.Modules["FARWingAerodynamicModel"];
+			}
+			else if (part.Modules.Contains("FARControlSys"))
+			{
+				return part.Modules["FARControlSys"];
+			}
+			else
+			{
+				return null;
 			}
 		}
 
