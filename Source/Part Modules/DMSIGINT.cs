@@ -54,36 +54,8 @@ namespace DMagic.Part_Modules
 			if (state != StartState.Editor)
 				return;
 
+			//Turn off the dish renderer so that the editor size check doesn't come out wrong
 			setTransformState(false);
-
-			disableEditorSkinnedMesh();
-		}
-
-		private void disableEditorSkinnedMesh()
-		{
-			for (int i = 0; i < dishObjects.Count; i++)
-			{
-				GameObject obj = dishObjects[i];
-
-				if (obj == null)
-					continue;
-
-				List<SkinnedMeshRenderer> renderers = obj.GetComponentsInChildren<SkinnedMeshRenderer>(true).ToList();
-
-				if (renderers.Count == 0)
-					return;
-
-				for (int j = 0; j < renderers.Count; j++)
-				{
-					SkinnedMeshRenderer r = renderers[j];
-
-					if (r == null)
-						continue;
-
-					DMUtils.DebugLog("Setting skinned mesh component null...");
-					r = null;
-				}
-			}
 		}
 
 		private void assignTransforms()
@@ -127,19 +99,19 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		public override void editorDeployEvent()
-		{
-			Events["editorDeployEvent"].active = false;
-			Events["editorRetractEvent"].active = false;
-			return;
-		}
+		//public override void editorDeployEvent()
+		//{
+		//	Events["editorDeployEvent"].active = false;
+		//	Events["editorRetractEvent"].active = false;
+		//	return;
+		//}
 
-		public override void editorRetractEvent()
-		{
-			Events["editorDeployEvent"].active = false;
-			Events["editorRetractEvent"].active = false;
-			return;
-		}
+		//public override void editorRetractEvent()
+		//{
+		//	Events["editorDeployEvent"].active = false;
+		//	Events["editorRetractEvent"].active = false;
+		//	return;
+		//}
 
 		protected override void runExperiment(ExperimentSituations sit, bool silent)
 		{
