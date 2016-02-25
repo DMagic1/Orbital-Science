@@ -51,6 +51,7 @@ namespace DMagic.Part_Modules
 		private string failMessage;
 		private Transform RotationTransform;
 		private Transform ExtensionTransform;
+		private Transform modelTransform;
 		private bool dryRun = true;
 		private bool silentRun;
 		private DMSeismometerValues values;
@@ -75,7 +76,8 @@ namespace DMagic.Part_Modules
 			if (!string.IsNullOrEmpty(hammerAnimation))
 				Anim = part.FindModelAnimators(hammerAnimation)[0];
 			RotationTransform = part.FindModelTransform(rotationTransformName);
-			ExtensionTransform = part.FindModelTransform(extensionTransformName);			
+			ExtensionTransform = part.FindModelTransform(extensionTransformName);
+			modelTransform = part.transform.GetChild(0).GetChild(0);
 
 			base.OnStart(state);
 
@@ -95,13 +97,13 @@ namespace DMagic.Part_Modules
 			GameEvents.onVesselWasModified.Add(onVesselModified);
 			GameEvents.onPartCouple.Add(onCouple);
 
-			Transform l1 = part.FindModelTransform("SignalLight_004");
-			Transform l2 = part.FindModelTransform("SignalLight_003");
-			Transform l3 = part.FindModelTransform("SignalLight_002");
-			Transform l4 = part.FindModelTransform("SignalLight_001");
-			Transform l5 = part.FindModelTransform("SignalLight_000");
-			Transform s1 = part.FindModelTransform("SensorLight_000");
-			Transform s2 = part.FindModelTransform("SensorLight_001");
+			Transform l1 = part.FindModelTransform("SignalLight.004");
+			Transform l2 = part.FindModelTransform("SignalLight.003");
+			Transform l3 = part.FindModelTransform("SignalLight.002");
+			Transform l4 = part.FindModelTransform("SignalLight.001");
+			Transform l5 = part.FindModelTransform("SignalLight.000");
+			Transform s1 = part.FindModelTransform("SensorLight.000");
+			Transform s2 = part.FindModelTransform("SensorLight.001");
 
 			if (l1 != null && l1.renderer != null)
 				scoreLightOne = l1.renderer.material;
@@ -191,8 +193,6 @@ namespace DMagic.Part_Modules
 
 		private void Update()
 		{
-			DMUtils.DebugLog("Hammer Local Scale [{0}]", part.transform.GetChild(0).localScale.y);
-
 			EventsCheck();
 
 			if (!HighLogic.LoadedSceneIsFlight)
@@ -446,13 +446,19 @@ namespace DMagic.Part_Modules
 			}
 
 			//Take any changes to the rescale factor into account
-			float scale = part.rescaleFactor * scaleModifier * part.transform.localScale.y;
+			float scale = part.rescaleFactor * scaleModifier *  modelTransform.localScale.y;
 
+			//Make a first distance check before anything moves; this will only be used if the angle is small and prevents errors where the drill punches through the surface
 			if (rayImpact(values.OnAsteroid, ExtensionTransform, scale, 2.45f + 1.41f, out distance))
 			{
 				useDistance = true;
 
+				DMUtils.DebugLog("Hammer Hit: Distance: {0:N3}", distance);
+
+				//Subtract the distance that the hammer body will move
 				distance -= (1.41f * scale);
+
+				DMUtils.DebugLog("Hammer Hit: New Distance: {0:N3}", distance);
 			}
 
 			//Calculate the angle on the Z axis
@@ -469,6 +475,7 @@ namespace DMagic.Part_Modules
 			//Reverse the angle to compensate for initial transform rotation
 			angle *= -1;
 
+			//If the angle is small enough use the first distance calculated
 			if (useDistance && Mathf.Abs(angle) < 15)
 				useDistance = true;
 			else
@@ -551,60 +558,41 @@ namespace DMagic.Part_Modules
 
 			DMUtils.DebugLog("Hammer Hit: Distance: {0:N3}", distance);
 
-			//We have to subtract the length of the impact hammer from the impact distance, leaving only the extension transform length
+			//We have to subtract the length of the impact hammer and the extensions transform position from the impact distance, leaving only the extension transform length
 			distance = distance - (0.75f * scale) - (0.6f * scale);
+
+			DMUtils.DebugLog("Hammer Hit: Second Distance: {0:N3}", distance);
 
 			//Transform translation does not take the part scale into account, so we need to convert the distance back into the unscaled dimensions
 			distance /= scale;
 
-			//If the hammer is too close to the surface we risk flipping the vessel over, so check for a minimum distance here
-			//if (!values.OnAsteroid && distance < -0.5f)
-			//{
-			//	DMUtils.DebugLog("Hammer Failed: Distance To Close: {0:N3}", distance);
-			//	animator(-1f, 1f, Anim, hammerAnimation);
+			DMUtils.DebugLog("Hammer Hit: Third Distance: {0:N3}", distance);
 
-			//	ScreenMessages.PostScreenMessage("Seismic Hammer is too close to the surface...", 6f, ScreenMessageStyle.UPPER_CENTER);
+			//Then divide everything by 100 because of Unity scaling
+			distance /= 100f;
 
-			//	if (angle > 0)
-			//	{
-			//		while (Anim.IsPlaying(hammerAnimation) && RotationTransform.localEulerAngles.x > originalAngle)
-			//		{
-			//			rotation(originalAngle, TimeWarp.deltaTime * 30f);
-			//			yield return null;
-			//		}
-			//	}
-			//	else if (angle < 0)
-			//	{
-			//		while (Anim.IsPlaying(hammerAnimation) && fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-			//		{
-			//			rotation(originalAngle, TimeWarp.deltaTime * 30f);
-			//			yield return null;
-			//		}
-			//	}
-			//	RotationTransform.localEulerAngles = originalRotation;
+			DMUtils.DebugLog("Hammer Hit: Fourth Distance: {0:N5}", distance);
 
-			//	yield break;
-			//}
-
+			//We obviously don't want negative distance movements
 			distance = Math.Max(0, distance);
 
-			DMUtils.DebugLog("New Distance: {0:N3}", distance);
+			DMUtils.DebugLog("New Distance: {0:N5}", distance);
 
 			//Cache the original transform position and calculate the target position
 			Vector3 originalPosition = ExtensionTransform.localPosition;
 
 			float targetPosition = originalPosition.z - distance;
 
-			DMUtils.DebugLog("Drill Original Position: {0:N3}", originalPosition.z);
+			DMUtils.DebugLog("Drill Original Position: {0:N5}", originalPosition.z);
 
-			DMUtils.DebugLog("Drill Target Position: {0:N3}", targetPosition);
+			DMUtils.DebugLog("Drill Target Position: {0:N5}", targetPosition);
 
 			//While the animation is playing translate the extension transform out
 			if (distance > 0)
 			{
 				while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.65f && ExtensionTransform.localPosition.z > targetPosition)
 				{
-					//DMUtils.Logging("Drill Position: {0:N3}", ExtensionTransform.localPosition.z);
+					DMUtils.Logging("Drill Position: {0:N5}", ExtensionTransform.localPosition.z);
 					extension(Vector3.back, TimeWarp.deltaTime);
 					yield return null;
 				}
