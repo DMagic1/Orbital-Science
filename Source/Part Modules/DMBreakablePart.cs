@@ -231,9 +231,9 @@ namespace DMagic.Part_Modules
 
 				DMUtils.DebugLog("Breaking Object [{0}]...", o.name);
 
-				Vector3 randomAngular = new Vector3((float)DMUtils.rand.NextDouble(), (float)DMUtils.rand.NextDouble(), (float)DMUtils.rand.NextDouble());
+				Vector3 randomAngular = new Vector3((float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3);
 				r.angularVelocity = part.rigidbody.angularVelocity + randomAngular;
-				Vector3 randomVel = new Vector3(((float)DMUtils.rand.NextDouble() * 4) - 2, ((float)DMUtils.rand.NextDouble() * 4) - 2, ((float)DMUtils.rand.NextDouble() * 4) - 2);
+				Vector3 randomVel = new Vector3(((float)DMUtils.rand.NextDouble() * 8) - 4, ((float)DMUtils.rand.NextDouble() * 8) - 4, ((float)DMUtils.rand.NextDouble() * 8) - 4);
 				Vector3 localCOM = vessel.findWorldCenterOfMass() - part.rigidbody.worldCenterOfMass;
 				r.velocity = part.rigidbody.velocity + randomVel + Vector3.Cross(localCOM, rigidbody.angularVelocity);
 				DMUtils.DebugLog("New Velocity: [{0:F4}]", r.velocity.magnitude);
