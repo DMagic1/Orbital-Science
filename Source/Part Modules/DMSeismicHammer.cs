@@ -568,11 +568,6 @@ namespace DMagic.Part_Modules
 
 			DMUtils.DebugLog("Hammer Hit: Third Distance: {0:N3}", distance);
 
-			//Then divide everything by 100 because of Unity scaling
-			distance /= 100f;
-
-			DMUtils.DebugLog("Hammer Hit: Fourth Distance: {0:N5}", distance);
-
 			//We obviously don't want negative distance movements
 			distance = Math.Max(0, distance);
 
