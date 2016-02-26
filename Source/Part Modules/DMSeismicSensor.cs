@@ -76,11 +76,11 @@ namespace DMagic.Part_Modules
 			GameEvents.onVesselCreate.Add(onNewVessel);
 			GameEvents.onPartCouple.Add(onCouple);
 
-			Transform l1 = part.FindModelTransform("SignalLight_004");
-			Transform l2 = part.FindModelTransform("SignalLight_003");
-			Transform l3 = part.FindModelTransform("SignalLight_002");
-			Transform l4 = part.FindModelTransform("SignalLight_001");
-			Transform l5 = part.FindModelTransform("SignalLight_000");
+			Transform l1 = part.FindModelTransform("SignalLight.004");
+			Transform l2 = part.FindModelTransform("SignalLight.003");
+			Transform l3 = part.FindModelTransform("SignalLight.002");
+			Transform l4 = part.FindModelTransform("SignalLight.001");
+			Transform l5 = part.FindModelTransform("SignalLight.000");
 			Transform s1 = part.FindModelTransform("SignalLight01");
 
 			if (l1 != null && l1.renderer != null)
