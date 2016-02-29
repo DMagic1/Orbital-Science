@@ -51,6 +51,8 @@ namespace DMagic.Part_Modules
 
 			base.OnStart(state);
 
+			Events["fixPart"].guiName = "Fix Dish";
+
 			if (state != StartState.Editor)
 				return;
 
@@ -98,20 +100,6 @@ namespace DMagic.Part_Modules
 				dishObjects.Add(obj);
 			}
 		}
-
-		//public override void editorDeployEvent()
-		//{
-		//	Events["editorDeployEvent"].active = false;
-		//	Events["editorRetractEvent"].active = false;
-		//	return;
-		//}
-
-		//public override void editorRetractEvent()
-		//{
-		//	Events["editorDeployEvent"].active = false;
-		//	Events["editorRetractEvent"].active = false;
-		//	return;
-		//}
 
 		protected override void runExperiment(ExperimentSituations sit, bool silent)
 		{
