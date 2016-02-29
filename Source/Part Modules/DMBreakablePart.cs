@@ -59,9 +59,9 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public string forwardTransformName = "";
 		[KSPField]
-		public float componentDrag = 0.5f;
+		public float componentDrag = 1f;
 		[KSPField]
-		public float componentMass = 0.001f;
+		public float componentMass = 0.1f;
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -76,9 +76,11 @@ namespace DMagic.Part_Modules
 			if (broken)
 			{
 				setTransformState(false);
+				base.Events["retractEvent"].active = base.IsDeployed && showEndEvent;
+				base.Events["deployEvent"].active = false;
 			}
 
-			Events["fixPart"].active = fixable && breakable;
+			Events["fixPart"].active = fixable && breakable && broken;
 			Events["fixPart"].unfocusedRange = interactionRange;
 		}
 
@@ -232,11 +234,16 @@ namespace DMagic.Part_Modules
 				DMUtils.DebugLog("Breaking Object [{0}]...", o.name);
 
 				Vector3 randomAngular = new Vector3((float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3);
+				DMUtils.DebugLog("Random Angular: [{0:F4}]", randomAngular);
+				DMUtils.DebugLog("Old Angular: [{0:F4}]", r.angularVelocity);
 				r.angularVelocity = part.rigidbody.angularVelocity + randomAngular;
+				DMUtils.DebugLog("New Angular: [{0:F4}]", r.angularVelocity);
 				Vector3 randomVel = new Vector3(((float)DMUtils.rand.NextDouble() * 8) - 4, ((float)DMUtils.rand.NextDouble() * 8) - 4, ((float)DMUtils.rand.NextDouble() * 8) - 4);
+				DMUtils.DebugLog("Random Velocity: [{0:F4}]", randomVel);
 				Vector3 localCOM = vessel.findWorldCenterOfMass() - part.rigidbody.worldCenterOfMass;
+				DMUtils.DebugLog("Old Velocity: [{0:F4}]", r.velocity);
 				r.velocity = part.rigidbody.velocity + randomVel + Vector3.Cross(localCOM, rigidbody.angularVelocity);
-				DMUtils.DebugLog("New Velocity: [{0:F4}]", r.velocity.magnitude);
+				DMUtils.DebugLog("New Velocity: [{0:F4}]", r.velocity);
 				r.mass = componentMass;
 				r.useGravity = false;
 				o.transform.parent = null;
@@ -252,7 +259,7 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator breakablePartsRemove()
 		{
-			yield return new WaitForSeconds(1);
+			yield return new WaitForSeconds(0.25f);
 
 			setTransformState(false);
 		}
@@ -288,7 +295,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		[KSPEvent(guiActive = true, guiName = "Fix", active = true)]
+		[KSPEvent(guiActive = false, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Fix", active = false)]
 		public void fixPart()
 		{
 			if (!fixable)
@@ -303,6 +310,32 @@ namespace DMagic.Part_Modules
 				return;
 			}
 
+			Vessel v = FlightGlobals.ActiveVessel;
+
+			if (v == null)
+				return;
+
+			if (!v.isEVA)
+				return;
+
+			if (v.parts[0] == null)
+				return;
+
+			if (v.parts[0].protoModuleCrew.Count <= 0)
+				return;
+
+			if (v.parts[0].protoModuleCrew[0].experienceTrait.TypeName != "Engineer")
+			{
+				ScreenMessages.PostScreenMessage(string.Format("An engineer of at least level [{0}] is required to repair this instrument.", fixLevel), 6f, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+
+			if (v.parts[0].protoModuleCrew[0].experienceLevel < fixLevel)
+			{
+				ScreenMessages.PostScreenMessage(string.Format("An engineer of at least level [{0}] is required to repair this instrument.", fixLevel), 6f, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+
 			onFix();
 		}
 
@@ -311,6 +344,9 @@ namespace DMagic.Part_Modules
 			breakObjects();
 
 			broken = true;
+
+			if (fixable)
+				Events["fixPart"].active = false;
 		}
 
 		protected void onFix()
@@ -318,6 +354,8 @@ namespace DMagic.Part_Modules
 			broken = false;
 
 			setTransformState(true);
+
+			Events["fixPart"].active = false;
 		}
 	}
 }
