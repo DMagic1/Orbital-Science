@@ -197,9 +197,15 @@ namespace DMagic.Part_Modules
 					if (anim3 != null)
 						primaryAnimator(2.5f * animSpeed, 0f, WrapMode.Loop, looperAnimation, anim3);
 					enableIAnimators();
+					Events["deployEvent"].active = false;
+					Events["retractEvent"].active = !oneWayAnimation && !oneShot;
 				}
 				else
+				{
 					disableIAnimators();
+					Events["deployEvent"].active = showStartEvent;
+					Events["retractEvent"].active = false;
+				}
 			}
 		}
 
@@ -300,8 +306,8 @@ namespace DMagic.Part_Modules
 
 		private void setup()
 		{
-			Events["deployEvent"].guiActive = showStartEvent;
-			Events["retractEvent"].guiActive = showEndEvent;
+			Events["deployEvent"].guiActive = showStartEvent || oneShot;
+			Events["retractEvent"].guiActive = showEndEvent && !oneShot;
 			Events["toggleEvent"].guiActive = showToggleEvent;
 			Events["deployEvent"].guiName = startEventGUIName;
 			Events["retractEvent"].guiName = endEventGUIName;
@@ -468,6 +474,7 @@ namespace DMagic.Part_Modules
 		public virtual void retractEvent()
 		{
 			if (oneWayAnimation) return;
+			if (oneShot) return;
 			primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, animationName, anim);
 			IsDeployed = false;
 			if (USScience)
