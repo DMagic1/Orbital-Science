@@ -41,9 +41,17 @@ namespace DMagic.Part_Modules
 	{
 		private const string drillTransform = "SampleDrill";
 		private const string potato = "PotatoRoid";
+		private Transform modelTransform;
 
 		[KSPField]
 		public float drillLength = 4f;
+
+		public override void OnStart(PartModule.StartState state)
+		{
+			modelTransform = part.transform.GetChild(0).GetChild(0);
+
+			base.OnStart(state);
+		}
 
 		protected override bool canConduct()
 		{
@@ -62,7 +70,7 @@ namespace DMagic.Part_Modules
 			Transform t = part.FindModelTransform(drillTransform);
 			Vector3 p = t.position;
 			Ray r = new Ray(p, -1f * t.forward);
-			float scale = part.rescaleFactor * part.transform.GetChild(0).localScale.y;
+			float scale = part.rescaleFactor * drillLength * modelTransform.localScale.y;
 
 			Physics.Raycast(r, out hit, drillLength * scale);
 			if (hit.collider != null)
