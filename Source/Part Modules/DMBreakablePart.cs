@@ -249,6 +249,26 @@ namespace DMagic.Part_Modules
 				o.transform.parent = null;
 				physicalObject p = o.AddComponent<physicalObject>();
 				r.drag = componentDrag;
+
+				var colliders = o.GetComponentsInChildren<Collider>();
+
+				if (colliders.Length <= 0)
+					continue;
+
+				for (int j = 0; j < colliders.Length; j++)
+				{
+					Collider c = colliders[j];
+
+					if (c == null)
+						continue;
+
+					if (!c.enabled)
+						continue;
+
+					DMUtils.DebugLog("Setting Collider [{0}] Inactive", c.name);
+
+					c.enabled = false;
+				}
 			}
 
 			StartCoroutine(breakablePartsRemove());
@@ -259,7 +279,7 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator breakablePartsRemove()
 		{
-			yield return new WaitForSeconds(0.25f);
+			yield return new WaitForSeconds(0.75f);
 
 			setTransformState(false);
 		}
