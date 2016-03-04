@@ -128,7 +128,7 @@ namespace DMagic.Parameters
 		protected override string GetNotes()
 		{
 			if (type == 2)
-				return "The Anomalous Signal Scanner can only be used from very close range; deploy and use the scanner to give an indication of range and distance to target";
+				return "The Anomalous Signal Scanner can only be used from very close range; deploy and use the scanner to give an indication of range and direction to target";
 
 			return base.GetNotes();
 		}
