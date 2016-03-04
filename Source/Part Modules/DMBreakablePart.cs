@@ -50,6 +50,8 @@ namespace DMagic.Part_Modules
 		public bool breakable = true;
 		[KSPField]
 		public float breakingForce = 5;
+		//[KSPField(guiActive = true)]
+		//public string BForce = "";
 		[KSPField]
 		public bool fixable = true;
 		[KSPField]
@@ -84,12 +86,31 @@ namespace DMagic.Part_Modules
 			Events["fixPart"].unfocusedRange = interactionRange;
 		}
 
+		public override string GetInfo()
+		{
+			string info = base.GetInfo();
+
+			if (breakable)
+			{
+				info += "Breakable: <color=#15b01a>V</color>\n";
+
+				info += "Fixable: " + (fixable ? "<color=#15b01a>V</color>\n" : "<color=#e50000>X</color>\n");
+
+				if (fixable)
+					info += string.Format("Engineer Level To Fix: {0}\n", fixLevel);
+			}
+
+			return info;
+		}
+
 		public override void OnFixedUpdate()
 		{
 			base.OnFixedUpdate();
 
 			if (!breakable)
 				return;
+
+			//BForce = breakingForce.ToString("F2");
 
 			if (broken)
 				return;
@@ -201,11 +222,23 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		[KSPEvent(guiActive = true, active = true, guiName = "Break")]
-		public void breakStuff()
-		{
-			onBreak();
-		}
+		//[KSPEvent(guiActive = true, active = true, guiName = "Break")]
+		//public void breakStuff()
+		//{
+		//	onBreak();
+		//}
+
+		//[KSPEvent(guiActive = true, active = true)]
+		//public void breakAdd()
+		//{
+		//	breakingForce += 0.05f;
+		//}
+
+		//[KSPEvent(guiActive = true, active = true)]
+		//public void breakMinus()
+		//{
+		//	breakingForce -= 0.05f;
+		//}
 
 		private void breakObjects()
 		{
@@ -365,8 +398,8 @@ namespace DMagic.Part_Modules
 
 			broken = true;
 
-			if (fixable)
-				Events["fixPart"].active = false;
+			//if (fixable)
+			//	Events["fixPart"].active = true;
 		}
 
 		protected void onFix()
