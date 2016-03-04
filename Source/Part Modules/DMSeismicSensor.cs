@@ -101,9 +101,9 @@ namespace DMagic.Part_Modules
 		{
 			string info = base.GetInfo();
 
-			string ranges = string.Format("\nIdeal Seismic Pod Ranges:\nNear: {0:N0}m - {1:N0}m\nFar: {2:N0}m - {3:N0}m", DMSeismicHandler.nearPodThreshold, DMSeismicHandler.nearPodMaxDistance, DMSeismicHandler.farPodThreshold, DMSeismicHandler.farPodMaxDistance);
+			string ranges = string.Format("Ideal Seismic Pod Ranges:\nNear: {0:N0}m - {1:N0}m\nFar: {2:N0}m - {3:N0}m\n", DMSeismicHandler.nearPodThreshold, DMSeismicHandler.nearPodMaxDistance, DMSeismicHandler.farPodThreshold, DMSeismicHandler.farPodMaxDistance);
 
-			string angles = string.Format("\nIdeal Seismic Pod Angle Difference: {0:N0}° - 180°", DMSeismicHandler.podAngleThreshold);
+			string angles = string.Format("Ideal Seismic Pod Angle Difference: {0:N0}° - 180°\n", DMSeismicHandler.podAngleThreshold);
 
 			return info + ranges + angles; ;
 		}

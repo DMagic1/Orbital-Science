@@ -198,7 +198,7 @@ namespace DMagic.Part_Modules
 						primaryAnimator(2.5f * animSpeed, 0f, WrapMode.Loop, looperAnimation, anim3);
 					enableIAnimators();
 					Events["deployEvent"].active = false;
-					Events["retractEvent"].active = !oneWayAnimation && !oneShot;
+					Events["retractEvent"].active = !oneWayAnimation && !oneShot && showEndEvent;
 				}
 				else
 				{
@@ -301,6 +301,8 @@ namespace DMagic.Part_Modules
 					time = anim[animationName].length;
 				info += string.Format("Requires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
 			}
+			if (oneShot)
+				info += "OneShot: <color=#15b01a>V</color>\n";
 			return info;
 		}
 
