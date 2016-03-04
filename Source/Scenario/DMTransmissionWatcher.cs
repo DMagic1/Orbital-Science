@@ -39,27 +39,26 @@ namespace DMagic.Scenario
 	{
 		private static bool loaded = false;
 
-		private void Awake()
-		{
-			if (!loaded)
-			{
-				GameEvents.OnScienceRecieved.Add(scienceReceived);
-				loaded = true;
-			}
-		}
-
 		private void Start()
 		{
-			DontDestroyOnLoad(this);
-		}
+			if (loaded)
+				Destroy(gameObject);
 
-		private void OnDestroy()
-		{
-			GameEvents.OnScienceRecieved.Remove(scienceReceived);
+			loaded = true;
+
+			GameEvents.OnScienceRecieved.Add(scienceReceived);
+
+			DontDestroyOnLoad(this);
 		}
 
 		private void scienceReceived(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
+			if (sub == null)
+				return;
+
+			if (DMScienceScenario.SciScenario == null)
+				return;
+
 			if (HighLogic.LoadedSceneIsFlight)
 			{
 				DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);

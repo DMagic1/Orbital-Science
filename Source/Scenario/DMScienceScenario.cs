@@ -44,9 +44,6 @@ namespace DMagic.Scenario
 			get { return instance; }
 		}
 
-		//Anomaly tracking object
-		internal DMAnomalyList anomalyList;
-
 		//Master List for saved asteroid science data
 		private Dictionary<string, DMScienceData> recoveredDMScience = new Dictionary<string,DMScienceData>();
 
@@ -72,25 +69,55 @@ namespace DMagic.Scenario
 			ConfigNode results_node = new ConfigNode("Asteroid_Science");
 			foreach (DMScienceData data in recoveredDMScience.Values)
 			{
-				if (data != null)
+				if (data == null)
+					continue;
+
+				try
 				{
-					try
-					{
-						ConfigNode scienceResults_node = new ConfigNode("DM_Science");
-						scienceResults_node.AddValue("title", data.Title);
-						scienceResults_node.AddValue("bsv", data.BaseValue);
-						scienceResults_node.AddValue("scv", data.SciVal);
-						scienceResults_node.AddValue("sci", data.Science);
-						scienceResults_node.AddValue("cap", data.Cap);
-						results_node.AddNode(scienceResults_node);
-					}
-					catch (Exception e)
-					{
-						Debug.LogWarning("[DMagic] Error Saving Asteroid Science Data: " + e);
-					}
+					ConfigNode scienceResults_node = new ConfigNode("DM_Science");
+					scienceResults_node.AddValue("title", data.Title);
+					scienceResults_node.AddValue("bsv", data.BaseValue);
+					scienceResults_node.AddValue("scv", data.SciVal);
+					scienceResults_node.AddValue("sci", data.Science);
+					scienceResults_node.AddValue("cap", data.Cap);
+					results_node.AddNode(scienceResults_node);
+				}
+				catch (Exception e)
+				{
+					Debug.LogWarning("[DMagic] Error Saving Asteroid Science Data: " + e);
 				}
 			}
+
+			ConfigNode anomaly_node = new ConfigNode("Anomaly_Records");
+			for (int i = 0; i < DMAnomalyList.AnomalyCount; i++)
+			{
+				DMAnomalyStorage anomStorage = DMAnomalyList.getAnomalyStorage(i);
+
+				if (anomStorage == null)
+					continue;
+
+				ConfigNode anomalyList = new ConfigNode("DM_Anomaly_List");
+				anomalyList.AddValue("Body", anomStorage.Body.flightGlobalsIndex);
+
+				for (int j = 0; j < anomStorage.AnomalyCount; j++)
+				{
+					DMAnomalyObject anom = anomStorage.getAnomaly(j);
+
+					if (anom == null)
+						continue;
+
+					ConfigNode anomaly = new ConfigNode("DM_Anomaly");
+					anomaly.AddValue("Name", anom.Name);
+					anomaly.AddValue("Lat", anom.Lat.ToString("N5"));
+					anomaly.AddValue("Lon", anom.Lon.ToString("N5"));
+					anomaly.AddValue("Alt", anom.Alt.ToString("N5"));
+					anomalyList.AddNode(anomaly);
+				}
+				anomaly_node.AddNode(anomalyList);
+			}
+
 			node.AddNode(results_node);
+			node.AddNode(anomaly_node);
 		}
 
 		public override void OnLoad(ConfigNode node)
@@ -103,25 +130,52 @@ namespace DMagic.Scenario
 			{
 				foreach (ConfigNode scienceResults_node in results_node.GetNodes("DM_Science"))
 				{
-					if (scienceResults_node != null)
+					if (scienceResults_node == null)
+						continue;
+
+					string title = scienceResults_node.parse("title", "");
+					if (string.IsNullOrEmpty(title))
+						continue;
+
+					float bsv = scienceResults_node.parse("bsv", (float)1);
+					float scv = scienceResults_node.parse("scv", (float)1);
+					float sci = scienceResults_node.parse("sci", (float)0);
+					float cap = scienceResults_node.parse("cap", (float)1);
+
+					RecordNewScience(title, bsv, scv, sci, cap);
+				}
+			}
+
+			DMAnomalyList.clearAnomalies();
+			ConfigNode anomaly_node = node.GetNode("Anomaly_Records");
+			if (anomaly_node != null)
+			{
+				foreach (ConfigNode anomalyList in anomaly_node.GetNodes("DM_Anomaly_List"))
+				{
+					if (anomalyList == null)
+						continue;
+
+					CelestialBody body = anomalyList.parse("Body", (CelestialBody)null);
+					if (body == null)
+						continue;
+
+					DMAnomalyStorage anomStorage = new DMAnomalyStorage(body);
+
+					foreach (ConfigNode anomaly in anomalyList.GetNodes("DM_Anomaly"))
 					{
-						float bsv = 1;
-						float scv = 1;
-						float sci = 0;
-						float cap = 1;
-						if (!scienceResults_node.HasValue("title"))
+						string name = anomaly.parse("Name", "");
+						if (string.IsNullOrEmpty(name))
 							continue;
-						string title = scienceResults_node.GetValue("title");
-						if (!float.TryParse(scienceResults_node.GetValue("bsv"), out bsv))
-							bsv = 1;
-						if (!float.TryParse(scienceResults_node.GetValue("scv"), out scv))
-							scv = 1;
-						if (!float.TryParse(scienceResults_node.GetValue("sci"), out sci))
-							sci = 0;
-						if (!float.TryParse(scienceResults_node.GetValue("cap"), out cap))
-							cap = 1;
-						RecordNewScience(title, bsv, scv, sci, cap);
+
+						double lat = anomaly.parse("Lat", (double)0);
+						double lon = anomaly.parse("Lon", (double)0);
+						double alt = anomaly.parse("Alt", (double)0);
+
+						anomStorage.addAnomaly(new DMAnomalyObject(name, body, lat, lon, alt));
 					}
+
+					if (anomStorage.AnomalyCount > 0)
+						DMAnomalyList.addAnomalyStorage(body.bodyName, anomStorage);
 				}
 			}
 		}
@@ -129,16 +183,7 @@ namespace DMagic.Scenario
 		private void Start()
 		{
 			if (HighLogic.LoadedSceneIsFlight)
-			{
-				anomalyList = gameObject.AddComponent<DMAnomalyList>();
 				updateRemainingData();
-			}
-		}
-
-		private void OnDestroy()
-		{
-			if (anomalyList != null)
-				Destroy(anomalyList);
 		}
 
 		private void addDMScience(DMScienceData data)

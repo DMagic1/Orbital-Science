@@ -83,6 +83,8 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public bool oneWayAnimation = false;
 		[KSPField]
+		public bool oneShot = false;
+		[KSPField]
 		public string resourceExperiment = "ElectricCharge";
 		[KSPField]
 		public float resourceExpCost = 0;
@@ -195,9 +197,15 @@ namespace DMagic.Part_Modules
 					if (anim3 != null)
 						primaryAnimator(2.5f * animSpeed, 0f, WrapMode.Loop, looperAnimation, anim3);
 					enableIAnimators();
+					Events["deployEvent"].active = false;
+					Events["retractEvent"].active = !oneWayAnimation && !oneShot && showEndEvent;
 				}
 				else
+				{
 					disableIAnimators();
+					Events["deployEvent"].active = showStartEvent;
+					Events["retractEvent"].active = false;
+				}
 			}
 		}
 
@@ -256,7 +264,7 @@ namespace DMagic.Part_Modules
 			if (keepDeployedMode == 0) retractEvent();
 		}
 
-		private void FixedUpdate()
+		protected virtual void FixedUpdate()
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
@@ -280,25 +288,28 @@ namespace DMagic.Part_Modules
 		public override string GetInfo()
 		{
 			string info = base.GetInfo();
+			info += string.Format("\nTransmission: {0:P0}\n", xmitDataScalar);
 			if (!rerunnable)
 			{
-				info += string.Format("\nMax Samples: {0}\n", experimentLimit);
-				info += string.Format("Scientist Level For Reset: {0}", resetLevel);
+				info += string.Format("Max Samples: {0}\n", experimentLimit);
+				info += string.Format("Scientist Level For Reset: {0}\n", resetLevel);
 			}
 			if (resourceExpCost > 0)
 			{
 				float time = waitForAnimationTime;
 				if (time == -1 && anim != null && !string.IsNullOrEmpty(animationName))
 					time = anim[animationName].length;
-				info += string.Format("\nRequires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
+				info += string.Format("Requires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
 			}
+			if (oneShot)
+				info += "OneShot: <color=#15b01a>V</color>\n";
 			return info;
 		}
 
 		private void setup()
 		{
-			Events["deployEvent"].guiActive = showStartEvent;
-			Events["retractEvent"].guiActive = showEndEvent;
+			Events["deployEvent"].guiActive = showStartEvent || oneShot;
+			Events["retractEvent"].guiActive = showEndEvent && !oneShot;
 			Events["toggleEvent"].guiActive = showToggleEvent;
 			Events["deployEvent"].guiName = startEventGUIName;
 			Events["retractEvent"].guiName = endEventGUIName;
@@ -429,7 +440,7 @@ namespace DMagic.Part_Modules
 			}
 			enableIAnimators();
 			Events["deployEvent"].active = oneWayAnimation;
-			Events["retractEvent"].active = showEndEvent;
+			Events["retractEvent"].active = showEndEvent && !oneShot;
 		}
 
 		private void enableIAnimators()
@@ -465,6 +476,7 @@ namespace DMagic.Part_Modules
 		public virtual void retractEvent()
 		{
 			if (oneWayAnimation) return;
+			if (oneShot) return;
 			primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, animationName, anim);
 			IsDeployed = false;
 			if (USScience)
@@ -517,7 +529,7 @@ namespace DMagic.Part_Modules
 		}
 
 		[KSPEvent(guiActiveEditor = true, guiName = "Deploy", active = true)]
-		public void editorDeployEvent()
+		public virtual void editorDeployEvent()
 		{
 			deployEvent();
 			IsDeployed = false;
@@ -526,7 +538,7 @@ namespace DMagic.Part_Modules
 		}
 
 		[KSPEvent(guiActiveEditor = true, guiName = "Retract", active = false)]
-		public void editorRetractEvent()
+		public virtual void editorRetractEvent()
 		{
 			retractEvent();
 			Events["editorDeployEvent"].active = true;
@@ -684,7 +696,7 @@ namespace DMagic.Part_Modules
 			runExperiment(vesselSit, s);
 		}
 
-		protected void runExperiment(ExperimentSituations sit, bool silent)
+		protected virtual void runExperiment(ExperimentSituations sit, bool silent)
 		{
 			ScienceData data = makeScience(scienceBoost, sit);
 			if (data == null)
@@ -878,18 +890,17 @@ namespace DMagic.Part_Modules
 				failMessage = customFailMessage;
 				return false;
 			}
-			else if (FlightGlobals.ActiveVessel.isEVA)
+
+			if (FlightGlobals.ActiveVessel.isEVA)
 			{
 				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, scienceExp, ref usageReqMessage))
 				{
 					failMessage = usageReqMessage;
 					return false;
 				}
-				else
-					return true;
 			}
-			else
-				return true;
+
+			return true;
 		}
 
 		private ScienceData makeScience(float boost, ExperimentSituations vesselSituation)
@@ -1186,6 +1197,11 @@ namespace DMagic.Part_Modules
 
 		new public void ReturnData(ScienceData data)
 		{
+			ReturnDataOverRide(data);
+		}
+
+		protected virtual void ReturnDataOverRide(ScienceData data)
+		{
 			if (data == null)
 				return;
 
@@ -1206,7 +1222,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private void DumpAllData(List<ScienceData> data)
+		protected virtual void DumpAllData(List<ScienceData> data)
 		{
 			foreach(ScienceData d in data)
 				experimentsReturned++;
@@ -1215,7 +1231,12 @@ namespace DMagic.Part_Modules
 			data.Clear();
 		}
 
-		new protected void DumpData(ScienceData data)
+		new public void DumpData(ScienceData data)
+		{
+			DumpDataOverride(data);
+		}
+
+		protected virtual void DumpDataOverride(ScienceData data)
 		{
 			if (storedScienceReports.Contains(data))
 			{
@@ -1226,7 +1247,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		private void DumpInitialData(ScienceData data)
+		protected virtual void DumpInitialData(ScienceData data)
 		{
 			if (scienceReports.Contains(data))
 			{

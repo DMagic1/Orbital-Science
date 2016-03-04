@@ -1,0 +1,446 @@
+v1.2
+- Added three new parts based on orbital recconnaisance satellites
+   - All parts have pseudo-biome support; northern and southern hemispheres
+   - Each part conducts an anomaly scan of the planet; used for anomaly contracts and the anomaly instrument
+
+- Single-Camera small recon satellite
+   - 1.25m telescope
+   - Two film cannisters
+   
+- Two-camera stereo recon satellite
+   - 2.5m telescope
+   - Four film cannisters
+   
+- Radio signals intelligence dish
+   - 2.5m instrument; expands to 3m in the center
+   - ~100m diameter radio dish
+   - Dish cannot be retracted
+   - Dish will break if open in the atmosphere
+   - These settings can be altered in the part config file
+   - Fully re-usable
+   
+- New recon contracts
+   - Contracts ask for a specific recon part and a specific orbit
+   - Contracts are long-term, using the same system as magnetic survey contracts
+   - Anomaly contracts are dependent on new recon contracts
+   
+- Overhaul of all contracts
+   - Existing contracts will not load correctly and will not be able to complete
+      - Use the Contract tab in the Alt+F12 menu to force contracts to complete
+   - Extensive contract configuration options
+   - Contract config file found in GameData/DMagicOrbitalScience/Resources/DMContracts.cfg
+   - Config file based on the stock contract config file
+   
+- Fixes for seismic sensor parts
+   - Seismic impact hammer no longer makes a minimum distance check
+   - Impact hammer collider removed; no longer a threat of catapulting your vessel
+   - Seismic sensor pod crash tolerance increased; decouple strength lowered
+   - Seismic sensor pod cose, mass and size reduced
+   - Seismic settings found in GameData/DMagicOrbitalScience/Resources/DMSeismicSettings.cfg
+   
+- Fix scaling issues for all parts
+- New science results text for new parts
+- New science results text for OPM planets for all parts
+
+v1.1
+- Added underwater experiment
+   - Can only be used while underwater
+   - Can collect two data sets: in shallow and deep water; the threshold depth is configurable
+   - Also includes a light
+
+- Added seismic impact hammer experiment
+   - Multi-part experiment; includes the impact hammer and seismic sensor pods
+   - Each part can be used individually to gain some science; use in conjunction to increase science
+   - Use two sensor parts positioned at varying distances and angles from the impact hammer to maximize science
+   - Sensor pods have a built-in decoupler and are have a very high impact tolerance
+   - Can be used on asteroids; have at least one sensor pod on the same asteroid to maximize science
+   - The impact hammer must contact the surface to function; test your designs
+   - The impact hammer will automatically detect the surface orientation with respect to the hammer and rotate to compensate
+
+- New science results text
+
+- Bug fixes and misc.
+    - Fix animations when resetting some experiments
+    - Clarify anomalous signal contract requirements
+    - Magnetometer only functions as a stock ore scanner
+    - Some kOS compatibility changes
+    - Fix stock part and experiment request contract descriptions
+
+v1.0.9.1
+- Fixed download package
+
+v1.0.9
+- Updated for KSP 1.0.5
+
+- Lowered maximum magnetometer ore scanning altitude
+- Fixed experiment resource usage during timewarp
+- Fixed XRay drill length calculations when used with TweakScale
+
+v1.0.8
+- Science report change
+- Fixes a bug when collecting or resetting data from parts that store multiple experiments
+
+v1.0.7
+- Include the assembly file
+
+v1.0.6
+- Update .version file...
+
+v1.0.5
+- Updated for KSP 1.0.4
+
+- Temporary fix for overheating Universal Storage parts
+     - Increased the max temperature
+
+- Fix bug triggered by deploying some parts in the VAB/SPH
+
+- Added support for SCANsat v14.0 resource scanners
+
+- Contract reward balancing
+
+v1.0.4
+- Contract balancing
+      - Science rewards significantly reduced (70-90%) for all contract types
+           - Magnetic field surveys have an additional science reward given after completion
+      - Smaller reduction in funds rewards
+      - Rep rewards are more consistent and lower
+
+- Contract improvements
+      - All science collection parameters are now placed under a parent parameter
+      - Some contracts don't require all of the requested experiments to be carried out
+      - Parameter notes and titles give a better indication of what is required for each contract
+      - The sun is only given for the highest difficulty contracts
+
+- Part balancing and adjustments
+      - Part mass tweaked and made to be more similar
+      - US part mass lowered
+      - All parts are now made by DMagic, not DMagic Orbital Science and show up in the manufacturer's editor tab
+      - US parts given the 'wedge' bulkhead profile
+      - US tech tree position adjusted when using CTT; most parts are along the construction nodes
+      - Various resource scanner and other related modules added to some parts (Community Resource Pack required for several of these).
+
+- More Outer Planets Mod science results
+
+- KIS support
+
+- Bug fixes
+     - Science lab processing works for all results
+     - Null reference fixed when loading a vessel with an active magnetometer
+     - Reduce un-needed log spam
+     - Fixed a few of the US parts showing up when they aren't supposed to
+     - Magnetic field surveys don't show negative time remaining after completion
+
+v1.0.3
+- Updated for KSP 1.0.2
+     - Fix contracts breaking
+
+- Part aerodynamic and thermal properties adjusted
+     - Soil Moisture sensor acts as a radiator
+     - Solar Particle Collector acts as a nose cone
+
+- Community Tech Tree support added
+
+v1.0.2
+- Updated for KSP 1.0
+
+- All textures converted to DDS
+- Experiments can be reset by scientists on EVA
+    - Scientists must meet a certain level in some cases
+- Only scientists can start experiments on EVA
+- New science definitions for Outer Planets Mod; Urlum's moons
+- Community Tech Tree support temporarily removed
+- Resource scanners removed
+- Significant rearrangement of tech tree position for most parts
+
+- Fixed 1.0 bugs
+    - Correct atmospheric height detected
+    - Proper stack node definitions
+- Misc
+    - Should work in Sandbox mode
+    - Changes to contract titles
+    - Updated Survey contracts to match stock balancing
+
+v1.0.1
+- Fix bug with FinePrint survey contract completion
+- Fix debug log spam when adding the Anomaly Scanner in the VAB
+
+v1.0
+- Added Universal Storage versions of the Soil Moisture and Imaging Platform parts
+- Many changes to contracts
+    - Surface and biological activity contracts deprecated
+        - Existing surveys will work fine, but no more will be offered; orbital surveys work the same as before
+        - Stock FinePrint waypoint survey system used for surface and biological activity contracts; custom waypoint icons are included
+    - Several bug fixes for anomaly surveys
+        - The anomaly scanner should detect and scan properly now
+        - Location hints will be consistent now; limitations in how anomalies work cause these to be inaccurate in some cases
+    - Contract save/load procedures have been simplified; as a result most existing contracts will not work properly
+        - Magnetic field surveys will reset to their default values; the timer resets to 100 days
+        - Asteroid and Anomaly surveys may not load correctly and/or may need to be manually completed with the Alt + F12 debug menu
+        - Orbital (and ground and biological) surveys should load fine
+    - Magnetic field surveys will indicate how much more time is remaining in their title
+        - Contracts Window + periodically updates the title
+        - Stock contract window users may kindly locate the nearest back button and get out of my threadâ€¦
+    - Some reward and parameter adjustments
+- Loads of new science results
+    - A full set of results for all completed Outer Planets Mod planets and moons
+    - Complete results for RSS planets (except Earth for reasonsâ€¦)
+- Numerous bug fixes related to anomaly detection and scanning
+- Changes to the rotating animation system used in the Anomaly Scanner and the Soil Moisture Scanner
+- Several bug fixes and minor changes
+- Alternate package available with DDS textures
+    - You must fully delete any existing DMagicOrbitalScience folders, otherwise you will load all textures twice
+
+v0.9.2
+- Added two new science experiments
+    - The high-orbit-only GORESat
+    - The asteroid-only ASERT
+    - New science results
+- Changed installation folder
+    - All spaces removed from folders and files
+    - You must fully delete any old installations
+- Stock satellite contracts use DMagic instruments
+    - DMagic Goo, Mat Bay, Thermometer, etc... can fulfill requirement for these contracts (Thanks lwho)
+    - Other DMagic instruments may be requested
+- Fix bug where experiments started in one situation were conducted in another
+    - i.e. starting a surface experiment and taking off before it is completed resulted in InFlight or InOrbit experiments
+- Some internal code rearranging
+- Road to Kosmos compatibility fix 
+
+v0.9.1.1
+- Add stock biomes reports
+    - Custom biome reports are still supported
+- Fix for Science Alert compatibility
+- Fix for science collection on planets without biomes
+- Convert resource scanning parts to Regolith
+    - Requires the latest dev build of SCANsat to function as SCANsat sensors
+- Compatibility with SETI re-balance
+
+v0.9.1
+- Updated for KSP 0.90
+
+v0.9.0.2
+- Fix for Universal Storage parts being added when using the Community Tech Tree
+- Realism Overhaul Career Mode compatibility fix when using the Community Tech Tree
+- KSP-AVC .version file updated
+
+v0.9.0.1
+- Fix to prevent existing contracts from loading improperly when upgrading from an earlier version
+
+v0.9
+- Several new rover parts
+    - X-Ray Diffraction and DAN parts based on Curiosity science instruments
+    - Micro-sized Goo pod and Materials bay
+- New science reports and fixed typos
+- Community Tech Tree support
+    - All parts and science experiments have been rebalanced for the Community Tech Tree
+    - Includes different tech node position, part costs, and science experiment values
+- Part costs reduced for stock tech tree
+- All Module Manager configs (except Universal Storage) have been moved out to separate files in the Resources folder
+- TweakScale configs changed to non-free-scale, custom mode; several size options are allowed for each part
+- ORSX/SCANsat Ore scanner added to magnetometer; ORSX/SCANsat Minerals scanner added to Imaging Platform
+- Magnetic survey contract duration bug fixed when using Earth days
+- Non-repeatable parts show how many samples can be collected in the VAB info tab
+
+v0.8.6.1
+- All textures replaced by .mbm files
+      - .tga files available on GitHub repo for anyone interested
+- Numerous minor bug fixes
+      - Update scale and rescaleFactor values for KSP 0.25
+      - Fix bugs in KAS modules
+      - Storable KAS science parts can be recovered with Science Data intact
+      - KSC biomes register properly
+      - .version file should be pointed at the correct location now
+- Tweaks to contracts and parts
+      - Primarily reduced reward amounts and duration
+      - Reduced initial purchase price for all parts
+
+v0.8.6
+- Updated for KSP 0.25
+- New Soil moisture sensor
+- New Universal Storage version of the solar particle collector
+    - Updated all US parts for latest US version
+- TweakScale and KASModuleGrab nodes added to all parts
+    - Won't conflict with older versions of GavinZac's KAS config
+- .version file included for use with KSP-AVC
+- All mu and config file names changed to be more descriptive
+- Fixed anomaly contract bugs
+    - Anomalies with the same name are correctly identified
+    - Accurate height above anomaly calculated
+- A few minor bug fixes
+    - Prevent loading duplicate science experiments at startup
+    - Prevent null science data results
+- Disabled automatic contract reset on update
+
+v0.8.5.1
+- Bug Fix for vessels deleted while registered to magnetic survey contracts
+- More reliable contract reset function
+      - Updating from v0.8.5 will not reset contracts
+- Survey contracts will always complete when science is returned to Kerbin, regardless of science value
+
+v0.8.5
+- Implemented asteroid science overhaul
+     - Asteroid science results are now based on asteroid spectral type, rather than size class
+     - New and updated science results included
+     - Spectral type assigned randomly when the asteroid is loaded
+     - Each spectral type has a separate science pool; nine total types
+     - Results from different asteroids of the same type return gradually decreasing amounts of science
+
+- Contracts
+     - Consolidated three survey contract types into one with three versions
+     - Removed standard collect science contracts; survey missions fulfill much the same purpose
+     - Magnetic field surveys are much more flexible, allowing multiple vessels to be used and tracked at the same time, and being more tolerant of vessel changes, orbit changes, same-named vessels, etcâ€¦
+     - Improved experiment collection detection for asteroid and anomaly survey contracts
+     - Anomaly surveys have much more forgiving distance constraints for experiment collections
+     - All contract types have had their rewards, penalties, deadlines and other factors tweaked and optimized
+     - Contracts have more varied requirements before they are first offered
+     - All currently active DMagic contracts will be reset and removed (without cancellation penalties) upon initial loading
+
+- Other Fixes
+     - Consolidated redundant anomaly detection code
+     - Moved anomaly scanner onto standard DMModuleScienceAnimate module
+     - Removed several potential divide by zeros
+     - Works with Contracts Window + part viewer in the VAB/SPH
+
+v0.8.4.1
+- Fixed a bug where anomaly contract results were not registering correctly
+
+v0.8.4
+- All contract types rebalanced
+      - Rewards, penalties and expiration dates have been significantly adjusted
+- Standard collect science missions now account for lower than 100% transmission rates
+- Magnetic field surveys now account for vessel undocking, stage separation and docking during mission
+- Anomaly surveys for Joolian moons are generated once you have visited Jool
+- All science part costs increased
+- Combo US science parts now available later in the tech tree
+- Fixed some bugs with EVA experiment resets
+
+v0.8.3
+- Update for KSP 0.24.2
+- **Experimental Release**
+
+- Seven new contract types
+    - New contracts may be buggy, consider this an experimental release
+    - Procedural generated based on career mode progression
+    - All science based missions
+- Note that all contract reward and penalty amounts are extremely unbalanced; this will receive further attention later
+
+- Incorporate Diazo's action group changes
+- Magnetometer functions as crude anomaly detector
+- Fix magnetometer connection nodes
+- Properly detect atmospheric experiments
+
+v0.8.2
+- Updated for KSP v0.24
+- New multispectral imaging platform experiment
+- New solar particle collector experiment
+- Rudimentary version of multiple-use asteroid experiments added
+    - Experiments can be repeated on several asteroids, but only once on any given asteroid
+- New versions of all Universal Storage parts
+    - Parts are now installed in the standard empty US science bay
+        - These require that Universal Storage be installed correctly and in the right location to function properly
+- Universal Storage and SCANsat compatible parts configure themselves automatically if the requisite mod in installed
+    - Module Manager required to work
+    - SCANsat parts no longer included on separate part files
+- External science monitoring/activating mods now require explicit support from me to function properly
+    - Only mods the have a 'deploy experiment' type of button affected
+- All experiments are EVA deployable
+- A few, mostly minor bug fixes
+    - Max atmospheric height is now properly determined
+    - Experimental situation multipliers for flying high and in space high now use their proper values
+        - This is most obvious for the sun; in space high has a multiplier of 2, in space low has a multiplier of 11
+    - General cleanup for inefficient animations and part models
+- Significant code rewrite for most modules
+    - In addition to several bug fixes, several exciting new bugs have probably been added
+
+
+v0.8.1
+- Hotfix for bug causing you to temporarily lose science reports after landing, taking off, or otherwise changing vessel situation
+
+v0.8
+- Added asteroid science system
+    - Asteroid specific reports can be collected while grappled to, or within 2km of an asteroid
+    - Reports and science values vary with asteroid class
+    - Asteroid experiments are only counted once per asteroid class (your current planet and experimental situation are ignored)
+- Four new parts for use in combination with the Universal Storage mod
+    - Replacements for magnetometer and RPWS; both are functionally identical to their default counterparts
+    - Combinations of the four basic science experiments; PresMat/2Hot and Accel/GravMax
+        - Asteroid reports available for Accel/GravMax
+        - Slight changes in atmospheric detection; PresMat/2Hot measurements can be taken while aerobraking, on escape trajectory etc...
+- Magnetometer simulation extended to all planets and moons; should also work on mod planets
+    - Simulation update frequency reduced; should be little/no chance for performance impact
+- A few minor bug fixes
+- Clarified limitations on Core Drill usage in the in-game part description
+- Additional science reports for asteroid science; typo fixes for old reports 
+
+v0.7.5
+- Updated for KSP v0.23.5
+- New RPWS model and texture
+    - Existing vessels should still work, but the RPWS might end up attached backwards
+- New telescope texture, some adjustments made to the existing model
+- Resized parts so that they are all more similar in scale
+- Added resource usage to drill, laser, anomaly scanner and magnetometer
+    - Can be configured in the part.cfg file
+- Limited magnetosphere simulation for Kerbin
+    - Values read-out in right-click menu, can be disabled in the part.cfg file
+- Several changes to plugin code
+    - Exploits for drill fixed
+    - Lab reset for anomaly scanner should work as it does for stock parts
+    - Most parts moved onto universal science module
+- Several default science reports added, should work on any mod planets that include ScienceParams values
+    - Drill should work on any planet with an atmosphere now
+    - Added reports for Krag's PlanetFactory planets
+
+v0.7.1:
+- Added SCANsat BTDT function to alternate version of the anomaly sensor.
+        - Can now be used for both custom anomaly science scanning and SCANsat scanning.
+        - Part has a different name and must be purchased separately in the R&D center.
+- Added my own telescope module to the SCANsat version.
+        - Details are the same as for the anomaly sensor.
+        - Both parts are found in the alternate, SCANsat folder.
+- No changes to the default parts.
+
+v0.7:
+- New anomalous signal scanner. Designed for rovers and spaceplanes.
+    - Used to detect and study anomalies.
+    - Single use only; return to Kerbin for complete study of the science report, or transmit and reset with science lab.
+- New textures for the magnetometer and laser; they fit in better with the recent parts.
+- Fixed .cfg file and plugin bugs for the laser and magnetometer
+    - Laser returned to its proper tech node - will require repurchase, but should not affect existing vessels.
+    - A few minor changes in other part.cfg files; dropped the mass of the telescope.
+- New science reports for the anomaly scanner, fixed many typos in old reports.
+
+v0.6:
+- New biological activity core drill. Designed for rovers and landers.
+    - Features multiple storage containers.
+    - Can be used up to six times before needing to be returned to Kerbin or reset with a science lab.
+    - Two different animation modes, used for rovers or landers. Animation dependent on the drill's orientation relative to its parent part - preview animation in the VAB/SPH - use cubic octagonal struts or other small parts to modify animation behavior.
+- New science reports for core drill.
+    - Included support for Trueborn's Custom Biomes plugin. * Requires separate download 
+    - Reports for custom biomes for the laser, optical telescope and core drill.
+- Reduced values for some science experiments.
+
+v0.5:
+- New surface scanning laser instrument. Designed for rovers and landers.
+- Changes in magnetometer and telescope part names to address compatibility issues with other mods (will not be backward compatible without manually changing the names or installing the alternate part folder). Re-purchasing parts in the R&D center is required.
+- New model for magnetometer, includes added details to the instruments themselves, cleaner animation, and lower RAM usage due to more efficient use of textures.
+- Custom part modules for all parts to address animation and science collection issues:
+        - Magnetometer and RPWS animations are fully reversible while playing, animation speed for these parts is increased as well.
+    - Deployed previews are available in the VAB/SPH for all parts
+    - Attempts to collect science where not possible will trigger a message with suggestions about where to use the instrument; will not play the deploy animation if the part is in the retracted position.
+    - Transmitting or resetting the instrument will not trigger the retract animation.
+    - Repeatedly pushing the collect data button/action group will not spam multiple results.
+    - The laser has only a single, forward animation. Data is collected midway through the animation.
+- Edited existing science reports, and added several more. Added full set of surface reports for the laser.
+
+v0.4: 
+- New textures for all parts.
+- Changed non-SCANsat telescope to be the default, for the SCANsat version replace the default scope folder with the alternate folder.
+- Tweaks to models and animations for the magnetometer and telescope.
+- Add Langmuir probe to RPWS model (should not break existing crafts).
+- Added surface reports for the magnetometer, including biome support where available.
+- Added biome support for non-SCANsat telescope in low orbit.
+- Rearranged tech tree placement; parts moved to earlier nodes.
+- Decreased science report values, added and edited science reports.
+- Added FxModule to part.cfg to force deployment before science reports can be collected.
+
+v0.3: Initial upload.

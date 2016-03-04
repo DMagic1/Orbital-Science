@@ -47,8 +47,7 @@ namespace DMagic.Contracts
 		private DMScienceContainer DMScience;
 		private List<DMScienceContainer> sciList = new List<DMScienceContainer>();
 		private DMAnomalyParameter[] anomParams = new DMAnomalyParameter[4];
-		private CelestialBody body;
-		private List<PQSCity> cities = new List<PQSCity>();
+		private string body;
 		private DMAnomalyObject targetAnomaly;
 		private double lat, lon;
 		private string cardNS, cardEW, hash;
@@ -62,8 +61,8 @@ namespace DMagic.Contracts
 			DMAnomalyContract[] anomContracts = ContractSystem.Instance.GetCurrentContracts<DMAnomalyContract>();
 			int offers = 0;
 			int active = 0;
-			int maxOffers = DMUtils.maxAnomalyOffered;
-			int maxActive = DMUtils.maxAnomalyActive;
+			int maxOffers = DMContractDefs.DMAnomaly.maxOffers;
+			int maxActive = DMContractDefs.DMAnomaly.maxActive;
 
 			for (int i = 0; i < anomContracts.Length; i++ )
 			{
@@ -80,61 +79,67 @@ namespace DMagic.Contracts
 				return false;
 
 			//Make sure that the anomaly scanner is available
-			AvailablePart aPart = PartLoader.getPartInfoByName("dmAnomScanner");
-			if (aPart == null)
-				return false;
-			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+			if (!DMUtils.partAvailable(new List<string>(1) { "dmAnomScanner" }))
 				return false;
 
-			//Kerbin or Mun Anomalies for trivial contracts
-			if (this.Prestige == ContractPrestige.Trivial)
+			int reconLevelRequirement = 0;
+			float levelLow = 0;
+			float levelHigh = 1;
+
+			switch(this.prestige)
 			{
-				if (rand.Next(0, 3) == 0)
-					body = FlightGlobals.Bodies[1];
-				else
-					body = FlightGlobals.Bodies[2];
+				case ContractPrestige.Trivial:
+					reconLevelRequirement = DMContractDefs.DMAnomaly.TrivialReconLevelRequirement;
+					levelLow = DMContractDefs.DMAnomaly.TrivialAnomalyLevel;
+					levelHigh = DMContractDefs.DMAnomaly.SignificantAnomalyLevel;
+					break;
+				case ContractPrestige.Significant:
+					reconLevelRequirement = DMContractDefs.DMAnomaly.SignificantReconLevelRequirement;
+					levelLow = DMContractDefs.DMAnomaly.SignificantAnomalyLevel;
+					levelHigh = DMContractDefs.DMAnomaly.ExceptionalAnomalyLevel;
+					break;
+				case ContractPrestige.Exceptional:
+					reconLevelRequirement = DMContractDefs.DMAnomaly.ExceptionalReconLevelRequirement;
+					levelLow = DMContractDefs.DMAnomaly.ExceptionalAnomalyLevel;
+					levelHigh = 1f;
+					break;
 			}
-			//Minmus and Duna are next
-			else if (this.Prestige == ContractPrestige.Significant)
+
+			List<CelestialBody> customReachedBodies = ContractSystem.Instance.GetCompletedContracts<DMReconContract>().Where(c => (int)c.Prestige >= reconLevelRequirement).Select(c => c.Body).ToList();
+
+			List<DMAnomalyStorage> anomalies = new List<DMAnomalyStorage>();
+
+			for (int i = 0; i < customReachedBodies.Count; i++)
 			{
-				if (!ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" }))
-					return false;
-				if (rand.Next(0, 2) == 0)
-					body = FlightGlobals.Bodies[3];
-				else
-					body = FlightGlobals.Bodies[6];
+				CelestialBody b = customReachedBodies[i];
+
+				DMAnomalyStorage stor = DMAnomalyList.getAnomalyStorage(b.name);
+
+				if (stor == null)
+					continue;
+
+				if (stor.Level >= levelLow && stor.Level < levelHigh)
+					anomalies.Add(stor);
 			}
-			//Vall, Tylo, and Bop are last; only if we've been to Jool first
-			else if (this.Prestige == ContractPrestige.Exceptional)
-			{
-				if (!ProgressTracking.Instance.NodeComplete(new string[] { "Jool", "Flyby" }))
-					return false;
-				int i = rand.Next(0, 3);
-				if (i == 0)
-					body = FlightGlobals.Bodies[10];
-				else if (i == 1)
-					body = FlightGlobals.Bodies[11];
-				else if (i == 2)
-					body = FlightGlobals.Bodies[12];
-				else
-					return false;
-			}
-			else
+
+			var allAnom = anomalies.SelectMany(a => a.getAllAnomalies);
+
+			var reducedAnom = allAnom.Where(a => a.Name != "KSC" && a.Name != "KSC2" && a.Name != "IslandAirfield");
+
+			if (reducedAnom.Count() <= 0)
 				return false;
 
-			PQSCity[] Cities = UnityEngine.Object.FindObjectsOfType(typeof(PQSCity)) as PQSCity[];
-			foreach (PQSCity city in Cities)
-			{
-				if (city.transform.parent.name == body.name)
-					cities.Add(city);
-			}
+			targetAnomaly = reducedAnom.ElementAt(rand.Next(0, reducedAnom.Count()));
+
+			if (targetAnomaly == null)
+				return false;
+
+			body = targetAnomaly.Body.bodyName;
 
 			r = new System.Random(this.MissionSeed);
 			latRand = r.Next(-5, 5);
 			lonRand = r.Next(-5, 5);
 
-			//Select random anomaly
-			targetAnomaly = new DMAnomalyObject(cities[rand.Next(0, cities.Count)]);
 			hash = targetAnomaly.Name;
 			lon = targetAnomaly.Lon;
 			lat = targetAnomaly.Lat;
@@ -142,7 +147,7 @@ namespace DMagic.Contracts
 			cardEW = EWDirection(lon);
 
 			//Assign primary anomaly contract parameter
-			if ((newParam = DMAnomalyGenerator.fetchAnomalyParameter(body, targetAnomaly)) == null)
+			if ((newParam = DMAnomalyGenerator.fetchAnomalyParameter(targetAnomaly.Body, targetAnomaly)) == null)
 				return false;
 
 			sciList.AddRange(DMUtils.availableScience[DMScienceType.Anomaly.ToString()].Values);
@@ -152,18 +157,20 @@ namespace DMagic.Contracts
 				if (sciList.Count > 0)
 				{
 					DMScience = sciList[rand.Next(0, sciList.Count)];
-					anomParams[i] = (DMAnomalyGenerator.fetchAnomalyParameter(body, DMScience));
+					anomParams[i] = (DMAnomalyGenerator.fetchAnomalyParameter(targetAnomaly.Body, DMScience));
 					sciList.Remove(DMScience);
 				}
 				else
 					anomParams[i] = null;
 			}
 
-			this.AddParameter(newParam, "AnomalyScience");
+			this.AddParameter(newParam);
 
 			float primaryLocationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(newParam.Situation), newParam.Body) * ((float)rand.Next(85, 116) / 100f);
-			newParam.SetFunds(12000f * DMUtils.reward * primaryLocationMod, body);
-			newParam.SetScience(6f * DMUtils.science * DMUtils.fixSubjectVal(newParam.Situation, 1f, body), null);
+
+			newParam.SetFunds(DMContractDefs.DMAnomaly.Funds.ParamReward * primaryLocationMod, DMContractDefs.DMAnomaly.Funds.ParamFailure * primaryLocationMod, targetAnomaly.Body);
+			newParam.SetScience(DMContractDefs.DMAnomaly.Science.ParamReward * DMUtils.fixSubjectVal(newParam.Situation, 1f, targetAnomaly.Body), null);
+			newParam.SetReputation(DMContractDefs.DMAnomaly.Reputation.ParamReward * primaryLocationMod, DMContractDefs.DMAnomaly.Reputation.ParamFailure * primaryLocationMod, null);
 
 			//Add the science collection parent parameter
 			DMCompleteParameter DMcp = new DMCompleteParameter(3, 1);
@@ -173,10 +180,14 @@ namespace DMagic.Contracts
 			{
 				if (aP != null)
 				{
-					DMcp.addToSubParams(aP, "CollectAnomalyScience");
-					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), body) * ((float)rand.Next(85, 116) / 100f);
-					aP.SetFunds(7000f * DMUtils.reward * locationMod, body);
-					aP.SetScience(aP.Container.Exp.baseValue * 0.25f * DMUtils.science * DMUtils.fixSubjectVal(aP.Situation, 1f, body), null);
+					if (aP.Container == null)
+						continue;
+
+					DMcp.addToSubParams(aP);
+					float locationMod = GameVariables.Instance.ScoreSituation(DMUtils.convertSit(aP.Situation), targetAnomaly.Body) * ((float)rand.Next(85, 116) / 100f);
+					aP.SetFunds((DMContractDefs.DMAnomaly.Funds.ParamReward / 2) * locationMod, (DMContractDefs.DMAnomaly.Funds.ParamFailure / 2) * locationMod, targetAnomaly.Body);
+					aP.SetScience(aP.Container.Exp.baseValue * DMContractDefs.DMAnomaly.Science.SecondaryReward * DMUtils.fixSubjectVal(aP.Situation, 1f, targetAnomaly.Body), null);
+					aP.SetReputation(DMContractDefs.DMAnomaly.Reputation.ParamReward * locationMod, DMContractDefs.DMAnomaly.Reputation.ParamFailure * locationMod, null);
 				}
 			}
 
@@ -184,10 +195,15 @@ namespace DMagic.Contracts
 				return false;
 
 			this.agent = AgentList.Instance.GetAgent("DMagic");
-			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
-			base.SetDeadlineYears(1.5f * ((float)rand.Next(80, 121)) / 100f * DMUtils.deadline, body);
-			base.SetReputation(8f * DMUtils.reward * primaryLocationMod, 9f * DMUtils.penalty * primaryLocationMod, null);
-			base.SetFunds(20000f * DMUtils.forward * primaryLocationMod, 24000f * DMUtils.reward * primaryLocationMod, 20000f * DMUtils.penalty * primaryLocationMod, body);
+
+			if (this.agent == null)
+				this.agent = AgentList.Instance.GetAgentRandom();
+
+			base.SetExpiry(DMContractDefs.DMAnomaly.Expire.MinimumExpireDays, DMContractDefs.DMAnomaly.Expire.MaximumExpireDays);
+			base.SetDeadlineYears(DMContractDefs.DMAnomaly.Expire.DeadlineYears * ((float)rand.Next(80, 121)) / 100f, targetAnomaly.Body);
+			base.SetReputation(DMContractDefs.DMAnomaly.Reputation.BaseReward * primaryLocationMod, DMContractDefs.DMAnomaly.Reputation.BaseFailure * primaryLocationMod, null);
+			base.SetScience(DMContractDefs.DMAnomaly.Science.BaseReward, null);
+			base.SetFunds(DMContractDefs.DMAnomaly.Funds.BaseAdvance * primaryLocationMod, DMContractDefs.DMAnomaly.Funds.BaseReward * primaryLocationMod, DMContractDefs.DMAnomaly.Funds.BaseFailure * primaryLocationMod, targetAnomaly.Body);
 			return true;
 		}
 
@@ -246,7 +262,7 @@ namespace DMagic.Contracts
 
 		protected override string GetTitle()
 		{
-			return string.Format("Study the source of the anomalous readings coming from {0}'s surface", body.theName);
+			return string.Format("Study the source of the anomalous readings coming from {0}'s surface", targetAnomaly.Body.theName);
 		}
 
 		protected override string GetNotes()
@@ -256,18 +272,18 @@ namespace DMagic.Contracts
 
 		protected override string GetDescription()
 		{
-			string story = DMUtils.backStory["anomaly"][rand.Next(0, DMUtils.backStory["anomaly"].Count)];
-			return string.Format(story, this.agent.Name, body.theName);
+			string story = DMContractDefs.DMAnomaly.backStory[rand.Next(0, DMContractDefs.DMAnomaly.backStory.Count)];
+			return string.Format(story, this.agent.Name, targetAnomaly.Body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
-			return string.Format("We would like you to travel to a specific location on {0}. Once there attempt to locate and study the source of the anomalous signal.", body.theName);
+			return string.Format("We would like you to travel to a specific location on {0}. Once there attempt to locate and study the source of the anomalous signal.", targetAnomaly.Body.theName);
 		}
 
 		protected override string MessageCompleted()
 		{
-			return string.Format("You successfully returned data from the {0} on {1}, well done.", hash, body.theName);
+			return string.Format("You successfully returned data from the {0} on {1}, well done.", hash, targetAnomaly.Body.theName);
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -276,47 +292,42 @@ namespace DMagic.Contracts
 			latRand = r.Next(-5, 5);
 			lonRand = r.Next(-5, 5);
 
-			int targetBodyID;
-			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
-			hash = anomalyString[0];
-			if (int.TryParse(anomalyString[1], out targetBodyID))
-				body = FlightGlobals.Bodies[targetBodyID];
-			else
+			body = node.parse("Target_Body", "");
+
+			if (string.IsNullOrEmpty(body))
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Target Body");
+				DMUtils.Logging("Failed To Load Anomaly Contract Target Body...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
 				return;
 			}
-			if (HighLogic.LoadedSceneIsFlight)
+
+			hash = node.parse("Target_Anomaly", "");
+
+			if (string.IsNullOrEmpty(hash))
 			{
-				if (DMScienceScenario.SciScenario != null)
-				{
-					if (DMScienceScenario.SciScenario.anomalyList != null)
-						targetAnomaly = DMScienceScenario.SciScenario.anomalyList.getAnomalyObject(body.name, hash);
-				}
-				if (targetAnomaly != null)
-				{
-					lat = targetAnomaly.Lat;
-					lon = targetAnomaly.Lon;
-				}
-				else
-				{
-					DMUtils.Logging("Failed To Load Anomaly Contract Object");
-					this.Unregister();
-					ContractSystem.Instance.Contracts.Remove(this);
-					return;
-				}
+				DMUtils.Logging("Failed To Load Anomaly Contract Target...");
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+				return;
 			}
-			else
+
+			targetAnomaly = DMAnomalyList.getAnomalyObject(body, hash);
+
+			if (targetAnomaly == null)
 			{
-				if (!double.TryParse(anomalyString[2], out lat))
-					lat = 0.000d;
-				if (!double.TryParse(anomalyString[3], out lon))
-					lon = 0.000d;
+				DMUtils.Logging("Failed To Load Anomaly Contract Object");
+				this.Unregister();
+				ContractSystem.Instance.Contracts.Remove(this);
+				return;	
 			}
+
+			lat = targetAnomaly.Lat;
+			lon = targetAnomaly.Lon;
+
 			cardNS = NSDirection(lat);
 			cardEW = EWDirection(lon);
+
 			if (this.ParameterCount == 0)
 			{
 				DMUtils.Logging("No Parameters Loaded For This Anomaly Contract; Removing Now...");
@@ -328,12 +339,13 @@ namespace DMagic.Contracts
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2:N2}|{3:N2}", hash, body.flightGlobalsIndex, lat, lon));
+			node.AddValue("Target_Anomaly", hash);
+			node.AddValue("Target_Body", body);
 		}
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Orbit" });
+			return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.name, "Orbit" });
 		}
 
 		/// <summary>
@@ -346,13 +358,19 @@ namespace DMagic.Contracts
 			if (c == null || c.GetType() != typeof(DMAnomalyContract))
 				return null;
 
-			DMAnomalyContract Instance = (DMAnomalyContract)c;
-			return Instance.body;
-		}
+			try
+			{
+				DMAnomalyContract Instance = (DMAnomalyContract)c;
+				if (Instance.targetAnomaly != null)
+					return Instance.targetAnomaly.Body;
 
-		public CelestialBody Body
-		{
-			get { return body; }
+				return null;
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("Error while accessing DMagic Anomaly Contract Target Body\n" + e);
+				return null;
+			}
 		}
 
 		public DMAnomalyObject TargetAnomaly

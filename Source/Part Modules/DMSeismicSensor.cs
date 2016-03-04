@@ -76,11 +76,11 @@ namespace DMagic.Part_Modules
 			GameEvents.onVesselCreate.Add(onNewVessel);
 			GameEvents.onPartCouple.Add(onCouple);
 
-			Transform l1 = part.FindModelTransform("SignalLight_004");
-			Transform l2 = part.FindModelTransform("SignalLight_003");
-			Transform l3 = part.FindModelTransform("SignalLight_002");
-			Transform l4 = part.FindModelTransform("SignalLight_001");
-			Transform l5 = part.FindModelTransform("SignalLight_000");
+			Transform l1 = part.FindModelTransform("SignalLight.004");
+			Transform l2 = part.FindModelTransform("SignalLight.003");
+			Transform l3 = part.FindModelTransform("SignalLight.002");
+			Transform l4 = part.FindModelTransform("SignalLight.001");
+			Transform l5 = part.FindModelTransform("SignalLight.000");
 			Transform s1 = part.FindModelTransform("SignalLight01");
 
 			if (l1 != null && l1.renderer != null)
@@ -101,9 +101,9 @@ namespace DMagic.Part_Modules
 		{
 			string info = base.GetInfo();
 
-			string ranges = string.Format("\nIdeal Seismic Pod Ranges:\nNear: {0:N0}m - {1:N0}m\nFar: {2:N0}m - {3:N0}m", DMSeismicHandler.nearPodThreshold, DMSeismicHandler.nearPodMaxDistance, DMSeismicHandler.farPodThreshold, DMSeismicHandler.farPodMaxDistance);
+			string ranges = string.Format("Ideal Seismic Pod Ranges:\nNear: {0:N0}m - {1:N0}m\nFar: {2:N0}m - {3:N0}m\n", DMSeismicHandler.nearPodThreshold, DMSeismicHandler.nearPodMaxDistance, DMSeismicHandler.farPodThreshold, DMSeismicHandler.farPodMaxDistance);
 
-			string angles = string.Format("\nIdeal Seismic Pod Angle Difference: {0:N0}° - 180°", DMSeismicHandler.podAngleThreshold);
+			string angles = string.Format("Ideal Seismic Pod Angle Difference: {0:N0}° - 180°\n", DMSeismicHandler.podAngleThreshold);
 
 			return info + ranges + angles; ;
 		}
@@ -149,8 +149,6 @@ namespace DMagic.Part_Modules
 			if (p.from != part)
 				return;
 
-			DMUtils.DebugLog("This part coupled...");
-
 			StartCoroutine(waitOnVessel());
 		}
 
@@ -183,8 +181,6 @@ namespace DMagic.Part_Modules
 			if (values == null)
 				return;
 
-			DMUtils.DebugLog("Assigning New Vessel Ref To Seismic Sensor: {0}", v.vesselName);
-
 			values.VesselRef = v;
 
 			if (!values.Armed)
@@ -201,8 +197,6 @@ namespace DMagic.Part_Modules
 
 			if (values == null)
 				return;
-
-			DMUtils.DebugLog("This vessel modified...");
 
 			values.OnAsteroid = DMAsteroidScience.AsteroidGrappled;
 		}
@@ -391,18 +385,17 @@ namespace DMagic.Part_Modules
 				failMessage = customFailMessage;
 				return false;
 			}
-			else if (FlightGlobals.ActiveVessel.isEVA)
+
+			if (FlightGlobals.ActiveVessel.isEVA)
 			{
 				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
 				{
 					failMessage = usageReqMessage;
 					return false;
 				}
-				else
-					return true;
 			}
-			else
-				return true;
+
+			return true;
 		}
 
 		#endregion

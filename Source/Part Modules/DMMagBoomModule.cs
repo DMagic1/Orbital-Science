@@ -87,6 +87,7 @@ namespace DMagic.Part_Modules
 		private float lastUpdate = 0f;
 		private float updateInterval = 0.2f;
 		private List<DMAnomalyObject> Cities = new List<DMAnomalyObject>();
+		private DMAnomalyStorage currentAnomalies;
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -305,10 +306,23 @@ namespace DMagic.Part_Modules
 
 						//Anomaly Detection
 						Cities.Clear();
-						if (!DMScienceScenario.SciScenario.anomalyList.ScannerUpdating)
+						if (!DMAnomalyList.ScannerUpdating)
 						{
-							foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
+							currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
+
+							if (currentAnomalies == null)
+								return;
+
+							for (int a = 0; a < currentAnomalies.AnomalyCount; a++)
+							//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
 							{
+								DMAnomalyObject anom = currentAnomalies.getAnomaly(a);
+
+								if (anom == null)
+									continue;
+
+								//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
+								//{
 								DMAnomalyList.updateAnomaly(vessel, anom);
 								if (anom.VDistance < 100000)
 									Cities.Add(anom);
@@ -316,8 +330,20 @@ namespace DMagic.Part_Modules
 						}
 						else
 						{
-							foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
+							currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
+
+							if (currentAnomalies == null)
+								return;
+
+							for (int a = 0; a < currentAnomalies.AnomalyCount; a++)
 							{
+								//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
+								//{
+								DMAnomalyObject anom = currentAnomalies.getAnomaly(a);
+
+								if (anom == null)
+									continue;
+
 								if (anom.VDistance < 100000)
 									Cities.Add(anom);
 							}

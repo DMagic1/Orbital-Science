@@ -36,11 +36,12 @@ using UnityEngine;
 using Contracts;
 using Contracts.Parameters;
 using Contracts.Agents;
+using FinePrint.Utilities;
 using DMagic.Parameters;
 
 namespace DMagic.Contracts
 {
-	public class DMMagneticSurveyContract: Contract
+	public class DMMagneticSurveyContract: Contract, IUpdateWaypoints
 	{
 		private CelestialBody body;
 		private DMCollectScience[] magParams = new DMCollectScience[4];
@@ -51,8 +52,8 @@ namespace DMagic.Contracts
 			DMMagneticSurveyContract[] magContracts = ContractSystem.Instance.GetCurrentContracts<DMMagneticSurveyContract>();
 			int offers = 0;
 			int active = 0;
-			int maxOffers = DMUtils.maxMagneticOffered;
-			int maxActive = DMUtils.maxMagneticActive;
+			int maxOffers = DMContractDefs.DMMagnetic.maxOffers;
+			int maxActive = DMContractDefs.DMMagnetic.maxActive;
 
 			for (int i = 0; i < magContracts.Length; i++)
 			{
@@ -68,38 +69,143 @@ namespace DMagic.Contracts
 			if (active >= maxActive)
 				return false;
 
-			//Make sure that the RPWS is available
-			AvailablePart aPart = PartLoader.getPartInfoByName("rpwsAnt");
-			if (aPart == null)
-				return false;
-			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+			//Make sure that the parts are available
+			if (!DMUtils.partAvailable(DMContractDefs.DMMagnetic.magParts) || !DMUtils.partAvailable(DMContractDefs.DMMagnetic.rpwsParts))
 				return false;
 
-			body = DMUtils.nextTargetBody(this.Prestige, GetBodies_Reached(false, false), GetBodies_NextUnreached(4, null));
+			List<CelestialBody> bodies = new List<CelestialBody>();
+			Func<CelestialBody, bool> cb = null;
+
+			switch (prestige)
+			{
+				case ContractPrestige.Trivial:
+					cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Sun)
+							return false;
+
+						if (b.scienceValues.RecoveryValue > 4)
+							return false;
+
+						return true;
+					};
+					bodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.ORBIT, true, cb));
+					break;
+				case ContractPrestige.Significant:
+					cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Sun)
+							return false;
+
+						if (b == Planetarium.fetch.Home)
+							return false;
+
+						if (b.scienceValues.RecoveryValue > 8)
+							return false;
+
+						return true;
+					};
+					bodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.FLYBY, true, cb));
+					bodies.AddRange(ProgressUtilities.GetNextUnreached(2, cb));
+					break;
+				case ContractPrestige.Exceptional:
+					cb = delegate(CelestialBody b)
+					{
+						if (b == Planetarium.fetch.Home)
+							return false;
+
+						if (Planetarium.fetch.Home.orbitingBodies.Count > 0)
+						{
+							foreach (CelestialBody B in Planetarium.fetch.Home.orbitingBodies)
+							{
+								if (b == B)
+									return false;
+							}
+						}
+
+						if (b.scienceValues.RecoveryValue < 4)
+							return false;
+
+						return true;
+					};
+					bodies.AddRange(ProgressUtilities.GetBodiesProgress(ProgressType.FLYBY, true, cb));
+					bodies.AddRange(ProgressUtilities.GetNextUnreached(4, cb));
+					break;
+			}
+
+			if (bodies.Count <= 0)
+				return false;
+
+			body = bodies[rand.Next(0, bodies.Count)];
+
 			if (body == null)
 				return false;
 
-			DMScienceContainer magContainer = DMUtils.availableScience["All"].FirstOrDefault(m => m.Key == "Magnetometer Scan").Value;
-			DMScienceContainer rpwsContainer = DMUtils.availableScience["All"].FirstOrDefault(r => r.Key == "Radio Plasma Wave Scan").Value;
+			DMScienceContainer magContainer = null;
+			DMScienceContainer rpwsContainer = null;
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
+				return false;
+
+			if (!DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMMagnetic.magnetometerExperimentTitle))
+				return false;
+			
+			magContainer = DMUtils.availableScience["All"][DMContractDefs.DMMagnetic.magnetometerExperimentTitle];
+
+			if (!DMUtils.availableScience["All"].ContainsKey(DMContractDefs.DMMagnetic.rpwsExperimentTitle))
+				return false;
+
+			rpwsContainer = DMUtils.availableScience["All"][DMContractDefs.DMMagnetic.rpwsExperimentTitle];
 
 			magParams[0] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, magContainer);
 			magParams[1] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, magContainer);
 			magParams[2] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceLow, rpwsContainer);
 			magParams[3] = DMCollectContractGenerator.fetchScienceContract(body, ExperimentSituations.InSpaceHigh, rpwsContainer);
 
-			double time = 2160000d *(double)(this.Prestige + 1) * ((double)rand.Next(6, 17) / 10d);
-			double eccen = 0.15d * (double)(this.Prestige + 1) * ((double)rand.Next(10, 21) / 10d);
+			double eccMod = 0.2;
+			double incMod = 20;
+			double timeMod = 2160000;
+
+			switch(prestige)
+			{
+				case ContractPrestige.Trivial:
+					eccMod = DMContractDefs.DMMagnetic.trivialEccentricityMultiplier;
+					incMod = DMContractDefs.DMMagnetic.trivialInclinationMultiplier;
+					timeMod = DMContractDefs.DMMagnetic.trivialTimeModifier * 6 * 3600;
+					break;
+				case ContractPrestige.Significant:
+					eccMod = DMContractDefs.DMMagnetic.significantEccentricityMultiplier;
+					incMod = DMContractDefs.DMMagnetic.significantInclinationMultiplier;
+					timeMod = DMContractDefs.DMMagnetic.significantTimeModifier * 6 * 3600;
+					break;
+				case ContractPrestige.Exceptional:
+					eccMod = DMContractDefs.DMMagnetic.exceptionalEccentricityMultiplier;
+					incMod = DMContractDefs.DMMagnetic.exceptionalInclinationMultiplier;
+					timeMod = DMContractDefs.DMMagnetic.exceptionalTimeModifier * 6 * 3600;
+					break;
+			}
+
+			double time = timeMod * ((double)rand.Next(6, 17) / 10d);
+			double eccen = eccMod * ((double)rand.Next(8, 13) / 10d);
 			if (eccen > 0.7) eccen = 0.7;
-			double inclination = 20d * (double)(this.Prestige + 1) * ((double)rand.Next(8, 15) / 10d);
+			double inclination = incMod * ((double)rand.Next(7, 14) / 10d);
 			if (inclination > 75) inclination = 75;
 
+			Dictionary<int, List<string>> parts = new Dictionary<int, List<string>>();
+			parts.Add(0, DMContractDefs.DMMagnetic.magParts);
+			parts.Add(1, DMContractDefs.DMMagnetic.rpwsParts);
+
 			DMLongOrbitParameter longParam = new DMLongOrbitParameter(time);
-			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(eccen, 0);
-			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(inclination, 1);
+			DMOrbitalParameters eccentricParam = new DMOrbitalParameters(eccen, 0, longParam);
+			DMOrbitalParameters inclinedParam = new DMOrbitalParameters(inclination, 1, longParam);
+			DMPartRequestParameter partRequest = new DMPartRequestParameter(parts, DMContractDefs.DMMagnetic.useVesselWaypoints, body);
 
 			this.AddParameter(longParam);
 			longParam.AddParameter(eccentricParam);
 			longParam.AddParameter(inclinedParam);
+			longParam.AddParameter(partRequest);
+
+			longParam.setPartRequest(partRequest);
 
 			if (eccentricParam == null || inclinedParam == null)
 				return false;
@@ -114,9 +220,14 @@ namespace DMagic.Contracts
 					return false;
 				else
 				{
-					DMcp.addToSubParams(DMCS, "MagFieldScience");
-					DMCS.SetFunds(5000f * DMUtils.reward  * ((float)rand.Next(85, 116) / 100f), body);
-					DMCS.SetScience(2f * DMUtils.science * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
+					if (DMCS.Container == null)
+						continue;
+
+					float modifier = ((float)rand.Next(85, 116) / 100f);
+					DMcp.addToSubParams(DMCS);
+					DMCS.SetFunds(DMContractDefs.DMMagnetic.Funds.ParamReward * modifier, DMContractDefs.DMMagnetic.Funds.ParamFailure * modifier, body);
+					DMCS.SetScience(DMContractDefs.DMMagnetic.Science.ParamReward * DMUtils.fixSubjectVal(DMCS.Situation, 1f, body), null);
+					DMCS.SetReputation(DMContractDefs.DMMagnetic.Reputation.ParamReward * modifier, DMContractDefs.DMMagnetic.Reputation.ParamFailure * modifier, null);
 				}
 			}
 
@@ -126,12 +237,18 @@ namespace DMagic.Contracts
 			float primaryModifier = ((float)rand.Next(80, 121) / 100f);
 			float diffModifier = 1 + ((float)this.Prestige * 0.5f);
 
+			float Mod = primaryModifier * diffModifier;
+
 			this.agent = AgentList.Instance.GetAgent("DMagic");
-			base.SetExpiry(10 * DMUtils.deadline, 20f * DMUtils.deadline);
-			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * 3.7f * (this.GetDestinationWeight(body) / 1.8f) * DMUtils.deadline * primaryModifier, null);
-			base.SetReputation(8f * diffModifier * DMUtils.reward * primaryModifier, 7f * diffModifier * DMUtils.penalty * primaryModifier, null);
-			base.SetFunds(35000 * diffModifier * DMUtils.forward * primaryModifier, 40000 * diffModifier * DMUtils.reward * primaryModifier, 28000 * diffModifier * DMUtils.penalty * primaryModifier, body);
-			base.SetScience(10f * diffModifier * DMUtils.science * primaryModifier, body);
+
+			if (this.agent == null)
+				this.agent = AgentList.Instance.GetAgentRandom();
+
+			base.SetExpiry(DMContractDefs.DMMagnetic.Expire.MinimumExpireDays, DMContractDefs.DMMagnetic.Expire.MaximumExpireDays);
+			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * DMContractDefs.DMMagnetic.Expire.DeadlineModifier * (this.GetDestinationWeight(body) / 1.8f) * primaryModifier, null);
+			base.SetReputation(DMContractDefs.DMMagnetic.Reputation.BaseReward * Mod, DMContractDefs.DMMagnetic.Reputation.BaseFailure * Mod, null);
+			base.SetFunds(DMContractDefs.DMMagnetic.Funds.BaseAdvance * Mod, DMContractDefs.DMMagnetic.Funds.BaseReward * Mod, DMContractDefs.DMMagnetic.Funds.BaseFailure * Mod, body);
+			base.SetScience(DMContractDefs.DMMagnetic.Science.BaseReward * Mod, body);
 			return true;
 		}
 
@@ -157,7 +274,7 @@ namespace DMagic.Contracts
 
 		protected override string GetDescription()
 		{
-			string story = DMUtils.backStory["magnetic"][rand.Next(0, DMUtils.backStory["magnetic"].Count)];
+			string story = DMContractDefs.DMMagnetic.backStory[rand.Next(0, DMContractDefs.DMMagnetic.backStory.Count)];
 			return string.Format(story, this.agent.Name, body.theName);
 		}
 
@@ -173,16 +290,16 @@ namespace DMagic.Contracts
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int target;
-			if (int.TryParse(node.GetValue("Mag_Survey_Target"), out target))
-				body = FlightGlobals.Bodies[target];
-			else
+			body = node.parse("Mag_Survey_Target", (CelestialBody)null);
+
+			if (body == null)
 			{
-				DMUtils.Logging("Failed To Load Mag Contract");
+				DMUtils.Logging("Error while loading Magnetic Field Survey Contract target body; removing contract now...");
 				this.Unregister();
 				ContractSystem.Instance.Contracts.Remove(this);
 				return;
 			}
+
 			if (this.GetParameter<DMLongOrbitParameter>() == null)
 			{
 				DMUtils.Logging("Magnetic Field Long Orbit Parameter Not Found; Removing This Contract");
@@ -206,7 +323,7 @@ namespace DMagic.Contracts
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { "Kerbin", "Escape" });
+			return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.name, "Escape" });
 		}
 
 		/// <summary>
@@ -219,8 +336,16 @@ namespace DMagic.Contracts
 			if (c == null || c.GetType() != typeof(DMMagneticSurveyContract))
 				return null;
 
-			DMMagneticSurveyContract Instance = (DMMagneticSurveyContract)c;
-			return Instance.body;
+			try
+			{
+				DMMagneticSurveyContract Instance = (DMMagneticSurveyContract)c;
+				return Instance.body;
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("Error while accessing DMagic Magnetic Survey Contract Target Body\n" + e);
+				return null;
+			}
 		}
 
 		public CelestialBody Body

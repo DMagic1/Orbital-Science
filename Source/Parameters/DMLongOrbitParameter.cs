@@ -29,6 +29,10 @@
  */
 #endregion
 
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Contracts;
 using Contracts.Parameters;
 using DMagic.Contracts;
@@ -38,6 +42,7 @@ namespace DMagic.Parameters
 	public class DMLongOrbitParameter: ContractParameter
 	{
 		private double orbitTime, timeNeeded;
+		private DMPartRequestParameter partRequest;
 
 		public DMLongOrbitParameter()
 		{
@@ -69,61 +74,120 @@ namespace DMagic.Parameters
 
 		protected override string GetNotes()
 		{
-			return "Vessel, or vessels, must be equipped with both magnetometer and RPWS instruments; vessels do not need to remain active throughout the period specified.";
+			return "Vessels do not need to remain active throughout the period specified.";
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Orbital_Parameter", string.Format("{0:N1}|{1:N1}", timeNeeded, orbitTime));
+			node.AddValue("Time_Needed", timeNeeded.ToString("N2"));
+			node.AddValue("Time_Completed", orbitTime.ToString("N2"));
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			string[] orbitString = node.GetValue("Orbital_Parameter").Split('|');
-			if (!double.TryParse(orbitString[0], out timeNeeded))
+			timeNeeded = node.parse("Time_Needed", (double)2160000);
+
+			orbitTime = node.parse("Time_Completed", (double)-1);
+			if (orbitTime < 0)
 			{
-				DMUtils.Logging("Failed To Load Time-Needed Variables; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
-				timeNeeded = 2160000;
-			}
-			if (timeNeeded < 1000)
-			{
-				DMUtils.Logging("Time-Needed Value Not Set Correctly; Mag Long Orbit Parameter Reset to Default Value of 100 Days");
-				timeNeeded = 2160000;
-			}
-			if (!double.TryParse(orbitString[1], out orbitTime))
-			{
-				DMUtils.Logging("Failed To Load Orbit-Time Variables; Mag Long Orbit Parameter Reset");
+				DMUtils.Logging("Failed To Load Orbit-Time Variables; Long Orbit Parameter Reset");
 				orbitTime = 0;
 			}
+
+			if (this.Root.ContractState == Contract.State.Active)
+				ContractSystem.Instance.StartCoroutine(loadChildParameter());
+		}
+
+		private IEnumerator loadChildParameter()
+		{
+			int timer = 0;
+			while (this.GetParameter<DMPartRequestParameter>() == null && timer < 200)
+			{
+				timer++;
+				yield return null;
+			}
+
+			if (timer >= 200)
+			{
+				this.Unregister();
+				this.Parent.RemoveParameter(this);
+				DMUtils.Logging("Could not find child part request parameter; timed out; removing DMLongOrbit Parameter");
+				yield break;
+			}
+
+			try
+			{
+				partRequest = this.GetParameter<DMPartRequestParameter>();
+			}
+			catch (Exception e)
+			{
+				this.Unregister();
+				this.Parent.RemoveParameter(this);
+				DMUtils.Logging("Could not find child part request parameter; removing DMLongOrbit Parameter\n{0}", e);
+				yield break;
+			}
+
+			if (partRequest == null)
+			{
+				this.Unregister();
+				this.Parent.RemoveParameter(this);
+				DMUtils.Logging("Could not find child part request parameter; removing DMLongOrbit Parameter");
+			}
+		}
+
+		public void setPartRequest(DMPartRequestParameter param)
+		{
+			partRequest = param;
 		}
 
 		//Track our vessel's orbit
 		protected override void OnUpdate()
 		{
-			if (this.Root.ContractState == Contract.State.Active && !HighLogic.LoadedSceneIsEditor)
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (HighLogic.LoadedSceneIsEditor)
+				return;
+
+			if (partRequest == null)
+				return;
+
+			if (AllChildParametersComplete())
 			{
-				if (AllChildParametersComplete())
+				if (orbitTime <= 0)
 				{
-					if (orbitTime <= 0)
+					orbitTime = Planetarium.GetUniversalTime();
+				}
+				else
+				{
+					if ((Planetarium.GetUniversalTime() - orbitTime) >= timeNeeded)
 					{
-						orbitTime = Planetarium.GetUniversalTime();
-					}
-					else
-					{
-						if ((Planetarium.GetUniversalTime() - orbitTime) >= timeNeeded)
-						{
-							this.DisableOnStateChange = true;
-							foreach (ContractParameter cP in this.AllParameters)
-								cP.DisableOnStateChange = true;
-							this.SetComplete();
-						}
+						this.DisableOnStateChange = true;
+						foreach (ContractParameter cP in this.AllParameters)
+							cP.DisableOnStateChange = true;
+						this.SetComplete();
 					}
 				}
-				//if the vessel falls out of the specified orbit reset the timer
-				else
-					orbitTime = 0;
+			}
+			//if the vessel falls out of the specified orbit reset the timer
+			else
+				orbitTime = 0;
+		}
+
+		public int VesselCount
+		{
+			get
+			{
+				if (partRequest == null)
+					return 0;
+
+				return partRequest.VesselCount;
 			}
 		}
 
+		public Vessel GetVessel(int index)
+		{
+			return partRequest.getVessel(index);
+		}
 	}
 }

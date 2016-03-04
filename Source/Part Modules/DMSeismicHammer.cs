@@ -51,6 +51,7 @@ namespace DMagic.Part_Modules
 		private string failMessage;
 		private Transform RotationTransform;
 		private Transform ExtensionTransform;
+		private Transform modelTransform;
 		private bool dryRun = true;
 		private bool silentRun;
 		private DMSeismometerValues values;
@@ -75,7 +76,8 @@ namespace DMagic.Part_Modules
 			if (!string.IsNullOrEmpty(hammerAnimation))
 				Anim = part.FindModelAnimators(hammerAnimation)[0];
 			RotationTransform = part.FindModelTransform(rotationTransformName);
-			ExtensionTransform = part.FindModelTransform(extensionTransformName);			
+			ExtensionTransform = part.FindModelTransform(extensionTransformName);
+			modelTransform = part.transform.GetChild(0).GetChild(0);
 
 			base.OnStart(state);
 
@@ -95,13 +97,13 @@ namespace DMagic.Part_Modules
 			GameEvents.onVesselWasModified.Add(onVesselModified);
 			GameEvents.onPartCouple.Add(onCouple);
 
-			Transform l1 = part.FindModelTransform("SignalLight_004");
-			Transform l2 = part.FindModelTransform("SignalLight_003");
-			Transform l3 = part.FindModelTransform("SignalLight_002");
-			Transform l4 = part.FindModelTransform("SignalLight_001");
-			Transform l5 = part.FindModelTransform("SignalLight_000");
-			Transform s1 = part.FindModelTransform("SensorLight_000");
-			Transform s2 = part.FindModelTransform("SensorLight_001");
+			Transform l1 = part.FindModelTransform("SignalLight.004");
+			Transform l2 = part.FindModelTransform("SignalLight.003");
+			Transform l3 = part.FindModelTransform("SignalLight.002");
+			Transform l4 = part.FindModelTransform("SignalLight.001");
+			Transform l5 = part.FindModelTransform("SignalLight.000");
+			Transform s1 = part.FindModelTransform("SensorLight.000");
+			Transform s2 = part.FindModelTransform("SensorLight.001");
 
 			if (l1 != null && l1.renderer != null)
 				scoreLightOne = l1.renderer.material;
@@ -123,9 +125,9 @@ namespace DMagic.Part_Modules
 		{
 			string info = base.GetInfo();
 
-			string ranges = string.Format("\nIdeal Seismic Pod Ranges:\nNear: {0:N0}m - {1:N0}m\nFar: {2:N0}m - {3:N0}m", DMSeismicHandler.nearPodThreshold, DMSeismicHandler.nearPodMaxDistance, DMSeismicHandler.farPodThreshold, DMSeismicHandler.farPodMaxDistance);
+			string ranges = string.Format("Ideal Seismic Pod Ranges:\nNear: {0:N0}m - {1:N0}m\nFar: {2:N0}m - {3:N0}m\n", DMSeismicHandler.nearPodThreshold, DMSeismicHandler.nearPodMaxDistance, DMSeismicHandler.farPodThreshold, DMSeismicHandler.farPodMaxDistance);
 
-			string angles = string.Format("\nIdeal Seismic Pod Angle Difference: {0:N0}° - 180°", DMSeismicHandler.podAngleThreshold);
+			string angles = string.Format("Ideal Seismic Pod Angle Difference: {0:N0}° - 180°\n", DMSeismicHandler.podAngleThreshold);
 
 			return info + ranges + angles; ;
 		}
@@ -157,8 +159,6 @@ namespace DMagic.Part_Modules
 			if (p.from != part)
 				return;
 
-			DMUtils.DebugLog("This hammer coupled...");
-
 			StartCoroutine(waitOnVessel());
 		}
 
@@ -187,8 +187,6 @@ namespace DMagic.Part_Modules
 
 			if (values == null)
 				return;
-
-			DMUtils.DebugLog("This vessel modified...");
 
 			values.OnAsteroid = DMAsteroidScience.AsteroidGrappled;
 		}
@@ -398,6 +396,7 @@ namespace DMagic.Part_Modules
 
 			float s = values.Score;
 
+			bool useDistance = false;
 			float distance = 0f;
 
 			float angle = 0;
@@ -446,6 +445,22 @@ namespace DMagic.Part_Modules
 				hammerLine = RotationTransform.InverseTransformPoint(surfacePos);
 			}
 
+			//Take any changes to the rescale factor into account
+			float scale = part.rescaleFactor * scaleModifier *  modelTransform.localScale.y;
+
+			//Make a first distance check before anything moves; this will only be used if the angle is small and prevents errors where the drill punches through the surface
+			if (rayImpact(values.OnAsteroid, ExtensionTransform, scale, 2.45f + 1.41f, out distance))
+			{
+				useDistance = true;
+
+				DMUtils.DebugLog("Hammer Hit: Distance: {0:N3}", distance);
+
+				//Subtract the distance that the hammer body will move
+				distance -= (1.41f * scale);
+
+				DMUtils.DebugLog("Hammer Hit: New Distance: {0:N3}", distance);
+			}
+
 			//Calculate the angle on the Z axis
 			angle = Mathf.Atan2((float)hammerLine.y, (float)hammerLine.z) * Mathf.Rad2Deg;
 
@@ -459,6 +474,12 @@ namespace DMagic.Part_Modules
 
 			//Reverse the angle to compensate for initial transform rotation
 			angle *= -1;
+
+			//If the angle is small enough use the first distance calculated
+			if (useDistance && Mathf.Abs(angle) < 15)
+				useDistance = true;
+			else
+				useDistance = false;
 
 			DMUtils.DebugLog("Clamped Angle: {0:N7}", angle);
 
@@ -500,97 +521,73 @@ namespace DMagic.Part_Modules
 			while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.32f)
 				yield return null;
 
-			//Take any changes to the rescale factor into account *need to add tweakscale reference too*
-			float scale = part.rescaleFactor * scaleModifier;
-
 			DMUtils.DebugLog("Checking Distance To Terrain...");
 
-			//After the transform is rotated and pointing at the surface draw a ray from the extension transform; check for impacts on the terrain
-			if (!rayImpact(values.OnAsteroid, ExtensionTransform, scale, out distance))
+			if (!useDistance)
 			{
-				//If no impact is detected within the distance limit stop the animation, reverse the rotation, and cancel the coroutine
-				DMUtils.DebugLog("Hammer Failed: Distance: {0:N3}", distance);
-				animator(-1f, 1f, Anim, hammerAnimation);
-
-				ScreenMessages.PostScreenMessage("Seismic Hammer can't impact the surface from here...", 6f, ScreenMessageStyle.UPPER_CENTER);
-
-				if (angle > 0)
+				//After the transform is rotated and pointing at the surface draw a ray from the extension transform; check for impacts on the terrain
+				if (!rayImpact(values.OnAsteroid, ExtensionTransform, scale, 2.45f, out distance))
 				{
-					while (Anim.IsPlaying(hammerAnimation) && RotationTransform.localEulerAngles.x > originalAngle)
-					{
-						rotation(originalAngle, TimeWarp.deltaTime * 30f);
-						yield return null;
-					}
-				}
-				else if (angle < 0)
-				{
-					while (Anim.IsPlaying(hammerAnimation) && fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-					{
-						rotation(originalAngle, TimeWarp.deltaTime * 30f);
-						yield return null;
-					}
-				}
-				RotationTransform.localEulerAngles = originalRotation;
+					//If no impact is detected within the distance limit stop the animation, reverse the rotation, and cancel the coroutine
+					DMUtils.DebugLog("Hammer Failed: Distance: {0:N3}", distance);
+					animator(-1f, 1f, Anim, hammerAnimation);
 
-				yield break;
+					ScreenMessages.PostScreenMessage("Seismic Hammer can't impact the surface from here...", 6f, ScreenMessageStyle.UPPER_CENTER);
+
+					if (angle > 0)
+					{
+						while (Anim.IsPlaying(hammerAnimation) && RotationTransform.localEulerAngles.x > originalAngle)
+						{
+							rotation(originalAngle, TimeWarp.deltaTime * 30f);
+							yield return null;
+						}
+					}
+					else if (angle < 0)
+					{
+						while (Anim.IsPlaying(hammerAnimation) && fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
+						{
+							rotation(originalAngle, TimeWarp.deltaTime * 30f);
+							yield return null;
+						}
+					}
+					RotationTransform.localEulerAngles = originalRotation;
+
+					yield break;
+				}
 			}
 
 			DMUtils.DebugLog("Hammer Hit: Distance: {0:N3}", distance);
 
-			//We have to subtract the length of the impact hammer from the impact distance, leaving only the extension transform length
-			distance -= (1.5f * scale);
+			//We have to subtract the length of the impact hammer and the extensions transform position from the impact distance, leaving only the extension transform length
+			distance = distance - (0.75f * scale) - (0.6f * scale);
+
+			DMUtils.DebugLog("Hammer Hit: Second Distance: {0:N3}", distance);
 
 			//Transform translation does not take the part scale into account, so we need to convert the distance back into the unscaled dimensions
 			distance /= scale;
 
-			//If the hammer is to close to the surface we risk flipping the vessel over, so check for a minimum distance here
-			if (!values.OnAsteroid && distance < -0.5f)
-			{
-				DMUtils.DebugLog("Hammer Failed: Distance To Close: {0:N3}", distance);
-				animator(-1f, 1f, Anim, hammerAnimation);
+			DMUtils.DebugLog("Hammer Hit: Third Distance: {0:N3}", distance);
 
-				ScreenMessages.PostScreenMessage("Seismic Hammer is too close to the surface...", 6f, ScreenMessageStyle.UPPER_CENTER);
-
-				if (angle > 0)
-				{
-					while (Anim.IsPlaying(hammerAnimation) && RotationTransform.localEulerAngles.x > originalAngle)
-					{
-						rotation(originalAngle, TimeWarp.deltaTime * 30f);
-						yield return null;
-					}
-				}
-				else if (angle < 0)
-				{
-					while (Anim.IsPlaying(hammerAnimation) && fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle))
-					{
-						rotation(originalAngle, TimeWarp.deltaTime * 30f);
-						yield return null;
-					}
-				}
-				RotationTransform.localEulerAngles = originalRotation;
-
-				yield break;
-			}
-
+			//We obviously don't want negative distance movements
 			distance = Math.Max(0, distance);
 
-			DMUtils.DebugLog("New Distance: {0:N3}", distance);
+			DMUtils.DebugLog("New Distance: {0:N5}", distance);
 
 			//Cache the original transform position and calculate the target position
 			Vector3 originalPosition = ExtensionTransform.localPosition;
 
 			float targetPosition = originalPosition.z - distance;
 
-			DMUtils.DebugLog("Drill Original Position: {0:N3}", originalPosition.z);
+			DMUtils.DebugLog("Drill Original Position: {0:N5}", originalPosition.z);
 
-			DMUtils.DebugLog("Drill Target Position: {0:N3}", targetPosition);
+			DMUtils.DebugLog("Drill Target Position: {0:N5}", targetPosition);
 
 			//While the animation is playing translate the extension transform out
 			if (distance > 0)
 			{
 				while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.65f && ExtensionTransform.localPosition.z > targetPosition)
 				{
-					//DMUtils.Logging("Drill Position: {0:N3}", ExtensionTransform.localPosition.z);
+					DMUtils.Logging("Drill Position: {0:N5}", ExtensionTransform.localPosition.z);
 					extension(Vector3.back, TimeWarp.deltaTime);
 					yield return null;
 				}
@@ -602,14 +599,12 @@ namespace DMagic.Part_Modules
 			//If this is a real run gather science data, then reset the flag
 			if (!dry)
 				getScienceData(values.OnAsteroid, showData, s);
-
+			
 			//After the experiment has been collected reverse the rotation and translation
 			if (angle > 0)
 			{
 				while (Anim.IsPlaying(hammerAnimation) && (ExtensionTransform.localPosition.z < originalPosition.z || RotationTransform.localEulerAngles.x > originalAngle))
 				{
-					//DMUtils.Logging("Rotation Angle Back positive: {0:N3}", RotationTransform.localEulerAngles.x);
-					//DMUtils.Logging("Drill Position Back: {0:N3}", ExtensionTransform.localPosition.z);
 					if (distance > 0)
 					{
 						if (ExtensionTransform.localPosition.z < originalPosition.z)
@@ -624,8 +619,6 @@ namespace DMagic.Part_Modules
 			{
 				while (Anim.IsPlaying(hammerAnimation) && (ExtensionTransform.localPosition.z < originalPosition.z || fixAngle(RotationTransform.localEulerAngles.x) < fixAngle(originalAngle)))
 				{
-					//DMUtils.Logging("Rotation Angle Back negative: {0:N3}", RotationTransform.localEulerAngles.x);
-					//DMUtils.Logging("Drill Position Back: {0:N3}", ExtensionTransform.localPosition.z);
 					if (distance > 0)
 					{
 						if (ExtensionTransform.localPosition.z < originalPosition.z)
@@ -664,14 +657,14 @@ namespace DMagic.Part_Modules
 			return a;
 		}
 
-		private bool rayImpact(bool b, Transform t, float s, out float d)
+		private bool rayImpact(bool b, Transform t, float s, float max, out float d)
 		{
 			RaycastHit hit = new RaycastHit();
 			Vector3 p = t.position;
 			Ray r = new Ray(p, -1f * t.forward);
 			d = 0f;
 
-			Physics.Raycast(r, out hit, 3.7f * s);
+			Physics.Raycast(r, out hit, max * s);
 			if (hit.collider != null)
 			{
 				if (b)
@@ -737,18 +730,17 @@ namespace DMagic.Part_Modules
 				failMessage = customFailMessage;
 				return false;
 			}
-			else if (FlightGlobals.ActiveVessel.isEVA)
+
+			if (FlightGlobals.ActiveVessel.isEVA)
 			{
 				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
 				{
 					failMessage = usageReqMessage;
 					return false;
 				}
-				else
-					return true;
 			}
-			else
-				return true;
+
+			return true;
 		}
 
 		#endregion

@@ -32,10 +32,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Contracts;
 using DMagic.Contracts;
 using DMagic.Parameters;
+using FinePrint.Utilities;
 
 namespace DMagic
 {
@@ -43,29 +45,19 @@ namespace DMagic
 	{
 		internal static System.Random rand;
 		internal static Dictionary<string, Dictionary<string, DMScienceContainer>> availableScience;
-		internal static Dictionary<string, List<string>> backStory;
-		internal static float science = 1f;
-		internal static float reward = 1f;
-		internal static float forward = 1f;
-		internal static float penalty = 1f;
-		internal static float deadline = 1f;
-		internal static int maxSurveyOffered = 2;
-		internal static int maxSurveyActive = 4;
-		internal static int maxAsteroidOffered = 1;
-		internal static int maxAsteroidActive = 3;
-		internal static int maxAnomalyOffered = 1;
-		internal static int maxAnomalyActive = 3;
-		internal static int maxMagneticOffered = 2;
-		internal static int maxMagneticActive = 4;
 		internal static string version = "v0.9.2";
 		internal static EventData<CelestialBody, String, String> OnAnomalyScience;
 		internal static EventData<String, String> OnAsteroidScience;
 		internal static bool whiteListed = false;
 
+		private static Regex openBracket = new Regex(@"\[(?=\d+:?\w?\d?\])");
+		private static Regex closeBraket = new Regex(@"(?<=\{\d+:?\w?\d?)\]");
+		private static Regex newLines = new Regex(@"\\n");
+
 		internal static void Logging(string s, params object[] stringObjects)
 		{
 			s = string.Format(s, stringObjects);
-			string finalLog = string.Format("[DM] {0}", s);
+			string finalLog = string.Format("[DMOS] {0}", s);
 			Debug.Log(finalLog);
 		}
 
@@ -100,7 +92,158 @@ namespace DMagic
 			}
 		}
 
-		internal static float asteroidSubjectVal(float f, int i)
+		internal static string stringConcat(List<Vessel> source)
+		{
+			int i = source.Count;
+			if (i == 0)
+				return "";
+			string[] s = new string[i];
+			for (int j = 0; j < i; j++)
+			{
+				if (source[j] != null)
+					s[j] = source[j].id.ToString() + "|";
+			}
+			return string.Concat(s).TrimEnd('|');
+		}
+
+		internal static string stringConcat(Dictionary<int, List<string>> source)
+		{
+			if (source.Count == 0)
+				return "";
+
+			string[] result = new string[source.Count];
+			for (int i = 0; i < source.Count; i++)
+			{
+				List<string> group = source.ElementAt(i).Value;
+
+				if (group.Count == 0)
+				{
+					result[i] = "|";
+					continue;
+				}
+
+				string[] s = new string[group.Count];
+
+				for (int j = 0; j < group.Count; j++)
+				{
+					s[j] = group[j] + ",";
+				}
+
+				result[i] = string.Concat(s).TrimEnd(',') + "|";
+			}
+
+			return string.Concat(result).TrimEnd('|');
+		}
+
+		public static List<string> formatFixStringList(List<string> source)
+		{
+			List<string> fixedList = new List<string>();
+
+			for (int i = 0; i < source.Count(); i++)
+			{
+				string s = source[i];
+
+				s = openBracket.Replace(s, "{");
+				s = closeBraket.Replace(s, "}");
+				s = newLines.Replace(s, Environment.NewLine);
+
+				fixedList.Add(s);
+			}
+
+			return fixedList;
+		}
+
+		internal static Dictionary<int, List<string>> stringSplit(string source)
+		{
+			Dictionary<int, List<string>> result = new Dictionary<int,List<string>>();
+
+			string[] groups = source.Split('|');
+
+			if (groups.Length == 0)
+				return result;
+
+			for (int i = 0; i < groups.Length; i++)
+			{
+				string[] s = groups[i].Split(',');
+
+				List<string> t = new List<string>();
+
+				for (int j= 0; j < s.Length; j++)
+				{
+					t.Add(s[j]);
+				}
+
+				result.Add(i, t);
+			}
+
+			return result;
+		}
+
+		internal static bool partAvailable(List<string> parts)
+		{
+			for (int i = 0; i < parts.Count; i++)
+			{
+				AvailablePart aPart = PartLoader.getPartInfoByName(parts[i].Replace('_','.'));
+				if (aPart == null)
+					continue;
+				if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+					continue;
+
+				return true;
+			}
+
+			return false;
+		}
+
+		internal static bool vesselHasPart(Vessel v, List<string> titles)
+		{
+			if (v == null)
+				return false;
+
+			if (titles.Count <= 0)
+				return false;
+
+			if (v.loaded)
+			{
+				for (int i = 0; i < v.Parts.Count; i++)
+				{
+					Part p = v.Parts[i];
+
+					if (p == null)
+						continue;
+
+					for (int j = 0; j < titles.Count; j++)
+					{
+						string title = titles[j];
+
+						if (VesselUtilities.GetPartName(p) == title.Replace('_', '.'))
+							return true;
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < v.protoVessel.protoPartSnapshots.Count; i++)
+				{
+					ProtoPartSnapshot pp = v.protoVessel.protoPartSnapshots[i];
+
+					if (pp == null)
+						continue;
+
+					for (int j = 0; j < titles.Count; j++)
+					{
+						string title = titles[j];
+
+						if (pp.partName == title.Replace('_', '.'))
+							return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		internal static float asteroidSubjectVal(int i)
 		{
 			switch (i)
 			{
@@ -156,6 +299,16 @@ namespace DMagic
 			return D;
 		}
 
+		internal static double fixLatShift(double lat)
+		{
+			return (lat + 180 + 90) % 180 - 90;
+		}
+
+		internal static double fixLonShift(double lon)
+		{
+			return (lon + 360 + 180) % 360 - 180;
+		}
+
 		#region Debug Logging
 
 		[System.Diagnostics.Conditional("DEBUG")]
@@ -167,39 +320,6 @@ namespace DMagic
 		#endregion
 
 		#region Random parameters
-
-		//Select target celestial body based on contract prestige
-		internal static CelestialBody nextTargetBody(Contract.ContractPrestige c, List<CelestialBody> cR, List<CelestialBody> cUR)
-		{
-			//Select Kerbin system for trivial
-			if (c == Contract.ContractPrestige.Trivial)
-				return FlightGlobals.Bodies[rand.Next(1, 4)];
-			//Select already visited planets for significant, add Mun and Minmus if they aren't already present
-			else if (c == Contract.ContractPrestige.Significant)
-			{
-				if (!cR.Contains(FlightGlobals.Bodies[2]))
-					cR.Add(FlightGlobals.Bodies[2]);
-				if (!cR.Contains(FlightGlobals.Bodies[3]))
-					cR.Add(FlightGlobals.Bodies[3]);
-				if (cR.Count == 0)
-					return null;
-				return cR[rand.Next(0, cR.Count)];
-			}
-			//Select unreached body; remove Kerbin system, return already reached bodies if all have been visited
-			else if (c == Contract.ContractPrestige.Exceptional)
-			{
-				if (cUR.Count == 0)
-					cUR = cR;
-				if (cUR.Contains(FlightGlobals.Bodies[1]))
-					cUR.Remove(FlightGlobals.Bodies[1]);
-				if (cUR.Contains(FlightGlobals.Bodies[2]))
-					cUR.Remove(FlightGlobals.Bodies[2]);
-				if (cUR.Contains(FlightGlobals.Bodies[3]))
-					cUR.Remove(FlightGlobals.Bodies[3]);
-				return cUR[rand.Next(0, cUR.Count)];
-			}
-			return null;
-		}
 
 		//Return a list of valid experiment situations based on the experiment parameters
 		internal static List<ExperimentSituations> availableSituations(ScienceExperiment exp, int i, CelestialBody b)

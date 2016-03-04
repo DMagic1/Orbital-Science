@@ -54,8 +54,8 @@ namespace DMagic.Contracts
 			DMAsteroidSurveyContract[] astContracts = ContractSystem.Instance.GetCurrentContracts<DMAsteroidSurveyContract>();
 			int offers = 0;
 			int active = 0;
-			int maxOffers = DMUtils.maxAsteroidOffered;
-			int maxActive = DMUtils.maxAsteroidActive;
+			int maxOffers = DMContractDefs.DMAsteroid.maxOffers;
+			int maxActive = DMContractDefs.DMAsteroid.maxActive;
 
 			for (int i = 0; i < astContracts.Length; i++)
 			{
@@ -71,21 +71,22 @@ namespace DMagic.Contracts
 			if (active >= maxActive)
 				return false;
 
-			if (this.Prestige == ContractPrestige.Trivial)
-				return false;
-			else if (this.Prestige == ContractPrestige.Significant)
-				size = rand.Next(0, 3);
-			else if (this.Prestige == ContractPrestige.Exceptional)
-				size = rand.Next(2, 4);
-			else
-				return false;
+			switch (prestige)
+			{
+				case ContractPrestige.Trivial:
+					return false;
+				case ContractPrestige.Significant:
+					size = rand.Next(0, 3);
+					break;
+				case ContractPrestige.Exceptional:
+					size = rand.Next(2, 4);
+					break;
+			}
+
 			hash = DMUtils.sizeHash(size);
 
 			//Make sure that the grappling device is available
-			AvailablePart aPart = PartLoader.getPartInfoByName("GrapplingDevice");
-			if (aPart == null)
-				return false;
-			if (!ResearchAndDevelopment.PartModelPurchased(aPart))
+			if (!DMUtils.partAvailable(new List<string>(1) { "GrapplingDevice" }))
 				return false;
 
 			sciList.AddRange(DMUtils.availableScience[DMScienceType.Asteroid.ToString()].Values);
@@ -108,18 +109,36 @@ namespace DMagic.Contracts
 			this.AddParameter(DMcp);
 
 			int limit = 0;
+			int maxRequests = 1;
+
+			switch (prestige)
+			{
+				case ContractPrestige.Trivial:
+					maxRequests = DMContractDefs.DMAsteroid.trivialScienceRequests;
+					break;
+				case ContractPrestige.Significant:
+					maxRequests = DMContractDefs.DMAsteroid.significantScienceRequests;
+					break;
+				case ContractPrestige.Exceptional:
+					maxRequests = DMContractDefs.DMAsteroid.exceptionalScienceRequests;
+					break;
+			}
 
 			//Add in all acceptable paramaters to the contract
 			foreach (DMAsteroidParameter DMAP in newParams)
 			{
-				if (limit > 3 + (int)this.prestige)
+				if (limit > maxRequests)
 					break;
 				if (DMAP != null)
 				{
-					DMcp.addToSubParams(DMAP, "CollectAsteroidScience");
+					if (DMAP.Container == null)
+						continue;
+
+					DMcp.addToSubParams(DMAP);
 					float modifier = ((float)rand.Next(85, 116) / 100f);
-					DMAP.SetScience(DMAP.Container.Exp.baseValue * 0.3f * DMUtils.science * DMUtils.asteroidSubjectVal(1f, size), null);
-					DMAP.SetFunds(5000f * DMUtils.reward * DMUtils.asteroidSubjectVal(1f, size) * modifier, null);
+					DMAP.SetScience(DMAP.Container.Exp.baseValue * DMContractDefs.DMAsteroid.Science.ParamReward * (DMUtils.asteroidSubjectVal(size) / 2), null);
+					DMAP.SetFunds(DMContractDefs.DMAsteroid.Funds.ParamReward * modifier, DMContractDefs.DMAsteroid.Funds.ParamFailure * DMUtils.asteroidSubjectVal(size) * modifier, null);
+					DMAP.SetReputation(DMContractDefs.DMAsteroid.Reputation.ParamReward * modifier, DMContractDefs.DMAsteroid.Reputation.ParamFailure * modifier, null);
 					limit++;
 				}
 			}
@@ -129,11 +148,18 @@ namespace DMagic.Contracts
 
 			float primaryModifier = ((float)rand.Next(85, 116) / 100f);
 
+			float Mod = primaryModifier * DMcp.ParameterCount;
+
 			this.agent = AgentList.Instance.GetAgent("DMagic");
-			base.SetExpiry(10 * DMUtils.deadline, 20 * DMUtils.deadline);
-			base.SetDeadlineYears(3.8f * DMUtils.deadline * primaryModifier, null);
-			base.SetReputation(1.5f * DMcp.ParameterCount * DMUtils.reward * (size + 1) * primaryModifier, 1.2f * DMcp.ParameterCount * DMUtils.penalty * primaryModifier, null);
-			base.SetFunds(8000 * DMcp.ParameterCount * DMUtils.forward * (size + 1) * primaryModifier, 9500 * DMcp.ParameterCount * DMUtils.reward * (size + 1) * primaryModifier, 7000 * DMcp.ParameterCount * DMUtils.penalty * (size + 1) * primaryModifier, null);
+
+			if (this.agent == null)
+				this.agent = AgentList.Instance.GetAgentRandom();
+
+			base.SetExpiry(DMContractDefs.DMAsteroid.Expire.MinimumExpireDays, DMContractDefs.DMAsteroid.Expire.MaximumExpireDays);
+			base.SetDeadlineYears(DMContractDefs.DMAsteroid.Expire.DeadlineYears * primaryModifier, null);
+			base.SetReputation(DMContractDefs.DMAsteroid.Reputation.BaseReward * primaryModifier, DMContractDefs.DMAsteroid.Reputation.BaseFailure * primaryModifier, null);
+			base.SetFunds(DMContractDefs.DMAsteroid.Funds.BaseAdvance * Mod, DMContractDefs.DMAsteroid.Funds.BaseReward * Mod, DMContractDefs.DMAsteroid.Funds.BaseFailure * Mod, null);
+			base.SetScience(DMContractDefs.DMAsteroid.Science.BaseReward * primaryModifier, null);
 			return true;
 		}
 
@@ -164,8 +190,7 @@ namespace DMagic.Contracts
 
 		protected override string GetDescription()
 		{
-			//Return a random asteroid survey backstory; use the same format as generic backstory
-			string story = DMUtils.backStory["asteroid"][rand.Next(0, DMUtils.backStory["asteroid"].Count)];
+			string story = DMContractDefs.DMAsteroid.backStory[rand.Next(0, DMContractDefs.DMAsteroid.backStory.Count)];
 			return string.Format(story, this.agent.Name, hash);
 		}
 
@@ -181,7 +206,8 @@ namespace DMagic.Contracts
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			hash = node.GetValue("Asteroid_Size_Class");
+			hash = node.parse("Asteroid_Size_Class", "Class B");
+
 			if (this.ParameterCount == 0)
 			{
 				DMUtils.Logging("No Parameters Loaded For This Asteroid Contract; Removing Now...");
@@ -198,7 +224,10 @@ namespace DMagic.Contracts
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { "Minmus", "Orbit" }) && GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
+			if (Planetarium.fetch.Home.orbitingBodies.Count < 2)
+				return GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
+			else
+				return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.orbitingBodies[1].name, "Orbit" }) && GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
 		}
 
 		public string AsteroidSize

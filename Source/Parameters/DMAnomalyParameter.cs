@@ -46,7 +46,8 @@ namespace DMagic.Parameters
 		private DMScienceContainer scienceContainer;
 		private DMAnomalyContract root;
 		private string name, partName;
-		private bool collected = false;
+		private bool collected;
+		private bool registered;
 
 		public DMAnomalyParameter()
 		{
@@ -56,8 +57,11 @@ namespace DMagic.Parameters
 		{
 			situation = Situation;
 			name = Name;
-			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.SciPart;
+			if (DMUtils.availableScience.ContainsKey("All"))
+				DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+
+			if (scienceContainer != null)
+				partName = scienceContainer.SciPart;
 		}
 
 		/// <summary>
@@ -106,52 +110,93 @@ namespace DMagic.Parameters
 
 		protected override void OnRegister()
 		{
+			if (registered)
+				return;
+
 			GameEvents.OnScienceRecieved.Add(anomalyScience);
 			DMUtils.OnAnomalyScience.Add(monitorAnomScience);
+
+			registered = true;
 		}
 
 		protected override void OnUnregister()
 		{
+			if (!registered)
+				return;
+
+			registered = false;
+
 			GameEvents.OnScienceRecieved.Remove(anomalyScience);
 			DMUtils.OnAnomalyScience.Remove(monitorAnomScience);
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Target_Anomaly", string.Format("{0}|{1}|{2}", (int)situation, collected, name));
+			node.AddValue("Name", name);
+			node.AddValue("Situation", (int)situation);
+			node.AddValue("Collected", collected);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int sitID;
-			string[] anomalyString = node.GetValue("Target_Anomaly").Split('|');
-			if (int.TryParse(anomalyString[0], out sitID))
-				situation = (ExperimentSituations)sitID;
-			else
+			int sitID = node.parse("Situation", (int)65);
+			if (sitID >= 65 || sitID <= 0)
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Situation Value; Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Anomaly Contract Situation Value; Parameter Removed");
+				return;
 			}
-			if (!bool.TryParse(anomalyString[1], out collected))
+			situation = (ExperimentSituations)sitID;
+
+			collected = node.parse("Collected", (bool)true);
+
+			name = node.parse("Name", "");
+			if (string.IsNullOrEmpty(name))
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Collected State; Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Anomaly Contract Science Container Variables; Removed");
+				return;
 			}
-			name = anomalyString[2];
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
+			{
+				removeThis("Failed To Load Anomaly Contract Science Container Variables; Parameter Removed");
+				return;
+			}
+
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Anomaly Contract Science Container Variables; Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Anomaly Contract Science Container Variables; Parameter Removed");
+				return;
 			}
 			else
 				partName = scienceContainer.SciPart;
 
-			root = (DMAnomalyContract)this.Root;
+			try
+			{
+				root = (DMAnomalyContract)this.Root;
+			}
+			catch (Exception e)
+			{
+				removeThis("Could not find root anomaly contract; removing DMAnomalyParameter\n" +  e);
+				return;
+			}
+		}
+
+		private void removeThis(string message)
+		{
+			this.Unregister();
+			this.Parent.RemoveParameter(this);
+			DMUtils.Logging(message);
 		}
 
 		private void monitorAnomScience(CelestialBody B, string s, string name)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (B == null)
+				return;
+
 			if (FlightGlobals.currentMainBody == B)
 			{
 				if (s == scienceContainer.Exp.id)
@@ -204,11 +249,27 @@ namespace DMagic.Parameters
 
 		private void anomalyScience(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
-			if (sub.id.Contains(string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.Body.name, situation)))
-			{
-				if (collected)
-					base.SetComplete();
-			}
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (sub == null)
+				return;
+
+			if (!collected)
+				return;
+
+			string id = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.name, situation);
+
+			if (sub.id.Contains(id))
+				base.SetComplete();
+
+			if (situation == ExperimentSituations.InSpaceLow)
+				id = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.name, ExperimentSituations.InSpaceHigh);
+			else
+				return;
+
+			if (sub.id.Contains(id))
+				base.SetComplete();
 		}
 	}
 }

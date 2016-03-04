@@ -44,6 +44,7 @@ namespace DMagic.Parameters
 		private int type;
 		private int minus;
 		private int subParamCountToComplete;
+		private bool registered;
 
 		public DMCompleteParameter()
 		{
@@ -55,9 +56,9 @@ namespace DMagic.Parameters
 			minus = i;
 		}
 
-		public void addToSubParams(ContractParameter cp, string id)
+		public void addToSubParams(ContractParameter cp)
 		{
-			AddParameter(cp, id);
+			AddParameter(cp);
 			subParamCountToComplete = ParameterCount - minus;
 		}
 
@@ -89,33 +90,38 @@ namespace DMagic.Parameters
 		protected override void OnRegister()
 		{
 			GameEvents.Contract.onParameterChange.Add(onParamChange);
+
+			registered = true;
 		}
 
 		protected override void OnUnregister()
 		{
+			if (!registered)
+				return;
+
+			registered = false;
+
 			GameEvents.Contract.onParameterChange.Remove(onParamChange);
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Parent_Parameter_Type", string.Format("{0}|{1}", type, subParamCountToComplete));
+			node.AddValue("Type", type);
+			node.AddValue("Count_To_Complete", subParamCountToComplete);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			string[] values = node.GetValue("Parent_Parameter_Type").Split('|');
-			if (!int.TryParse(values[0], out type))
+			type = node.parse("Type", (int)1000);
+			if (type == 1000)
 			{
 				DMUtils.Logging("Failed To Load Parent Parameter Variables; Parent Parameter Removed");
 				this.Unregister();
 				this.Parent.RemoveParameter(this);
 				return;
 			}
-			if (!int.TryParse(values[1], out subParamCountToComplete))
-			{
-				DMUtils.Logging("Failed To Load Parent Parameter Variables; Reset To Default");
-				subParamCountToComplete = 2;
-			}
+
+			subParamCountToComplete = node.parse("Count_To_Complete", (int)2);
 		}
 
 		private int SubParamCompleted()
@@ -125,6 +131,12 @@ namespace DMagic.Parameters
 
 		private void onParamChange(Contract c, ContractParameter p)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (c == null)
+				return;
+
 			if (c != this.Root)
 				return;
 	

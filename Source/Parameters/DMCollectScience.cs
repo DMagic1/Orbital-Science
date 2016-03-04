@@ -45,7 +45,8 @@ namespace DMagic.Parameters
 		private DMScienceContainer scienceContainer;
 		private float returnedScience;
 		private string subject, name, biomeName, partName;
-		private int type; //type 0: standard survey; type 1: biological survey; type 2: anomaly
+		private int type; //type 0: standard survey; type 1: long term survey; type 2: anomaly
+		private bool registered;
 
 		public DMCollectScience()
 		{
@@ -59,8 +60,13 @@ namespace DMagic.Parameters
 			biomeName = BiomeName;
 			type = Type;
 			returnedScience = 0f;
-			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.SciPart;
+
+			if (DMUtils.availableScience.ContainsKey("All"))
+				DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+
+			if (scienceContainer != null)
+				partName = scienceContainer.SciPart;
+
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.Exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
 		}
 
@@ -122,7 +128,7 @@ namespace DMagic.Parameters
 		protected override string GetNotes()
 		{
 			if (type == 2)
-				return "The Anomalous Signal Scanner can only be used from very close range; deploy and use the scanner to give an indication of range and distance to target";
+				return "The Anomalous Signal Scanner can only be used from very close range; deploy and use the scanner to give an indication of range and direction to target";
 
 			return base.GetNotes();
 		}
@@ -176,13 +182,23 @@ namespace DMagic.Parameters
 
 		protected override void OnRegister()
 		{
+			if (registered)
+				return;
+
 			GameEvents.OnScienceRecieved.Add(scienceReceive);
 			if (type == 2)
 				DMUtils.OnAnomalyScience.Add(anomalyReceive);
+
+			registered = true;
 		}
 
 		protected override void OnUnregister()
 		{
+			if (!registered)
+				return;
+
+			registered = false;
+
 			GameEvents.OnScienceRecieved.Remove(scienceReceive);
 			if (type == 2)
 				DMUtils.OnAnomalyScience.Remove(anomalyReceive);
@@ -190,64 +206,95 @@ namespace DMagic.Parameters
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}|{3}|{4}|{5}", type, name, body.flightGlobalsIndex, (int)scienceLocation, biomeName, returnedScience));
+			node.AddValue("Name", name);
+			node.AddValue("Body", body.flightGlobalsIndex);
+			node.AddValue("Situation", (int)scienceLocation);
+			node.AddValue("Biome", biomeName);
+			node.AddValue("Type", type);
+			node.AddValue("Returned_Science", returnedScience);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int targetBodyID, targetSituation;
-			string[] scienceString = node.GetValue("Science_Subject").Split('|');
-			if (!int.TryParse(scienceString[0], out type))
+			int targetSituation = node.parse("Situation", (int)65);
+			if (targetSituation >= 65 || targetSituation <= 0)
 			{
-				DMUtils.Logging("Failed To Load Contract Type Value; Collect Science Parameter Reset");
+				removeThis("Failed To Load Situation Variables; Collect Science Parameter Removed");
+				return;
+			}
+			scienceLocation = (ExperimentSituations)targetSituation;
+
+			body = node.parse("Body", (CelestialBody)null);
+
+			if (body == null)
+			{
+				removeThis("Failed To Load Target Body; Collect Science Parameter Removed");
+				return;
+			}
+
+			type = node.parse("Type", (int)1000);
+			if (type == 1000)
+			{
+				removeThis("Failed To Load Contract Type Value; Collect Science Parameter Reset");
 				type = 1;
 			}
-			name = scienceString[1];
+
+			name = node.parse("Name", "");
+			if (string.IsNullOrEmpty(name))
+			{
+				removeThis("Failed To Load Science Container Variables; Collect Science Parameter Removed");
+				return;
+			}
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
+			{
+				removeThis("Failed To Load Science Container Variables; Collect Science Parameter Removed");
+				return;
+			}
+
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Collect Science Parameter Removed");
-				this.Unregister();
-				this.Parent.RemoveParameter(this);
+				removeThis("Failed To Load Science Container Variables; Collect Science Parameter Removed");
 				return;
 			}
 			else
 				partName = scienceContainer.SciPart;
-			if (int.TryParse(scienceString[2], out targetBodyID))
-				body = FlightGlobals.Bodies[targetBodyID];
-			else
-			{
-				DMUtils.Logging("Failed To Load Target Body Variables; Collect Science Parameter Removed");
-				this.Unregister();
-				this.Parent.RemoveParameter(this);
-				return;
-			}
-			if (int.TryParse(scienceString[3], out targetSituation))
-				scienceLocation = (ExperimentSituations)targetSituation;
-			else
-			{
-				DMUtils.Logging("Failed To Load Situation Variables; Collect Science Parameter Removed");
-				this.Unregister();
-				this.Parent.RemoveParameter(this);
-				return;
-			}
-			biomeName = scienceString[4];
-			if (!float.TryParse(scienceString[5], out returnedScience))
-			{
-				DMUtils.Logging("Failed To Load Returned Data Variables; Collect Science Parameter Reset");
-				returnedScience = 0;
-			}
+
+			biomeName = node.parse("Biome", "");
+
+			returnedScience = node.parse("Returned_Science", (float)0);
+
 			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.Exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
+		}
+
+		private void removeThis(string message)
+		{
+			this.Unregister();
+			this.Parent.RemoveParameter(this);
+			DMUtils.Logging(message);
 		}
 
 		private void anomalyReceive(CelestialBody Body, string exp, string biome)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (Body == null)
+				return;
+
 			if (body == Body && exp == scienceContainer.Exp.id && biomeName.Replace(" ", "") == biome)
 				ScreenMessages.PostScreenMessage("Results From Anomalous Signal Recovered", 6f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void scienceReceive(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (sub == null)
+				return;
+
 			if (type == 0 || type == 2)
 			{
 				if (!string.IsNullOrEmpty(biomeName))

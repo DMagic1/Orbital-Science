@@ -40,236 +40,409 @@ namespace DMagic
 	[KSPAddon(KSPAddon.Startup.MainMenu, true)]
 	internal class DMConfigLoader: MonoBehaviour
 	{
+		private static bool loaded;
 		private string[] WhiteList = new string[1] { "ScienceAlert" };
 		private const string iconURL = "DMagicOrbitalScience/Icons/Waypoints/";
 
 		private void Start()
 		{
+			if (loaded)
+				return;
+
 			initializeUtils();
 			findAssemblies(WhiteList);
+			seismicLoad();
 			configLoad();
 			hackWaypointIcons();
+			fixPartIcons();
+			loaded = true;
 		}
 
 		private void configLoad()
 		{
-			//Load in global multipliers
-			foreach (ConfigNode setNode in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_SETTINGS"))
+			ConfigNode DMcontractDefs = GameDatabase.Instance.GetConfigNode("DMagicOrbitalScience/Resources/DMContracts/DMContracts");
+
+			if (DMcontractDefs == null)
+				return;
+
+			foreach (ConfigNode node in DMcontractDefs.GetNodes("DM_CONTRACT_EXPERIMENT"))
 			{
-				if (setNode != null)
+				if (node == null)
+					continue;
+				DMScienceContainer DMscience = null;
+				ScienceExperiment exp = null;
+
+				//Some apparently not impossible errors can cause duplicate experiments to be added to the R&D science experiment dictionary
+				try
 				{
-					if (!float.TryParse(setNode.GetValue("Global_Science_Return"), out DMUtils.science))
-						DMUtils.science = 1;
-					if (!float.TryParse(setNode.GetValue("Global_Fund_Reward"), out DMUtils.reward))
-						DMUtils.reward = 1;
-					if (!float.TryParse(setNode.GetValue("Global_Fund_Forward"), out DMUtils.forward))
-						DMUtils.forward = 1;
-					if (!float.TryParse(setNode.GetValue("Global_Fund_Penalty"), out DMUtils.penalty))
-						DMUtils.penalty = 1;
-					if (!float.TryParse(setNode.GetValue("Global_Deadline"), out DMUtils.deadline))
-						DMUtils.deadline = 1;
-					if (!int.TryParse(setNode.GetValue("Max_Survey_Offered"), out DMUtils.maxSurveyOffered))
-						DMUtils.maxSurveyOffered = 2;
-					if (!int.TryParse(setNode.GetValue("Max_Survey_Active"), out DMUtils.maxSurveyActive))
-						DMUtils.maxSurveyActive = 4;
-					if (!int.TryParse(setNode.GetValue("Max_Asteroid_Offered"), out DMUtils.maxAsteroidOffered))
-						DMUtils.maxAsteroidOffered = 1;
-					if (!int.TryParse(setNode.GetValue("Max_Asteroid_Active"), out DMUtils.maxAsteroidActive))
-						DMUtils.maxAsteroidActive = 3;
-					if (!int.TryParse(setNode.GetValue("Max_Anomaly_Offered"), out DMUtils.maxAnomalyOffered))
-						DMUtils.maxAnomalyOffered = 1;
-					if (!int.TryParse(setNode.GetValue("Max_Anomaly_Active"), out DMUtils.maxAnomalyActive))
-						DMUtils.maxAnomalyActive = 3;
-					if (!int.TryParse(setNode.GetValue("Max_Magnetic_Offered"), out DMUtils.maxMagneticOffered))
-						DMUtils.maxMagneticOffered = 2;
-					if (!int.TryParse(setNode.GetValue("Max_Magnetic_Active"), out DMUtils.maxMagneticActive))
-						DMUtils.maxMagneticActive = 4;
-					if (!float.TryParse(setNode.GetValue("Seismic_Near_Pod_Min_Distance"), out DMSeismicHandler.nearPodMinDistance))
-						DMSeismicHandler.nearPodMinDistance = 10;
-					if (!float.TryParse(setNode.GetValue("Seismic_Near_Pod_Max_Distance"), out DMSeismicHandler.nearPodMaxDistance))
-						DMSeismicHandler.nearPodMaxDistance = 2500;
-					if (!float.TryParse(setNode.GetValue("Seismic_Near_Pod_Threshold"), out DMSeismicHandler.nearPodThreshold))
-						DMSeismicHandler.nearPodThreshold = 500;
-					if (!float.TryParse(setNode.GetValue("Seismic_Far_Pod_Min_Distance"), out DMSeismicHandler.farPodMinDistance))
-						DMSeismicHandler.farPodMinDistance = 2500;
-					if (!float.TryParse(setNode.GetValue("Seismic_Far_Pod_Max_Distance"), out DMSeismicHandler.farPodMaxDistance))
-						DMSeismicHandler.farPodMaxDistance = 15000;
-					if (!float.TryParse(setNode.GetValue("Seismic_Far_Pod_Threshold"), out DMSeismicHandler.farPodThreshold))
-						DMSeismicHandler.farPodThreshold = 4000;
-					if (!float.TryParse(setNode.GetValue("Seismic_Pod_Min_Angle"), out DMSeismicHandler.podMinAngle))
-						DMSeismicHandler.podMinAngle = 20;
-					if (!float.TryParse(setNode.GetValue("Seismic_Pod_Angle_Threshold"), out DMSeismicHandler.podAngleThreshold))
-						DMSeismicHandler.podAngleThreshold = 90;
-
-					DMUtils.Logging("Contract Variables Set; Science Reward: {0} ; Completion Reward: {1} ; Forward Amount: {2} ; Penalty Amount: {3} ; Deadline Length: {4}",
-						DMUtils.science, DMUtils.reward, DMUtils.forward, DMUtils.penalty, DMUtils.deadline);
-					DMUtils.Logging("Max Contract Variables Set: Survey Offers: {0}; Active: {1} -- Asteroid Offers: {2}; Active: {3} -- Anomaly Offers: {4}; Active: {5} -- Magnetic Offers: {6}; Active: {7}",
-						DMUtils.maxSurveyOffered, DMUtils.maxSurveyActive, DMUtils.maxAsteroidOffered, DMUtils.maxAsteroidActive, DMUtils.maxAnomalyOffered, DMUtils.maxAnomalyActive, DMUtils.maxMagneticOffered, DMUtils.maxMagneticActive);
-
-					break;
+					exp = ResearchAndDevelopment.GetExperiment(node.GetValue("experimentID"));
 				}
-				else
-					DMUtils.Logging("Broken Config.....");
-			}
-
-			//Load in experiment definitions
-			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_CONTRACT_EXPERIMENT"))
-			{
-				if (node != null)
+				catch (Exception e)
 				{
-					string name = "";
-					string part = "";
-					string agent = "";
-					int sitMask = 0;
-					int bioMask = 0;
-					int type = 0;
-					float transmit = 0;
-					DMScienceContainer DMscience = null;
-					ScienceExperiment exp = null;
-
-					//Some apparently not impossible errors can cause duplicate experiments to be added to the R&D science experiment dictionary
-					try
-					{
-						exp = ResearchAndDevelopment.GetExperiment(node.GetValue("experimentID"));
-					}
-					catch (Exception e)
-					{
-						Debug.LogError("[DM] Whoops. Something really wrong happened here; stopping this contract experiment from loading..." + e);
+					Debug.LogError("[DM] Whoops. Something really wrong happened here, a duplicate science experiment definition may be present somewhere; stopping this contract experiment from loading..." + e);
+					continue;
+				}
+				if (exp != null)
+				{
+					string name = node.parse("name", "null");
+					if (name == "null")
 						continue;
-					}
-					if (exp != null)
+
+					int sitMask = node.parse("sitMask", (int)1000);
+					if (sitMask == 1000)
+						continue;
+
+					int bioMask = node.parse("bioMask", (int)1000);
+					if (bioMask == 1000)
+						continue;
+
+					int type = node.parse("type", (int)1000);
+					if (type == 1000)
+						continue;
+
+					float transmit = node.parse("xmitDataScalar", (float)1000);
+					if (transmit >= 1000)
+						continue;
+
+					string part = node.parse("part", "None");
+
+					string agent = node.parse("agent", "Any");
+
+					if (DMUtils.whiteListed)
 					{
-						if (!node.HasValue("name"))
-							continue;
-						name = node.GetValue("name");
-						if (!int.TryParse(node.GetValue("sitMask"), out sitMask))
-							continue;
-						if (!int.TryParse(node.GetValue("bioMask"), out bioMask))
-							continue;
-						if (!int.TryParse(node.GetValue("type"), out type))
-							continue;
-						if (!float.TryParse(node.GetValue("xmitDataScalar"), out transmit))
-							continue;
-						if (node.HasValue("part"))
-							part = node.GetValue("part");
-						else
-							part = "None";
-						if (node.HasValue("agent"))
-							agent = node.GetValue("agent");
-						else
-							agent = "Any";
-						if (DMUtils.whiteListed)
-						{
-							exp.situationMask = (uint)sitMask;
-							exp.biomeMask = (uint)bioMask;
-						}
+						exp.situationMask = (uint)sitMask;
+						exp.biomeMask = (uint)bioMask;
+					}
 
-						DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent, transmit);
+					DMscience = new DMScienceContainer(exp, sitMask, bioMask, (DMScienceType)type, part, agent, transmit);
 
-						foreach (var sciType in Enum.GetValues(typeof(DMScienceType)))
+					foreach (var sciType in Enum.GetValues(typeof(DMScienceType)))
+					{
+						string typeString = ((DMScienceType)sciType).ToString();
+						if (string.IsNullOrEmpty(typeString))
+							continue;
+
+						if (DMUtils.availableScience.ContainsKey(typeString))
 						{
-							string typeString = ((DMScienceType)sciType).ToString();
-							if (!string.IsNullOrEmpty(typeString))
+							if ((DMScienceType)sciType == DMScienceType.All)
 							{
-								if (DMUtils.availableScience.ContainsKey(typeString))
-								{
-									if ((DMScienceType)sciType == DMScienceType.All)
-									{
-										if (!DMUtils.availableScience[typeString].ContainsKey(name))
-											DMUtils.availableScience[typeString].Add(name, DMscience);
-									}
-									else if (((DMScienceType)type & (DMScienceType)sciType) == (DMScienceType)sciType)
-									{
-										if (!DMUtils.availableScience[typeString].ContainsKey(name))
-											DMUtils.availableScience[typeString].Add(name, DMscience);
-									}
-								}
+								if (!DMUtils.availableScience[typeString].ContainsKey(name))
+									DMUtils.availableScience[typeString].Add(name, DMscience);
+							}
+							else if (((DMScienceType)type & (DMScienceType)sciType) == (DMScienceType)sciType)
+							{
+								if (!DMUtils.availableScience[typeString].ContainsKey(name))
+									DMUtils.availableScience[typeString].Add(name, DMscience);
 							}
 						}
-
-						//DMUtils.DebugLog("New Experiment: [{0}] Available For Contracts", name);
 					}
 				}
 			}
 
 			DMUtils.Logging("Successfully Added {0} New Experiments To Contract List", DMUtils.availableScience["All"].Count);
 
-			//foreach (var sciType in Enum.GetValues(typeof(DMScienceType)))
-			//{
-			//	string type = ((DMScienceType)sciType).ToString();
-			//	if (!string.IsNullOrEmpty(type))
-			//	{
-			//		if (DMUtils.availableScience.ContainsKey(type))
-			//		{
-			//			if (type != "All")
-			//				DMUtils.DebugLog("Successfully Added {0} New {1} Experiments To Contract List", DMUtils.availableScience[type].Count, type);
-			//		}
-			//	}
-			//}
+			ConfigNode DMAnomalyNode = DMcontractDefs.GetNode("DMAnomaly");
+			ConfigNode DMAsteroidNode = DMcontractDefs.GetNode("DMAsteroid");
+			ConfigNode DMMagNode = DMcontractDefs.GetNode("DMMag");
+			ConfigNode DMReconNode = DMcontractDefs.GetNode("DMRecon");
+			ConfigNode DMSurveyNode = DMcontractDefs.GetNode("DMSurvey");
 
-			//Load in custom contract descriptions
-			foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("DM_SCIENCE_STORY_DEF"))
+			if (DMAnomalyNode != null)
 			{
-				if (node != null)
+				DMContractDefs.DMAnomaly.maxOffers = DMAnomalyNode.parse("maxOffers", (int)2);
+				DMContractDefs.DMAnomaly.maxActive = DMAnomalyNode.parse("maxActive", (int)3);
+
+				DMContractDefs.DMAnomaly.TrivialReconLevelRequirement = DMAnomalyNode.parse("Trivial_Recon_Level_Requirement", (int)0);
+				DMContractDefs.DMAnomaly.SignificantReconLevelRequirement = DMAnomalyNode.parse("Significant_Recon_Level_Requirement", (int)1);
+				DMContractDefs.DMAnomaly.ExceptionalReconLevelRequirement = DMAnomalyNode.parse("Exceptional_Recon_Level_Requirement", (int)1);
+
+				DMContractDefs.DMAnomaly.TrivialAnomalyLevel = DMAnomalyNode.parse("Trivial_Anomaly_Level_Requirement", (float)0);
+				DMContractDefs.DMAnomaly.SignificantAnomalyLevel = DMAnomalyNode.parse("Significant_Anomaly_Level_Requirement", (float)0.3f);
+				DMContractDefs.DMAnomaly.ExceptionalAnomalyLevel = DMAnomalyNode.parse("Exceptional_Anomaly_Level_Requirement", (float)0.6f);
+
+				DMContractDefs.DMAnomaly.backStory = DMAnomalyNode.parse("Backstory", '|', new List<string>(1) { "Something, Something, Something..." });
+
+				DMContractDefs.DMAnomaly.backStory = DMUtils.formatFixStringList(DMContractDefs.DMAnomaly.backStory);
+
+				ConfigNode AnomalyExpireNode = DMAnomalyNode.GetNode("Expire");
+				ConfigNode AnomalyFundsNode = DMAnomalyNode.GetNode("Funds");
+				ConfigNode AnomalySciNode = DMAnomalyNode.GetNode("Science");
+				ConfigNode AnomalyRepNode = DMAnomalyNode.GetNode("Reputation");
+
+				if (AnomalyExpireNode != null)
 				{
-					foreach (ConfigNode storyNode in node.GetNodes("DM_SCIENCE_BACKSTORY"))
-					{
-						if (storyNode != null)
-						{
-							if (storyNode.HasValue("survey"))
-							{
-								foreach (string so in storyNode.GetValues("survey"))
-								{
-									if (!string.IsNullOrEmpty(so))
-									{
-										string story_o = so.Replace("[", "{");
-										story_o = story_o.Replace("]", "}");
-										DMUtils.backStory["survey"].Add(story_o);
-									}
-								}
-							}
-							if (storyNode.HasValue("asteroid"))
-							{
-								foreach (string sb in storyNode.GetValues("asteroid"))
-								{
-									if (!string.IsNullOrEmpty(sb))
-									{
-										string story_b = sb.Replace("[", "{");
-										story_b = story_b.Replace("]", "}");
-										DMUtils.backStory["asteroid"].Add(story_b);
-									}
-								}
-							}
-							if (storyNode.HasValue("anomaly"))
-							{
-								foreach (string sb in storyNode.GetValues("anomaly"))
-								{
-									if (!string.IsNullOrEmpty(sb))
-									{
-										string story_b = sb.Replace("[", "{");
-										story_b = story_b.Replace("]", "}");
-										DMUtils.backStory["anomaly"].Add(story_b);
-									}
-								}
-							}
-							if (storyNode.HasValue("magnetic"))
-							{
-								foreach (string sb in storyNode.GetValues("magnetic"))
-								{
-									if (!string.IsNullOrEmpty(sb))
-									{
-										string story_b = sb.Replace("[", "{");
-										story_b = story_b.Replace("]", "}");
-										DMUtils.backStory["magnetic"].Add(story_b);
-									}
-								}
-							}
-						}
-					}
+					DMContractDefs.DMAnomaly.Expire.MinimumExpireDays = AnomalyExpireNode.parse("MinimumExpireDays", (int)4);
+					DMContractDefs.DMAnomaly.Expire.MaximumExpireDays = AnomalyExpireNode.parse("MaximumExpireDays", (int)10);
+					DMContractDefs.DMAnomaly.Expire.DeadlineYears = AnomalyExpireNode.parse("DeadlineYears", (float)1.5);
+				}
+
+				if (AnomalyFundsNode != null)
+				{
+					DMContractDefs.DMAnomaly.Funds.BaseAdvance = AnomalyFundsNode.parse("BaseAdvance", (float)20000);
+					DMContractDefs.DMAnomaly.Funds.BaseReward = AnomalyFundsNode.parse("BaseReward", (float)24000);
+					DMContractDefs.DMAnomaly.Funds.BaseFailure = AnomalyFundsNode.parse("BaseFailure", (float)24000);
+					DMContractDefs.DMAnomaly.Funds.ParamReward = AnomalyFundsNode.parse("ParamReward", (float)8000);
+					DMContractDefs.DMAnomaly.Funds.ParamFailure = AnomalyFundsNode.parse("ParamFailure", (float)0);
+				}
+
+				if (AnomalySciNode != null)
+				{
+					DMContractDefs.DMAnomaly.Science.BaseReward = AnomalySciNode.parse("BaseReward", (float)0);
+					DMContractDefs.DMAnomaly.Science.ParamReward = AnomalySciNode.parse("ParamReward", (float)5);
+					DMContractDefs.DMAnomaly.Science.SecondaryReward = AnomalySciNode.parse("SecondaryReward", (float)0.25);
+				}
+
+				if (AnomalyRepNode != null)
+				{
+					DMContractDefs.DMAnomaly.Reputation.BaseReward = AnomalyRepNode.parse("BaseReward", (float)7);
+					DMContractDefs.DMAnomaly.Reputation.BaseFailure = AnomalyRepNode.parse("BaseFailure", (float)6);
+					DMContractDefs.DMAnomaly.Reputation.ParamReward = AnomalyRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMAnomaly.Reputation.ParamFailure = AnomalyRepNode.parse("ParamFailure", (float)0);
 				}
 			}
 
-			DMUtils.Logging("Added {0} New Survey Backstories; {1} New Asteroid Backstories; {2} New Anomaly Backstories; {3} New Magnetic Backstories To The List", DMUtils.backStory["survey"].Count, DMUtils.backStory["asteroid"].Count, DMUtils.backStory["anomaly"].Count, DMUtils.backStory["magnetic"].Count);
+			if (DMAsteroidNode != null)
+			{
+				DMContractDefs.DMAsteroid.maxOffers = DMAsteroidNode.parse("maxOffers", (int)2);
+				DMContractDefs.DMAsteroid.maxActive = DMAsteroidNode.parse("maxActive", (int)3);
+
+				DMContractDefs.DMAsteroid.trivialScienceRequests = DMAsteroidNode.parse("Max_Trivial_Science_Requests", (int)3);
+				DMContractDefs.DMAsteroid.significantScienceRequests = DMAsteroidNode.parse("Max_Significant_Science_Requests", (int)4);
+				DMContractDefs.DMAsteroid.exceptionalScienceRequests = DMAsteroidNode.parse("Max_Exceptional_Science_Requests", (int)6);
+
+				DMContractDefs.DMAsteroid.backStory = DMAsteroidNode.parse("Backstory", '|', new List<string>(1) { "Something, Something, Something..." });
+
+				DMContractDefs.DMAsteroid.backStory = DMUtils.formatFixStringList(DMContractDefs.DMAsteroid.backStory);
+
+				ConfigNode AsteroidExpireNode = DMAsteroidNode.GetNode("Expire");
+				ConfigNode AsteroidFundsNode = DMAsteroidNode.GetNode("Funds");
+				ConfigNode AsteroidSciNode = DMAsteroidNode.GetNode("Science");
+				ConfigNode AsteroidRepNode = DMAsteroidNode.GetNode("Reputation");
+
+				if (AsteroidExpireNode != null)
+				{
+					DMContractDefs.DMAsteroid.Expire.MinimumExpireDays = AsteroidExpireNode.parse("MinimumExpireDays", (int)4);
+					DMContractDefs.DMAsteroid.Expire.MaximumExpireDays = AsteroidExpireNode.parse("MaximumExpireDays", (int)10);
+					DMContractDefs.DMAsteroid.Expire.DeadlineYears = AsteroidExpireNode.parse("DeadlineYears", (float)3.8);
+				}
+
+				if (AsteroidFundsNode != null)
+				{
+					DMContractDefs.DMAsteroid.Funds.BaseAdvance = AsteroidFundsNode.parse("BaseAdvance", (float)8000);
+					DMContractDefs.DMAsteroid.Funds.BaseReward = AsteroidFundsNode.parse("BaseReward", (float)9500);
+					DMContractDefs.DMAsteroid.Funds.BaseFailure = AsteroidFundsNode.parse("BaseFailure", (float)7000);
+					DMContractDefs.DMAsteroid.Funds.ParamReward = AsteroidFundsNode.parse("ParamReward", (float)5000);
+					DMContractDefs.DMAsteroid.Funds.ParamFailure = AsteroidFundsNode.parse("ParamFailure", (float)0);
+				}
+
+				if (AsteroidSciNode != null)
+				{
+					DMContractDefs.DMAsteroid.Science.BaseReward = AsteroidSciNode.parse("BaseReward", (float)0);
+					DMContractDefs.DMAsteroid.Science.ParamReward = AsteroidSciNode.parse("ParamReward", (float)0.25);
+				}
+
+				if (AsteroidRepNode != null)
+				{
+					DMContractDefs.DMAsteroid.Reputation.BaseReward = AsteroidRepNode.parse("BaseReward", (float)8);
+					DMContractDefs.DMAsteroid.Reputation.BaseFailure = AsteroidRepNode.parse("BaseFailure", (float)6);
+					DMContractDefs.DMAsteroid.Reputation.ParamReward = AsteroidRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMAsteroid.Reputation.ParamFailure = AsteroidRepNode.parse("ParamFailure", (float)0);
+				}
+			}
+
+			if (DMMagNode != null)
+			{
+				DMContractDefs.DMMagnetic.maxOffers = DMMagNode.parse("maxOffers", (int)2);
+				DMContractDefs.DMMagnetic.maxActive = DMMagNode.parse("maxActive", (int)4);
+
+				DMContractDefs.DMMagnetic.trivialTimeModifier = DMMagNode.parse("Trivial_Mission_Length", (double)100);
+				DMContractDefs.DMMagnetic.significantTimeModifier = DMMagNode.parse("Significant_Mission_Length", (double)150);
+				DMContractDefs.DMMagnetic.exceptionalTimeModifier = DMMagNode.parse("Exceptional_Mission_Length", (double)200);
+
+				DMContractDefs.DMMagnetic.trivialEccentricityMultiplier = DMMagNode.parse("Trivial_Eccentricity_Modifier", (double)0.2);
+				DMContractDefs.DMMagnetic.significantEccentricityMultiplier = DMMagNode.parse("Significant_Eccentricity_Modifier", (double)0.35);
+				DMContractDefs.DMMagnetic.exceptionalEccentricityMultiplier = DMMagNode.parse("Exceptional_Eccentricity_Modifier", (double)0.5);
+
+				DMContractDefs.DMMagnetic.trivialInclinationMultiplier = DMMagNode.parse("Trivial_Inclination_Modifier", (double)20);
+				DMContractDefs.DMMagnetic.significantInclinationMultiplier = DMMagNode.parse("Significant_Inclination_Modifier", (double)40);
+				DMContractDefs.DMMagnetic.exceptionalInclinationMultiplier = DMMagNode.parse("Exceptional_Inclination_Modifier", (double)60);
+
+				DMContractDefs.DMMagnetic.magnetometerExperimentTitle = DMMagNode.parse("Magnetometer_Experiment_Title", "Magnetometer Scan");
+				DMContractDefs.DMMagnetic.rpwsExperimentTitle = DMMagNode.parse("RPWS_Experiment_Title", "Radio Plasma Wave Scan");
+
+				DMContractDefs.DMMagnetic.useVesselWaypoints = DMMagNode.parse("Use_Vessel_Waypoints", (bool)true);
+
+				DMContractDefs.DMMagnetic.magParts = DMMagNode.parse("Magnetometer_Parts", ',', new List<string>(2) { "dmmagBoom", "dmUSMagBoom" });
+				DMContractDefs.DMMagnetic.rpwsParts = DMMagNode.parse("RPWS_Parts", ',', new List<string>(2) { "rpwsAnt", "USRPWS" });
+
+				DMContractDefs.DMMagnetic.backStory = DMMagNode.parse("Backstory", '|', new List<string>(1) { "Something, Something, Something..." });
+
+				DMContractDefs.DMMagnetic.backStory = DMUtils.formatFixStringList(DMContractDefs.DMMagnetic.backStory);
+
+				ConfigNode MagExpireNode = DMMagNode.GetNode("Expire");
+				ConfigNode MagFundsNode = DMMagNode.GetNode("Funds");
+				ConfigNode MagSciNode = DMMagNode.GetNode("Science");
+				ConfigNode MagRepNode = DMMagNode.GetNode("Reputation");
+
+				if (MagExpireNode != null)
+				{
+					DMContractDefs.DMMagnetic.Expire.MinimumExpireDays = MagExpireNode.parse("MinimumExpireDays", (int)4);
+					DMContractDefs.DMMagnetic.Expire.MaximumExpireDays = MagExpireNode.parse("MaximumExpireDays", (int)10);
+					DMContractDefs.DMMagnetic.Expire.DeadlineModifier = MagExpireNode.parse("DeadlineModifier", (float)3.7);
+				}
+
+				if (MagFundsNode != null)
+				{
+					DMContractDefs.DMMagnetic.Funds.BaseAdvance = MagFundsNode.parse("BaseAdvance", (float)21000);
+					DMContractDefs.DMMagnetic.Funds.BaseReward = MagFundsNode.parse("BaseReward", (float)25000);
+					DMContractDefs.DMMagnetic.Funds.BaseFailure = MagFundsNode.parse("BaseFailure", (float)23000);
+					DMContractDefs.DMMagnetic.Funds.ParamReward = MagFundsNode.parse("ParamReward", (float)4000);
+					DMContractDefs.DMMagnetic.Funds.ParamFailure = MagFundsNode.parse("ParamFailure", (float)0);
+				}
+
+				if (MagSciNode != null)
+				{
+					DMContractDefs.DMMagnetic.Science.BaseReward = MagSciNode.parse("BaseReward", (float)24);
+					DMContractDefs.DMMagnetic.Science.ParamReward = MagSciNode.parse("ParamReward", (float)2);
+				}
+
+				if (MagRepNode != null)
+				{
+					DMContractDefs.DMMagnetic.Reputation.BaseReward = MagRepNode.parse("BaseReward", (float)8);
+					DMContractDefs.DMMagnetic.Reputation.BaseFailure = MagRepNode.parse("BaseFailure", (float)7);
+					DMContractDefs.DMMagnetic.Reputation.ParamReward = MagRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMMagnetic.Reputation.ParamFailure = MagRepNode.parse("ParamFailure", (float)0);
+				}
+			}
+
+			if (DMReconNode != null)
+			{
+				DMContractDefs.DMRecon.maxOffers = DMReconNode.parse("maxOffers", (int)2);
+				DMContractDefs.DMRecon.maxActive = DMReconNode.parse("maxActive", (int)4);
+
+				DMContractDefs.DMRecon.trivialTimeModifier = DMReconNode.parse("Trivial_Mission_Length", (double)50);
+				DMContractDefs.DMRecon.significantTimeModifier = DMReconNode.parse("Significant_Mission_Length", (double)100);
+				DMContractDefs.DMRecon.exceptionalTimeModifier = DMReconNode.parse("Exceptional_Mission_Length", (double)150);
+
+				DMContractDefs.DMRecon.useVesselWaypoints = DMReconNode.parse("Use_Vessel_Waypoints", (bool)true);
+
+				DMContractDefs.DMRecon.trivialExperimentTitle = DMReconNode.parse("Trivial_Experiment_Title", "Simple Recon Scan");
+				DMContractDefs.DMRecon.significantExperimentTitle = DMReconNode.parse("Significant_Experiment_Title", "SIGINT Scan");
+				DMContractDefs.DMRecon.exceptionalExperimentTitle = DMReconNode.parse("Exceptional_Experiment_Title", "Stereographic Recon Scan");
+
+				DMContractDefs.DMRecon.reconTrivialParts = DMReconNode.parse("Trivial_Parts", ',', new List<string>(1) { "dmReconSmall" });
+				DMContractDefs.DMRecon.reconSignificantParts = DMReconNode.parse("Significant_Parts", ',', new List<string>(1) { "dmSIGINT" });
+				DMContractDefs.DMRecon.reconExceptionalParts = DMReconNode.parse("Exceptional_Parts", ',', new List<string>(1) { "dmReconLarge" });
+
+				DMContractDefs.DMRecon.backStory = DMReconNode.parse("Backstory", '|', new List<string>(1) { "Something, Something, Something..." });
+
+				DMContractDefs.DMRecon.backStory = DMUtils.formatFixStringList(DMContractDefs.DMRecon.backStory);
+
+				ConfigNode ReconExpireNode = DMReconNode.GetNode("Expire");
+				ConfigNode ReconFundsNode = DMReconNode.GetNode("Funds");
+				ConfigNode ReconSciNode = DMReconNode.GetNode("Science");
+				ConfigNode ReconRepNode = DMReconNode.GetNode("Reputation");
+
+				if (ReconExpireNode != null)
+				{
+					DMContractDefs.DMRecon.Expire.MinimumExpireDays = ReconExpireNode.parse("MinimumExpireDays", (int)4);
+					DMContractDefs.DMRecon.Expire.MaximumExpireDays = ReconExpireNode.parse("MaximumExpireDays", (int)10);
+					DMContractDefs.DMRecon.Expire.DeadlineModifier = ReconExpireNode.parse("DeadlineModifier", (float)3.9);
+				}
+
+				if (ReconFundsNode != null)
+				{
+					DMContractDefs.DMRecon.Funds.BaseAdvance = ReconFundsNode.parse("BaseAdvance", (float)50000);
+					DMContractDefs.DMRecon.Funds.BaseReward = ReconFundsNode.parse("BaseReward", (float)60000);
+					DMContractDefs.DMRecon.Funds.BaseFailure = ReconFundsNode.parse("BaseFailure", (float)38000);
+					DMContractDefs.DMRecon.Funds.ParamReward = ReconFundsNode.parse("ParamReward", (float)8000);
+					DMContractDefs.DMRecon.Funds.ParamFailure = ReconFundsNode.parse("ParamFailure", (float)0);
+				}
+
+				if (ReconSciNode != null)
+				{
+					DMContractDefs.DMRecon.Science.BaseReward = ReconSciNode.parse("BaseReward", (float)10);
+					DMContractDefs.DMRecon.Science.ParamReward = ReconSciNode.parse("ParamReward", (float)2);
+				}
+
+				if (ReconRepNode != null)
+				{
+					DMContractDefs.DMRecon.Reputation.BaseReward = ReconRepNode.parse("BaseReward", (float)12);
+					DMContractDefs.DMRecon.Reputation.BaseFailure = ReconRepNode.parse("BaseFailure", (float)10);
+					DMContractDefs.DMRecon.Reputation.ParamReward = ReconRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMRecon.Reputation.ParamFailure = ReconRepNode.parse("ParamFailure", (float)0);
+				}
+			}
+
+			if (DMSurveyNode != null)
+			{
+				DMContractDefs.DMSurvey.maxOffers = DMSurveyNode.parse("maxOffers", (int)2);
+				DMContractDefs.DMSurvey.maxActive = DMSurveyNode.parse("maxActive", (int)4);
+
+				DMContractDefs.DMSurvey.trivialScienceRequests = DMSurveyNode.parse("Max_Trivial_Science_Requests", (int)4);
+				DMContractDefs.DMSurvey.significantScienceRequests = DMSurveyNode.parse("Max_Significant_Science_Requests", (int)6);
+				DMContractDefs.DMSurvey.exceptionalScienceRequests = DMSurveyNode.parse("Max_Exceptional_Science_Requests", (int)8);
+
+				DMContractDefs.DMSurvey.backStory = DMSurveyNode.parse("Backstory", '|', new List<string>(1) { "Something, Something, Something..." });
+
+				DMContractDefs.DMSurvey.backStory = DMUtils.formatFixStringList(DMContractDefs.DMSurvey.backStory);
+
+				ConfigNode SurveyExpireNode = DMSurveyNode.GetNode("Expire");
+				ConfigNode SurveyFundsNode = DMSurveyNode.GetNode("Funds");
+				ConfigNode SurveySciNode = DMSurveyNode.GetNode("Science");
+				ConfigNode SurveyRepNode = DMSurveyNode.GetNode("Reputation");
+
+				if (SurveyExpireNode != null)
+				{
+					DMContractDefs.DMSurvey.Expire.MinimumExpireDays = SurveyExpireNode.parse("MinimumExpireDays", (int)4);
+					DMContractDefs.DMSurvey.Expire.MaximumExpireDays = SurveyExpireNode.parse("MaximumExpireDays", (int)10);
+					DMContractDefs.DMSurvey.Expire.DeadlineYears = SurveyExpireNode.parse("DeadlineYears", (float)1.7);
+				}
+
+				if (SurveyFundsNode != null)
+				{
+					DMContractDefs.DMSurvey.Funds.BaseAdvance = SurveyFundsNode.parse("BaseAdvance", (float)8500);
+					DMContractDefs.DMSurvey.Funds.BaseReward = SurveyFundsNode.parse("BaseReward", (float)10500);
+					DMContractDefs.DMSurvey.Funds.BaseFailure = SurveyFundsNode.parse("BaseFailure", (float)7500);
+					DMContractDefs.DMSurvey.Funds.ParamReward = SurveyFundsNode.parse("ParamReward", (float)3000);
+					DMContractDefs.DMSurvey.Funds.ParamFailure = SurveyFundsNode.parse("ParamFailure", (float)0);
+				}
+
+				if (SurveySciNode != null)
+				{
+					DMContractDefs.DMSurvey.Science.BaseReward = SurveySciNode.parse("BaseReward", (float)0);
+					DMContractDefs.DMSurvey.Science.ParamReward = SurveySciNode.parse("ParamReward", (float)0.25);
+				}
+
+				if (SurveyRepNode != null)
+				{
+					DMContractDefs.DMSurvey.Reputation.BaseReward = SurveyRepNode.parse("BaseReward", (float)12);
+					DMContractDefs.DMSurvey.Reputation.BaseFailure = SurveyRepNode.parse("BaseFailure", (float)10);
+					DMContractDefs.DMSurvey.Reputation.ParamReward = SurveyRepNode.parse("ParamReward", (float)0);
+					DMContractDefs.DMSurvey.Reputation.ParamFailure = SurveyRepNode.parse("ParamFailure", (float)0);
+				}
+			}
+		}
+
+		private void seismicLoad()
+		{
+			ConfigNode seismicNode = GameDatabase.Instance.GetConfigNode("DMagicOrbitalScience/Resources/DMSeismicSettings/DM_SEISMIC_SETTINGS");
+
+			if (seismicNode != null)
+			{
+				DMSeismicHandler.nearPodMinDistance = seismicNode.parse("Seismic_Near_Pod_Min_Distance", 10f);
+				DMSeismicHandler.nearPodMaxDistance = seismicNode.parse("Seismic_Near_Pod_Max_Distance", 2500f);
+				DMSeismicHandler.nearPodThreshold = seismicNode.parse("Seismic_Near_Pod_Threshold", 500f);
+
+				DMSeismicHandler.farPodMinDistance = seismicNode.parse("Seismic_Far_Pod_Min_Distance", 2500f);
+				DMSeismicHandler.farPodMaxDistance = seismicNode.parse("Seismic_Far_Pod_Max_Distance", 15000f);
+				DMSeismicHandler.farPodThreshold = seismicNode.parse("Seismic_Far_Pod_Threshold", 4000f);
+
+				DMSeismicHandler.podMinAngle = seismicNode.parse("Seismic_Pod_Min_Angle", 20f);
+				DMSeismicHandler.podAngleThreshold = seismicNode.parse("Seismic_Pod_Angle_Threshold", 90f);
+			}
+			else
+				DMUtils.Logging("Broken Seismic Config...");
 		}
 
 		private void initializeUtils()
@@ -296,22 +469,12 @@ namespace DMagic
 			foreach (var sciType in Enum.GetValues(typeof(DMScienceType)))
 			{
 				string type = ((DMScienceType)sciType).ToString();
-				if (!string.IsNullOrEmpty(type))
-				{
-					if (!DMUtils.availableScience.ContainsKey(type))
-						DMUtils.availableScience[type] = new Dictionary<string, DMScienceContainer>();
-					else
-						DMUtils.Logging("");
-				}
-				else
-					DMUtils.Logging("");
-			}
+				if (string.IsNullOrEmpty(type))
+					continue;
 
-			DMUtils.backStory = new Dictionary<string, List<string>>();
-			DMUtils.backStory.Add("survey", new List<string>());
-			DMUtils.backStory.Add("asteroid", new List<string>());
-			DMUtils.backStory.Add("anomaly", new List<string>());
-			DMUtils.backStory.Add("magnetic", new List<string>());
+				if (!DMUtils.availableScience.ContainsKey(type))
+					DMUtils.availableScience[type] = new Dictionary<string, DMScienceContainer>();
+			}
 		}
 
 		private void findAssemblies(string[] assemblies)
@@ -339,6 +502,86 @@ namespace DMagic
 					DMUtils.Logging("DMagic Icon [{0}] Inserted Into FinePrint Database", s);
 				}
 			}
+		}
+
+		//This is borrowed from xEvilReeperx's partIconFixer, which is released under the MIT license:
+		//https://bitbucket.org/xEvilReeperx/ksp_particonfixer/src/060facfd8887512a77795a0fd36d029669d098eb/EditorPartIconFix/PartIconFixer.cs?at=master&fileviewer=file-view-default#PartIconFixer.cs-270:430
+		private void fixPartIcons()
+		{
+			AvailablePart p = PartLoader.getPartInfoByName("dmSIGINT");
+
+			if (p == null)
+				return;
+
+			GameObject iconPrefab = p.iconPrefab;
+
+			if (iconPrefab == null)
+				return;
+
+			Bounds b = calculateBounds(iconPrefab);
+
+			float max = Mathf.Max(b.size.x, b.size.y, b.size.z);
+
+			float factor = 40 / max;
+
+			factor /= 40;
+
+			iconPrefab.transform.GetChild(0).localScale *= factor;
+
+			p.iconScale = 1 / max;
+
+			iconPrefab.transform.GetChild(0).localPosition = Vector3.zero;
+		}
+
+		private Bounds calculateBounds(GameObject obj)
+		{
+			List<Renderer> renderers = obj.GetComponentsInChildren<Renderer>(true).ToList();
+
+			if (renderers.Count == 0)
+				return default(Bounds);
+
+			List<Bounds> boundsList = new List<Bounds>();
+
+			for(int i = 0; i < renderers.Count; i++)
+			{
+				Renderer r = renderers[i];
+
+				if (r == null)
+					continue;
+
+				if (r is SkinnedMeshRenderer)
+				{
+					SkinnedMeshRenderer smr = r as SkinnedMeshRenderer;
+
+					Mesh mesh = new Mesh();
+					smr.BakeMesh(mesh);
+
+					Matrix4x4 m = Matrix4x4.TRS(smr.transform.position, smr.transform.rotation, Vector3.one);
+
+					var verts = mesh.vertices;
+
+					Bounds smrBounds = new Bounds(m.MultiplyPoint3x4(verts[0]), Vector3.zero);
+
+					for (int j = 1; j < verts.Length; j++)
+						smrBounds.Encapsulate(m.MultiplyPoint3x4(verts[j]));
+
+					Destroy(mesh);
+
+					boundsList.Add(smrBounds);
+				}
+				else if (r is MeshRenderer)
+				{
+					r.gameObject.GetComponent<MeshFilter>().sharedMesh.RecalculateBounds();
+					boundsList.Add(r.bounds);
+				}
+			}
+
+			Bounds bounds = boundsList[0];
+
+			for (int i = 1; i < boundsList.Count; i++)
+				bounds.Encapsulate(boundsList[i]);
+
+			return bounds;
 		}
 
 	}

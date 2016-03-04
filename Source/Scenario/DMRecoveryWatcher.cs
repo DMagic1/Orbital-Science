@@ -39,27 +39,26 @@ namespace DMagic.Scenario
 	{
 		private static bool loaded = false;
 
-		private void Awake()
-		{
-			if (!loaded)
-			{
-				GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
-				loaded = true;
-			}
-		}
-
 		private void Start()
 		{
-			DontDestroyOnLoad(this);
-		}
+			if (loaded)
+				Destroy(gameObject);
 
-		private void OnDestroy()
-		{
-			GameEvents.OnScienceRecieved.Remove(RecoveryWatcher);
+			loaded = true;
+
+			GameEvents.OnScienceRecieved.Add(RecoveryWatcher);
+
+			DontDestroyOnLoad(gameObject);
 		}
 
 		private void RecoveryWatcher(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
+			if (sub == null)
+				return;
+
+			if (DMScienceScenario.SciScenario == null)
+				return;
+
 			if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
 			{
 				float DMScience = sci;

@@ -45,6 +45,7 @@ namespace DMagic.Parameters
 		private DMScienceContainer scienceContainer;
 		private string name, partName;
 		private bool collected;
+		private bool registered;
 
 		public DMAsteroidParameter()
 		{
@@ -55,8 +56,11 @@ namespace DMagic.Parameters
 			scienceLocation = Location;
 			name = Name;
 			collected = false;
-			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
-			partName = scienceContainer.SciPart;
+			if (DMUtils.availableScience.ContainsKey("All"))
+				DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
+
+			if (scienceContainer != null)
+				partName = scienceContainer.SciPart;
 		}
 
 		/// <summary>
@@ -101,52 +105,90 @@ namespace DMagic.Parameters
 
 		protected override void OnRegister()
 		{
+			if (registered)
+				return;
+
 			GameEvents.OnScienceRecieved.Add(scienceRecieve);
 			DMUtils.OnAsteroidScience.Add(asteroidMonitor);
+
+			registered = true;
 		}
 
 		protected override void OnUnregister()
 		{
+			if (!registered)
+				return;
+
+			registered = false;
+
 			GameEvents.OnScienceRecieved.Remove(scienceRecieve);
 			DMUtils.OnAsteroidScience.Remove(asteroidMonitor);
 		}
 
 		protected override void OnSave(ConfigNode node)
 		{
-			node.AddValue("Science_Subject", string.Format("{0}|{1}|{2}", name, collected, (int)scienceLocation));
+			node.AddValue("Name", name);
+			node.AddValue("Situation", (int)scienceLocation);
+			node.AddValue("Collected", collected);
 		}
 
 		protected override void OnLoad(ConfigNode node)
 		{
-			int targetLocation;
-			string[] scienceString = node.GetValue("Science_Subject").Split('|');
-			name = scienceString[0];
+			int targetLocation = node.parse("Situation", (int)65);
+			if (targetLocation >= 65 || targetLocation <= 0)
+			{
+				removeThis("Failed To Load Situation Variables; Asteroid Parameter Removed");
+				return;
+			}
+			scienceLocation = (ExperimentSituations)targetLocation;
+
+			collected = node.parse("Collected", (bool)true);
+
+			name = node.parse("Name", "");
+			if (string.IsNullOrEmpty(name))
+			{
+				removeThis("Failed To Load Science Container Variables; Asteroid Parameter Removed");
+				return;
+			}
+
+			if (!DMUtils.availableScience.ContainsKey("All"))
+			{
+				removeThis("Failed To Load Science Container Variables; Asteroid Parameter Removed");
+				return;
+			}
+
 			DMUtils.availableScience["All"].TryGetValue(name, out scienceContainer);
 			if (scienceContainer == null)
 			{
-				DMUtils.Logging("Failed To Load Science Container Variables; Asteroid Parameter Set To Complete");
-				this.SetComplete();
+				removeThis("Failed To Load Science Container Variables; Asteroid Parameter Removed");
+				return;
 			}
 			else
 				partName = scienceContainer.SciPart;
-			if (!bool.TryParse(scienceString[1], out collected))
-			{
-				DMUtils.Logging("Failed To Load Collected State; Asteroid Parameter Assuming Experiment Already Collected");
-				collected = true;
-			}
-			if (int.TryParse(scienceString[2], out targetLocation))
-				scienceLocation = (ExperimentSituations)targetLocation;
-			else
-			{
-				DMUtils.Logging("Failed To Load Situation Variables; Asteroid Parameter Set To Complete");
-				this.SetComplete();
-			}
 
-			root = (DMAsteroidSurveyContract)this.Root;
+			try
+			{
+				root = (DMAsteroidSurveyContract)this.Root;
+			}
+			catch (Exception e)
+			{
+				removeThis("Could not find root asteroid contract; removing DMAsteroid Parameter\n" + e);
+				return;
+			}
+		}
+
+		private void removeThis(string message)
+		{
+			this.Unregister();
+			this.Parent.RemoveParameter(this);
+			DMUtils.Logging(message);
 		}
 
 		private void asteroidMonitor(string size, string exp)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
 			if (!collected)
 			{
 				if (size == root.AsteroidSize && exp == scienceContainer.Exp.id)
@@ -159,6 +201,12 @@ namespace DMagic.Parameters
 
 		private void scienceRecieve(float sci, ScienceSubject sub, ProtoVessel pv, bool reverse)
 		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (sub == null)
+				return;
+
 			if (sub.id.Contains(string.Format("{0}@Asteroid{1}{2}", scienceContainer.Exp.id, scienceLocation, "")))
 			{
 				if (collected)

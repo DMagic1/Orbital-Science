@@ -50,16 +50,25 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contracts\DMAnomalyContract.cs" />
+    <Compile Include="Contracts\DMReconContract.cs" />
+    <Compile Include="DMAnomalyStorage.cs" />
+    <Compile Include="DMContractDefs.cs" />
     <Compile Include="DMContractGenerators.cs" />
+    <Compile Include="DMExtensions.cs" />
     <Compile Include="DMSeismicHandler.cs" />
     <Compile Include="DMSeismometerValues.cs" />
     <Compile Include="Parameters\DMCompleteParameter.cs" />
+    <Compile Include="Parameters\DMPartRequestParameter.cs" />
+    <Compile Include="Parameters\DMSpecificOrbitParameter.cs" />
     <Compile Include="Part Modules\DMAsteroidScanner.cs" />
     <Compile Include="Part Modules\DMBasicScienceModule.cs" />
     <Compile Include="Part Modules\DMBathymetry.cs" />
+    <Compile Include="Part Modules\DMBreakablePart.cs" />
+    <Compile Include="Part Modules\DMReconScope.cs" />
     <Compile Include="Part Modules\DMRoverGooMat.cs" />
     <Compile Include="Part Modules\DMSeismicHammer.cs" />
     <Compile Include="Part Modules\DMSeismicSensor.cs" />
+    <Compile Include="Part Modules\DMSIGINT.cs" />
     <Compile Include="Part Modules\DMSoilMoisture.cs" />
     <Compile Include="Parameters\DMAnomalyParameter.cs" />
     <Compile Include="Parameters\DMAsteroidParameter.cs" />
@@ -88,6 +97,7 @@
     <Compile Include="Part Modules\DMSolarCollector.cs" />
     <Compile Include="DMUtils.cs" />
     <Compile Include="Part Modules\DMXRayDiffract.cs" />
+    <Compile Include="Part Modules\IDMSurvey.cs" />
     <Compile Include="Part Modules\MagVar.cs">
       <SubType>Code</SubType>
     </Compile>

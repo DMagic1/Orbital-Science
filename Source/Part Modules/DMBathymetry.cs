@@ -101,7 +101,7 @@ namespace DMagic.Part_Modules
 			return s;
 		}
 
-		private void FixedUpdate()
+		protected override void FixedUpdate()
 		{
 			if (!HighLogic.LoadedSceneIsFlight)
 				return;
