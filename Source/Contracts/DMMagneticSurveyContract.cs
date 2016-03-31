@@ -245,7 +245,7 @@ namespace DMagic.Contracts
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(DMContractDefs.DMMagnetic.Expire.MinimumExpireDays, DMContractDefs.DMMagnetic.Expire.MaximumExpireDays);
-			base.SetDeadlineDays((float)(time  / KSPUtil.KerbinDay) * DMContractDefs.DMMagnetic.Expire.DeadlineModifier * (this.GetDestinationWeight(body) / 1.8f) * primaryModifier, null);
+			base.SetDeadlineDays((float)(time / ((KSPUtil.DefaultDateTimeFormatter)KSPUtil.dateTimeFormatter).KerbinDay) * DMContractDefs.DMMagnetic.Expire.DeadlineModifier * (this.GetDestinationWeight(body) / 1.8f) * primaryModifier, null);
 			base.SetReputation(DMContractDefs.DMMagnetic.Reputation.BaseReward * Mod, DMContractDefs.DMMagnetic.Reputation.BaseFailure * Mod, null);
 			base.SetFunds(DMContractDefs.DMMagnetic.Funds.BaseAdvance * Mod, DMContractDefs.DMMagnetic.Funds.BaseReward * Mod, DMContractDefs.DMMagnetic.Funds.BaseFailure * Mod, body);
 			base.SetScience(DMContractDefs.DMMagnetic.Science.BaseReward * Mod, body);
