@@ -72,17 +72,7 @@ namespace DMagic.Parameters
 
 		private void setupOrbit()
 		{
-			orbitDriver = new OrbitDriver();
-			orbitDriver.orbit = new Orbit();
-			orbitDriver.orbit.referenceBody = body;
-			orbitDriver.orbit.inclination = inc;
-			orbitDriver.orbit.eccentricity = ecc;
-			orbitDriver.orbit.argumentOfPeriapsis = aop;
-			orbitDriver.orbit.semiMajorAxis = sma;
-			orbitDriver.orbit.LAN = lan;
-			orbitDriver.orbit.meanAnomalyAtEpoch = mae;
-			orbitDriver.orbit.epoch = epo;
-			orbitDriver.orbit.Init();
+			orbitRenderer = ContractOrbitRenderer.Setup(Root, new Orbit(inc, ecc, sma, lan, aop, mae, epo, body));
 
 			orbitLoaded = true;
 		}
@@ -104,11 +94,14 @@ namespace DMagic.Parameters
 			if (!orbitLoaded)
 				return;
 
-			if (orbitDriver.orbit == null)
-			{
-				this.SetIncomplete();
+			if (orbitRenderer == null)
 				return;
-			}
+
+			if (orbitRenderer.driver == null)
+				return;
+
+			if (orbitRenderer.driver.orbit == null)
+				return;
 
 			if (root == null)
 			{
@@ -123,7 +116,7 @@ namespace DMagic.Parameters
 				if (v == null)
 					continue;
 
-				if (VesselUtilities.VesselAtOrbit(orbitDriver.orbit, deviationWindow, v))
+				if (VesselUtilities.VesselAtOrbit(orbitRenderer.driver.orbit, deviationWindow, v))
 				{
 					this.SetComplete();
 					return;
@@ -183,7 +176,7 @@ namespace DMagic.Parameters
 		{
 			try
 			{
-				double d = orbitDriver.orbit.inclination;
+				double d = orbitRenderer.driver.orbit.inclination;
 				orbitTested = true;
 				DMUtils.DebugLog("Orbit Checks Out...");
 				return true;
