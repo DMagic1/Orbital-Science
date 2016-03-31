@@ -118,6 +118,17 @@ namespace DMagic.Part_Modules
 			checkForces();
 		}
 
+		protected override bool canConduct()
+		{
+			if (broken)
+			{
+				failMessage = "This instrument is broken; the experiment can't be conducted";
+				return false;
+			}
+
+			return base.canConduct();
+		}
+
 		public override void deployEvent()
 		{
 			base.deployEvent();
