@@ -105,20 +105,28 @@ namespace DMagic.Part_Modules
 			Transform s1 = part.FindModelTransform("SensorLight.000");
 			Transform s2 = part.FindModelTransform("SensorLight.001");
 
-			if (l1 != null && l1.renderer != null)
-				scoreLightOne = l1.renderer.material;
-			if (l2 != null && l2.renderer != null)
-				scoreLightTwo = l2.renderer.material;
-			if (l3 != null && l3.renderer != null)
-				scoreLightThree = l3.renderer.material;
-			if (l4 != null && l4.renderer != null)
-				scoreLightFour = l4.renderer.material;
-			if (l4 != null && l5.renderer != null)
-				scoreLightFive = l5.renderer.material;
-			if (s1 != null && s1.renderer != null)
-				signalLightOne = s1.renderer.material;
-			if (s2 != null && s2.renderer != null)
-				signalLightTwo = s2.renderer.material;
+			Renderer r1 = l1.GetComponent<Renderer>();
+			Renderer r2 = l2.GetComponent<Renderer>();
+			Renderer r3 = l3.GetComponent<Renderer>();
+			Renderer r4 = l4.GetComponent<Renderer>();
+			Renderer r5 = l5.GetComponent<Renderer>();
+			Renderer r6 = s1.GetComponent<Renderer>();
+			Renderer r7 = s2.GetComponent<Renderer>();
+
+			if (l1 != null && r1 != null)
+				scoreLightOne = r1.material;
+			if (l2 != null && r2 != null)
+				scoreLightTwo = r2.material;
+			if (l3 != null && r3 != null)
+				scoreLightThree = r3.material;
+			if (l4 != null && r4 != null)
+				scoreLightFour = r4.material;
+			if (l4 != null && r5 != null)
+				scoreLightFive = r5.material;
+			if (s1 != null && r6 != null)
+				signalLightOne = r6.material;
+			if (s2 != null && r7 != null)
+				signalLightTwo = r6.material;
 		}
 
 		public override string GetInfo()

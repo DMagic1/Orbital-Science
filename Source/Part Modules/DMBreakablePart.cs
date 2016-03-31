@@ -266,16 +266,18 @@ namespace DMagic.Part_Modules
 
 				DMUtils.DebugLog("Breaking Object [{0}]...", o.name);
 
+				Rigidbody partRigid = part.GetComponent<Rigidbody>();
+
 				Vector3 randomAngular = new Vector3((float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3, (float)DMUtils.rand.NextDouble() * 3);
 				DMUtils.DebugLog("Random Angular: [{0:F4}]", randomAngular);
 				DMUtils.DebugLog("Old Angular: [{0:F4}]", r.angularVelocity);
-				r.angularVelocity = part.rigidbody.angularVelocity + randomAngular;
+				r.angularVelocity = partRigid.angularVelocity + randomAngular;
 				DMUtils.DebugLog("New Angular: [{0:F4}]", r.angularVelocity);
 				Vector3 randomVel = new Vector3(((float)DMUtils.rand.NextDouble() * 8) - 4, ((float)DMUtils.rand.NextDouble() * 8) - 4, ((float)DMUtils.rand.NextDouble() * 8) - 4);
 				DMUtils.DebugLog("Random Velocity: [{0:F4}]", randomVel);
-				Vector3 localCOM = vessel.findWorldCenterOfMass() - part.rigidbody.worldCenterOfMass;
+				Vector3 localCOM = vessel.findWorldCenterOfMass() - partRigid.worldCenterOfMass;
 				DMUtils.DebugLog("Old Velocity: [{0:F4}]", r.velocity);
-				r.velocity = part.rigidbody.velocity + randomVel + Vector3.Cross(localCOM, rigidbody.angularVelocity);
+				r.velocity = partRigid.velocity + randomVel + Vector3.Cross(localCOM, r.angularVelocity);
 				DMUtils.DebugLog("New Velocity: [{0:F4}]", r.velocity);
 				r.mass = componentMass;
 				r.useGravity = false;

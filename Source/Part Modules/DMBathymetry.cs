@@ -76,10 +76,13 @@ namespace DMagic.Part_Modules
 			Transform redLightT = part.FindModelTransform(redLightMaterial);
 			Transform blueLightT = part.FindModelTransform(blueLightMaterial);
 
-			if (redLightT != null && redLightT.renderer != null)
-				redLightMat = redLightT.renderer.material;
-			if (blueLightT != null && blueLightT.renderer != null)
-				blueLightMat = blueLightT.renderer.material;
+			Renderer redLightR = redLightT.GetComponent<Renderer>();
+			Renderer blueLightR = blueLightT.GetComponent<Renderer>();
+
+			if (redLightT != null && redLightR != null)
+				redLightMat = redLightR.material;
+			if (blueLightT != null && blueLightR != null)
+				blueLightMat = blueLightR.material;
 
 			if (redLight != null)
 				redLight.enabled = false;
