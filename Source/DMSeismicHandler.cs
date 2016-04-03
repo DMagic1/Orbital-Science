@@ -64,7 +64,6 @@ namespace DMagic
 		private Dictionary<uint, DMSeismometerValues> hammers = new Dictionary<uint, DMSeismometerValues>();
 
 		private static string bodyNameFixed = "Eeloo";
-		private const string potato = "PotatoRoid";
 
 		private void Start()
 		{
