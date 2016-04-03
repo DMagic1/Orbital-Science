@@ -1,15 +1,18 @@
+﻿v1.2.1
+- Updated for KSP 1.1.1183
+
 v1.2
-- Added three new parts based on orbital recconnaisance satellites
+- Added three new parts based on orbital reconnaissance satellites
    - All parts have pseudo-biome support; northern and southern hemispheres
    - Each part conducts an anomaly scan of the planet; used for anomaly contracts and the anomaly instrument
 
 - Single-Camera small recon satellite
    - 1.25m telescope
-   - Two film cannisters
+   - Two film canisters
    
 - Two-camera stereo recon satellite
    - 2.5m telescope
-   - Four film cannisters
+   - Four film canisters
    
 - Radio signals intelligence dish
    - 2.5m instrument; expands to 3m in the center
@@ -35,7 +38,7 @@ v1.2
    - Seismic impact hammer no longer makes a minimum distance check
    - Impact hammer collider removed; no longer a threat of catapulting your vessel
    - Seismic sensor pod crash tolerance increased; decouple strength lowered
-   - Seismic sensor pod cose, mass and size reduced
+   - Seismic sensor pod cost, mass and size reduced
    - Seismic settings found in GameData/DMagicOrbitalScience/Resources/DMSeismicSettings.cfg
    
 - Fix scaling issues for all parts
