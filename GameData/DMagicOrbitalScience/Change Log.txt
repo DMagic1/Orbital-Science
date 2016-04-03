@@ -1,6 +1,8 @@
 ﻿v1.2.1
 - Updated for KSP 1.1.1183
 
+- Broken SIGINT dish no longer able to collect science
+
 v1.2
 - Added three new parts based on orbital reconnaissance satellites
    - All parts have pseudo-biome support; northern and southern hemispheres
