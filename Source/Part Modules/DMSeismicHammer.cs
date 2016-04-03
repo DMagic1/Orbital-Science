@@ -595,7 +595,7 @@ namespace DMagic.Part_Modules
 			{
 				while (Anim.IsPlaying(hammerAnimation) && Anim[hammerAnimation].normalizedTime < 0.65f && ExtensionTransform.localPosition.z > targetPosition)
 				{
-					DMUtils.Logging("Drill Position: {0:N5}", ExtensionTransform.localPosition.z);
+					DMUtils.DebugLog("Drill Position: {0:N5}", ExtensionTransform.localPosition.z);
 					extension(Vector3.back, TimeWarp.deltaTime);
 					yield return null;
 				}
