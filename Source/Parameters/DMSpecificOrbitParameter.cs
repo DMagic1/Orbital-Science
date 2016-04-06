@@ -198,7 +198,8 @@ namespace DMagic.Parameters
 			}
 			catch (Exception e)
 			{
-				Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deactivating\n" + e.StackTrace);
+				if (!HighLogic.LoadedSceneIsEditor)
+					Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deactivating\n" + e.StackTrace);
 				return false;
 			}
 		}		
