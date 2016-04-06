@@ -52,12 +52,6 @@ namespace DMagic.Part_Modules
 			base.OnStart(state);
 
 			Events["fixPart"].guiName = "Fix Dish";
-
-			if (state != StartState.Editor)
-				return;
-
-			//Turn off the dish renderer so that the editor size check doesn't come out wrong
-			setTransformState(false);
 		}
 
 		private void assignTransforms()
