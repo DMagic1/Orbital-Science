@@ -622,15 +622,14 @@ namespace DMagic.Part_Modules
 				{
 					if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].experienceLevel >= resetLevel)
 					{
-						ResetExperiment();
 						Inoperable = false;
-						ScreenMessages.PostScreenMessage(string.Format("[0]: Media Restored. Module is operational again.", experiment.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
+						ScreenMessages.PostScreenMessage(string.Format("[{0}]: Media Restored. Module is operational again.", scienceExp.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
 					}
 					else
-						ScreenMessages.PostScreenMessage(string.Format("[0]: A level " + resetLevel +  " scientist is required to reset this experiment.", experiment.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
+						ScreenMessages.PostScreenMessage(string.Format("[{0}]: A level " + resetLevel + " scientist is required to reset this experiment.", scienceExp.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
 				}
 				else
-					ScreenMessages.PostScreenMessage(string.Format("[0]: A scientist is needed to reset this experiment.", experiment.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
+					ScreenMessages.PostScreenMessage(string.Format("[{0}]: A scientist is needed to reset this experiment.", scienceExp.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
 			}
 		}
 
@@ -1070,9 +1069,15 @@ namespace DMagic.Part_Modules
 
 		private void onSendToLab(ScienceData data)
 		{
-			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			if (checkLabOps() && storedScienceReports.Count > 0)
-				labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
+			ScienceLabSearch labSearch = new ScienceLabSearch(vessel, data);
+
+			if (labSearch.NextLabForDataFound)
+			{
+				StartCoroutine(labSearch.NextLabForData.ProcessData(data, new Callback<ScienceData>(onComplete)));
+
+				Inoperable = !IsRerunnable();
+				Deployed = Inoperable;
+			}
 			else
 				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
 		}
@@ -1080,17 +1085,6 @@ namespace DMagic.Part_Modules
 		protected virtual void onComplete(ScienceData data)
 		{
 			ReviewData();
-		}
-
-		private bool checkLabOps()
-		{
-			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			for (int i = 0; i < labList.Count; i++)
-			{
-				if (labList[i].IsOperational())
-					return true;
-			}
-			return false;
 		}
 
 		private void onDiscardInitialData(ScienceData data)
@@ -1147,9 +1141,15 @@ namespace DMagic.Part_Modules
 
 		private void onSendInitialToLab(ScienceData data)
 		{
-			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			if (checkLabOps() && scienceReports.Count > 0)
-				labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onInitialComplete)));
+			ScienceLabSearch labSearch = new ScienceLabSearch(vessel, data);
+
+			if (labSearch.NextLabForDataFound)
+			{
+				StartCoroutine(labSearch.NextLabForData.ProcessData(data, new Callback<ScienceData>(onInitialComplete)));
+
+				Inoperable = !IsRerunnable();
+				Deployed = Inoperable;
+			}
 			else
 				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
 		}
