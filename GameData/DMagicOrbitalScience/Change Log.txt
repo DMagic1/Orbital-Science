@@ -1,4 +1,7 @@
-﻿v1.2.2
+﻿v1.2.3
+- Updated for KSP 1.1 final release
+
+v1.2.2
 - Updated for KSP 1.1.1215
 
 - Fix SIGINT size issues
