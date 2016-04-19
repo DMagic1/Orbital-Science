@@ -43,6 +43,8 @@ namespace DMagic.Part_Modules
 		public string loopingAnimName = "";
 		[KSPField]
 		public string filmCannisterName = "cannister";
+		[KSPField]
+		public bool openDoorsOnly = false;
 
 		private Animation loopingAnim;
 		private bool windingDown;
@@ -60,6 +62,15 @@ namespace DMagic.Part_Modules
 				startLoopingAnimation(1f);
 
 			setCannisterObjects();
+
+			if (openDoorsOnly)
+			{
+				DMUtils.Logging("Setting Door Only Status...");
+				Events["openDoors"].active = !IsDeployed;
+				Events["closeDoors"].active = IsDeployed;
+				Actions["openDoorsAction"].active = true;
+				Actions["closeDoorsAction"].active = true;
+			}
 		}
 
 		private void setCannisterObjects()
@@ -180,9 +191,58 @@ namespace DMagic.Part_Modules
 			}
 		}
 
+		[KSPEvent(guiActive = true, guiName = "Open Camera Doors", active = false)]
+		public void openDoors()
+		{
+			base.deployEvent();
+
+			Events["openDoors"].active = false;
+			Events["closeDoors"].active = true;
+		}
+
+		[KSPAction("Open Camera Doors")]
+		public void openDoorsAction()
+		{
+			openDoors();
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Close Camera Doors", active = false)]
+		public void closeDoors()
+		{
+			if (loopingAnim != null)
+			{
+				if (loopingAnim.IsPlaying(loopingAnimName))
+				{
+					if (windingUp)
+						return;
+
+					if (windingDown)
+						return;
+
+					StartCoroutine(stopLooping());
+
+					return;
+				}
+			}
+
+			base.retractEvent();
+
+			Events["openDoors"].active = true;
+			Events["closeDoors"].active = false;
+		}
+
+		[KSPAction("Close Camera Doors")]
+		public void closeDoorsAction()
+		{
+			closeDoors();
+		}
+
 		public override void deployEvent()
 		{
 			if (windingDown)
+				return;
+
+			if (windingUp)
 				return;
 
 			base.deployEvent();
@@ -191,6 +251,9 @@ namespace DMagic.Part_Modules
 				return;
 
 			StartCoroutine(startLooping(waitForAnimationTime));
+
+			Events["openDoors"].active = false;
+			Events["closeDoors"].active = openDoorsOnly;
 		}
 
 		private IEnumerator startLooping(float time)
@@ -220,6 +283,9 @@ namespace DMagic.Part_Modules
 			if (windingUp)
 				return;
 
+			if (windingDown)
+				return;
+
 			StartCoroutine(stopLooping());
 		}
 
@@ -232,6 +298,9 @@ namespace DMagic.Part_Modules
 			float time = getTimeRemaining();
 
 			yield return new WaitForSeconds(time);
+
+			Events["openDoors"].active = openDoorsOnly;
+			Events["closeDoors"].active = false;
 
 			windingDown = false;
 
