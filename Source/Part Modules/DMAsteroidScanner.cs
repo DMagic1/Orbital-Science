@@ -774,7 +774,7 @@ namespace DMagic.Part_Modules
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
 
-			data = new ScienceData(multiplier * exp.baseValue * sub.dataScale, transmitValue, 0f, sub.id, dataTitle, false, part.flightID);
+			data = new ScienceData(multiplier * exp.baseValue * sub.dataScale, transmitValue, vessel.VesselValues.ScienceReturn.value, sub.id, dataTitle, false, part.flightID);
 
 			return data;
 		}

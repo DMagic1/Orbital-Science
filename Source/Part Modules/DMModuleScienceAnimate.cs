@@ -479,7 +479,7 @@ namespace DMagic.Part_Modules
 		public virtual void retractEvent()
 		{
 			if (oneWayAnimation) return;
-			if (oneShot) return;
+			if (oneShot && !HighLogic.LoadedSceneIsEditor) return;
 			primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, animationName, anim);
 			IsDeployed = false;
 			if (USScience)
@@ -952,7 +952,7 @@ namespace DMagic.Part_Modules
 				sub.scienceCap = scienceExp.scienceCap * sub.subjectValue;
 			}
 
-			data = new ScienceData(scienceExp.baseValue * sub.dataScale, xmitDataScalar, 1f, sub.id, sub.title, false, part.flightID);
+			data = new ScienceData(scienceExp.baseValue * sub.dataScale, xmitDataScalar, vessel.VesselValues.ScienceReturn.value, sub.id, sub.title, false, part.flightID);
 
 			return data;
 		}
@@ -992,7 +992,7 @@ namespace DMagic.Part_Modules
 			if (storedScienceReports.Count > 0)
 			{
 				ScienceData data = storedScienceReports[dataIndex];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, labDataBoost, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, 0, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
@@ -1024,7 +1024,7 @@ namespace DMagic.Part_Modules
 			if (scienceReports.Count > 0)
 			{
 				ScienceData data = scienceReports[0];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, labDataBoost, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, 0, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}

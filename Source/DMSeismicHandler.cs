@@ -402,7 +402,7 @@ namespace DMagic
 				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.theName, biome);
 			}
 
-			return new ScienceData(science, 1f, 1f, sub.id, sub.title, false, sensor.ID);
+			return new ScienceData(science, 1f, v.VesselValues.ScienceReturn.value, sub.id, sub.title, false, sensor.ID);
 		}
 
 		private static void registerDMScience(DMAsteroidScience newAst, ScienceExperiment exp, ScienceSubject sub)
