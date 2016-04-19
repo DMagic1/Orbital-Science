@@ -293,9 +293,9 @@ namespace DMagic
 		internal static double timeInDays(double D)
 		{
 			if (GameSettings.KERBIN_TIME)
-				D /= KSPUtil.KerbinDay;
+				D /= ((KSPUtil.DefaultDateTimeFormatter)KSPUtil.dateTimeFormatter).KerbinDay;
 			else
-				D /= KSPUtil.EarthDay;
+				D /= ((KSPUtil.DefaultDateTimeFormatter)KSPUtil.dateTimeFormatter).EarthDay;
 			return D;
 		}
 

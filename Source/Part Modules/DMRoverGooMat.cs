@@ -48,10 +48,10 @@ namespace DMagic.Part_Modules
 
 		protected override void onLabReset()
 		{
-			base.onLabReset();
-
 			if (IsDeployed)
 				sampleAnimator(-2f, 1f, (anim2[sampleAnim].length / 2f));
+
+			base.onLabReset();
 		}
 
 		public override void deployEvent()

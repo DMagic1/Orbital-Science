@@ -142,7 +142,8 @@ namespace DMagic.Part_Modules
 				if (Time.deltaTime != 0)
 					deltaTime = TimeWarp.deltaTime / Time.deltaTime;
 				if (deltaTime > 10) deltaTime = 10;
-				if (((Time.time * deltaTime) - lastUpdate) > updateInterval)
+				float dTime = Time.time * deltaTime;
+				if (dTime - lastUpdate > updateInterval || dTime < updateInterval)
 				{
 					lastUpdate = Time.time;
 					if (primaryModule.IsDeployed && runMagnetometer)
@@ -310,42 +311,43 @@ namespace DMagic.Part_Modules
 						{
 							currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
 
-							if (currentAnomalies == null)
-								return;
-
-							for (int a = 0; a < currentAnomalies.AnomalyCount; a++)
-							//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
+							if (currentAnomalies != null)
 							{
-								DMAnomalyObject anom = currentAnomalies.getAnomaly(a);
-
-								if (anom == null)
-									continue;
-
+								for (int a = 0; a < currentAnomalies.AnomalyCount; a++)
 								//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
-								//{
-								DMAnomalyList.updateAnomaly(vessel, anom);
-								if (anom.VDistance < 100000)
-									Cities.Add(anom);
+								{
+									DMAnomalyObject anom = currentAnomalies.getAnomaly(a);
+
+									if (anom == null)
+										continue;
+
+									//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
+									//{
+									DMAnomalyList.updateAnomaly(vessel, anom);
+									if (anom.VDistance < 100000)
+										Cities.Add(anom);
+								}
 							}
 						}
 						else
 						{
 							currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
 
-							if (currentAnomalies == null)
-								return;
-
-							for (int a = 0; a < currentAnomalies.AnomalyCount; a++)
+							if (currentAnomalies != null)
 							{
-								//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
-								//{
-								DMAnomalyObject anom = currentAnomalies.getAnomaly(a);
 
-								if (anom == null)
-									continue;
+								for (int a = 0; a < currentAnomalies.AnomalyCount; a++)
+								{
+									//foreach (DMAnomalyObject anom in DMScienceScenario.SciScenario.anomalyList.anomObjects())
+									//{
+									DMAnomalyObject anom = currentAnomalies.getAnomaly(a);
 
-								if (anom.VDistance < 100000)
-									Cities.Add(anom);
+									if (anom == null)
+										continue;
+
+									if (anom.VDistance < 100000)
+										Cities.Add(anom);
+								}
 							}
 						}
 

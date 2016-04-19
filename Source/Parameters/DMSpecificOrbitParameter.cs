@@ -49,6 +49,7 @@ namespace DMagic.Parameters
 		private bool orbitLoaded;
 		private bool orbitTested;
 		private DMLongOrbitParameter root;
+		private Orbit KSCOrbit = null;
 
 		public DMSpecificOrbitParameter() { }
 
@@ -66,23 +67,14 @@ namespace DMagic.Parameters
 			deviation = deviationWindow;
 			root = r;
 			disableOnStateChange = false;
-			setupOrbit();
-			testOrbit();
 		}
 
-		private void setupOrbit()
+		private void setupOrbit(bool ksc)
 		{
-			orbitDriver = new OrbitDriver();
-			orbitDriver.orbit = new Orbit();
-			orbitDriver.orbit.referenceBody = body;
-			orbitDriver.orbit.inclination = inc;
-			orbitDriver.orbit.eccentricity = ecc;
-			orbitDriver.orbit.argumentOfPeriapsis = aop;
-			orbitDriver.orbit.semiMajorAxis = sma;
-			orbitDriver.orbit.LAN = lan;
-			orbitDriver.orbit.meanAnomalyAtEpoch = mae;
-			orbitDriver.orbit.epoch = epo;
-			orbitDriver.orbit.Init();
+			if (ksc)
+				KSCOrbit = new Orbit(inc, ecc, sma, lan, aop, mae, epo, body);
+			else
+				orbitRenderer = ContractOrbitRenderer.Setup(Root, new Orbit(inc, ecc, sma, lan, aop, mae, epo, body));
 
 			orbitLoaded = true;
 		}
@@ -97,17 +89,29 @@ namespace DMagic.Parameters
 
 			if (!orbitTested)
 			{
-				orbitLoaded = testOrbit();
+				setupOrbit(HighLogic.LoadedScene == GameScenes.SPACECENTER);
+				orbitLoaded = testOrbit(HighLogic.LoadedScene == GameScenes.SPACECENTER);
 				orbitTested = true;
 			}
 
 			if (!orbitLoaded)
 				return;
 
-			if (orbitDriver.orbit == null)
+			if (HighLogic.LoadedScene != GameScenes.SPACECENTER)
 			{
-				this.SetIncomplete();
-				return;
+				if (orbitRenderer == null)
+					return;
+
+				if (orbitRenderer.driver == null)
+					return;
+
+				if (orbitRenderer.driver.orbit == null)
+					return;
+			}
+			else
+			{
+				if (KSCOrbit == null)
+					return;
 			}
 
 			if (root == null)
@@ -123,7 +127,7 @@ namespace DMagic.Parameters
 				if (v == null)
 					continue;
 
-				if (VesselUtilities.VesselAtOrbit(orbitDriver.orbit, deviationWindow, v))
+				if (VesselUtilities.VesselAtOrbit(HighLogic.LoadedScene == GameScenes.SPACECENTER ? KSCOrbit : orbitRenderer.driver.orbit, deviationWindow, v))
 				{
 					this.SetComplete();
 					return;
@@ -172,25 +176,30 @@ namespace DMagic.Parameters
 				epo = node.parse("epoch", (double)0);
 				lan = node.parse("lan", (double)0);
 				deviation = node.parse("deviationWindow", (double)10);
-				setupOrbit();
+				setupOrbit(true);
 			}
 
 			if (this.Root.ContractState == Contract.State.Active)
-				orbitLoaded = testOrbit();
+				orbitLoaded = testOrbit(HighLogic.LoadedScene == GameScenes.SPACECENTER);
 		}
 
-		private bool testOrbit()
+		private bool testOrbit(bool ksc)
 		{
 			try
 			{
-				double d = orbitDriver.orbit.inclination;
+				double d = 0;
+				if (ksc)
+					d = KSCOrbit.inclination;
+				else
+					d = orbitRenderer.driver.orbit.inclination;
 				orbitTested = true;
 				DMUtils.DebugLog("Orbit Checks Out...");
 				return true;
 			}
 			catch (Exception e)
 			{
-				Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deactivating\n" + e.StackTrace);
+				if (!HighLogic.LoadedSceneIsEditor)
+					Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deactivating\n" + e.StackTrace);
 				return false;
 			}
 		}		

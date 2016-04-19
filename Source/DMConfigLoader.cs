@@ -54,7 +54,6 @@ namespace DMagic
 			seismicLoad();
 			configLoad();
 			hackWaypointIcons();
-			fixPartIcons();
 			loaded = true;
 		}
 
