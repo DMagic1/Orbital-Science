@@ -1,4 +1,11 @@
-﻿v1.2.1
+﻿v1.2.2
+- Updated for KSP 1.1.1215
+
+- Fix SIGINT size issues
+- Add empty transforms in recon cameras for TST usage
+- Fix some issues with science labs
+
+v1.2.1
 - Updated for KSP 1.1.1183
 
 - Broken SIGINT dish no longer able to collect science
