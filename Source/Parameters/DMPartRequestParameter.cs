@@ -118,6 +118,9 @@ namespace DMagic.Parameters
 
 		protected override string GetTitle()
 		{
+			if (partTitles.Count <= 0)
+				return "Whoops. Something bad happened here...";
+
 			if (requiredParts.Count == 1)
 				return string.Format("Have the following part onboard: {0}", partTitles[0]);
 

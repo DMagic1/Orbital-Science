@@ -182,27 +182,42 @@ namespace DMagic.Contracts
 
 		protected override string GetHashString()
 		{
+			if (body == null)
+				return "";
+
 			return string.Format("{0}{1}", body.name, this.ParameterCount);
 		}
 
 		protected override string GetTitle()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			return string.Format("Conduct an orbital survey of {0}", body.theName);
 		}
 
 		protected override string GetDescription()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			string story = DMContractDefs.DMSurvey.backStory[rand.Next(0, DMContractDefs.DMSurvey.backStory.Count)];
 			return string.Format(story, this.agent.Name, "orbital", body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit multiple scientific observations.", body.theName);
 		}
 
 		protected override string MessageCompleted()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			return string.Format("You completed a survey of {0}, well done.", body.theName);
 		}
 
@@ -229,6 +244,9 @@ namespace DMagic.Contracts
 
 		protected override void OnSave(ConfigNode node)
 		{
+			if (body == null)
+				return;
+
 			node.AddValue("Survey_Target", body.flightGlobalsIndex);
 		}
 

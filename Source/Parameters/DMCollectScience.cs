@@ -135,6 +135,9 @@ namespace DMagic.Parameters
 
 		protected override string GetTitle()
 		{
+			if (scienceContainer == null)
+				return "Whoops. Something bad happened here...";
+
 			if (type == 2)
 			{
 				if (scienceLocation == ExperimentSituations.SrfLanded)
