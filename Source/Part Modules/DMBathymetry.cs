@@ -257,7 +257,7 @@ namespace DMagic.Part_Modules
 			m.SetColor("_EmissiveColor", target);
 		}
 
-		protected override ExperimentSituations getSituation()
+		public override ExperimentSituations getSituation()
 		{
 			switch (vessel.situation)
 			{
@@ -275,7 +275,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		protected override string getBiome(ExperimentSituations s)
+		public override string getBiome(ExperimentSituations s)
 		{
 			if ((bioMask & (int)s) == 0)
 				return "";

@@ -53,7 +53,7 @@ namespace DMagic.Part_Modules
 			base.OnStart(state);
 		}
 
-		protected override bool canConduct()
+		public override bool canConduct()
 		{
 			if (base.canConduct())
 			{

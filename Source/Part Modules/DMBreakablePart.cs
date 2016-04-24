@@ -118,7 +118,7 @@ namespace DMagic.Part_Modules
 			checkForces();
 		}
 
-		protected override bool canConduct()
+		public override bool canConduct()
 		{
 			if (broken)
 			{
