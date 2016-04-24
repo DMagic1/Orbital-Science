@@ -64,6 +64,7 @@
     <Compile Include="Contracts\DMAnomalyContract.cs" />
     <Compile Include="Contracts\DMReconContract.cs" />
     <Compile Include="DMAnomalyStorage.cs" />
+    <Compile Include="DMAPI.cs" />
     <Compile Include="DMContractDefs.cs" />
     <Compile Include="DMContractGenerators.cs" />
     <Compile Include="DMExtensions.cs" />
