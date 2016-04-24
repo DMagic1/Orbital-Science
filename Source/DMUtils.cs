@@ -54,13 +54,6 @@ namespace DMagic
 		private static Regex closeBraket = new Regex(@"(?<=\{\d+:?\w?\d?)\]");
 		private static Regex newLines = new Regex(@"\\n");
 
-		internal static void Logging(string s, params object[] stringObjects)
-		{
-			s = string.Format(s, stringObjects);
-			string finalLog = string.Format("[DMOS] {0}", s);
-			Debug.Log(finalLog);
-		}
-
 		internal static float fixSubjectVal(ExperimentSituations s, float f, CelestialBody body)
 		{
 			float subV = f;
@@ -135,7 +128,7 @@ namespace DMagic
 			return string.Concat(result).TrimEnd('|');
 		}
 
-		public static List<string> formatFixStringList(List<string> source)
+		internal static List<string> formatFixStringList(List<string> source)
 		{
 			List<string> fixedList = new List<string>();
 
@@ -315,6 +308,13 @@ namespace DMagic
 		internal static void DebugLog(string s, params object[] stringObjects)
 		{
 			Logging(s, stringObjects);
+		}
+
+		internal static void Logging(string s, params object[] stringObjects)
+		{
+			s = string.Format(s, stringObjects);
+			string finalLog = string.Format("[DMOS] {0}", s);
+			Debug.Log(finalLog);
 		}
 
 		#endregion
