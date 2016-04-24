@@ -204,9 +204,9 @@ namespace DMagic
 					if (m == null)
 						continue;
 
-					double distance = (m.part.transform.position - FlightGlobals.ActiveVessel.transform.position).magnitude;
+					double distance = (m.part.transform.position - FlightGlobals.ActiveVessel.transform.position).sqrMagnitude;
 
-					if (distance > 2000)
+					if (distance > (2500 * 2500))
 						continue;
 
 					modAsteroid = m;
