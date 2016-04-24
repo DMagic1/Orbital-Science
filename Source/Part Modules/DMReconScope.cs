@@ -201,7 +201,7 @@ namespace DMagic.Part_Modules
 		}
 
 		[KSPAction("Open Camera Doors")]
-		public void openDoorsAction()
+		public void openDoorsAction(KSPActionParam param)
 		{
 			openDoors();
 		}
@@ -232,7 +232,7 @@ namespace DMagic.Part_Modules
 		}
 
 		[KSPAction("Close Camera Doors")]
-		public void closeDoorsAction()
+		public void closeDoorsAction(KSPActionParam param)
 		{
 			closeDoors();
 		}
@@ -345,7 +345,7 @@ namespace DMagic.Part_Modules
 			scanPlanet(vessel.mainBody);
 		}
 
-		protected override ExperimentSituations getSituation()
+		public override ExperimentSituations getSituation()
 		{
 			switch (vessel.situation)
 			{
@@ -369,7 +369,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		protected override string getBiome(ExperimentSituations s)
+		public override string getBiome(ExperimentSituations s)
 		{
 			if ((bioMask & (int)s) == 0)
 				return "";
