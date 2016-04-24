@@ -40,7 +40,6 @@ namespace DMagic.Part_Modules
 	class DMXRayDiffract : DMModuleScienceAnimate
 	{
 		private const string drillTransform = "SampleDrill";
-		private const string potato = "PotatoRoid";
 		private Transform modelTransform;
 
 		[KSPField]
@@ -77,8 +76,13 @@ namespace DMagic.Part_Modules
 			{
 				if (b)
 				{
-					string obj = hit.collider.attachedRigidbody.gameObject.name;
-					return (obj.StartsWith(potato));
+					Part a = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
+
+					if (a != null)
+					{
+						if (a.Modules.Contains("ModuleAsteroid"))
+							return true;
+					}
 				}
 				else
 				{

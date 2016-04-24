@@ -83,7 +83,6 @@ namespace DMagic.Part_Modules
 		private const string baseTransformName = "DishBaseTransform";
 		private const string transformName = "DishTransform";
 		private const string transformRotatorName = "DishArmTransform";
-		private const string potato = "PotatoRoid";
 		private Animation Anim;
 		private Animation IndicatorAnim1;
 		private Animation IndicatorAnim2;
@@ -375,9 +374,13 @@ namespace DMagic.Part_Modules
 			{
 				if (hit.collider.attachedRigidbody != null)
 				{
-					string obj = hit.collider.attachedRigidbody.gameObject.name;
-					if (obj.StartsWith(potato))
-						return true;
+					Part a = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
+
+					if (a != null)
+					{
+						if (a.Modules.Contains("ModuleAsteroid"))
+							return true;
+					}
 				}
 			}
 			return false;
@@ -669,39 +672,31 @@ namespace DMagic.Part_Modules
 				//to that first encounter
 				if (hit.collider != null)
 				{
-					string obj = hit.collider.attachedRigidbody.gameObject.name;
-					if (obj.StartsWith(potato))
+					float firstDist = hit.distance;
+					DMUtils.DebugLog("First Ray Hit; Distance: {0:N3}", firstDist);
+					Vector3 reverseDirection = tPos - targetPos;
+					Ray targetRay = new Ray(targetPos, reverseDirection);
+					RaycastHit targetHit = new RaycastHit();
+					Physics.Raycast(targetRay, out targetHit, targetDistance, 1 << 28);
+
+					//The second ray determines the distance from the target vessel to the asteroid
+					if (targetHit.collider != null)
 					{
-						float firstDist = hit.distance;
-						DMUtils.DebugLog("First Ray Hit; Distance: {0:N3}", firstDist);
-						Vector3 reverseDirection = tPos - targetPos;
-						Ray targetRay = new Ray(targetPos, reverseDirection);
-						RaycastHit targetHit = new RaycastHit();
-						Physics.Raycast(targetRay, out targetHit, targetDistance, 1 << 28);
+						float secondDist = targetHit.distance;
+						DMUtils.DebugLog("Second Ray Hit; Distance: {0:N3}", secondDist);
+						Part p = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
 
-						//The second ray determines the distance from the target vessel to the asteroid
-						if (targetHit.collider != null)
+						if (p != null)
 						{
-							string targetObj = targetHit.collider.attachedRigidbody.gameObject.name;
-							if (targetObj.StartsWith(potato))
-							{
-								float secondDist = targetHit.distance;
-								DMUtils.DebugLog("Second Ray Hit; Distance: {0:N3}", secondDist);
-								Part p = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
-
-								if (p != null)
-								{
-									if (p.Modules.Contains("ModuleAsteroid"))
-										m = p.FindModuleImplementing<ModuleAsteroid>();
-								}
-
-								//The two distances are subtracted from the total distance between vessels to 
-								//give the distance the signal travels while inside the asteroid
-								dist = targetDistance - secondDist - firstDist;
-
-								DMUtils.DebugLog("Asteroid Scan Distance: {0:N3}", dist);
-							}
+							if (p.Modules.Contains("ModuleAsteroid"))
+								m = p.FindModuleImplementing<ModuleAsteroid>();
 						}
+
+						//The two distances are subtracted from the total distance between vessels to 
+						//give the distance the signal travels while inside the asteroid
+						dist = targetDistance - secondDist - firstDist;
+
+						DMUtils.DebugLog("Asteroid Scan Distance: {0:N3}", dist);
 					}
 				}
 			}
