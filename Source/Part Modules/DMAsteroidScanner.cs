@@ -78,6 +78,7 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public string usageReqMessage = "";
 
+		private string failMessage = "";
 		private string asteroidBodyNameFixed = "Eeloo";
 		private const string baseTransformName = "DishBaseTransform";
 		private const string transformName = "DishTransform";
@@ -87,7 +88,7 @@ namespace DMagic.Part_Modules
 		private Animation IndicatorAnim1;
 		private Animation IndicatorAnim2;
 		private Animation USAnim;
-		private ScienceExperiment exp = null;
+		internal ScienceExperiment exp = null;
 		private List<ScienceData> scienceReports = new List<ScienceData>();
 		private bool receiverInRange = false;
 		private bool asteroidInSight = false;
@@ -604,23 +605,14 @@ namespace DMagic.Part_Modules
 
 		public void gatherScienceData(bool silent = false)
 		{
-			if (FlightGlobals.ActiveVessel.isEVA)
-			{
-				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
-				{
-					ScreenMessages.PostScreenMessage(usageReqMessage, 6f, ScreenMessageStyle.UPPER_LEFT);
-					return;
-				}
-			}
-
-			if (receiverInRange && asteroidInSight)
+			if (canConduct())
 			{
 				ModuleAsteroid modAst = null;
 				float distance = asteroidScanLength(out modAst);
 				runExperiment(distance, modAst, silent);
 			}
 			else
-				ScreenMessages.PostScreenMessage("No valid targets within scaning range", 5f, ScreenMessageStyle.UPPER_CENTER);
+				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		[KSPAction("Scan Asteroid")]
@@ -632,6 +624,31 @@ namespace DMagic.Part_Modules
 		#endregion
 
 		#region Science Setup
+
+		public bool canConduct()
+		{
+			if (!receiverInRange)
+			{
+				failMessage = "No receivers detected within scanning range";
+				return false;
+			}
+			else if (!asteroidInSight)
+			{
+				failMessage = "No valid targets within scanning range";
+				return false;
+			}
+
+			if (FlightGlobals.ActiveVessel.isEVA)
+			{
+				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
+				{
+					failMessage = usageReqMessage;
+					return false;
+				}
+			}
+
+			return true;
+		}
 
 		//Determine if the signal passes through the asteroid, and what distance it travels if so
 		private float asteroidScanLength(out ModuleAsteroid m)
@@ -811,7 +828,7 @@ namespace DMagic.Part_Modules
 		{
 			if (scienceReports.Count > 0)
 			{
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, transmitValue, 0f, false, "", true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, transmitValue, ModuleScienceLab.GetBoostForVesselData(vessel, data), false, "", true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
@@ -834,36 +851,25 @@ namespace DMagic.Part_Modules
 			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
 			if (tranList.Count > 0 && scienceReports.Count > 0)
 			{
+				DMUtils.Logging("Sending data to vessel comms. {0} devices to choose from. Will try to pick the best one", tranList.Count);
 				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
 				DumpData(data);
 			}
 			else
-				ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 5f, ScreenMessageStyle.UPPER_LEFT);
+				ScreenMessages.PostScreenMessage("No Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void onSendToLab(ScienceData data)
 		{
-			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			if (checkLabOps() && scienceReports.Count > 0)
-				labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
-			else
-				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 5f, ScreenMessageStyle.UPPER_CENTER);
-		}
+			ScienceLabSearch labSearch = new ScienceLabSearch(vessel, data);
 
-		private void onComplete(ScienceData data)
-		{
-			ReviewData();
-		}
-
-		private bool checkLabOps()
-		{
-			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			for (int i = 0; i < labList.Count; i++)
+			if (labSearch.NextLabForDataFound)
 			{
-				if (labList[i].IsOperational())
-					return true;
+				StartCoroutine(labSearch.NextLabForData.ProcessData(data, null));
+				DumpData(data);
 			}
-			return false;
+			else
+				labSearch.PostErrorToScreen();
 		}
 
 		#endregion
