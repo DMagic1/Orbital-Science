@@ -295,6 +295,7 @@ namespace DMagic.Parameters
 			wp.index = 0;
 			wp.id = "dmVessel";
 			wp.iconSize = 32;
+			wp.blocksInput = false;
 			wp.seed = SystemUtilities.SuperSeed(this.Root);
 			wp.isOnSurface = false;
 			wp.isNavigatable = false;
