@@ -537,9 +537,19 @@ namespace DMagic
 			}
 		}
 
-
+		/// <summary>
+		/// Get the value of the next science result for a given experiment and science subject.
+		/// </summary>
+		/// <param name="mse">The science experiment module must be cast as a ModuleScienceExperiment.</param>
+		/// <param name="sub">The Science Subject for the asteroid type and experiment.</param>
+		/// <param name="data">The science data amount for the results; from ScienceData dataAmount.</param>
+		/// <param name="xmit">The transmission percentage from 0-1; use 1 for recovered results.</param>
+		/// <returns>Returns a float representing the science value for the next set of results; returns 0 if the experiment is not of the right type, or is not an asteroid experiment.</returns>
 		public static float getNextDMScienceValue(ModuleScienceExperiment mse, ScienceSubject sub, float data, float xmit)
 		{
+			if (mse == null)
+				return 0;
+
 			Type t = mse.GetType();
 
 			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
@@ -550,27 +560,21 @@ namespace DMagic
 			if (!isAsteroidExperiment(DMMod))
 				return 0;
 
-			if (DMMod.scienceExp == null)
-				return 0;
-
-			if (DMScienceScenario.SciScenario == null)
-				return 0;
-
-			DMScienceData DMS = DMScienceScenario.SciScenario.getDMScience(sub.title);
-
-			if (DMS == null)
-			{
-				return sub.subjectValue * DMMod.scienceExp.baseValue * xmit;
-			}
-			else
-			{
-				return sub.subjectValue * DMMod.scienceExp.baseValue * DMS.SciVal * sub.scientificValue * xmit;
-			}
+			return getNextDMScienceValue(sub, data, xmit);
 		}
 
-
-		public static float getNextDMScienceValue(ScienceExperiment exp, ScienceSubject sub, float data, float xmit)
+		/// <summary>
+		/// Get the value of the next science result for a given science subject; may be invalid if the science subject does not come from an asteoid-specific experiment.
+		/// </summary>
+		/// <param name="sub">The Science Subject for the asteroid type and experiment.</param>
+		/// <param name="data">The science data amount for the results; from ScienceData dataAmount.</param>
+		/// <param name="xmit">The transmission percentage from 0-1; use 1 for recovered results.</param>
+		/// <returns>Returns a float representing the science value for the next set of results; returns 0 if subject is null.</returns>
+		public static float getNextDMScienceValue(ScienceSubject sub, float data, float xmit)
 		{
+			if (sub == null)
+				return 0;
+
 			if (DMScienceScenario.SciScenario == null)
 				return 0;
 
@@ -578,11 +582,16 @@ namespace DMagic
 
 			if (DMS == null)
 			{
-				return sub.subjectValue * exp.baseValue;
+				return ResearchAndDevelopment.GetNextScienceValue(data, sub, xmit);
 			}
 			else
 			{
-				return sub.subjectValue * exp.baseValue * DMS.SciVal * sub.scientificValue;
+				float sci = ResearchAndDevelopment.GetNextScienceValue(data, sub, xmit);
+
+				float oldSciVal = 0f;
+				if (sub.scienceCap != 0)
+					oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
+				return sub.subjectValue * DMS.BaseValue * DMS.SciVal * oldSciVal * xmit;
 			}
 		}
 
