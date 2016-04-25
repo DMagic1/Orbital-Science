@@ -345,6 +345,11 @@ namespace DMagic.Part_Modules
 			if (experimentID != null)
 			{
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
+				if (scienceExp != null)
+				{
+					sitMask = (int)scienceExp.situationMask;
+					bioMask = (int)scienceExp.biomeMask;
+				}
 			}
 			if (FlightGlobals.Bodies.Count >= 17)
 				bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
