@@ -48,6 +48,9 @@ namespace DMagic
 		/// <returns>Returns true if the experiment can be performed; will return false if the science module is not of the right type.</returns>
 		public static bool experimentCanConduct(IScienceDataContainer isc)
 		{
+			if (isc == null)
+				return false;
+
 			Type t = isc.GetType();
 
 			if (t == typeof(DMAnomalyScanner))
@@ -102,6 +105,9 @@ namespace DMagic
 		/// <returns>Returns true if the science module is of the right type and the gather science method is called.</returns>
 		public static bool deployDMExperiment(IScienceDataContainer isc, bool silent = false)
 		{
+			if (isc == null)
+				return false;
+
 			Type t = isc.GetType();		
 
 			if (t == typeof(DMAnomalyScanner))
@@ -151,6 +157,9 @@ namespace DMagic
 		/// <returns>Returns the Experiment Situation value for that experiment; returns InSpaceHigh if the experiment is not of the right type.</returns>
 		public static ExperimentSituations getExperimentSituation(ModuleScienceExperiment mse)
 		{
+			if (mse == null)
+				return ExperimentSituations.InSpaceHigh;
+
 			Type t = mse.GetType();
 
 			if (t == typeof(DMAnomalyScanner))
@@ -190,6 +199,9 @@ namespace DMagic
 		/// <returns>Returns the biome string for that experiment; returns an empty string if the experiment is not of the right type.</returns>
 		public static string getBiome(ModuleScienceExperiment mse, ExperimentSituations sit)
 		{
+			if (mse == null)
+				return "";
+
 			Type t = mse.GetType();
 
 			if (t == typeof(DMAnomalyScanner))
@@ -228,6 +240,9 @@ namespace DMagic
 		/// <returns>Returns false if the module is not of the right type or if the experiment cannot be conducted with asteroids.</returns>
 		public static bool isAsteroidExperiment(ModuleScienceExperiment mse)
 		{
+			if (mse == null)
+				return false;
+
 			Type t = mse.GetType();
 
 			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
@@ -244,6 +259,9 @@ namespace DMagic
 		/// <returns>Returns false if the module is not of the right type or if the experiment cannot be conducted with asteroids.</returns>
 		public static bool isAsteroidExperiment(DMModuleScienceAnimate dms)
 		{
+			if (dms == null)
+				return false;
+
 			return dms.asteroidReports;
 		}
 
@@ -298,6 +316,9 @@ namespace DMagic
 		/// <returns>Returns the ScienceSubject for that specific asteroid and experiment; returns null if the module is not of the right type, the experiment is not suitable for astroids, if no asteroids are detected, or if the current asteroid situation is not suitable for the experiment.</returns>
 		public static ScienceSubject getAsteroidSubject(ModuleScienceExperiment mse)
 		{
+			if (mse == null)
+				return null;
+
 			Type t = mse.GetType();
 
 			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
@@ -343,6 +364,9 @@ namespace DMagic
 		/// <returns>Returns the ScienceSubject for that specific asteroid, experiment, and ExperimentSituation; returns null if the module is not of the right type, the experiment is not suitable for astroids, if no asteroids are detected, or if the current asteroid situation is not suitable for the experiment.</returns>
 		public static ScienceSubject getAsteroidSubject(ModuleScienceExperiment mse, ExperimentSituations sit)
 		{
+			if (mse == null)
+				return null;
+
 			Type t = mse.GetType();
 
 			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
@@ -430,7 +454,91 @@ namespace DMagic
 			return getDMScienceRecoveredValue(getAsteroidSubject(mse, sit));
 		}
 
-		public static float getNextDMScienceValue(ModuleScienceExperiment mse, ScienceSubject sub)
+		/// <summary>
+		/// Get the value of the next science result for a given experiment and science subject.
+		/// </summary>
+		/// <param name="mse">The science experiment module must be cast as a ModuleScienceExperiment.</param>
+		/// <param name="sub">The Science Subject for the asteroid type and experiment.</param>
+		/// <param name="xmit">The transmission percentage from 0-1; use 1 for recovered results.</param>
+		/// <returns>Returns a float representing the science value for the next set of results; returns 0 if the experiment is not of the right type, or is not an asteroid experiment.</returns>
+		public static float getNextDMScienceValue(ModuleScienceExperiment mse, ScienceSubject sub, float xmit)
+		{
+			if (sub == null)
+				return 0;
+
+			if (mse == null)
+				return 0;
+
+			Type t = mse.GetType();
+
+			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
+				return 0;
+
+			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
+
+			if (!isAsteroidExperiment(DMMod))
+				return 0;
+
+			if (DMMod.scienceExp == null)
+				return 0;
+
+			if (DMScienceScenario.SciScenario == null)
+				return 0;
+
+			DMScienceData DMS = DMScienceScenario.SciScenario.getDMScience(sub.title);
+
+			if (DMS == null)
+			{
+				return ResearchAndDevelopment.GetNextScienceValue(DMMod.scienceExp.baseValue * DMMod.scienceExp.dataScale, sub, xmit);
+			}
+			else
+			{
+				float sci = ResearchAndDevelopment.GetNextScienceValue(DMMod.scienceExp.baseValue * DMMod.scienceExp.dataScale, sub, xmit);
+
+				float oldSciVal = 0f;
+				if (sub.scienceCap != 0)
+					oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
+				return sub.subjectValue * DMS.BaseValue * DMS.SciVal * oldSciVal * xmit;
+			}
+		}
+
+		/// <summary>
+		/// Get the value of the next science result for a given experiment and science subject.
+		/// </summary>
+		/// <param name="exp">The science experiment; results will not be valid if the experiment cannot be used for asteroids.</param>
+		/// <param name="sub">The Science Subject for the asteroid type and experiment.</param>
+		/// <param name="xmit">The transmission percentage from 0-1; use 1 for recovered results.</param>
+		/// <returns>Returns a float representing the science value for the next set of results.</returns>
+		public static float getNextDMScienceValue(ScienceExperiment exp, ScienceSubject sub, float xmit)
+		{
+			if (sub == null)
+				return 0;
+
+			if (exp == null)
+				return 0;
+
+			if (DMScienceScenario.SciScenario == null)
+				return 0;
+
+			DMScienceData DMS = DMScienceScenario.SciScenario.getDMScience(sub.title);
+
+			if (DMS == null)
+			{
+				return ResearchAndDevelopment.GetNextScienceValue(exp.baseValue * exp.dataScale, sub, xmit);
+			}
+			else
+			{
+				float sci = ResearchAndDevelopment.GetNextScienceValue(exp.baseValue * exp.dataScale, sub, xmit);
+
+				float oldSciVal = 0f;
+				if (sub.scienceCap != 0)
+					oldSciVal = Math.Max(0f, 1f - ((sub.science - sci) / sub.scienceCap));
+				return sub.subjectValue * DMS.BaseValue * DMS.SciVal * oldSciVal * xmit;
+			}
+		}
+
+
+		public static float getNextDMScienceValue(ModuleScienceExperiment mse, ScienceSubject sub, float data, float xmit)
 		{
 			Type t = mse.GetType();
 
@@ -452,15 +560,16 @@ namespace DMagic
 
 			if (DMS == null)
 			{
-				return sub.subjectValue * DMMod.scienceExp.baseValue;
+				return sub.subjectValue * DMMod.scienceExp.baseValue * xmit;
 			}
 			else
 			{
-				return sub.subjectValue * DMMod.scienceExp.baseValue * DMS.SciVal * sub.scientificValue;
+				return sub.subjectValue * DMMod.scienceExp.baseValue * DMS.SciVal * sub.scientificValue * xmit;
 			}
 		}
 
-		public static float getNextDMScienceValue(ScienceExperiment exp, ScienceSubject sub)
+
+		public static float getNextDMScienceValue(ScienceExperiment exp, ScienceSubject sub, float data, float xmit)
 		{
 			if (DMScienceScenario.SciScenario == null)
 				return 0;
@@ -477,6 +586,11 @@ namespace DMagic
 			}
 		}
 
+		/// <summary>
+		/// Get the Sci Value for a given asteroid science subject; this is analogous to the Science Data scientificValue; a 0-1 float representing the fraction of science for a certain asteroid type still remaining.
+		/// </summary>
+		/// <param name="title">The Science Subject title (not the ID) for the asteroid type and experiment.</param>
+		/// <returns>A 0-1 float representing the fraction of science remaining for an asteroid type; returns 1 if the subject is not found.</returns>
 		public static float getDMScienceSciValue(string title)
 		{
 			if (DMScienceScenario.SciScenario == null)
@@ -485,11 +599,16 @@ namespace DMagic
 			DMScienceData DMS = DMScienceScenario.SciScenario.getDMScience(title);
 
 			if (DMS == null)
-				return 0;
+				return 1;
 
 			return DMS.SciVal;
 		}
 
+		/// <summary>
+		/// Get the Sci Value for a given asteroid science subject; this is analogous to the Science Data scientificValue; a 0-1 float representing the fraction of science for a certain asteroid type still remaining.
+		/// </summary>
+		/// <param name="sub">The Science Subject for the asteroid type and experiment.</param>
+		/// <returns>A 0-1 float representing the fraction of science remaining for an asteroid type; returns 1 if the subject is not found, returns 0 if the subject is null.</returns>
 		public static float getDMScienceSciValue(ScienceSubject sub)
 		{
 			if (sub == null)
@@ -498,16 +617,32 @@ namespace DMagic
 			return getDMScienceSciValue(sub.title);
 		}
 
+		/// <summary>
+		/// Get the Sci Value for a given asteroid science subject; this is analogous to the Science Data scientificValue; a 0-1 float representing the fraction of science for a certain asteroid type still remaining. This method must first determine the science subject and will only work if the experiment is properly suited for asteroid science and there is an asteroid nearby or on the vessel.
+		/// </summary>
+		/// <param name="mse">The science experiment module must be cast as a ModuleScienceExperiment.</param>
+		/// <returns>A 0-1 float representing the fraction of science remaining for an asteroid type; returns 1 if the subject is not found, returns 0 if the subject is null.</returns>
 		public static float getDMScienceSciValue(ModuleScienceExperiment mse)
 		{
 			return getDMScienceSciValue(getAsteroidSubject(mse));
 		}
 
+		/// <summary>
+		/// Get the Sci Value for a given asteroid science subject; this is analogous to the Science Data scientificValue; a 0-1 float representing the fraction of science for a certain asteroid type still remaining. This method must first determine the science subject and will only work if the experiment is properly suited for asteroid science and there is an asteroid nearby or on the vessel.
+		/// </summary>
+		/// <param name="mse">The science experiment module must be cast as a ModuleScienceExperiment.</param>
+		/// <param name="sit">The current Experiment Situation value; see the getExperimentSituation method above.</param>
+		/// <returns>A 0-1 float representing the fraction of science remaining for an asteroid type; returns 1 if the subject is not found, returns 0 if the subject is null.</returns>
 		public static float getDMScienceSciValue(ModuleScienceExperiment mse, ExperimentSituations sit)
 		{
 			return getDMScienceSciValue(getAsteroidSubject(mse, sit));
 		}
 
+		/// <summary>
+		/// Get the science cap for a certain asteroid type and experiment. This represents the total available science, and is analogous to the science subject scienceCap value.
+		/// </summary>
+		/// <param name="title">The Science Subject title (not the ID) for the asteroid type and experiment.</param>
+		/// <returns>A float representing the total science available for an asteroid type and experiment. Returns 0 if no valid subject is found.</returns>
 		public static float getDMScienceCap(string title)
 		{
 			if (DMScienceScenario.SciScenario == null)
@@ -521,6 +656,11 @@ namespace DMagic
 			return DMS.Cap;
 		}
 
+		/// <summary>
+		/// Get the science cap for a certain asteroid type and experiment. This represents the total available science, and is analogous to the science subject scienceCap value.
+		/// </summary>
+		/// <param name="sub">The Science Subject for the asteroid type and experiment.</param>
+		/// <returns>A float representing the total science available for an asteroid type and experiment. Returns 0 if no valid subject is found.</returns>
 		public static float getDMScienceCap(ScienceSubject sub)
 		{
 			if (sub == null)
@@ -529,11 +669,22 @@ namespace DMagic
 			return getDMScienceCap(sub.title);
 		}
 
+		/// <summary>
+		/// Get the science cap for a certain asteroid type and experiment. This represents the total available science, and is analogous to the science subject scienceCap value. This method must first determine the science subject and will only work if the experiment is properly suited for asteroid science and there is an asteroid nearby or on the vessel.
+		/// </summary>
+		/// <param name="mse">The science experiment module must be cast as a ModuleScienceExperiment.</param>
+		/// <returns>A float representing the total science available for an asteroid type and experiment. Returns 0 if no valid subject is found.</returns>
 		public static float getDMScienceCap(ModuleScienceExperiment mse)
 		{
 			return getDMScienceCap(getAsteroidSubject(mse));
 		}
 
+		/// <summary>
+		/// Get the science cap for a certain asteroid type and experiment. This represents the total available science, and is analogous to the science subject scienceCap value. This method must first determine the science subject and will only work if the experiment is properly suited for asteroid science and there is an asteroid nearby or on the vessel.
+		/// </summary>
+		/// <param name="mse">The science experiment module must be cast as a ModuleScienceExperiment.</param>
+		/// <param name="sit">The current Experiment Situation value; see the getExperimentSituation method above.</param>
+		/// <returns>A float representing the total science available for an asteroid type and experiment. Returns 0 if no valid subject is found.</returns>
 		public static float getDMScienceCap(ModuleScienceExperiment mse, ExperimentSituations sit)
 		{
 			return getDMScienceCap(getAsteroidSubject(mse, sit));
