@@ -125,15 +125,15 @@ namespace DMagic.Part_Modules
 		private Animation anim3;
 		private Animation anim4;
 		internal ScienceExperiment scienceExp;
-		private bool resourceOn = false;
-		private int dataIndex = 0;
+		protected bool resourceOn;
+		private int dataIndex;
 		private List<ScienceData> scienceReports = new List<ScienceData>();
 		protected List<ScienceData> storedScienceReports = new List<ScienceData>();
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
 		private string bodyNameFixed = "Eeloo";
-		private bool lastInOperableState = false;
+		private bool lastInOperableState;
 		protected float scienceBoost = 1f;
 		protected string failMessage = "";
 
@@ -660,7 +660,7 @@ namespace DMagic.Part_Modules
 			{
 				if (experimentAnimation)
 				{
-					if (anim.IsPlaying(animationName)) return;
+					if (anim != null && anim.IsPlaying(animationName)) return;
 					else
 					{
 						if (!primary)
@@ -697,7 +697,7 @@ namespace DMagic.Part_Modules
 				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		private IEnumerator WaitForAnimation(bool s)
+		protected IEnumerator WaitForAnimation(bool s)
 		{
 			ExperimentSituations vesselSit = getSituation();
 			yield return new WaitForSeconds(waitForAnimationTime);

@@ -44,10 +44,24 @@ namespace DMagic.Part_Modules
 		private List<Transform> dishTransforms = new List<Transform>();
 		private List<GameObject> dishObjects = new List<GameObject>();
 
+		private ModuleAnimateGeneric animator;
+
 		public override void OnStart(PartModule.StartState state)
 		{
 			assignTransforms();
 			assignObjects();
+
+			animator = part.FindModulesImplementing<ModuleAnimateGeneric>().FirstOrDefault();
+
+			if (animator != null)
+			{
+				animator.Actions["ToggleAction"].active = false;
+				animator.Events["Toggle"].guiActive = false;
+				animator.Events["Toggle"].guiActiveEditor = false;
+				animator.Events["Toggle"].guiActiveUnfocused = false;
+				animator.Fields["deployPercent"].guiActiveEditor = false;
+				animator.Fields["deployPercent"].guiActive = false;
+			}
 
 			base.OnStart(state);
 
@@ -135,6 +149,77 @@ namespace DMagic.Part_Modules
 				return "NorthernHemisphere";
 			else
 				return "SouthernHemisphere";
+		}
+
+		//public override void gatherScienceData(bool silent = false)
+		//{
+		//	if (!canConduct())
+		//	{
+		//		ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+		//		return;
+		//	}
+
+		//	if (animator == null)
+		//	{
+		//		DMUtils.Logging("Anim missing...");
+		//		runExperiment(getSituation(), silent);
+		//		return;
+		//	}
+
+		//	if (animator.aniState == ModuleAnimateGeneric.animationStates.MOVING)
+		//		return;
+
+		//	if (animator.aniState == ModuleAnimateGeneric.animationStates.LOCKED)
+		//	{
+		//		DMUtils.Logging("Starting Anim...");
+		//		animator.SetScalar(1);
+
+		//		if (!string.IsNullOrEmpty(deployingMessage))
+		//			ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+
+		//		if (experimentWaitForAnimation)
+		//		{
+		//			if (resourceExpCost > 0)
+		//				resourceOn = true;
+
+		//			StartCoroutine("WaitForAnimation", silent);
+		//		}
+		//		else
+		//			runExperiment(getSituation(), silent);
+
+		//		return;
+		//	}
+
+		//	if (resourceExpCost > 0)
+		//	{
+		//		resourceOn = true;
+		//		StartCoroutine("WaitForAnimation", silent);
+		//		return;
+		//	}
+
+		//	DMUtils.Logging("Starting experiment...");
+
+		//	runExperiment(getSituation(), silent);
+		//}
+
+		public override void deployEvent()
+		{
+			if (animator != null)
+			{
+				animator.Toggle();
+				//if (animator.aniState == ModuleAnimateGeneric.animationStates.LOCKED)
+				//{
+				//	DMUtils.Logging("Starting Anim...");
+				//	animator.SetScalar(1);
+				//}
+			}
+
+			base.deployEvent();
+		}
+
+		public override void retractEvent()
+		{
+			base.retractEvent();
 		}
 
 		public void scanPlanet(CelestialBody b)
