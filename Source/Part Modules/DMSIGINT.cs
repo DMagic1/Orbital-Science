@@ -30,13 +30,14 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace DMagic.Part_Modules
 {
-	public class DMSIGINT : DMBreakablePart, IDMSurvey
+	public class DMSIGINT : DMBreakablePart, IDMSurvey, IScalarModule
 	{
 		private readonly string[] dishTransformNames = new string[7] { "dish_Armature.000", "dish_Armature.001", "dish_Armature.002", "dish_Armature.003", "focalColumn", "dishCenter", "focalHead" };
 		private readonly string[] dishMeshNames = new string[7] { "dish_Mesh.000", "dish_Mesh.001", "dish_Mesh.002", "dish_Mesh.003", "focalColumn", "dishCenter", "focalHead" };
@@ -44,26 +45,25 @@ namespace DMagic.Part_Modules
 		private List<Transform> dishTransforms = new List<Transform>();
 		private List<GameObject> dishObjects = new List<GameObject>();
 
-		private ModuleAnimateGeneric animator;
+		private float scalar;
+		private float scalarStep;
+		private bool moving;
+
+		EventData<float> onStop;
+		EventData<float, float> onMove;
 
 		public override void OnStart(PartModule.StartState state)
 		{
+			onStop = new EventData<float>("SIGINT_" + part.flightID + "_OnStop");
+			onMove = new EventData<float, float>("SIGINT_" + part.flightID + "_OnMove");
+
 			assignTransforms();
 			assignObjects();
 
-			animator = part.FindModulesImplementing<ModuleAnimateGeneric>().FirstOrDefault();
-
-			if (animator != null)
-			{
-				animator.Actions["ToggleAction"].active = false;
-				animator.Events["Toggle"].guiActive = false;
-				animator.Events["Toggle"].guiActiveEditor = false;
-				animator.Events["Toggle"].guiActiveUnfocused = false;
-				animator.Fields["deployPercent"].guiActiveEditor = false;
-				animator.Fields["deployPercent"].guiActive = false;
-			}
-
 			base.OnStart(state);
+
+			if (anim != null && anim[animationName] != null)
+				scalarStep = 1 / anim[animationName].length;
 
 			Events["fixPart"].guiName = "Fix Dish";
 		}
@@ -151,75 +151,128 @@ namespace DMagic.Part_Modules
 				return "SouthernHemisphere";
 		}
 
-		//public override void gatherScienceData(bool silent = false)
-		//{
-		//	if (!canConduct())
-		//	{
-		//		ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-		//		return;
-		//	}
-
-		//	if (animator == null)
-		//	{
-		//		DMUtils.Logging("Anim missing...");
-		//		runExperiment(getSituation(), silent);
-		//		return;
-		//	}
-
-		//	if (animator.aniState == ModuleAnimateGeneric.animationStates.MOVING)
-		//		return;
-
-		//	if (animator.aniState == ModuleAnimateGeneric.animationStates.LOCKED)
-		//	{
-		//		DMUtils.Logging("Starting Anim...");
-		//		animator.SetScalar(1);
-
-		//		if (!string.IsNullOrEmpty(deployingMessage))
-		//			ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
-
-		//		if (experimentWaitForAnimation)
-		//		{
-		//			if (resourceExpCost > 0)
-		//				resourceOn = true;
-
-		//			StartCoroutine("WaitForAnimation", silent);
-		//		}
-		//		else
-		//			runExperiment(getSituation(), silent);
-
-		//		return;
-		//	}
-
-		//	if (resourceExpCost > 0)
-		//	{
-		//		resourceOn = true;
-		//		StartCoroutine("WaitForAnimation", silent);
-		//		return;
-		//	}
-
-		//	DMUtils.Logging("Starting experiment...");
-
-		//	runExperiment(getSituation(), silent);
-		//}
-
 		public override void deployEvent()
 		{
-			if (animator != null)
-			{
-				animator.Toggle();
-				//if (animator.aniState == ModuleAnimateGeneric.animationStates.LOCKED)
-				//{
-				//	DMUtils.Logging("Starting Anim...");
-				//	animator.SetScalar(1);
-				//}
-			}
-
 			base.deployEvent();
+
+			moving = true;
 		}
 
 		public override void retractEvent()
 		{
 			base.retractEvent();
+
+			moving = true;
+		}
+
+		public bool CanMove
+		{
+			get
+			{
+				DMUtils.Logging("Checking For Can Move...");
+
+				if (anim == null)
+					return false;
+
+				if (oneShot && IsDeployed)
+					return false;
+
+				return true;
+			}
+		}
+
+		public float GetScalar
+		{
+			get {
+				DMUtils.Logging("Fetching Scalar..."); 
+				return scalar;
+			}
+		}
+
+		public EventData<float, float> OnMoving
+		{
+			get { return onMove; }
+		}
+		public EventData<float> OnStop
+		{
+			get { return onStop; }
+		}
+
+		public bool IsMoving()
+		{
+			DMUtils.Logging("Checking if Moving...");
+
+			if (anim == null)
+				return false;
+
+			if (anim.isPlaying && anim[animationName] != null && anim[animationName].speed != 0f)
+				return true;
+
+			return moving;
+		}
+
+		public void SetScalar(float t)
+		{
+			DMUtils.Logging("Setting Scale: [{0:F3}]", t);
+
+			if (oneShot && anim[animationName].normalizedTime > 0.99f)
+			{
+				scalar = t;
+				moving = false;
+				return;
+			}
+
+			if (anim.IsPlaying(animationName))
+			{
+				anim.Stop(animationName);
+				onStop.Fire(anim[animationName].normalizedTime);
+				DMUtils.Logging("On Stop Fire: [{0:F3}]", anim[animationName].normalizedTime);
+			}
+
+			anim[animationName].speed = 0f;
+			anim[animationName].enabled = true;
+
+			moving = true;
+
+			t = Mathf.MoveTowards(scalar, t, scalarStep * Time.deltaTime);
+
+			DMUtils.Logging("Moving To: [{0:F3}]", t);
+
+			anim[animationName].normalizedTime = t;
+			anim.Blend(animationName);
+			scalar = t;
+		}
+
+		public void SetUIRead(bool state)
+		{
+			DMUtils.Logging("Set UI Read...");
+		}
+		public void SetUIWrite(bool state)
+		{
+			DMUtils.Logging("Set UI Write...");
+		}
+
+		public override void OnUpdate()
+		{
+			base.OnUpdate();
+
+			if (!moving)
+				return;
+
+			if (scalar > 0.99f)
+			{
+				deployEvent();
+				onStop.Fire(anim[animationName].normalizedTime);
+				DMUtils.Logging("On Stop Fire: [{0:F3}]", anim[animationName].normalizedTime);
+				moving = false;
+			}
+			else if (scalar < 0.01f)
+			{
+				retractEvent();
+				onStop.Fire(anim[animationName].normalizedTime);
+				DMUtils.Logging("On Stop Fire: [{0:F3}]", anim[animationName].normalizedTime);
+				moving = false;
+			}
 		}
 
 		public void scanPlanet(CelestialBody b)
