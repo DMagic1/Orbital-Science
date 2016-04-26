@@ -122,6 +122,12 @@ namespace DMagic
 				DMMod.gatherScienceData(silent);
 				return true;
 			}
+			else if (t == typeof(DMSIGINT))
+			{
+				DMSIGINT DMMod = (DMSIGINT)isc;
+				DMMod.gatherScienceData(silent);
+				return true;
+			}
 			else if (t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
 			{
 				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)isc;
