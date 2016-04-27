@@ -48,6 +48,8 @@ namespace DMagic.Part_Modules
 		public string deployingMessage = null;
 		[KSPField(isPersistant = true)]
 		public bool IsDeployed;
+		[KSPField(isPersistant = true)]
+		public bool isLocked;
 		[KSPField]
 		public string animationName = null;
 		[KSPField]
@@ -449,6 +451,7 @@ namespace DMagic.Part_Modules
 			enableIAnimators();
 			Events["deployEvent"].active = oneWayAnimation;
 			Events["retractEvent"].active = showEndEvent && !oneShot;
+			isLocked = oneShot;
 		}
 
 		private void enableIAnimators()
@@ -485,6 +488,7 @@ namespace DMagic.Part_Modules
 		{
 			if (oneWayAnimation) return;
 			if (oneShot && !HighLogic.LoadedSceneIsEditor) return;
+			isLocked = false;
 			primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, animationName, anim);
 			IsDeployed = false;
 			if (USScience)
