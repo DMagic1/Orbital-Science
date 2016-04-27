@@ -215,19 +215,20 @@ namespace DMagic.Part_Modules
 		{
 			DMUtils.Logging("Setting Scale: [{0:F3}]", t);
 
-			if (oneShot && anim[animationName].normalizedTime > 0.99f)
+			if (oneShot && t <= 0.5f)
 			{
+				DMUtils.Logging("Oneshot; Can't Go Backwards...");
 				scalar = t;
 				moving = false;
 				return;
 			}
 
-			if (anim.IsPlaying(animationName))
-			{
-				anim.Stop(animationName);
-				onStop.Fire(anim[animationName].normalizedTime);
-				DMUtils.Logging("On Stop Fire: [{0:F3}]", anim[animationName].normalizedTime);
-			}
+			//if (anim.IsPlaying(animationName))
+			//{
+			//	anim.Stop(animationName);
+			//	onStop.Fire(anim[animationName].normalizedTime);
+			//	DMUtils.Logging("On Stop Fire: [{0:F3}]", anim[animationName].normalizedTime);
+			//}
 
 			anim[animationName].speed = 0f;
 			anim[animationName].enabled = true;
