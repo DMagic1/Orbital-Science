@@ -48,6 +48,7 @@ namespace DMagic.Part_Modules
 		private float scalar;
 		private float scalarStep;
 		private bool moving;
+		private float deployScalar;
 
 		EventData<float> onStop;
 		EventData<float, float> onMove;
@@ -153,46 +154,51 @@ namespace DMagic.Part_Modules
 
 		public override void deployEvent()
 		{
-			base.deployEvent();
+			if (moving)
+				return;
 
-			moving = true;
+			deployScalar = 1;
+
+			base.deployEvent();
 		}
 
 		public override void retractEvent()
 		{
-			base.retractEvent();
+			if (moving)
+				return;
 
-			moving = true;
+			deployScalar = 0;
+
+			base.retractEvent();
 		}
 
 		public bool CanMove
 		{
 			get
 			{
-				DMUtils.Logging("Checking For Can Move...");
+				if (anim.IsPlaying(animationName))
+				{
+					scalar = anim[animationName].normalizedTime;
+					deployScalar = scalar;
+				}
 
-				if (anim == null)
-					return false;
+				if (deployScalar < 0.95f)
+					isLocked = false;
 
-				if (oneShot && IsDeployed)
-					return false;
-
-				return true;
+				return !broken;
 			}
 		}
 
 		public float GetScalar
 		{
-			get {
-				DMUtils.Logging("Fetching Scalar..."); 
-				return scalar;
-			}
+			get { return scalar; }
 		}
 
 		public EventData<float, float> OnMoving
 		{
 			get { return onMove; }
 		}
+
 		public EventData<float> OnStop
 		{
 			get { return onStop; }
@@ -200,8 +206,6 @@ namespace DMagic.Part_Modules
 
 		public bool IsMoving()
 		{
-			DMUtils.Logging("Checking if Moving...");
-
 			if (anim == null)
 				return false;
 
@@ -213,22 +217,14 @@ namespace DMagic.Part_Modules
 
 		public void SetScalar(float t)
 		{
-			DMUtils.Logging("Setting Scale: [{0:F3}]", t);
-
-			if (oneShot && t <= 0.5f)
+			if (oneShot && isLocked)
 			{
-				DMUtils.Logging("Oneshot; Can't Go Backwards...");
 				scalar = t;
+				deployScalar = 1;
 				moving = false;
+
 				return;
 			}
-
-			//if (anim.IsPlaying(animationName))
-			//{
-			//	anim.Stop(animationName);
-			//	onStop.Fire(anim[animationName].normalizedTime);
-			//	DMUtils.Logging("On Stop Fire: [{0:F3}]", anim[animationName].normalizedTime);
-			//}
 
 			anim[animationName].speed = 0f;
 			anim[animationName].enabled = true;
@@ -237,20 +233,19 @@ namespace DMagic.Part_Modules
 
 			t = Mathf.MoveTowards(scalar, t, scalarStep * Time.deltaTime);
 
-			DMUtils.Logging("Moving To: [{0:F3}]", t);
-
 			anim[animationName].normalizedTime = t;
 			anim.Blend(animationName);
 			scalar = t;
+			deployScalar = scalar;
 		}
 
 		public void SetUIRead(bool state)
 		{
-			DMUtils.Logging("Set UI Read...");
+
 		}
 		public void SetUIWrite(bool state)
 		{
-			DMUtils.Logging("Set UI Write...");
+
 		}
 
 		public override void OnUpdate()
@@ -260,19 +255,21 @@ namespace DMagic.Part_Modules
 			if (!moving)
 				return;
 
-			if (scalar > 0.99f)
+			if (scalar >= 0.99f)
 			{
+				if (oneShot)
+					isLocked = true;
+
+				moving = false;
 				deployEvent();
 				onStop.Fire(anim[animationName].normalizedTime);
-				DMUtils.Logging("On Stop Fire: [{0:F3}]", anim[animationName].normalizedTime);
-				moving = false;
 			}
-			else if (scalar < 0.01f)
+			else if (scalar <= 0.01f)
 			{
+				isLocked = false;
+				moving = false;
 				retractEvent();
 				onStop.Fire(anim[animationName].normalizedTime);
-				DMUtils.Logging("On Stop Fire: [{0:F3}]", anim[animationName].normalizedTime);
-				moving = false;
 			}
 		}
 
