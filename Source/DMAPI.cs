@@ -77,7 +77,12 @@ namespace DMagic
 			{
 				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)isc;
 				return DMMod.canConduct();
-			}			
+			}
+			else if (t == typeof(DMModuleScienceAnimate))
+			{
+				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)isc;
+				return DMMod.canConduct();
+			}
 			else if (t == typeof(DMSeismicHammer))
 			{
 				DMSeismicHammer DMMod = (DMSeismicHammer)isc;
@@ -123,6 +128,12 @@ namespace DMagic
 				return true;
 			}
 			else if (t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
+			{
+				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)isc;
+				DMMod.gatherScienceData(silent);
+				return true;
+			}
+			else if (t == typeof(DMModuleScienceAnimate))
 			{
 				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)isc;
 				DMMod.gatherScienceData(silent);
@@ -187,6 +198,11 @@ namespace DMagic
 				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
 				return DMMod.getSituation();
 			}
+			else if (t == typeof(DMModuleScienceAnimate))
+			{
+				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
+				return DMMod.getSituation();
+			}
 
 			return ExperimentSituations.InSpaceHigh;
 		}
@@ -229,6 +245,11 @@ namespace DMagic
 				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
 				return DMMod.getBiome(sit);
 			}
+			else if (t == typeof(DMModuleScienceAnimate))
+			{
+				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
+				return DMMod.getBiome(sit);
+			}
 
 			return "";
 		}
@@ -245,11 +266,18 @@ namespace DMagic
 
 			Type t = mse.GetType();
 
-			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
-				return false;
+			if (t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
+			{
+				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
+				return DMMod.asteroidReports;
+			}
+			else if (t == typeof(DMModuleScienceAnimate))
+			{
+				DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
+				return DMMod.asteroidReports;
+			}
 
-			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
-			return DMMod.asteroidReports;
+			return false;
 		}
 
 		/// <summary>
@@ -321,7 +349,7 @@ namespace DMagic
 
 			Type t = mse.GetType();
 
-			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
+			if (!(t.IsSubclassOf(typeof(DMModuleScienceAnimate)) || t == typeof(DMModuleScienceAnimate)))
 				return null;
 
 			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
@@ -369,7 +397,7 @@ namespace DMagic
 
 			Type t = mse.GetType();
 
-			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
+			if (!(t.IsSubclassOf(typeof(DMModuleScienceAnimate)) || t == typeof(DMModuleScienceAnimate)))
 				return null;
 
 			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
@@ -471,7 +499,7 @@ namespace DMagic
 
 			Type t = mse.GetType();
 
-			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
+			if (!(t.IsSubclassOf(typeof(DMModuleScienceAnimate)) || t == typeof(DMModuleScienceAnimate)))
 				return 0;
 
 			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
@@ -552,7 +580,7 @@ namespace DMagic
 
 			Type t = mse.GetType();
 
-			if (!t.IsSubclassOf(typeof(DMModuleScienceAnimate)))
+			if (!(t.IsSubclassOf(typeof(DMModuleScienceAnimate)) || t == typeof(DMModuleScienceAnimate)))
 				return 0;
 
 			DMModuleScienceAnimate DMMod = (DMModuleScienceAnimate)mse;
@@ -698,8 +726,6 @@ namespace DMagic
 		{
 			return getDMScienceCap(getAsteroidSubject(mse, sit));
 		}
-
-
 
 	}
 }
