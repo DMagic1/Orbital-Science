@@ -183,8 +183,8 @@ namespace DMagic.Part_Modules
 									if (t == this)
 										continue;
 
-									float d = (t.part.transform.position - dishBase.position).magnitude;
-									if (d > 2f)
+									float d = (t.part.transform.position - dishBase.position).sqrMagnitude;
+									if (d > 4f)
 									{
 										targetModule = t;
 										break;
@@ -217,8 +217,8 @@ namespace DMagic.Part_Modules
 								if (t == this)
 									continue;
 
-								float d = (t.part.transform.position - dishBase.position).magnitude;
-								if (d > 2f)
+								float d = (t.part.transform.position - dishBase.position).sqrMagnitude;
+								if (d > 4f)
 								{
 									targetModule = t;
 									break;
@@ -242,8 +242,8 @@ namespace DMagic.Part_Modules
 					if (targetModule != null)
 					{
 						s = "Receiver Located";
-						targetDistance = (targetModule.part.transform.position - dishBase.position).magnitude;
-						if (targetDistance < 2000 && targetDistance > 2)
+						targetDistance = (targetModule.part.transform.position - dishBase.position).sqrMagnitude;
+						if (targetDistance < (2000 * 2000) && targetDistance > 4)
 						{
 							s = "Receiver In Range";
 							receiverInRange = true;
