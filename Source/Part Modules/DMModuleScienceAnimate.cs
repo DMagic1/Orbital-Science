@@ -984,7 +984,7 @@ namespace DMagic.Part_Modules
 
 			if (DMData == null)
 			{
-				float astSciCap = scienceExp.scienceCap * 40f;
+				float astSciCap = scienceExp.scienceCap * 25f;
 				DMScienceScenario.SciScenario.RecordNewScience(sub.title, scienceExp.baseValue, 1f, 0f, astSciCap);
 				sub.scientificValue = 1f;
 			}
@@ -998,11 +998,12 @@ namespace DMagic.Part_Modules
 
 		#region Results Pages
 
-		private void newResultPage()
+		private void newResultPage(ScienceData data = null)
 		{
 			if (storedScienceReports.Count > 0)
 			{
-				ScienceData data = storedScienceReports[dataIndex];
+				if (data == null)
+					data = storedScienceReports[dataIndex];
 				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, ModuleScienceLab.GetBoostForVesselData(vessel, data), (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
@@ -1016,6 +1017,12 @@ namespace DMagic.Part_Modules
 				newResultPage();
 				dataIndex++;
 			}
+		}
+
+		new public void ReviewDataItem(ScienceData data)
+		{
+			dataIndex = 0;
+			newResultPage(data);
 		}
 
 		new public void ReviewDataEvent()
@@ -1164,12 +1171,12 @@ namespace DMagic.Part_Modules
 
 		ScienceData[] IScienceDataContainer.GetData()
 		{
-			return storedScienceReports.ToArray();
+			return GetData();
 		}
 
 		int IScienceDataContainer.GetScienceCount()
 		{
-			return storedScienceReports.Count;
+			return GetScienceCount();
 		}
 
 		bool IScienceDataContainer.IsRerunnable()
@@ -1189,12 +1196,22 @@ namespace DMagic.Part_Modules
 
 		void IScienceDataContainer.ReviewDataItem(ScienceData data)
 		{
-			ReviewData();
+			ReviewDataItem(data);
 		}
 
 		void IScienceDataContainer.DumpData(ScienceData data)
 		{
 			DumpData(data);
+		}
+
+		new public ScienceData[] GetData()
+		{
+			return storedScienceReports.ToArray();
+		}
+
+		new public int GetScienceCount()
+		{
+			return storedScienceReports.Count;
 		}
 
 		new public void ReturnData(ScienceData data)

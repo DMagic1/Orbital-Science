@@ -806,7 +806,7 @@ namespace DMagic.Part_Modules
 
 			if (DMData == null)
 			{
-				float astSciCap = exp.scienceCap * 40f;
+				float astSciCap = exp.scienceCap * 25f;
 				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, 1f, 0f, astSciCap);
 				sub.scientificValue = 1f;
 			}
