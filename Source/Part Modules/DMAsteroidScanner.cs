@@ -368,21 +368,21 @@ namespace DMagic.Part_Modules
 			Ray r = new Ray(tPos, dish.forward);
 			RaycastHit hit = new RaycastHit();
 
-			//Use the terrain collider Raycast layer; this is what is used by asteroids
-			Physics.Raycast(r, out hit, 2000, 1 << 28);
-			if (hit.collider != null)
-			{
-				if (hit.collider.attachedRigidbody != null)
+				Physics.Raycast(r, out hit, 2000, 1 << 0);
+				if (hit.collider != null)
 				{
-					Part a = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
-
-					if (a != null)
+					if (hit.collider.attachedRigidbody != null)
 					{
-						if (a.Modules.Contains("ModuleAsteroid"))
-							return true;
+						Part a = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
+
+						if (a != null)
+						{
+							if (a.Modules.Contains("ModuleAsteroid"))
+								return true;
+						}
 					}
 				}
-			}
+
 			return false;
 		}
 
@@ -665,7 +665,7 @@ namespace DMagic.Part_Modules
 				Vector3 direction = targetPos - tPos;
 				Ray r = new Ray(tPos, direction);
 				RaycastHit hit = new RaycastHit();
-				Physics.Raycast(r, out hit, targetDistance, 1 << 28);
+				Physics.Raycast(r, out hit, targetDistance, 1 << 0);
 				DMUtils.DebugLog("Target Distance: {0:N3}", targetDistance);
 
 				//The first ray determines whether or not the asteroid was hit and the distance from the dish
@@ -677,7 +677,7 @@ namespace DMagic.Part_Modules
 					Vector3 reverseDirection = tPos - targetPos;
 					Ray targetRay = new Ray(targetPos, reverseDirection);
 					RaycastHit targetHit = new RaycastHit();
-					Physics.Raycast(targetRay, out targetHit, targetDistance, 1 << 28);
+					Physics.Raycast(targetRay, out targetHit, targetDistance, 1 << 0);
 
 					//The second ray determines the distance from the target vessel to the asteroid
 					if (targetHit.collider != null)
