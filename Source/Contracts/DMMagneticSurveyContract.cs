@@ -269,22 +269,34 @@ namespace DMagic.Contracts
 
 		protected override string GetTitle()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			return string.Format("Conduct a survey of the magnetic field environment around {0}", body.theName);
 		}
 
 		protected override string GetDescription()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			string story = DMContractDefs.DMMagnetic.backStory[rand.Next(0, DMContractDefs.DMMagnetic.backStory.Count)];
 			return string.Format(story, this.agent.Name, body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			return string.Format("Study the magnetic field environment around {0} by inserting a long-term research vessel into orbit.", body.theName);
 		}
 
 		protected override string MessageCompleted()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			return string.Format("You completed a survey of {0}, well done.", body.theName);
 		}
 
@@ -318,6 +330,9 @@ namespace DMagic.Contracts
 
 		protected override void OnSave(ConfigNode node)
 		{
+			if (body == null)
+				return;
+
 			node.AddValue("Mag_Survey_Target", body.flightGlobalsIndex);
 		}
 

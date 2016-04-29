@@ -135,6 +135,9 @@ namespace DMagic.Parameters
 
 		protected override string GetTitle()
 		{
+			if (scienceContainer == null)
+				return "Whoops. Something bad happened here...";
+
 			if (type == 2)
 			{
 				if (scienceLocation == ExperimentSituations.SrfLanded)
@@ -332,7 +335,7 @@ namespace DMagic.Parameters
 							}
 							else
 							{
-								if (DMUtils.biomeRelevant(this.Situation, this.Container.BioMask))
+								if (DMUtils.biomeRelevant(this.Situation, (int)this.Container.Exp.biomeMask))
 									ScreenMessages.PostScreenMessage("This area has already been studied, try investigating another region to complete the contract", 6f, ScreenMessageStyle.UPPER_CENTER);
 								else
 									ScreenMessages.PostScreenMessage("Not enough science remaining; this experiment may need to be returned to Kerbin for credit", 6f, ScreenMessageStyle.UPPER_CENTER);

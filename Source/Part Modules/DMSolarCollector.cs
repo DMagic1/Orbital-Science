@@ -46,7 +46,6 @@ namespace DMagic.Part_Modules
 				anim = part.FindModelAnimators(loopingAnim)[0];
 			if (IsDeployed)
 				primaryAnimator(1f, 0f, WrapMode.Loop, loopingAnim, anim);
-			base.labDataBoost = 0.5f;
 		}
 
 		public override void deployEvent()
@@ -62,18 +61,6 @@ namespace DMagic.Part_Modules
 					anim[loopingAnim].wrapMode = WrapMode.Clamp;
 				}
 			base.retractEvent();
-		}
-
-		protected override void onComplete(ScienceData data)
-		{
-			data.transmitValue = 0.7f;
-			base.onComplete(data);
-		}
-
-		protected override void onInitialComplete(ScienceData data)
-		{
-			data.transmitValue = 0.7f;
-			base.onInitialComplete(data);
 		}
 
 	}

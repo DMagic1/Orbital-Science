@@ -294,17 +294,26 @@ namespace DMagic.Contracts
 
 		protected override string GetDescription()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			string story = DMContractDefs.DMRecon.backStory[rand.Next(0, DMContractDefs.DMRecon.backStory.Count)];
 			return string.Format(story, this.agent.Name, body.theName);
 		}
 
 		protected override string GetHashString()
 		{
+			if (body == null)
+				return "";
+
 			return string.Format("{0}{1}", body.name, prestige);
 		}
 
 		protected override string GetSynopsys()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			switch(prestige)
 			{
 				case ContractPrestige.Trivial:
@@ -318,6 +327,9 @@ namespace DMagic.Contracts
 
 		protected override string GetTitle()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			string t = "";
 
 			switch (prestige)
@@ -338,6 +350,9 @@ namespace DMagic.Contracts
 
 		protected override string MessageCompleted()
 		{
+			if (body == null)
+				return "Whoops. Something bad happened here...";
+
 			switch (prestige)
 			{
 				case ContractPrestige.Trivial:
@@ -372,6 +387,9 @@ namespace DMagic.Contracts
 
 		protected override void OnSave(ConfigNode node)
 		{
+			if (body == null)
+				return;
+
 			node.AddValue("Recon_Target", body.flightGlobalsIndex);
 		}
 

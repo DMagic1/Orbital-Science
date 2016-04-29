@@ -262,6 +262,9 @@ namespace DMagic.Contracts
 
 		protected override string GetTitle()
 		{
+			if (targetAnomaly == null)
+				return "Whoops. Something bad happened here...";
+
 			return string.Format("Study the source of the anomalous readings coming from {0}'s surface", targetAnomaly.Body.theName);
 		}
 
@@ -272,17 +275,26 @@ namespace DMagic.Contracts
 
 		protected override string GetDescription()
 		{
+			if (targetAnomaly == null)
+				return "Whoops. Something bad happened here...";
+
 			string story = DMContractDefs.DMAnomaly.backStory[rand.Next(0, DMContractDefs.DMAnomaly.backStory.Count)];
 			return string.Format(story, this.agent.Name, targetAnomaly.Body.theName);
 		}
 
 		protected override string GetSynopsys()
 		{
+			if (targetAnomaly == null)
+				return "Whoops. Something bad happened here...";
+
 			return string.Format("We would like you to travel to a specific location on {0}. Once there attempt to locate and study the source of the anomalous signal.", targetAnomaly.Body.theName);
 		}
 
 		protected override string MessageCompleted()
 		{
+			if (targetAnomaly == null)
+				return "Whoops. Something bad happened here...";
+
 			return string.Format("You successfully returned data from the {0} on {1}, well done.", hash, targetAnomaly.Body.theName);
 		}
 

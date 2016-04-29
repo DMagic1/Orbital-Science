@@ -48,6 +48,8 @@ namespace DMagic.Part_Modules
 		public string deployingMessage = null;
 		[KSPField(isPersistant = true)]
 		public bool IsDeployed;
+		[KSPField(isPersistant = true)]
+		public bool isLocked;
 		[KSPField]
 		public string animationName = null;
 		[KSPField]
@@ -124,19 +126,18 @@ namespace DMagic.Part_Modules
 		protected Animation anim2;
 		private Animation anim3;
 		private Animation anim4;
-		private ScienceExperiment scienceExp;
-		private bool resourceOn = false;
-		private int dataIndex = 0;
+		internal ScienceExperiment scienceExp;
+		protected bool resourceOn;
+		private int dataIndex;
 		private List<ScienceData> scienceReports = new List<ScienceData>();
 		protected List<ScienceData> storedScienceReports = new List<ScienceData>();
 		private List<DMEnviroSensor> enviroList = new List<DMEnviroSensor>();
 		private List<DMModuleScienceAnimate> primaryList = new List<DMModuleScienceAnimate>();
 		private DMModuleScienceAnimate primaryModule = null;
 		private string bodyNameFixed = "Eeloo";
-		private bool lastInOperableState = false;
+		private bool lastInOperableState;
 		protected float scienceBoost = 1f;
 		protected string failMessage = "";
-		protected float labDataBoost = 0.5f;
 
 		/// <summary>
 		/// For external use to determine if a module can conduct science
@@ -155,7 +156,7 @@ namespace DMagic.Part_Modules
 			}
 			catch (Exception e)
 			{
-				Debug.LogWarning("[DM] Error in casting ModuleScienceExperiment to DMModuleScienceAnimate; Invalid Part Module... : " + e);
+				Debug.LogWarning("[DMOS] Error in casting ModuleScienceExperiment to DMModuleScienceAnimate; Invalid Part Module... : " + e);
 				return false;
 			}
 		}
@@ -263,6 +264,8 @@ namespace DMagic.Part_Modules
 			}
 			experimentNumber = 0;
 			experimentsReturned = 0;
+			Inoperable = false;
+			Deployed = false;
 
 			if (keepDeployedMode == 0) retractEvent();
 		}
@@ -344,10 +347,14 @@ namespace DMagic.Part_Modules
 			if (experimentID != null)
 			{
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
+				if (scienceExp != null)
+				{
+					sitMask = (int)scienceExp.situationMask;
+					bioMask = (int)scienceExp.biomeMask;
+				}
 			}
 			if (FlightGlobals.Bodies.Count >= 17)
 				bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
-			labDataBoost = xmitDataScalar / 2;
 		}
 
 		private void editorSetup()
@@ -444,6 +451,7 @@ namespace DMagic.Part_Modules
 			enableIAnimators();
 			Events["deployEvent"].active = oneWayAnimation;
 			Events["retractEvent"].active = showEndEvent && !oneShot;
+			isLocked = oneShot;
 		}
 
 		private void enableIAnimators()
@@ -480,6 +488,7 @@ namespace DMagic.Part_Modules
 		{
 			if (oneWayAnimation) return;
 			if (oneShot && !HighLogic.LoadedSceneIsEditor) return;
+			isLocked = false;
 			primaryAnimator(-1f * animSpeed, 1f, WrapMode.Default, animationName, anim);
 			IsDeployed = false;
 			if (USScience)
@@ -555,13 +564,32 @@ namespace DMagic.Part_Modules
 		new public void ResetExperiment()
 		{
 			if (experimentLimit > 1)
-				ResetExperimentExternal();
+			{
+				if (!string.IsNullOrEmpty(sampleEmptyAnim))
+					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+				else if (!string.IsNullOrEmpty(sampleAnim))
+					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+				if (!string.IsNullOrEmpty(indicatorAnim))
+					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+
+				foreach (ScienceData data in storedScienceReports)
+					experimentNumber--;
+				storedScienceReports.Clear();
+				if (experimentNumber < 0)
+					experimentNumber = 0;
+				if (keepDeployedMode == 0)
+					retractEvent();
+			}
 			else
 			{
-				if (keepDeployedMode == 0) retractEvent();
+				if (keepDeployedMode == 0)
+					retractEvent();
 				storedScienceReports.Clear();
 			}
+
 			Deployed = false;
+			Inoperable = false;
+			lastInOperableState = false;
 		}
 
 		new public void ResetAction(KSPActionParam param)
@@ -571,28 +599,7 @@ namespace DMagic.Part_Modules
 
 		new public void ResetExperimentExternal()
 		{
-			if (experimentLimit > 1)
-			{
-				if (experimentLimit != 0)
-				{
-					if (!string.IsNullOrEmpty(sampleEmptyAnim))
-						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-					else if (!string.IsNullOrEmpty(sampleAnim))
-						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-					if (!string.IsNullOrEmpty(indicatorAnim))
-						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
-				}
-				foreach (ScienceData data in storedScienceReports)
-					experimentNumber--;
-				storedScienceReports.Clear();
-				if (experimentNumber < 0)
-					experimentNumber = 0;
-				if (keepDeployedMode == 0)
-					retractEvent();
-				Deployed = false;
-			}
-			else
-				ResetExperiment();
+			ResetExperiment();
 		}
 
 		new public void CollectDataExternalEvent()
@@ -616,21 +623,25 @@ namespace DMagic.Part_Modules
 
 		new public void CleanUpExperimentExternal()
 		{
-			if (FlightGlobals.ActiveVessel.isEVA)
+			if (!FlightGlobals.ActiveVessel.isEVA)
+				return;
+
+			if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].experienceTrait.TypeName != "Scientist")
 			{
-				if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].experienceTrait.TypeName == "Scientist")
-				{
-					if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].experienceLevel >= resetLevel)
-					{
-						Inoperable = false;
-						ScreenMessages.PostScreenMessage(string.Format("[{0}]: Media Restored. Module is operational again.", scienceExp.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
-					}
-					else
-						ScreenMessages.PostScreenMessage(string.Format("[{0}]: A level " + resetLevel + " scientist is required to reset this experiment.", scienceExp.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
-				}
-				else
-					ScreenMessages.PostScreenMessage(string.Format("[{0}]: A scientist is needed to reset this experiment.", scienceExp.experimentTitle), 6f, ScreenMessageStyle.UPPER_LEFT);
+				ScreenMessages.PostScreenMessage(string.Format("<b><color=orange>[{0}]: A scientist is needed to reset this experiment.</color></b>", part.partInfo.title), 6f, ScreenMessageStyle.UPPER_LEFT);
+				return;
 			}
+
+			if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].experienceLevel < resetLevel)
+			{
+				ScreenMessages.PostScreenMessage(string.Format("<b><color=orange>[{0}]: A level {1} scientist is required to reset this experiment.</color></b>", part.partInfo.title, resetLevel), 6f, ScreenMessageStyle.UPPER_LEFT);
+				return;
+			}
+
+			Inoperable = false;
+			lastInOperableState = false;
+			onLabReset();
+			ScreenMessages.PostScreenMessage(string.Format("<b><color=#99ff00ff>[{0}]: Media Restored. Module is operational again.</color></b>", part.partInfo.title), 6f, ScreenMessageStyle.UPPER_LEFT);
 		}
 
 		#endregion
@@ -653,7 +664,7 @@ namespace DMagic.Part_Modules
 			{
 				if (experimentAnimation)
 				{
-					if (anim.IsPlaying(animationName)) return;
+					if (anim != null && anim.IsPlaying(animationName)) return;
 					else
 					{
 						if (!primary)
@@ -690,7 +701,7 @@ namespace DMagic.Part_Modules
 				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		private IEnumerator WaitForAnimation(bool s)
+		protected IEnumerator WaitForAnimation(bool s)
 		{
 			ExperimentSituations vesselSit = getSituation();
 			yield return new WaitForSeconds(waitForAnimationTime);
@@ -700,9 +711,9 @@ namespace DMagic.Part_Modules
 
 		protected virtual void runExperiment(ExperimentSituations sit, bool silent)
 		{
-			ScienceData data = makeScience(scienceBoost, sit);
+			ScienceData data = makeScience(sit);
 			if (data == null)
-				Debug.LogError("[DM] Something Went Wrong Here; Null Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
+				Debug.LogError("[DMOS] Something Went Wrong Here; Null Science Data Returned; Please Report This On The KSP Forum With Output.log Data");
 			else
 			{
 				GameEvents.OnExperimentDeployed.Fire(data);
@@ -757,7 +768,7 @@ namespace DMagic.Part_Modules
 			return subV * boost;
 		}
 
-		protected virtual string getBiome(ExperimentSituations s)
+		public virtual string getBiome(ExperimentSituations s)
 		{
 			if ((bioMask & (int)s) == 0)
 				return "";
@@ -776,7 +787,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		protected virtual ExperimentSituations getSituation()
+		public virtual ExperimentSituations getSituation()
 		{
 			if (asteroidReports && DMAsteroidScience.AsteroidGrappled)
 				return ExperimentSituations.SrfLanded;
@@ -859,7 +870,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		protected virtual bool canConduct()
+		public virtual bool canConduct()
 		{
 			failMessage = "";
 			if (Inoperable)
@@ -905,7 +916,7 @@ namespace DMagic.Part_Modules
 			return true;
 		}
 
-		private ScienceData makeScience(float boost, ExperimentSituations vesselSituation)
+		private ScienceData makeScience(ExperimentSituations vesselSituation)
 		{
 			string biome = getBiome(vesselSituation);
 			CelestialBody mainBody = vessel.mainBody;
@@ -926,14 +937,14 @@ namespace DMagic.Part_Modules
 
 			if (scienceExp == null)
 			{
-				Debug.LogError("[DM] Something Went Wrong Here; Null Experiment Returned; Please Report This On The KSP Forum With Output.log Data");
+				Debug.LogError("[DMOS] Something Went Wrong Here; Null Experiment Returned; Please Report This On The KSP Forum With Output.log Data");
 				return null;
 			}
 
 			sub = ResearchAndDevelopment.GetExperimentSubject(scienceExp, vesselSituation, mainBody, biome);
 			if (sub == null)
 			{
-				Debug.LogError("[DM] Something Went Wrong Here; Null Subject Returned; Please Report This On The KSP Forum With Output.log Data");
+				Debug.LogError("[DMOS] Something Went Wrong Here; Null Subject Returned; Please Report This On The KSP Forum With Output.log Data");
 				return null;
 			}
 
@@ -948,7 +959,7 @@ namespace DMagic.Part_Modules
 			{
 				DMUtils.OnAnomalyScience.Fire(mainBody, experimentID, biome);
 				sub.title = scienceExp.experimentTitle + situationCleanup(vesselSituation, biome);
-				sub.subjectValue = fixSubjectValue(vesselSituation, sub.subjectValue, boost, mainBody);
+				sub.subjectValue *= scienceBoost;
 				sub.scienceCap = scienceExp.scienceCap * sub.subjectValue;
 			}
 
@@ -973,7 +984,7 @@ namespace DMagic.Part_Modules
 
 			if (DMData == null)
 			{
-				float astSciCap = scienceExp.scienceCap * 40f;
+				float astSciCap = scienceExp.scienceCap * 25f;
 				DMScienceScenario.SciScenario.RecordNewScience(sub.title, scienceExp.baseValue, 1f, 0f, astSciCap);
 				sub.scientificValue = 1f;
 			}
@@ -987,12 +998,13 @@ namespace DMagic.Part_Modules
 
 		#region Results Pages
 
-		private void newResultPage()
+		private void newResultPage(ScienceData data = null)
 		{
 			if (storedScienceReports.Count > 0)
 			{
-				ScienceData data = storedScienceReports[dataIndex];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, 0, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				if (data == null)
+					data = storedScienceReports[dataIndex];
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, ModuleScienceLab.GetBoostForVesselData(vessel, data), (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
@@ -1005,6 +1017,12 @@ namespace DMagic.Part_Modules
 				newResultPage();
 				dataIndex++;
 			}
+		}
+
+		new public void ReviewDataItem(ScienceData data)
+		{
+			dataIndex = 0;
+			newResultPage(data);
 		}
 
 		new public void ReviewDataEvent()
@@ -1024,7 +1042,7 @@ namespace DMagic.Part_Modules
 			if (scienceReports.Count > 0)
 			{
 				ScienceData data = scienceReports[0];
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, 0, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.transmitValue, ModuleScienceLab.GetBoostForVesselData(vessel, data), (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
@@ -1060,11 +1078,12 @@ namespace DMagic.Part_Modules
 			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
 			if (tranList.Count > 0 && storedScienceReports.Count > 0)
 			{
+				DMUtils.Logging("Sending data to vessel comms. {0} devices to choose from. Will try to pick the best one", tranList.Count);
 				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
 				DumpData(data);
 			}
 			else
-				ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
+				ScreenMessages.PostScreenMessage("No Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void onSendToLab(ScienceData data)
@@ -1073,18 +1092,11 @@ namespace DMagic.Part_Modules
 
 			if (labSearch.NextLabForDataFound)
 			{
-				StartCoroutine(labSearch.NextLabForData.ProcessData(data, new Callback<ScienceData>(onComplete)));
-
-				Inoperable = !IsRerunnable();
-				Deployed = Inoperable;
+				StartCoroutine(labSearch.NextLabForData.ProcessData(data, null));
+				DumpData(data);
 			}
 			else
-				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
-		}
-
-		protected virtual void onComplete(ScienceData data)
-		{
-			ReviewData();
+				labSearch.PostErrorToScreen();
 		}
 
 		private void onDiscardInitialData(ScienceData data)
@@ -1124,6 +1136,7 @@ namespace DMagic.Part_Modules
 			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
 			if (tranList.Count > 0 && scienceReports.Count > 0)
 			{
+				DMUtils.Logging("Sending data to vessel comms. {0} devices to choose from. Will try to pick the best one", tranList.Count);
 				if (experimentLimit != 0)
 				{
 					if (!string.IsNullOrEmpty(sampleAnim))
@@ -1136,7 +1149,7 @@ namespace DMagic.Part_Modules
 				experimentNumber++;
 			}
 			else
-				ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 4f, ScreenMessageStyle.UPPER_LEFT);
+				ScreenMessages.PostScreenMessage("No Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void onSendInitialToLab(ScienceData data)
@@ -1145,18 +1158,11 @@ namespace DMagic.Part_Modules
 
 			if (labSearch.NextLabForDataFound)
 			{
-				StartCoroutine(labSearch.NextLabForData.ProcessData(data, new Callback<ScienceData>(onInitialComplete)));
-
-				Inoperable = !IsRerunnable();
-				Deployed = Inoperable;
+				StartCoroutine(labSearch.NextLabForData.ProcessData(data, null));
+				DumpData(data);
 			}
 			else
-				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 4f, ScreenMessageStyle.UPPER_CENTER);
-		}
-
-		protected virtual void onInitialComplete(ScienceData data)
-		{
-			initialResultsPage();
+				labSearch.PostErrorToScreen();
 		}
 
 		#endregion
@@ -1165,12 +1171,12 @@ namespace DMagic.Part_Modules
 
 		ScienceData[] IScienceDataContainer.GetData()
 		{
-			return storedScienceReports.ToArray();
+			return GetData();
 		}
 
 		int IScienceDataContainer.GetScienceCount()
 		{
-			return storedScienceReports.Count;
+			return GetScienceCount();
 		}
 
 		bool IScienceDataContainer.IsRerunnable()
@@ -1190,12 +1196,22 @@ namespace DMagic.Part_Modules
 
 		void IScienceDataContainer.ReviewDataItem(ScienceData data)
 		{
-			ReviewData();
+			ReviewDataItem(data);
 		}
 
 		void IScienceDataContainer.DumpData(ScienceData data)
 		{
 			DumpData(data);
+		}
+
+		new public ScienceData[] GetData()
+		{
+			return storedScienceReports.ToArray();
+		}
+
+		new public int GetScienceCount()
+		{
+			return storedScienceReports.Count;
 		}
 
 		new public void ReturnData(ScienceData data)
@@ -1216,6 +1232,7 @@ namespace DMagic.Part_Modules
 				experimentsReturned = 0;
 
 			Inoperable = false;
+			lastInOperableState = false;
 
 			if (experimentLimit <= 1)
 				Deployed = true;
@@ -1230,6 +1247,7 @@ namespace DMagic.Part_Modules
 			foreach(ScienceData d in data)
 				experimentsReturned++;
 			Inoperable = !IsRerunnable();
+			lastInOperableState = Inoperable;
 			Deployed = Inoperable;
 			data.Clear();
 		}
@@ -1245,6 +1263,7 @@ namespace DMagic.Part_Modules
 			{
 				experimentsReturned++;
 				Inoperable = !IsRerunnable();
+				lastInOperableState = Inoperable;
 				Deployed = Inoperable;
 				storedScienceReports.Remove(data);
 			}
@@ -1256,6 +1275,7 @@ namespace DMagic.Part_Modules
 			{
 				experimentsReturned++;
 				Inoperable = !IsRerunnable();
+				lastInOperableState = Inoperable;
 				Deployed = Inoperable;
 				scienceReports.Remove(data);
 			}

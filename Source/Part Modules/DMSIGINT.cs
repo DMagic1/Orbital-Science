@@ -30,13 +30,14 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace DMagic.Part_Modules
 {
-	public class DMSIGINT : DMBreakablePart, IDMSurvey
+	public class DMSIGINT : DMBreakablePart, IDMSurvey, IScalarModule
 	{
 		private readonly string[] dishTransformNames = new string[7] { "dish_Armature.000", "dish_Armature.001", "dish_Armature.002", "dish_Armature.003", "focalColumn", "dishCenter", "focalHead" };
 		private readonly string[] dishMeshNames = new string[7] { "dish_Mesh.000", "dish_Mesh.001", "dish_Mesh.002", "dish_Mesh.003", "focalColumn", "dishCenter", "focalHead" };
@@ -44,12 +45,26 @@ namespace DMagic.Part_Modules
 		private List<Transform> dishTransforms = new List<Transform>();
 		private List<GameObject> dishObjects = new List<GameObject>();
 
+		private float scalar;
+		private float scalarStep;
+		private bool moving;
+		private float deployScalar;
+
+		EventData<float> onStop;
+		EventData<float, float> onMove;
+
 		public override void OnStart(PartModule.StartState state)
 		{
+			onStop = new EventData<float>("SIGINT_" + part.flightID + "_OnStop");
+			onMove = new EventData<float, float>("SIGINT_" + part.flightID + "_OnMove");
+
 			assignTransforms();
 			assignObjects();
 
 			base.OnStart(state);
+
+			if (anim != null && anim[animationName] != null)
+				scalarStep = 1 / anim[animationName].length;
 
 			Events["fixPart"].guiName = "Fix Dish";
 		}
@@ -102,7 +117,7 @@ namespace DMagic.Part_Modules
 			scanPlanet(vessel.mainBody);
 		}
 
-		protected override ExperimentSituations getSituation()
+		public override ExperimentSituations getSituation()
 		{
 			switch (vessel.situation)
 			{
@@ -126,7 +141,7 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		protected override string getBiome(ExperimentSituations s)
+		public override string getBiome(ExperimentSituations s)
 		{
 			if ((bioMask & (int)s) == 0)
 				return "";
@@ -135,6 +150,127 @@ namespace DMagic.Part_Modules
 				return "NorthernHemisphere";
 			else
 				return "SouthernHemisphere";
+		}
+
+		public override void deployEvent()
+		{
+			if (moving)
+				return;
+
+			deployScalar = 1;
+
+			base.deployEvent();
+		}
+
+		public override void retractEvent()
+		{
+			if (moving)
+				return;
+
+			deployScalar = 0;
+
+			base.retractEvent();
+		}
+
+		public bool CanMove
+		{
+			get
+			{
+				if (anim.IsPlaying(animationName))
+				{
+					scalar = anim[animationName].normalizedTime;
+					deployScalar = scalar;
+				}
+
+				if (deployScalar < 0.95f)
+					isLocked = false;
+
+				return !broken;
+			}
+		}
+
+		public float GetScalar
+		{
+			get { return scalar; }
+		}
+
+		public EventData<float, float> OnMoving
+		{
+			get { return onMove; }
+		}
+
+		public EventData<float> OnStop
+		{
+			get { return onStop; }
+		}
+
+		public bool IsMoving()
+		{
+			if (anim == null)
+				return false;
+
+			if (anim.isPlaying && anim[animationName] != null && anim[animationName].speed != 0f)
+				return true;
+
+			return moving;
+		}
+
+		public void SetScalar(float t)
+		{
+			if (oneShot && isLocked)
+			{
+				scalar = t;
+				deployScalar = 1;
+				moving = false;
+
+				return;
+			}
+
+			anim[animationName].speed = 0f;
+			anim[animationName].enabled = true;
+
+			moving = true;
+
+			t = Mathf.MoveTowards(scalar, t, scalarStep * Time.deltaTime);
+
+			anim[animationName].normalizedTime = t;
+			anim.Blend(animationName);
+			scalar = t;
+			deployScalar = scalar;
+		}
+
+		public void SetUIRead(bool state)
+		{
+
+		}
+		public void SetUIWrite(bool state)
+		{
+
+		}
+
+		public override void OnUpdate()
+		{
+			base.OnUpdate();
+
+			if (!moving)
+				return;
+
+			if (scalar >= 0.99f)
+			{
+				if (oneShot)
+					isLocked = true;
+
+				moving = false;
+				deployEvent();
+				onStop.Fire(anim[animationName].normalizedTime);
+			}
+			else if (scalar <= 0.01f)
+			{
+				isLocked = false;
+				moving = false;
+				retractEvent();
+				onStop.Fire(anim[animationName].normalizedTime);
+			}
 		}
 
 		public void scanPlanet(CelestialBody b)

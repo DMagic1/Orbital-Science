@@ -60,7 +60,6 @@ namespace DMagic.Part_Modules
 			animSecondary = part.FindModelAnimators(foundAnimate)[0];
 			if (IsDeployed)
 				fullyDeployed = true;
-			base.labDataBoost = 0.45f;
 			base.Events["CollectDataExternalEvent"].active = false;
 			if (!HighLogic.LoadedSceneIsEditor)
 			{
@@ -461,7 +460,7 @@ namespace DMagic.Part_Modules
 				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
-		protected override bool canConduct()
+		public override bool canConduct()
 		{
 			failMessage = "";
 			if (Inoperable)
@@ -483,7 +482,7 @@ namespace DMagic.Part_Modules
 			return true;
 		}
 
-		protected override string getBiome(ExperimentSituations s)
+		public override string getBiome(ExperimentSituations s)
 		{
 			return anomalyCleanup(closestAnom);
 		}
@@ -536,7 +535,7 @@ namespace DMagic.Part_Modules
 			return "Dummy";
 		}
 
-		protected override ExperimentSituations getSituation()
+		public override ExperimentSituations getSituation()
 		{
 			switch (vessel.situation)
 			{
@@ -547,12 +546,6 @@ namespace DMagic.Part_Modules
 				default:
 					return ExperimentSituations.FlyingLow;
 			}
-		}
-
-		protected override void onComplete(ScienceData data)
-		{
-			data.transmitValue = 0.95f;
-			base.onComplete(data);
 		}
 
 		#endregion

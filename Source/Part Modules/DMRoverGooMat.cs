@@ -38,6 +38,7 @@ namespace DMagic.Part_Modules
 {
 	class DMRoverGooMat : DMModuleScienceAnimate
 	{
+		private bool coroutineRunning;
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -49,7 +50,7 @@ namespace DMagic.Part_Modules
 		protected override void onLabReset()
 		{
 			if (IsDeployed)
-				sampleAnimator(-2f, 1f, (anim2[sampleAnim].length / 2f));
+				sampleAnimator(-2f, 1f, anim2[sampleAnim].length);
 
 			base.onLabReset();
 		}
@@ -70,17 +71,21 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator waitForSamples(float waitTime)
 		{
+			coroutineRunning = true;
 			yield return new WaitForSeconds(waitTime);
 			if (IsDeployed)
 				sampleAnimator(1.5f, 0f, (experimentNumber * (1f / experimentLimit)) * (anim2[sampleAnim].length) / 1.5f);
 			else
 				sampleAnimator(-2f, (experimentNumber * 1f / experimentLimit), (experimentNumber * (1f / experimentLimit)) * (anim2[sampleAnim].length) / 2f);
+			coroutineRunning = false;
 		}
 
 		private IEnumerator stopAnimSample(float timer)
 		{
+			coroutineRunning = true;
 			yield return new WaitForSeconds(timer);
 			anim2[sampleAnim].enabled = false;
+			coroutineRunning = false;
 		}
 
 		private void sampleAnimator(float waitTime)
@@ -89,24 +94,45 @@ namespace DMagic.Part_Modules
 			{
 				if (anim2.IsPlaying(sampleAnim))
 				{
-					StopCoroutine("stopAnimSample");
+					if (coroutineRunning)
+					{
+						StopCoroutine("stopAnimSample");
+						coroutineRunning = false;
+					}
 					anim2[sampleAnim].speed = -1.5f;
 				}
 				else if (anim.IsPlaying(animationName))
-					StopCoroutine("waitForSamples");
+				{
+					if (coroutineRunning)
+					{
+						StopCoroutine("waitForSamples");
+						coroutineRunning = false;
+					}
+				}
 				else
-					StartCoroutine("waitForSamples", waitTime);
+				{
+					if (!coroutineRunning)
+						StartCoroutine("waitForSamples", waitTime);
+				}
 			}
 			else
 			{
 				if (anim2.IsPlaying(sampleAnim))
 				{
-					StopCoroutine("stopAnimSample");
+					if (coroutineRunning)
+					{
+						StopCoroutine("stopAnimSample");
+						coroutineRunning = false;
+					}
 					anim2[sampleAnim].speed = 1.5f;
-					StartCoroutine("stopAnimSample", (1 - (anim2[sampleAnim].time / ((experimentNumber * (1f / experimentLimit)) * anim2[sampleAnim].length))) * ((experimentNumber * (1f / experimentLimit)) * (anim2[sampleAnim].length / 1.5f)));
+					if (!coroutineRunning)
+						StartCoroutine("stopAnimSample", (1 - (anim2[sampleAnim].time / ((experimentNumber * (1f / experimentLimit)) * anim2[sampleAnim].length))) * ((experimentNumber * (1f / experimentLimit)) * (anim2[sampleAnim].length / 1.5f)));
 				}
 				else
-					StartCoroutine("waitForSamples", waitTime);
+				{
+					if (!coroutineRunning)
+						StartCoroutine("waitForSamples", waitTime);
+				}
 			}
 		}
 

@@ -45,35 +45,36 @@ namespace DMagic.Part_Modules
 			base.OnStart(state);
 			if (!string.IsNullOrEmpty(verticalDrill))
 				anim = part.FindModelAnimators(verticalDrill)[0];
-			base.labDataBoost = 0.3f;
+		}
+
+		public override bool canConduct()
+		{
+			if (base.canConduct())
+			{
+				if (vessel.mainBody.name == "Eve" || vessel.mainBody.name == "Kerbin" || vessel.mainBody.name == "Duna" || vessel.mainBody.name == "Laythe" || vessel.mainBody.name == "Bop" || vessel.mainBody.name == "Vall" || vessel.mainBody.name == "Slate" || vessel.mainBody.atmosphere)
+					return true;
+
+				failMessage = customFailMessage;
+			}
+
+			return false;
 		}
 
 		public override void gatherScienceData(bool silent = false)
 		{
-			if (vessel.mainBody.name == "Eve" || vessel.mainBody.name == "Kerbin" || vessel.mainBody.name == "Duna" || vessel.mainBody.name == "Laythe" || vessel.mainBody.name == "Bop" || vessel.mainBody.name == "Vall" || vessel.mainBody.name == "Slate" || vessel.mainBody.atmosphere)
-			{
-				if (vessel.mainBody.name == "Eve")
-					base.scienceBoost = 2f;
-				else
-					base.scienceBoost = 1f;
-				if (anim.IsPlaying(verticalDrill))
-					return;
-
-				base.gatherScienceData(silent);
-			}
+			if (vessel.mainBody.name == "Eve")
+				base.scienceBoost = 2f;
 			else
-				ScreenMessages.PostScreenMessage(customFailMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
+				base.scienceBoost = 1f;
+			if (anim.IsPlaying(verticalDrill))
+				return;
+
+			base.gatherScienceData(silent);
 		}
 
 		public override void deployEvent()
 		{
 			startDrill();
-		}
-
-		protected override void onComplete(ScienceData data)
-		{
-			data.transmitValue = 0.6f;
-			base.onComplete(data);
 		}
 
 		//Determine drill orientation relative to parent part, set angle to -90 to 90.

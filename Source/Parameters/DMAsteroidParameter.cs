@@ -95,6 +95,9 @@ namespace DMagic.Parameters
 
 		protected override string GetTitle()
 		{
+			if (scienceContainer == null)
+				return "Whoops. Something bad happened here...";
+
 			if (scienceLocation == ExperimentSituations.InSpaceLow)
 				return string.Format("{0} data from in space near the asteroid", scienceContainer.Exp.experimentTitle);
 			else if (scienceLocation == ExperimentSituations.SrfLanded)

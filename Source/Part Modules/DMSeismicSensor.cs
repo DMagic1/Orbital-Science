@@ -369,7 +369,7 @@ namespace DMagic.Part_Modules
 				ReviewData();
 		}
 
-		protected override bool canConduct()
+		public override bool canConduct()
 		{
 			failMessage = "";
 			if (Inoperable)

@@ -78,16 +78,16 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public string usageReqMessage = "";
 
+		private string failMessage = "";
 		private string asteroidBodyNameFixed = "Eeloo";
 		private const string baseTransformName = "DishBaseTransform";
 		private const string transformName = "DishTransform";
 		private const string transformRotatorName = "DishArmTransform";
-		private const string potato = "PotatoRoid";
 		private Animation Anim;
 		private Animation IndicatorAnim1;
 		private Animation IndicatorAnim2;
 		private Animation USAnim;
-		private ScienceExperiment exp = null;
+		internal ScienceExperiment exp = null;
 		private List<ScienceData> scienceReports = new List<ScienceData>();
 		private bool receiverInRange = false;
 		private bool asteroidInSight = false;
@@ -183,8 +183,8 @@ namespace DMagic.Part_Modules
 									if (t == this)
 										continue;
 
-									float d = (t.part.transform.position - dishBase.position).magnitude;
-									if (d > 2f)
+									float d = (t.part.transform.position - dishBase.position).sqrMagnitude;
+									if (d > 4f)
 									{
 										targetModule = t;
 										break;
@@ -217,8 +217,8 @@ namespace DMagic.Part_Modules
 								if (t == this)
 									continue;
 
-								float d = (t.part.transform.position - dishBase.position).magnitude;
-								if (d > 2f)
+								float d = (t.part.transform.position - dishBase.position).sqrMagnitude;
+								if (d > 4f)
 								{
 									targetModule = t;
 									break;
@@ -242,8 +242,8 @@ namespace DMagic.Part_Modules
 					if (targetModule != null)
 					{
 						s = "Receiver Located";
-						targetDistance = (targetModule.part.transform.position - dishBase.position).magnitude;
-						if (targetDistance < 2000 && targetDistance > 2)
+						targetDistance = (targetModule.part.transform.position - dishBase.position).sqrMagnitude;
+						if (targetDistance < (2000 * 2000) && targetDistance > 4)
 						{
 							s = "Receiver In Range";
 							receiverInRange = true;
@@ -368,17 +368,21 @@ namespace DMagic.Part_Modules
 			Ray r = new Ray(tPos, dish.forward);
 			RaycastHit hit = new RaycastHit();
 
-			//Use the terrain collider Raycast layer; this is what is used by asteroids
-			Physics.Raycast(r, out hit, 2000, 1 << 28);
-			if (hit.collider != null)
-			{
-				if (hit.collider.attachedRigidbody != null)
+				Physics.Raycast(r, out hit, 2000, 1 << 0);
+				if (hit.collider != null)
 				{
-					string obj = hit.collider.attachedRigidbody.gameObject.name;
-					if (obj.StartsWith(potato))
-						return true;
+					if (hit.collider.attachedRigidbody != null)
+					{
+						Part a = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
+
+						if (a != null)
+						{
+							if (a.Modules.Contains("ModuleAsteroid"))
+								return true;
+						}
+					}
 				}
-			}
+
 			return false;
 		}
 
@@ -604,23 +608,14 @@ namespace DMagic.Part_Modules
 
 		public void gatherScienceData(bool silent = false)
 		{
-			if (FlightGlobals.ActiveVessel.isEVA)
-			{
-				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
-				{
-					ScreenMessages.PostScreenMessage(usageReqMessage, 6f, ScreenMessageStyle.UPPER_LEFT);
-					return;
-				}
-			}
-
-			if (receiverInRange && asteroidInSight)
+			if (canConduct())
 			{
 				ModuleAsteroid modAst = null;
 				float distance = asteroidScanLength(out modAst);
 				runExperiment(distance, modAst, silent);
 			}
 			else
-				ScreenMessages.PostScreenMessage("No valid targets within scaning range", 5f, ScreenMessageStyle.UPPER_CENTER);
+				ScreenMessages.PostScreenMessage(failMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		[KSPAction("Scan Asteroid")]
@@ -632,6 +627,31 @@ namespace DMagic.Part_Modules
 		#endregion
 
 		#region Science Setup
+
+		public bool canConduct()
+		{
+			if (!receiverInRange)
+			{
+				failMessage = "No receivers detected within scanning range";
+				return false;
+			}
+			else if (!asteroidInSight)
+			{
+				failMessage = "No valid targets within scanning range";
+				return false;
+			}
+
+			if (FlightGlobals.ActiveVessel.isEVA)
+			{
+				if (!ScienceUtil.RequiredUsageExternalAvailable(part.vessel, FlightGlobals.ActiveVessel, (ExperimentUsageReqs)usageReqMaskExternal, exp, ref usageReqMessage))
+				{
+					failMessage = usageReqMessage;
+					return false;
+				}
+			}
+
+			return true;
+		}
 
 		//Determine if the signal passes through the asteroid, and what distance it travels if so
 		private float asteroidScanLength(out ModuleAsteroid m)
@@ -645,46 +665,38 @@ namespace DMagic.Part_Modules
 				Vector3 direction = targetPos - tPos;
 				Ray r = new Ray(tPos, direction);
 				RaycastHit hit = new RaycastHit();
-				Physics.Raycast(r, out hit, targetDistance, 1 << 28);
+				Physics.Raycast(r, out hit, targetDistance, 1 << 0);
 				DMUtils.DebugLog("Target Distance: {0:N3}", targetDistance);
 
 				//The first ray determines whether or not the asteroid was hit and the distance from the dish
 				//to that first encounter
 				if (hit.collider != null)
 				{
-					string obj = hit.collider.attachedRigidbody.gameObject.name;
-					if (obj.StartsWith(potato))
+					float firstDist = hit.distance;
+					DMUtils.DebugLog("First Ray Hit; Distance: {0:N3}", firstDist);
+					Vector3 reverseDirection = tPos - targetPos;
+					Ray targetRay = new Ray(targetPos, reverseDirection);
+					RaycastHit targetHit = new RaycastHit();
+					Physics.Raycast(targetRay, out targetHit, targetDistance, 1 << 0);
+
+					//The second ray determines the distance from the target vessel to the asteroid
+					if (targetHit.collider != null)
 					{
-						float firstDist = hit.distance;
-						DMUtils.DebugLog("First Ray Hit; Distance: {0:N3}", firstDist);
-						Vector3 reverseDirection = tPos - targetPos;
-						Ray targetRay = new Ray(targetPos, reverseDirection);
-						RaycastHit targetHit = new RaycastHit();
-						Physics.Raycast(targetRay, out targetHit, targetDistance, 1 << 28);
+						float secondDist = targetHit.distance;
+						DMUtils.DebugLog("Second Ray Hit; Distance: {0:N3}", secondDist);
+						Part p = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
 
-						//The second ray determines the distance from the target vessel to the asteroid
-						if (targetHit.collider != null)
+						if (p != null)
 						{
-							string targetObj = targetHit.collider.attachedRigidbody.gameObject.name;
-							if (targetObj.StartsWith(potato))
-							{
-								float secondDist = targetHit.distance;
-								DMUtils.DebugLog("Second Ray Hit; Distance: {0:N3}", secondDist);
-								Part p = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
-
-								if (p != null)
-								{
-									if (p.Modules.Contains("ModuleAsteroid"))
-										m = p.FindModuleImplementing<ModuleAsteroid>();
-								}
-
-								//The two distances are subtracted from the total distance between vessels to 
-								//give the distance the signal travels while inside the asteroid
-								dist = targetDistance - secondDist - firstDist;
-
-								DMUtils.DebugLog("Asteroid Scan Distance: {0:N3}", dist);
-							}
+							if (p.Modules.Contains("ModuleAsteroid"))
+								m = p.FindModuleImplementing<ModuleAsteroid>();
 						}
+
+						//The two distances are subtracted from the total distance between vessels to 
+						//give the distance the signal travels while inside the asteroid
+						dist = targetDistance - secondDist - firstDist;
+
+						DMUtils.DebugLog("Asteroid Scan Distance: {0:N3}", dist);
 					}
 				}
 			}
@@ -794,7 +806,7 @@ namespace DMagic.Part_Modules
 
 			if (DMData == null)
 			{
-				float astSciCap = exp.scienceCap * 40f;
+				float astSciCap = exp.scienceCap * 25f;
 				DMScienceScenario.SciScenario.RecordNewScience(sub.title, exp.baseValue, 1f, 0f, astSciCap);
 				sub.scientificValue = 1f;
 			}
@@ -811,7 +823,7 @@ namespace DMagic.Part_Modules
 		{
 			if (scienceReports.Count > 0)
 			{
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, transmitValue, 0f, false, "", true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, transmitValue, ModuleScienceLab.GetBoostForVesselData(vessel, data), false, "", true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
@@ -834,36 +846,25 @@ namespace DMagic.Part_Modules
 			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
 			if (tranList.Count > 0 && scienceReports.Count > 0)
 			{
+				DMUtils.Logging("Sending data to vessel comms. {0} devices to choose from. Will try to pick the best one", tranList.Count);
 				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
 				DumpData(data);
 			}
 			else
-				ScreenMessages.PostScreenMessage("No transmitters available on this vessel.", 5f, ScreenMessageStyle.UPPER_LEFT);
+				ScreenMessages.PostScreenMessage("No Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void onSendToLab(ScienceData data)
 		{
-			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			if (checkLabOps() && scienceReports.Count > 0)
-				labList.OrderBy(ScienceUtil.GetLabScore).First().StartCoroutine(labList.First().ProcessData(data, new Callback<ScienceData>(onComplete)));
-			else
-				ScreenMessages.PostScreenMessage("No operational lab modules on this vessel. Cannot analyze data.", 5f, ScreenMessageStyle.UPPER_CENTER);
-		}
+			ScienceLabSearch labSearch = new ScienceLabSearch(vessel, data);
 
-		private void onComplete(ScienceData data)
-		{
-			ReviewData();
-		}
-
-		private bool checkLabOps()
-		{
-			List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
-			for (int i = 0; i < labList.Count; i++)
+			if (labSearch.NextLabForDataFound)
 			{
-				if (labList[i].IsOperational())
-					return true;
+				StartCoroutine(labSearch.NextLabForData.ProcessData(data, null));
+				DumpData(data);
 			}
-			return false;
+			else
+				labSearch.PostErrorToScreen();
 		}
 
 		#endregion

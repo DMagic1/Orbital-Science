@@ -118,7 +118,7 @@ namespace DMagic.Part_Modules
 			checkForces();
 		}
 
-		protected override bool canConduct()
+		public override bool canConduct()
 		{
 			if (broken)
 			{
@@ -320,7 +320,10 @@ namespace DMagic.Part_Modules
 			StartCoroutine(breakablePartsRemove());
 
 			if (IsDeployed && oneShot && !oneWayAnimation)
+			{
+				isLocked = false;
 				base.Events["retractEvent"].active = true;
+			}
 		}
 
 		private IEnumerator breakablePartsRemove()
@@ -405,17 +408,17 @@ namespace DMagic.Part_Modules
 			onFix();
 		}
 
-		protected void onBreak()
+		protected virtual void onBreak()
 		{
 			breakObjects();
 
 			broken = true;
 
-			//if (fixable)
-			//	Events["fixPart"].active = true;
+			if (fixable)
+				Events["fixPart"].active = true;
 		}
 
-		protected void onFix()
+		protected virtual void onFix()
 		{
 			broken = false;
 

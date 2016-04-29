@@ -69,7 +69,6 @@ namespace DMagic.Part_Modules
 	
 		private const string rotationTransformName = "RotationTransform";
 		private const string extensionTransformName = "ThumperCasing";
-		private const string potato = "PotatoRoid";
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -677,9 +676,16 @@ namespace DMagic.Part_Modules
 			{
 				if (b)
 				{
-					string obj = hit.collider.attachedRigidbody.gameObject.name;
-					d = hit.distance;
-					return (obj.StartsWith(potato));
+					Part a = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
+
+					if (a != null)
+					{
+						if (a.Modules.Contains("ModuleAsteroid"))
+						{
+							d = hit.distance;
+							return true;
+						}
+					}
 				}
 				else
 				{
@@ -715,7 +721,7 @@ namespace DMagic.Part_Modules
 				ReviewData();
 		}
 
-		protected override bool canConduct()
+		public override bool canConduct()
 		{
 			failMessage = "";
 			if (Inoperable)

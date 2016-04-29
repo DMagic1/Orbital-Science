@@ -248,7 +248,7 @@ namespace DMagic.Scenario
 				{
 					foreach (ScienceData data in dataList)
 					{
-						DMScienceData DMData = getDMScience(data.title, true);
+						DMScienceData DMData = getDMScience(data.title);
 						if (DMData != null)
 						{
 							ScienceSubject sub = ResearchAndDevelopment.GetSubjectByID(data.subjectID);
