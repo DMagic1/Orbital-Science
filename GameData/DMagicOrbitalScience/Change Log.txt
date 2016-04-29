@@ -1,4 +1,24 @@
-﻿v1.2.3
+﻿v1.2.4
+- Updated for KSP 1.1.1
+
+- Add a new API for better mod compatibility
+	- Use the standard situation and biome mask values for defining experiment conditions
+	
+- Add a transmitter module to the SIGINT dish; fast transmission rates, but high power usage
+	- Antenna Range and Remote Tech configs not included
+	
+- Add search tags for all parts
+- Fixed an error in the ASERT asteroid scanner
+	- Both scanners need a clear line-of-sight, with nothing but the asteroid between them
+- Reduce the total amount of science available from asteroids for each experiment
+- Fix EVA scientist reset for non-reusable parts
+- Fix some errors with lab data
+- Fix error that prevented vessels on a long-term contract from being selected in the map viewer
+- Fix potential errors in contracts with loading problems
+- All asteroid science checks look for ModuleAsteroid, instead of the potatoRoid part
+- Fix an issue with recon telescope action groups
+
+v1.2.3
 - Updated for KSP 1.1 final release
 
 v1.2.2
