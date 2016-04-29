@@ -65,11 +65,17 @@ namespace DMagic.Part_Modules
 
 			if (openDoorsOnly)
 			{
-				DMUtils.Logging("Setting Door Only Status...");
 				Events["openDoors"].active = !IsDeployed;
 				Events["closeDoors"].active = IsDeployed;
 				Actions["openDoorsAction"].active = true;
 				Actions["closeDoorsAction"].active = true;
+			}
+			else
+			{
+				Events["openDoors"].active = false;
+				Events["closeDoors"].active = false;
+				Actions["openDoorsAction"].active = false;
+				Actions["closeDoorsAction"].active = false;
 			}
 		}
 
@@ -203,7 +209,8 @@ namespace DMagic.Part_Modules
 		[KSPAction("Open Camera Doors")]
 		public void openDoorsAction(KSPActionParam param)
 		{
-			openDoors();
+			if (!IsDeployed)
+				openDoors();
 		}
 
 		[KSPEvent(guiActive = true, guiName = "Close Camera Doors", active = false)]
@@ -234,7 +241,8 @@ namespace DMagic.Part_Modules
 		[KSPAction("Close Camera Doors")]
 		public void closeDoorsAction(KSPActionParam param)
 		{
-			closeDoors();
+			if (IsDeployed)
+				closeDoors();
 		}
 
 		public override void deployEvent()
