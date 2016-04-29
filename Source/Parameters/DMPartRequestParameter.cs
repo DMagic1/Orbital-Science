@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Contracts;
+using DMagic.Contracts;
 using FinePrint.Contracts.Parameters;
 using FinePrint;
 using FinePrint.Utilities;
@@ -166,7 +167,6 @@ namespace DMagic.Parameters
 				vessels = DMUtils.stringConcat(suitableVessels.Values.ToList());
 
 			node.AddValue("Body", TargetBody.flightGlobalsIndex);
-			node.AddValue("Use_Waypoints", useWaypoints);
 			node.AddValue("Requested_Parts", DMUtils.stringConcat(requiredParts));
 			node.AddValue("Vessels", vessels);
 		}
@@ -182,7 +182,12 @@ namespace DMagic.Parameters
 				return;
 			}
 
-			useWaypoints = node.parse("Use_Waypoints", true);
+			if (Root.GetType() == typeof(DMReconContract))
+				useWaypoints = DMContractDefs.DMRecon.useVesselWaypoints;
+			else if (Root.GetType() == typeof(DMMagneticSurveyContract))
+				useWaypoints = DMContractDefs.DMMagnetic.useVesselWaypoints;
+			else
+				useWaypoints = false;
 
 			string parts = node.parse("Requested_Parts", "");
 			if (string.IsNullOrEmpty(parts))
