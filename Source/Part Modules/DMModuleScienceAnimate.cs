@@ -121,6 +121,8 @@ namespace DMagic.Part_Modules
 		public bool externalDeploy = false;
 		[KSPField]
 		public int resetLevel = 0;
+		[KSPField]
+		public float totalScienceLevel = 1;
 
 		protected Animation anim;
 		protected Animation anim2;
@@ -963,7 +965,25 @@ namespace DMagic.Part_Modules
 				sub.scienceCap = scienceExp.scienceCap * sub.subjectValue;
 			}
 
-			data = new ScienceData(scienceExp.baseValue * sub.dataScale, xmitDataScalar, vessel.VesselValues.ScienceReturn.value, sub.id, sub.title, false, part.flightID);
+			float dat = scienceExp.baseValue * sub.dataScale * totalScienceLevel;
+
+			if (totalScienceLevel < 1)
+			{
+				float science = (dat * sub.subjectValue) / sub.dataScale;
+				float max = sub.scienceCap * totalScienceLevel;
+				if (sub.science >= max)
+				{
+					dat = 0.000001f;
+				}
+				else
+				{
+					float sci = Mathf.Max(Mathf.Min(science - sub.science, max), 0.000001f);
+					dat = (sci * sub.dataScale) / sub.subjectValue;
+					dat /= sub.scientificValue;
+				}
+			}
+
+			data = new ScienceData(dat, xmitDataScalar, vessel.VesselValues.ScienceReturn.value, sub.id, sub.title, false, part.flightID);
 
 			return data;
 		}
