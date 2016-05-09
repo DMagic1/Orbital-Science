@@ -223,6 +223,7 @@ namespace DMagic
 			if (t == typeof(DMAnomalyScanner))
 			{
 				DMAnomalyScanner DMMod = (DMAnomalyScanner)mse;
+				DMMod.getAnomValues();
 				return DMMod.getBiome(sit);
 			}
 			else if (t == typeof(DMBathymetry))
@@ -365,9 +366,12 @@ namespace DMagic
 				if ((DMMod.scienceExp.situationMask & (int)ExperimentSituations.SrfLanded) == 0)
 					return null;
 
+				string oldBodyName = FlightGlobals.Bodies[16].bodyName;
+
 				DMAsteroidScience newAsteroid = new DMAsteroidScience();
 			    ScienceSubject sub = new ScienceSubject(DMMod.scienceExp, ExperimentSituations.SrfLanded, newAsteroid.Body, newAsteroid.AType + newAsteroid.ASeed.ToString());
 				sub.subjectValue = newAsteroid.SciMult;
+				newAsteroid.Body.bodyName = oldBodyName;
 				return sub;
 			}
 			else if (DMAsteroidScience.AsteroidNear)
@@ -375,9 +379,12 @@ namespace DMagic
 				if ((DMMod.scienceExp.situationMask & (int)ExperimentSituations.InSpaceLow) == 0)
 					return null;
 
+				string oldBodyName = FlightGlobals.Bodies[16].bodyName;
+
 				DMAsteroidScience newAsteroid = new DMAsteroidScience();
 				ScienceSubject sub = new ScienceSubject(DMMod.scienceExp, ExperimentSituations.InSpaceLow, newAsteroid.Body, newAsteroid.AType + newAsteroid.ASeed.ToString());
 				sub.subjectValue = newAsteroid.SciMult;
+				newAsteroid.Body.bodyName = oldBodyName;
 				return sub;
 			}
 
@@ -424,9 +431,12 @@ namespace DMagic
 			if ((DMMod.scienceExp.situationMask & (int)sit) == 0)
 				return null;
 
+			string oldBodyName = FlightGlobals.Bodies[16].bodyName;
+
 			DMAsteroidScience newAsteroid = new DMAsteroidScience();
 			ScienceSubject sub = new ScienceSubject(DMMod.scienceExp, sit, newAsteroid.Body, newAsteroid.AType + newAsteroid.ASeed.ToString());
 			sub.subjectValue = newAsteroid.SciMult;
+			newAsteroid.Body.bodyName = oldBodyName;
 			return sub;
 		}
 
