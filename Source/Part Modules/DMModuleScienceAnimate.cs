@@ -43,21 +43,21 @@ namespace DMagic.Part_Modules
 		#region Fields
 
 		[KSPField]
-		public string customFailMessage = null;
+		public string customFailMessage = "";
 		[KSPField]
-		public string deployingMessage = null;
+		public string deployingMessage = "";
 		[KSPField(isPersistant = true)]
 		public bool IsDeployed;
 		[KSPField(isPersistant = true)]
 		public bool isLocked;
 		[KSPField]
-		public string animationName = null;
+		public string animationName = "";
 		[KSPField]
-		public string sampleAnim = null;
+		public string sampleAnim = "";
 		[KSPField]
-		public string indicatorAnim = null;
+		public string indicatorAnim = "";
 		[KSPField]
-		public string sampleEmptyAnim = null;
+		public string sampleEmptyAnim = "";
 		[KSPField]
 		public float animSpeed = 1f;
 		[KSPField]
@@ -106,9 +106,9 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public bool USStock = false;
 		[KSPField]
-		public string bayAnimation = null;
+		public string bayAnimation = "";
 		[KSPField]
-		public string looperAnimation = null;
+		public string looperAnimation = "";
 		[KSPField]
 		public bool primary = true;
 		[KSPField]
@@ -861,12 +861,20 @@ namespace DMagic.Part_Modules
 
 		private string astCleanup(ExperimentSituations s, string b)
 		{
+			string a = "a";
+			if (b == "Icy-Organic")
+				a = "an";
+
+			string c = " asteroid";
+			if (b == "Comet")
+				c = "";
+
 			switch (s)
 			{
 				case ExperimentSituations.SrfLanded:
-					return string.Format(" from the surface of a {0} asteroid", b);
+					return string.Format(" from the surface of {0} {1}{2}", a, b, c);
 				case ExperimentSituations.InSpaceLow:
-					return string.Format(" while in space near a {0} asteroid", b);
+					return string.Format(" while in space near a {0} {1}{2}", a, b, c);
 				default:
 					return "";
 			}
