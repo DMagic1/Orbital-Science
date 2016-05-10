@@ -38,8 +38,8 @@ namespace DMagic
 	internal class DMAsteroidScience
 	{
 		private static ModuleAsteroid modAsteroid;
-		private string aClass = null;
-		private string aType = null;
+		private string aClass = "";
+		private string aType = "";
 		private int aSeed = 0;
 		private float sciMult = 1f;
 		private CelestialBody body = null;
@@ -154,15 +154,11 @@ namespace DMagic
 		//Assign a spectral type based on the ModuleAsteroid.seed value
 		private string asteroidSpectral(int seed)
 		{
-			if (seed >= 0 && seed < 40000000) return "C Type";
-			else if (seed >= 40000000 && seed < 65000000) return "S Type";
-			else if (seed >= 65000000 && seed < 80000000) return "M Type";
-			else if (seed >= 80000000 && seed < 85000000) return "E Type";
-			else if (seed >= 85000000 && seed < 88000000) return "P Type";
-			else if (seed >= 88000000 && seed < 91000000) return "B Type";
-			else if (seed >= 91000000 && seed < 94000000) return "A Type";
-			else if (seed >= 94000000 && seed < 97000000) return "R Type";
-			else if (seed >= 97000000 && seed < 100000000) return "G Type";
+			if (seed >= 0 && seed < 60000000) return "Carbonaceous";
+			else if (seed >= 60000000 && seed < 80000000) return "Stony";
+			else if (seed >= 80000000 && seed < 90000000) return "Metallic";
+			else if (seed >= 90000000 && seed < 95000000) return "Icy-Organic";
+			else if (seed >= 95000000 && seed < 100000000) return "Comet";
 			else return "Unknown Type";
 		}
 
