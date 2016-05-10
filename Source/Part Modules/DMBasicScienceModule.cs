@@ -40,7 +40,7 @@ namespace DMagic.Part_Modules
 	public class DMBasicScienceModule : PartModule, IScienceDataContainer
 	{
 		[KSPField]
-		public string animationName = null;
+		public string animationName = "";
 		[KSPField]
 		public float animSpeed = 1f;
 		[KSPField]

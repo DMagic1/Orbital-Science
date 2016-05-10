@@ -37,7 +37,7 @@ namespace DMagic.Part_Modules
 	{
 
 		[KSPField]
-		public string loopingAnim = null;
+		public string loopingAnim = "";
 
 		public override void OnStart(PartModule.StartState state)
 		{
