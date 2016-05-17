@@ -301,6 +301,7 @@ namespace DMagic.Part_Modules
 		{
 			string info = base.GetInfo();
 			info += string.Format("\nTransmission: {0:P0}\n", xmitDataScalar);
+			info += string.Format("Total Science Available: {0:P0}\n", totalScienceLevel);
 			if (!rerunnable)
 			{
 				info += string.Format("Max Samples: {0}\n", experimentLimit);
