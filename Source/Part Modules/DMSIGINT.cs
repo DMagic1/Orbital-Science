@@ -70,6 +70,12 @@ namespace DMagic.Part_Modules
 
 			base.OnStart(state);
 
+			if (scienceExp != null)
+			{
+				sitMask = (int)scienceExp.situationMask;
+				bioMask = sitMask;
+			}
+
 			if (anim != null && anim[animationName] != null)
 				scalarStep = 1 / anim[animationName].length;
 
@@ -109,7 +115,10 @@ namespace DMagic.Part_Modules
 				return;
 
 			if (IsDeployed)
+			{
+				deployScalar = 1;
 				return;
+			}
 
 			if (useFairings)
 			{
@@ -256,7 +265,9 @@ namespace DMagic.Part_Modules
 
 		public override void OnActive()
 		{
-			if (stagingDeploy)
+			part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
+
+			if (stagingDeploy && !IsDeployed)
 			{
 				deployEvent();
 				return;
@@ -278,6 +289,8 @@ namespace DMagic.Part_Modules
 			if (!transformState)
 				setTransformState(true);
 
+			part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
+
 			foreach (ModuleJettison j in fairings)
 			{
 				if (j == null)
@@ -298,6 +311,8 @@ namespace DMagic.Part_Modules
 
 			if (!transformState)
 				setTransformState(true);
+
+			part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
 
 			foreach (ModuleJettison j in fairings)
 			{
@@ -372,6 +387,8 @@ namespace DMagic.Part_Modules
 			{
 				Events["jettison"].active = false;
 
+				part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
+
 				foreach (ModuleJettison j in fairings)
 				{
 					if (j == null)
@@ -413,21 +430,19 @@ namespace DMagic.Part_Modules
 			if (!moving)
 				return;
 
-			if (scalar >= 0.99f)
+			if (scalar >= 0.95f)
 			{
 				if (oneShot)
 					isLocked = true;
 
 				moving = false;
-				anim[animationName].normalizedTime = 0.9999f;
 				deployEvent();
 				onStop.Fire(anim[animationName].normalizedTime);
 			}
-			else if (scalar <= 0.01f)
+			else if (scalar <= 0.05f)
 			{
 				isLocked = false;
 				moving = false;
-				anim[animationName].normalizedTime = 0.0001f;
 				retractEvent();
 				onStop.Fire(anim[animationName].normalizedTime);
 			}
