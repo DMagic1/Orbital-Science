@@ -203,12 +203,16 @@ namespace DMagic.Part_Modules
 					enableIAnimators();
 					Events["deployEvent"].active = false;
 					Events["retractEvent"].active = !oneWayAnimation && !oneShot && showEndEvent;
+					if (oneShot)
+						isLocked = true;
 				}
 				else
 				{
 					disableIAnimators();
 					Events["deployEvent"].active = showStartEvent;
 					Events["retractEvent"].active = false;
+					if (oneShot)
+						isLocked = false;
 				}
 			}
 		}
