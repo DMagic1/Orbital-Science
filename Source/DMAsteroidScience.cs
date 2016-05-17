@@ -108,7 +108,7 @@ namespace DMagic
 		{
 			aClass = asteroidClass(m.prefabBaseURL);
 			aSeed = Math.Abs(m.seed);
-			aType = asteroidSpectral(aSeed);
+			aType = asteroidSpectral(aSeed, m);
 			id = m.seed;
 			sciMult = asteroidValue(aClass) * mult;
 		}
@@ -152,8 +152,21 @@ namespace DMagic
 		}
 
 		//Assign a spectral type based on the ModuleAsteroid.seed value
-		private string asteroidSpectral(int seed)
+		private string asteroidSpectral(int seed, ModuleAsteroid m)
 		{
+			if (m.part.Modules.Contains("CustomAsteroidData"))
+			{
+				PartModule p = m.part.Modules["CustomAsteroidData"];
+
+				if (p != null)
+				{
+					string type = p.Fields.GetValue<string>("composition");
+
+					if (!string.IsNullOrEmpty(type))
+						return type;
+				}
+			}
+
 			if (seed >= 0 && seed < 60000000) return "Carbonaceous";
 			else if (seed >= 60000000 && seed < 80000000) return "Stony";
 			else if (seed >= 80000000 && seed < 90000000) return "Metallic";
