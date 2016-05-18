@@ -101,8 +101,8 @@ namespace DMagic.Part_Modules
 						j.Events["Jettison"].guiActiveEditor = false;
 					}
 
-					Events["jettison"].active = true;
-					Actions["jettisonAction"].active = true;
+					Events["jettison"].active = !IsDeployed;
+					Actions["jettisonAction"].active = !IsDeployed;
 				}
 			}
 			else
@@ -277,6 +277,9 @@ namespace DMagic.Part_Modules
 			{
 				if (!transformState)
 					setTransformState(true);
+
+				Events["jettison"].active = false;
+				Actions["jettisonAction"].active = false;
 			}
 		}
 
@@ -301,6 +304,9 @@ namespace DMagic.Part_Modules
 
 				j.JettisonAction(null);
 			}
+
+			Events["jettison"].active = false;
+			Actions["jettisonAction"].active = false;
 		}
 
 		[KSPAction("Jettison Shroud")]
@@ -324,6 +330,9 @@ namespace DMagic.Part_Modules
 
 				j.JettisonAction(null);
 			}
+
+			Events["jettison"].active = false;
+			Actions["jettisonAction"].active = false;
 		}
 
 		public bool CanMove
@@ -386,6 +395,7 @@ namespace DMagic.Part_Modules
 			if (useFairings)
 			{
 				Events["jettison"].active = false;
+				Actions["jettisonAction"].active = false;
 
 				part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
 
