@@ -38,7 +38,7 @@ namespace DMagic.Part_Modules
 	{
 
 		[KSPField]
-		public string verticalDrill = null;
+		public string verticalDrill = "";
 
 		public override void OnStart(PartModule.StartState state)
 		{

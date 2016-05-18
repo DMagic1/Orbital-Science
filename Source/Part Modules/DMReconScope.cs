@@ -55,6 +55,12 @@ namespace DMagic.Part_Modules
 		{
 			base.OnStart(state);
 
+			if (scienceExp != null)
+			{
+				sitMask = (int)scienceExp.situationMask;
+				bioMask = sitMask;
+			}
+
 			if (!string.IsNullOrEmpty(loopingAnimName))
 				loopingAnim = part.FindModelAnimators(loopingAnimName)[0];
 

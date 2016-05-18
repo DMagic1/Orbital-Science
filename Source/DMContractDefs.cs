@@ -320,12 +320,12 @@ namespace DMagic
 			public static bool useVesselWaypoints = true;
 
 			public static List<string> reconTrivialParts = new List<string>(1) { "dmReconSmall" };
-			public static List<string> reconSignificantParts = new List<string>(1) { "dmSIGINT" };
+			public static List<string> reconSignificantParts = new List<string>(3) { "dmSIGINT", "dmSIGINT.Small", "dmSIGINT.End" };
 			public static List<string> reconExceptionalParts = new List<string>(1) { "dmReconLarge" };
 
-			public static string trivialExperimentTitle = "Simple Recon Scan";
+			public static string trivialExperimentTitle = "Recon Scan";
 			public static string significantExperimentTitle = "SIGINT Scan";
-			public static string exceptionalExperimentTitle = "Stereographic Recon Scan";
+			public static string exceptionalExperimentTitle = "Recon Scan";
 
 			public static List<string> backStory = new List<string>(1) { "Something, Something, Something..." };
 		}

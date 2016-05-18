@@ -1,4 +1,4 @@
-Version 1.2.4
+Version 1.3
 KSP Forum thread: http://forum.kerbalspaceprogram.com/index.php?/topic/59009-1
 Installation:
 

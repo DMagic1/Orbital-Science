@@ -381,10 +381,19 @@ namespace DMagic
 
 			if (asteroid) 
 			{
+				string b = newAsteroid.AType;
+
+				string a = "a";
+				if (b == "Icy-Organic")
+					a = "an";
+
+				string c = " asteroid";
+				if (b == "Comet")
+					c = "";
 
 				body.bodyName = bodyNameFixed;
 				DMUtils.OnAsteroidScience.Fire(newAsteroid.AClass, expID);
-				sub.title = exp.experimentTitle + string.Format(" from the surface of a {0} asteroid", newAsteroid.AType);
+				sub.title = exp.experimentTitle + string.Format(" from the surface of {0} {1}{2}", a, b, c);
 				registerDMScience(newAsteroid, exp, sub);
 			}
 			else

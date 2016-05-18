@@ -309,12 +309,12 @@ namespace DMagic
 
 				DMContractDefs.DMRecon.useVesselWaypoints = DMReconNode.parse("Use_Vessel_Waypoints", (bool)true);
 
-				DMContractDefs.DMRecon.trivialExperimentTitle = DMReconNode.parse("Trivial_Experiment_Title", "Simple Recon Scan");
+				DMContractDefs.DMRecon.trivialExperimentTitle = DMReconNode.parse("Trivial_Experiment_Title", "Recon Scan");
 				DMContractDefs.DMRecon.significantExperimentTitle = DMReconNode.parse("Significant_Experiment_Title", "SIGINT Scan");
-				DMContractDefs.DMRecon.exceptionalExperimentTitle = DMReconNode.parse("Exceptional_Experiment_Title", "Stereographic Recon Scan");
+				DMContractDefs.DMRecon.exceptionalExperimentTitle = DMReconNode.parse("Exceptional_Experiment_Title", "Recon Scan");
 
 				DMContractDefs.DMRecon.reconTrivialParts = DMReconNode.parse("Trivial_Parts", ',', new List<string>(1) { "dmReconSmall" });
-				DMContractDefs.DMRecon.reconSignificantParts = DMReconNode.parse("Significant_Parts", ',', new List<string>(1) { "dmSIGINT" });
+				DMContractDefs.DMRecon.reconSignificantParts = DMReconNode.parse("Significant_Parts", ',', new List<string>(3) { "dmSIGINT", "dmSIGINT.Small", "dmSIGINT.End" });
 				DMContractDefs.DMRecon.reconExceptionalParts = DMReconNode.parse("Exceptional_Parts", ',', new List<string>(1) { "dmReconLarge" });
 
 				DMContractDefs.DMRecon.backStory = DMReconNode.parse("Backstory", '|', new List<string>(1) { "Something, Something, Something..." });

@@ -38,13 +38,13 @@ namespace DMagic.Part_Modules
 	class DMAnomalyScanner : DMModuleScienceAnimate
 	{
 		[KSPField]
-		public string camAnimate = null;
+		public string camAnimate = "";
 		[KSPField]
-		public string foundAnimate = null;
+		public string foundAnimate = "";
 		[KSPField]
 		public float resourceCost = 0f;
 
-		private string closestAnom = null;
+		private string closestAnom = "";
 		private bool anomCloseRange, anomInRange, anomScienceInRange, camDeployed, rotating, closeRange, fullyDeployed = false;
 		private Animation animSecondary;
 		private Transform cam, dish;
@@ -342,7 +342,7 @@ namespace DMagic.Part_Modules
 			return false;
 		}
 
-		private void getAnomValues()
+		internal void getAnomValues()
 		{
 			anomCloseRange = false;
 			anomScienceInRange = false;

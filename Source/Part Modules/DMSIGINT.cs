@@ -39,16 +39,23 @@ namespace DMagic.Part_Modules
 {
 	public class DMSIGINT : DMBreakablePart, IDMSurvey, IScalarModule
 	{
+		[KSPField]
+		public bool useFairings;
+		[KSPField]
+		public bool stagingDeploy;
+
 		private readonly string[] dishTransformNames = new string[7] { "dish_Armature.000", "dish_Armature.001", "dish_Armature.002", "dish_Armature.003", "focalColumn", "dishCenter", "focalHead" };
 		private readonly string[] dishMeshNames = new string[7] { "dish_Mesh.000", "dish_Mesh.001", "dish_Mesh.002", "dish_Mesh.003", "focalColumn", "dishCenter", "focalHead" };
 
 		private List<Transform> dishTransforms = new List<Transform>();
 		private List<GameObject> dishObjects = new List<GameObject>();
+		private List<ModuleJettison> fairings = new List<ModuleJettison>();
 
 		private float scalar;
 		private float scalarStep;
 		private bool moving;
 		private float deployScalar;
+		private bool transformState = true;
 
 		EventData<float> onStop;
 		EventData<float, float> onMove;
@@ -63,10 +70,72 @@ namespace DMagic.Part_Modules
 
 			base.OnStart(state);
 
+			if (scienceExp != null)
+			{
+				sitMask = (int)scienceExp.situationMask;
+				bioMask = sitMask;
+			}
+
 			if (anim != null && anim[animationName] != null)
 				scalarStep = 1 / anim[animationName].length;
 
 			Events["fixPart"].guiName = "Fix Dish";
+
+			if (useFairings)
+			{
+				fairings = part.FindModulesImplementing<ModuleJettison>();
+
+				if (fairings.Count > 0)
+				{
+					if (part.stagingIcon == string.Empty && overrideStagingIconIfBlank)
+						part.stagingIcon = DefaultIcons.FUEL_TANK.ToString();
+
+					foreach (ModuleJettison j in fairings)
+					{
+						if (j == null)
+							continue;
+
+						j.Actions["JettisonAction"].active = false;
+						j.Events["Jettison"].active = false;
+						j.Events["Jettison"].guiActiveUnfocused = false;
+						j.Events["Jettison"].guiActiveEditor = false;
+					}
+
+					Events["jettison"].active = !IsDeployed;
+					Actions["jettisonAction"].active = !IsDeployed;
+				}
+			}
+			else
+			{
+				Events["jettison"].active = false;
+				Actions["jettisonAction"].active = false;
+			}
+
+			if (state == StartState.Editor)
+				return;
+
+			if (IsDeployed)
+			{
+				deployScalar = 1;
+				return;
+			}
+
+			if (useFairings)
+			{
+				if (fairings.Count > 0)
+				{
+					foreach (ModuleJettison j in fairings)
+					{
+						if (j == null)
+							continue;
+
+						if (j.isJettisoned)
+							return;
+					}
+				}
+			}
+
+			setTransformState(false);
 		}
 
 		private void assignTransforms()
@@ -157,6 +226,28 @@ namespace DMagic.Part_Modules
 			if (moving)
 				return;
 
+			if (!transformState)
+				setTransformState(true);
+
+			if (useFairings)
+			{
+				if (HighLogic.LoadedSceneIsEditor)
+					return;
+
+				Events["jettison"].active = false;
+
+				foreach (ModuleJettison j in fairings)
+				{
+					if (j == null)
+						continue;
+
+					if (j.isJettisoned)
+						continue;
+
+					j.JettisonAction(null);
+				}
+			}
+
 			deployScalar = 1;
 
 			base.deployEvent();
@@ -170,6 +261,78 @@ namespace DMagic.Part_Modules
 			deployScalar = 0;
 
 			base.retractEvent();
+		}
+
+		public override void OnActive()
+		{
+			part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
+
+			if (stagingDeploy && !IsDeployed)
+			{
+				deployEvent();
+				return;
+			}
+
+			if (useFairings && stagingEnabled && !string.IsNullOrEmpty(part.stagingIcon))
+			{
+				if (!transformState)
+					setTransformState(true);
+
+				Events["jettison"].active = false;
+				Actions["jettisonAction"].active = false;
+			}
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Jettison Shroud", active = false)]
+		public void jettison()
+		{
+			if (!useFairings)
+				return;
+
+			if (!transformState)
+				setTransformState(true);
+
+			part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
+
+			foreach (ModuleJettison j in fairings)
+			{
+				if (j == null)
+					continue;
+
+				if (j.isJettisoned)
+					continue;
+
+				j.JettisonAction(null);
+			}
+
+			Events["jettison"].active = false;
+			Actions["jettisonAction"].active = false;
+		}
+
+		[KSPAction("Jettison Shroud")]
+		public void jettisonAction(KSPActionParam param)
+		{
+			if (!useFairings)
+				return;
+
+			if (!transformState)
+				setTransformState(true);
+
+			part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
+
+			foreach (ModuleJettison j in fairings)
+			{
+				if (j == null)
+					continue;
+
+				if (j.isJettisoned)
+					continue;
+
+				j.JettisonAction(null);
+			}
+
+			Events["jettison"].active = false;
+			Actions["jettisonAction"].active = false;
 		}
 
 		public bool CanMove
@@ -226,6 +389,28 @@ namespace DMagic.Part_Modules
 				return;
 			}
 
+			if (!transformState)
+				setTransformState(true);
+
+			if (useFairings)
+			{
+				Events["jettison"].active = false;
+				Actions["jettisonAction"].active = false;
+
+				part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
+
+				foreach (ModuleJettison j in fairings)
+				{
+					if (j == null)
+						continue;
+
+					if (j.isJettisoned)
+						continue;
+
+					j.JettisonAction(null);
+				}
+			}
+
 			anim[animationName].speed = 0f;
 			anim[animationName].enabled = true;
 
@@ -255,7 +440,7 @@ namespace DMagic.Part_Modules
 			if (!moving)
 				return;
 
-			if (scalar >= 0.99f)
+			if (scalar >= 0.95f)
 			{
 				if (oneShot)
 					isLocked = true;
@@ -264,7 +449,7 @@ namespace DMagic.Part_Modules
 				deployEvent();
 				onStop.Fire(anim[animationName].normalizedTime);
 			}
-			else if (scalar <= 0.01f)
+			else if (scalar <= 0.05f)
 			{
 				isLocked = false;
 				moving = false;
@@ -310,8 +495,7 @@ namespace DMagic.Part_Modules
 
 		protected override void setTransformState(bool on)
 		{
-			if (!breakable)
-				return;
+			transformState = on;
 
 			for (int i = 0; i < dishObjects.Count; i++)
 			{

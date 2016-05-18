@@ -43,21 +43,21 @@ namespace DMagic.Part_Modules
 		#region Fields
 
 		[KSPField]
-		public string customFailMessage = null;
+		public string customFailMessage = "";
 		[KSPField]
-		public string deployingMessage = null;
+		public string deployingMessage = "";
 		[KSPField(isPersistant = true)]
 		public bool IsDeployed;
 		[KSPField(isPersistant = true)]
 		public bool isLocked;
 		[KSPField]
-		public string animationName = null;
+		public string animationName = "";
 		[KSPField]
-		public string sampleAnim = null;
+		public string sampleAnim = "";
 		[KSPField]
-		public string indicatorAnim = null;
+		public string indicatorAnim = "";
 		[KSPField]
-		public string sampleEmptyAnim = null;
+		public string sampleEmptyAnim = "";
 		[KSPField]
 		public float animSpeed = 1f;
 		[KSPField]
@@ -106,9 +106,9 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public bool USStock = false;
 		[KSPField]
-		public string bayAnimation = null;
+		public string bayAnimation = "";
 		[KSPField]
-		public string looperAnimation = null;
+		public string looperAnimation = "";
 		[KSPField]
 		public bool primary = true;
 		[KSPField]
@@ -121,6 +121,8 @@ namespace DMagic.Part_Modules
 		public bool externalDeploy = false;
 		[KSPField]
 		public int resetLevel = 0;
+		[KSPField]
+		public float totalScienceLevel = 1;
 
 		protected Animation anim;
 		protected Animation anim2;
@@ -201,12 +203,16 @@ namespace DMagic.Part_Modules
 					enableIAnimators();
 					Events["deployEvent"].active = false;
 					Events["retractEvent"].active = !oneWayAnimation && !oneShot && showEndEvent;
+					if (oneShot)
+						isLocked = true;
 				}
 				else
 				{
 					disableIAnimators();
 					Events["deployEvent"].active = showStartEvent;
 					Events["retractEvent"].active = false;
+					if (oneShot)
+						isLocked = false;
 				}
 			}
 		}
@@ -295,6 +301,7 @@ namespace DMagic.Part_Modules
 		{
 			string info = base.GetInfo();
 			info += string.Format("\nTransmission: {0:P0}\n", xmitDataScalar);
+			info += string.Format("Total Science Available: {0:P0}\n", totalScienceLevel);
 			if (!rerunnable)
 			{
 				info += string.Format("Max Samples: {0}\n", experimentLimit);
@@ -859,12 +866,20 @@ namespace DMagic.Part_Modules
 
 		private string astCleanup(ExperimentSituations s, string b)
 		{
+			string a = "a";
+			if (b == "Icy-Organic")
+				a = "an";
+
+			string c = " asteroid";
+			if (b == "Comet")
+				c = "";
+
 			switch (s)
 			{
 				case ExperimentSituations.SrfLanded:
-					return string.Format(" from the surface of a {0} asteroid", b);
+					return string.Format(" from the surface of {0} {1}{2}", a, b, c);
 				case ExperimentSituations.InSpaceLow:
-					return string.Format(" while in space near a {0} asteroid", b);
+					return string.Format(" while in space near a {0} {1}{2}", a, b, c);
 				default:
 					return "";
 			}
@@ -963,7 +978,25 @@ namespace DMagic.Part_Modules
 				sub.scienceCap = scienceExp.scienceCap * sub.subjectValue;
 			}
 
-			data = new ScienceData(scienceExp.baseValue * sub.dataScale, xmitDataScalar, vessel.VesselValues.ScienceReturn.value, sub.id, sub.title, false, part.flightID);
+			float dat = scienceExp.baseValue * sub.dataScale * totalScienceLevel;
+
+			if (totalScienceLevel < 1)
+			{
+				float science = (dat * sub.subjectValue) / sub.dataScale;
+				float max = sub.scienceCap * totalScienceLevel;
+				if (sub.science >= max)
+				{
+					dat = 0.000001f;
+				}
+				else
+				{
+					float sci = Mathf.Max(Mathf.Min(science - sub.science, max), 0.000001f);
+					dat = (sci * sub.dataScale) / sub.subjectValue;
+					dat /= sub.scientificValue;
+				}
+			}
+
+			data = new ScienceData(dat, xmitDataScalar, vessel.VesselValues.ScienceReturn.value, sub.id, sub.title, false, part.flightID);
 
 			return data;
 		}
