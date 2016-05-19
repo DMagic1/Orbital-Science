@@ -92,9 +92,9 @@ namespace DMagic.Part_Modules
 
 			if (breakable)
 			{
-				info += "Breakable: <color=#15b01a>V</color>\n";
+				info += string.Format("Breakable: {0}\n", RUIutils.GetYesNoUIString(fixable));
 
-				info += "Fixable: " + (fixable ? "<color=#15b01a>V</color>\n" : "<color=#e50000>X</color>\n");
+				info += string.Format("Fixable: {0}\n", RUIutils.GetYesNoUIString(fixable));
 
 				if (fixable)
 					info += string.Format("Engineer Level To Fix: {0}\n", fixLevel);
