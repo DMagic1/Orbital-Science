@@ -302,6 +302,7 @@ namespace DMagic.Part_Modules
 			string info = base.GetInfo();
 			info += string.Format("\nTransmission: {0:P0}\n", xmitDataScalar);
 			info += string.Format("Total Science Available: {0:P0}\n", totalScienceLevel);
+			info += string.Format("Asteroid Samples: {0}\n", RUIutils.GetYesNoUIString(asteroidReports));
 			if (!rerunnable)
 			{
 				info += string.Format("Max Samples: {0}\n", experimentLimit);
@@ -315,7 +316,7 @@ namespace DMagic.Part_Modules
 				info += string.Format("Requires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
 			}
 			if (oneShot)
-				info += "OneShot: <color=#15b01a>V</color>\n";
+				info += string.Format("OneShot: {0}\n", RUIutils.GetYesNoUIString(oneShot));
 			return info;
 		}
 
