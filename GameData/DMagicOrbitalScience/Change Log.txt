@@ -1,24 +1,37 @@
-﻿v1.3
+﻿v1.3.1
+- Update for KSP 1.1.3
+
+- Added a KSPedia entry
+    - Information on the conditions required for all experiments
+    - Info on asteroid experiments
+    - Descriptions of all the non-standard science experiments
+    - Info on contract requirements
+
+- Indicate asteroid experiments in the VAB/SPH info window
+- Fix a bug with asteroid scanners
+- Remove unused experiment definition
+
+v1.3
 - Update for KSP 1.1.2
 
 - Added new versions of SIGINT dish
     - The standard version is now 1.25m
-	- A new version is added that fits on the top of a rocket and acts as a nose cone
-	- The existing part is still included, but cannot be researched or purchased
-	- All parts use the same experiment
-	- The smaller dish can only collect 50% of the total science
+    - A new version is added that fits on the top of a rocket and acts as a nose cone
+    - The existing part is still included, but cannot be researched or purchased
+    - All parts use the same experiment
+    - The smaller dish can only collect 50% of the total science
 	
 - Combined the two reconnaissance telescope experiments
     - Both parts use the same experiment
-	- The small telescope can only gather 50% of the total science; through either transmission or recovery
-	- The large telescope can gather 100% of the total science through recovering the data
+    - The small telescope can only gather 50% of the total science; through either transmission or recovery
+    - The large telescope can gather 100% of the total science through recovering the data
 	
 - The total amount of science each experiment can collect is indicated in the VAB extra info tab
 
 - Asteroid spectral types have been switched to those used by Custom Asteroids
     - Only five types are now included; down from nine
-	- Science results have been updated accordingly
-	- Asteroid type will be pulled from Custom Asteroids if it is installed
+    - Science results have been updated accordingly
+    - Asteroid type will be pulled from Custom Asteroids if it is installed
 
 - Fix TweakScale bugs with stack attached parts
 - Add new science experiment function to TweakScale definitions
