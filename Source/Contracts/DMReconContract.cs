@@ -145,7 +145,7 @@ namespace DMagic.Contracts
 
 					container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.trivialExperimentTitle];
 
-					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.15, ContractDefs.Satellite.TrivialInclinationDifficulty);
+					o = OrbitUtilities.GenerateOrbit(this.MissionSeed, body, orbitType, 0.15, ContractDefs.Satellite.TrivialInclinationDifficulty);
 
 					double st = o.semiMajorAxis - o.referenceBody.Radius;
 
@@ -185,7 +185,7 @@ namespace DMagic.Contracts
 						else
 							orbitType = OrbitType.POLAR;
 					}
-					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.5, ContractDefs.Satellite.TrivialInclinationDifficulty);
+					o = OrbitUtilities.GenerateOrbit(this.MissionSeed, body, orbitType, 0.5, ContractDefs.Satellite.TrivialInclinationDifficulty);
 					timeMod = DMContractDefs.DMRecon.significantTimeModifier * 6 * 3600;
 					incMod = 0;
 					break;
@@ -200,7 +200,7 @@ namespace DMagic.Contracts
 
 					container = DMUtils.availableScience["All"][DMContractDefs.DMRecon.exceptionalExperimentTitle];
 
-					o = CelestialUtilities.GenerateOrbit(orbitType, this.MissionSeed, body, 0.15, ContractDefs.Satellite.TrivialInclinationDifficulty);
+					o = OrbitUtilities.GenerateOrbit(this.MissionSeed, body, orbitType, 0.15, ContractDefs.Satellite.TrivialInclinationDifficulty);
 
 					double se = o.semiMajorAxis - o.referenceBody.Radius;
 

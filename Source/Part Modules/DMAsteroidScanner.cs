@@ -169,7 +169,7 @@ namespace DMagic.Part_Modules
 
 					if (target != null)
 					{
-						targetModule = target.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault();
+						targetModule = target.FindPartModulesImplementing<DMAsteroidScanner>().FirstOrDefault(t => t.fullyDeployed && t.resourceOn);
 					}
 					else if (targetObj != null)
 					{
@@ -181,6 +181,9 @@ namespace DMagic.Part_Modules
 								foreach (DMAsteroidScanner t in targets)
 								{
 									if (t == this)
+										continue;
+
+									if (!(t.fullyDeployed && t.resourceOn))
 										continue;
 
 									float d = (t.part.transform.position - dishBase.position).sqrMagnitude;
@@ -198,7 +201,10 @@ namespace DMagic.Part_Modules
 								}
 							}
 							else if (targets[0] != this)
-								targetModule = targets[0];
+							{
+								if (targets[0].fullyDeployed && targets[0].resourceOn)
+									targetModule = targets[0];
+							}
 						}
 						else
 						{
@@ -215,6 +221,9 @@ namespace DMagic.Part_Modules
 							foreach (DMAsteroidScanner t in targets)
 							{
 								if (t == this)
+									continue;
+
+								if (!(t.fullyDeployed && t.resourceOn))
 									continue;
 
 								float d = (t.part.transform.position - dishBase.position).sqrMagnitude;
