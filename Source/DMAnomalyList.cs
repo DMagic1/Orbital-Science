@@ -40,17 +40,17 @@ namespace DMagic
 	public static class DMAnomalyList
 	{
 		private static bool scannerUpdating;
-		private static Dictionary<string, DMAnomalyStorage> anomalies = new Dictionary<string, DMAnomalyStorage>();
+		private static DictionaryValueList<string, DMAnomalyStorage> anomalies = new DictionaryValueList<string, DMAnomalyStorage>();
 
 		public static void addAnomalyStorage(string body, DMAnomalyStorage anom)
 		{
-			if (!anomalies.ContainsKey(body))
+			if (!anomalies.Contains(body))
 				anomalies.Add(body, anom);
 		}
 
 		public static DMAnomalyObject getAnomalyObject(string body, string city)
 		{
-			if (!anomalies.ContainsKey(body))
+			if (!anomalies.Contains(body))
 			{
 				DMUtils.Logging("No anomaly of name [{0}] found for body [{1}]", city, body);
 				return null;
@@ -62,14 +62,14 @@ namespace DMagic
 		public static DMAnomalyStorage getAnomalyStorage(int index)
 		{
 			if (anomalies.Count > index)
-				return anomalies.ElementAt(index).Value;
+				return anomalies.At(index);
 
 			return null;
 		}
 
 		public static DMAnomalyStorage getAnomalyStorage(string body)
 		{
-			if (anomalies.ContainsKey(body))
+			if (anomalies.Contains(body))
 				return anomalies[body];
 
 			return null;
@@ -99,7 +99,7 @@ namespace DMagic
 
 				for (int i = 0; i < anomalies.Count; i++)
 				{
-					CelestialBody c = FlightGlobals.Bodies.FirstOrDefault(a => a.name == anomalies.ElementAt(i).Key);
+					CelestialBody c = FlightGlobals.Bodies.FirstOrDefault(a => a.name == anomalies.At(i).Body.bodyName);
 
 					if (c == null)
 						continue;
@@ -113,7 +113,7 @@ namespace DMagic
 
 		public static void updateCoordinates(CelestialBody b)
 		{
-			if (anomalies.ContainsKey(b.name))
+			if (anomalies.Contains(b.name))
 			{
 				for (int i = 0; i < anomalies[b.name].AnomalyCount; i++)
 				{

@@ -42,7 +42,7 @@ namespace DMagic
 		private CelestialBody body;
 		private bool scanned;
 		private float level;
-		private Dictionary<string, DMAnomalyObject> anomalies = new Dictionary<string, DMAnomalyObject>();
+		private DictionaryValueList<string, DMAnomalyObject> anomalies = new DictionaryValueList<string, DMAnomalyObject>();
 
 		public DMAnomalyStorage(CelestialBody b, bool s = true)
 		{
@@ -53,7 +53,7 @@ namespace DMagic
 
 		public void addAnomaly(DMAnomalyObject anom)
 		{
-			if (!anomalies.ContainsKey(anom.Name))
+			if (!anomalies.Contains(anom.Name))
 				anomalies.Add(anom.Name, anom);
 		}
 
@@ -64,11 +64,11 @@ namespace DMagic
 			if (body.pqsController == null)
 				return false;
 
-			PQSCity[] Cities = body.pqsController.GetComponentsInChildren<PQSCity>();
+			PQSSurfaceObject[] Cities = body.pqsSurfaceObjects;
 
 			for (int i = 0; i < Cities.Length; i++)
 			{
-				PQSCity city = Cities[i];
+				PQSSurfaceObject city = Cities[i];
 
 				if (city == null)
 					continue;
@@ -86,7 +86,7 @@ namespace DMagic
 
 		public DMAnomalyObject getAnomaly(string name)
 		{
-			if (anomalies.ContainsKey(name))
+			if (anomalies.Contains(name))
 				return anomalies[name];
 
 			return null;
@@ -95,7 +95,7 @@ namespace DMagic
 		public DMAnomalyObject getAnomaly(int index)
 		{
 			if (anomalies.Count > index)
-				return anomalies.ElementAt(index).Value;
+				return anomalies.At(index);
 
 			return null;
 		}
