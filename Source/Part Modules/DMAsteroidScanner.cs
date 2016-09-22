@@ -823,7 +823,7 @@ namespace DMagic.Part_Modules
 			registerDMScience(ast, sub);
 			body.bodyName = asteroidBodyNameFixed;
 
-			data = new ScienceData(multiplier * exp.baseValue * sub.dataScale, transmitValue, vessel.VesselValues.ScienceReturn.value, sub.id, dataTitle, false, part.flightID);
+			data = new ScienceData(multiplier * exp.baseValue * sub.dataScale, transmitValue, 0, sub.id, dataTitle, false, part.flightID);
 
 			return data;
 		}
@@ -860,7 +860,7 @@ namespace DMagic.Part_Modules
 		{
 			if (scienceReports.Count > 0)
 			{
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, transmitValue, ModuleScienceLab.GetBoostForVesselData(vessel, data), false, "", true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.baseTransmitValue, data.transmitBonus, false, "", true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}

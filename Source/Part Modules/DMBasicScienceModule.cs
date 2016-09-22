@@ -356,7 +356,7 @@ namespace DMagic.Part_Modules
 		{
 			if (scienceReports.Count > 0)
 			{
-				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, transmitValue, ModuleScienceLab.GetBoostForVesselData(vessel, data), false, "", true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
+				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.baseTransmitValue, data.transmitBonus, false, "", true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
 				ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
