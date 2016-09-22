@@ -242,11 +242,11 @@ namespace DMagic.Part_Modules
 			if (body.pqsController == null)
 				return;
 
-			PQSCity[] Cities = body.pqsController.GetComponentsInChildren<PQSCity>();
+			PQSSurfaceObject[] Cities = body.pqsSurfaceObjects;
 
 			for (int i = 0; i < Cities.Length; i++)
 			{
-				PQSCity city = Cities[i];
+				PQSSurfaceObject city = Cities[i];
 
 				if (city == null)
 					continue;
@@ -254,7 +254,7 @@ namespace DMagic.Part_Modules
 				if (city.transform.parent.name != body.name)
 					continue;
 
-				if (city.name != name)
+				if (city.SurfaceObjectName != name)
 					continue;
 
 				currentAnomaly = new DMAnomalyObject(city);

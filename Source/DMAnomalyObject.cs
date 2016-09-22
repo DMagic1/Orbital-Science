@@ -44,9 +44,9 @@ namespace DMagic
 		private double bearing;
 		private string name;
 
-		public DMAnomalyObject(PQSCity City)
+		public DMAnomalyObject(PQSSurfaceObject City)
 		{
-			name = City.name;
+			name = City.SurfaceObjectName;
 			try
 			{
 				body = FlightGlobals.Bodies.FirstOrDefault(b => b.name == City.transform.parent.name);
