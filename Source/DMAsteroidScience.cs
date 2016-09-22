@@ -192,14 +192,11 @@ namespace DMagic
 		{
 			get
 			{
-				for (int i = 0; i < FlightGlobals.Vessels.Count; i++)
+				for (int i = FlightGlobals.VesselsLoaded.Count - 1; i >= 0; i--)
 				{
-					Vessel v = FlightGlobals.Vessels[i];
+					Vessel v = FlightGlobals.VesselsLoaded[i];
 
 					if (v == null)
-						continue;
-
-					if (!v.loaded)
 						continue;
 
 					if (v == FlightGlobals.ActiveVessel)
