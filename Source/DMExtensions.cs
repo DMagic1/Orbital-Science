@@ -233,6 +233,38 @@ namespace DMagic
 			}
 		}
 
+		public static List<Guid> parse(this string name, List<Guid> original)
+		{
+			if (string.IsNullOrEmpty(name))
+				return original;
+			else
+			{
+				List<Guid> ids = new List<Guid>();
+
+				string[] sA = name.Split('|');
+				for (int i = 0; i < sA.Length; i++)
+				{
+					try
+					{
+						Guid g = new Guid(sA[i]);
+
+						if (g == null)
+							continue;
+
+						if (!ids.Contains(g))
+							ids.Add(g);
+					}
+					catch (Exception e)
+					{
+						DMUtils.Logging("Guid invalid:\n{0}", e);
+						continue;
+					}
+				}
+
+				return ids;
+			}
+		}
+
 		public static Vessel parse(this ConfigNode node, string name, Vessel original)
 		{
 			if (!node.HasValue(name))
