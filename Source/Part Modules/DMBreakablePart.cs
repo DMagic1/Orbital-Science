@@ -286,7 +286,7 @@ namespace DMagic.Part_Modules
 				DMUtils.DebugLog("New Angular: [{0:F4}]", r.angularVelocity);
 				Vector3 randomVel = new Vector3(((float)DMUtils.rand.NextDouble() * 8) - 4, ((float)DMUtils.rand.NextDouble() * 8) - 4, ((float)DMUtils.rand.NextDouble() * 8) - 4);
 				DMUtils.DebugLog("Random Velocity: [{0:F4}]", randomVel);
-				Vector3 localCOM = vessel.findWorldCenterOfMass() - partRigid.worldCenterOfMass;
+				Vector3 localCOM = vessel.CurrentCoM - partRigid.worldCenterOfMass;
 				DMUtils.DebugLog("Old Velocity: [{0:F4}]", r.velocity);
 				r.velocity = partRigid.velocity + randomVel + Vector3.Cross(localCOM, r.angularVelocity);
 				DMUtils.DebugLog("New Velocity: [{0:F4}]", r.velocity);
