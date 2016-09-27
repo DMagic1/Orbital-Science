@@ -50,6 +50,7 @@ namespace DMagic.Parameters
 		private bool orbitTested;
 		private DMLongOrbitParameter root;
 		private Orbit KSCOrbit = null;
+		private bool loaded;
 
 		public DMSpecificOrbitParameter() { }
 
@@ -74,7 +75,8 @@ namespace DMagic.Parameters
 			if (ksc)
 				KSCOrbit = new Orbit(inc, ecc, sma, lan, aop, mae, epo, body);
 			else
-				orbitRenderer = ContractOrbitRenderer.Setup(Root, new Orbit(inc, ecc, sma, lan, aop, mae, epo, body));
+				SetupRenderer();
+				//orbitRenderer = ContractOrbitRenderer.Setup(Root, new Orbit(inc, ecc, sma, lan, aop, mae, epo, body));
 
 			orbitLoaded = true;
 		}
@@ -87,7 +89,7 @@ namespace DMagic.Parameters
 			if (HighLogic.LoadedSceneIsEditor)
 				return;
 
-			if (!orbitTested)
+			if (!orbitTested && loaded)
 			{
 				setupOrbit(HighLogic.LoadedScene == GameScenes.SPACECENTER);
 				orbitLoaded = testOrbit(HighLogic.LoadedScene == GameScenes.SPACECENTER);
@@ -181,6 +183,8 @@ namespace DMagic.Parameters
 
 			if (this.Root.ContractState == Contract.State.Active)
 				orbitLoaded = testOrbit(HighLogic.LoadedScene == GameScenes.SPACECENTER);
+
+			loaded = true;
 		}
 
 		private bool testOrbit(bool ksc)
@@ -199,7 +203,7 @@ namespace DMagic.Parameters
 			catch (Exception e)
 			{
 				if (!HighLogic.LoadedSceneIsEditor)
-					Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deactivating\n" + e.StackTrace);
+					Debug.LogError("[DM] Error detected in setting up long term recon orbit parameter; deactivating\n" + e.ToString());
 				return false;
 			}
 		}		
