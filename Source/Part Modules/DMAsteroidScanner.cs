@@ -77,6 +77,8 @@ namespace DMagic.Part_Modules
 		public int usageReqMaskExternal = -1;
 		[KSPField]
 		public string usageReqMessage = "";
+		[KSPField(isPersistant = true)]
+		public bool showLines = true;
 
 		private string failMessage = "";
 		private string asteroidBodyNameFixed = "Eeloo";
@@ -315,6 +317,7 @@ namespace DMagic.Part_Modules
 			Events["CollectDataExternalEvent"].active = scienceReports.Count > 0 && dataIsCollectable;
 			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable && asteroidInSight;
 			Events["ReviewDataEvent"].active = scienceReports.Count > 0;
+			Events["toggleLine"].active = fullyDeployed;
 		}
 
 		//Point the dish at the target
@@ -340,7 +343,8 @@ namespace DMagic.Part_Modules
 			dishArm.localRotation = Quaternion.RotateTowards(dishArm.localRotation, Quaternion.AngleAxis(angleZ, Vector3.forward), Time.deltaTime * 30f);
 			dish.localRotation = Quaternion.RotateTowards(dish.localRotation, Quaternion.AngleAxis(angleY, Vector3.up), Time.deltaTime * 30f);
 
-			drawLine(dishBase.position, targetModule.part.transform.position, Color.red);
+			if (showLines)
+				drawLine(dishBase.position, targetModule.part.transform.position, Color.red);
 		}
 
 		private void drawLine(Vector3 start, Vector3 end, Color c)
@@ -568,6 +572,12 @@ namespace DMagic.Part_Modules
 		public void toggleAction(KSPActionParam param)
 		{
 			toggleEvent();
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Toggle Asteroid Targeting line", active = false)]
+		public void toggleLine()
+		{
+			showLines = !showLines;
 		}
 
 		[KSPEvent(guiActiveEditor = true, guiName = "Deploy Asteroid Scanner", active = true)]
