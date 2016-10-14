@@ -100,9 +100,11 @@ namespace DMagic.Part_Modules
 					spinDishDown();
 			}
 		}
-
-		new private void OnDestroy()
+		
+		protected override void OnDestroy()
 		{
+			base.OnDestroy();
+
 			DMAnomalyList.ScannerUpdating = false;
 			if (!HighLogic.LoadedSceneIsEditor)
 			{
@@ -499,6 +501,8 @@ namespace DMagic.Part_Modules
 				case "Icehenge":
 				case "Pyramid":
 					return anomName;
+				case "Randolith":
+					return "Random Monolith";
 				case "IslandAirfield":
 					return "Island Airfield";
 				case "KSC2":
