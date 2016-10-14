@@ -140,6 +140,7 @@ namespace DMagic.Part_Modules
 		private bool lastInOperableState;
 		protected float scienceBoost = 1f;
 		protected string failMessage = "";
+		private ExperimentsResultDialog resultsDialog;
 
 		/// <summary>
 		/// For external use to determine if a module can conduct science
@@ -166,6 +167,13 @@ namespace DMagic.Part_Modules
 		#endregion
 
 		#region PartModule
+
+		public override void OnAwake()
+		{
+			GameEvents.onGamePause.Add(onPause);
+			GameEvents.onGameUnpause.Add(onUnPause);
+			GameEvents.onVesselStandardModification.Add(OnVesselModified);
+		}
 
 		public override void OnStart(StartState state)
 		{
@@ -215,6 +223,13 @@ namespace DMagic.Part_Modules
 						isLocked = false;
 				}
 			}
+		}
+
+		new protected virtual void OnDestroy()
+		{
+			GameEvents.onGamePause.Remove(onPause);
+			GameEvents.onGameUnpause.Remove(onUnPause);
+			GameEvents.onVesselStandardModification.Remove(OnVesselModified);
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -335,6 +350,7 @@ namespace DMagic.Part_Modules
 			Events["DeployExperiment"].guiActiveUnfocused = externalDeploy;
 			Events["DeployExperiment"].externalToEVAOnly = externalDeploy;
 			Events["DeployExperiment"].unfocusedRange = interactionRange;
+			Actions["DeployAction"].active = useActionGroups;
 			Actions["deployAction"].guiName = startEventGUIName;
 			Actions["retractAction"].guiName = endEventGUIName;
 			Actions["toggleAction"].guiName = toggleEventGUIName;
@@ -392,6 +408,20 @@ namespace DMagic.Part_Modules
 			Events["ReviewInitialData"].active = scienceReports.Count > 0;
 			Events["DeployExperimentExternal"].guiActiveUnfocused = false;
 			Events["CleanUpExperimentExternal"].active = Inoperable;
+			Events["TransferDataEvent"].active = hasContainer && dataIsCollectable && storedScienceReports.Count > 0;
+			Actions["ResetAction"].active = useActionGroups && storedScienceReports.Count > 0 && resettable;
+		}
+
+		private void onPause()
+		{
+			if (resultsDialog != null)
+				resultsDialog.gameObject.SetActive(false);
+		}
+
+		private void onUnPause()
+		{
+			if (resultsDialog != null)
+				resultsDialog.gameObject.SetActive(true);
 		}
 
 		#endregion
@@ -650,6 +680,77 @@ namespace DMagic.Part_Modules
 			lastInOperableState = false;
 			onLabReset();
 			ScreenMessages.PostScreenMessage(string.Format("<b><color=#99ff00ff>[{0}]: Media Restored. Module is operational again.</color></b>", part.partInfo.title), 6f, ScreenMessageStyle.UPPER_LEFT);
+		}
+
+		new public void TransferDataEvent()
+		{
+			if (PartItemTransfer.Instance != null)
+			{
+				ScreenMessages.PostScreenMessage("<b><color=orange>A transfer is already in progress.</color></b>", 3f, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+
+			ExperimentTransfer.Create(part, this, new Callback<PartItemTransfer.DismissAction, Part>(transferData));
+		}
+
+		private void transferData(PartItemTransfer.DismissAction dismiss, Part p)
+		{
+			if (dismiss != PartItemTransfer.DismissAction.ItemMoved)
+				return;
+
+			if (p == null)
+				return;
+
+			if (storedScienceReports.Count <= 0)
+			{
+				ScreenMessages.PostScreenMessage(string.Format("[{0}]: has no data to transfer.", part.partInfo.title), 6, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+
+			ModuleScienceContainer container = p.FindModuleImplementing<ModuleScienceContainer>();
+
+			if (container == null)
+			{
+				ScreenMessages.PostScreenMessage(string.Format("<color=orange>[{0}]: {1} has no data container, canceling transfer.<color>", part.partInfo.title, p.partInfo.title), 6, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+
+			if ((experimentsReturned >= (experimentLimit - 1)) && !rerunnable)
+			{
+				List<DialogGUIBase> dialog = new List<DialogGUIBase>();
+				dialog.Add(new DialogGUIButton<ModuleScienceContainer>("Remove Data", new Callback<ModuleScienceContainer>(onTransferData), container));
+				dialog.Add(new DialogGUIButton("Cancel", null, true));
+
+				PopupDialog.SpawnPopupDialog(
+					new Vector2(0.5f, 0.5f),
+					new Vector2(0.5f, 0.5f),
+					new MultiOptionDialog(
+						collectWarningText,
+						part.partInfo.title + "Warning!",
+						UISkinManager.defaultSkin,
+						dialog.ToArray()
+						),
+					false,
+					UISkinManager.defaultSkin,
+					true,
+					""
+					);
+			}
+			else
+				onTransferData(container);
+		}
+
+		private void onTransferData(ModuleScienceContainer target)
+		{
+			if (target == null)
+				return;
+
+			int i = storedScienceReports.Count;
+
+			if (target.StoreData(new List<IScienceDataContainer> { this }, false))
+				ScreenMessages.PostScreenMessage(string.Format("[{0}]: {1} Data stored.", target.part.partInfo.title, i), 6, ScreenMessageStyle.UPPER_LEFT);
+			else
+				ScreenMessages.PostScreenMessage(string.Format("<color=orange>[{0}]: Not all data was stored.</color>", target.part.partInfo.title), 6, ScreenMessageStyle.UPPER_LEFT);
 		}
 
 		#endregion
@@ -1039,7 +1140,7 @@ namespace DMagic.Part_Modules
 				if (data == null)
 					data = storedScienceReports[dataIndex];
 				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.baseTransmitValue, data.transmitBonus, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
-				ExperimentsResultDialog.DisplayResult(page);
+				resultsDialog = ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
 
@@ -1077,12 +1178,14 @@ namespace DMagic.Part_Modules
 			{
 				ScienceData data = scienceReports[0];
 				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.baseTransmitValue, data.transmitBonus, (experimentsReturned >= (experimentLimit - 1)) && !rerunnable, transmitWarningText, true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardInitialData), new Callback<ScienceData>(onKeepInitialData), new Callback<ScienceData>(onTransmitInitialData), new Callback<ScienceData>(onSendInitialToLab));
-				ExperimentsResultDialog.DisplayResult(page);
+				resultsDialog = ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
 
 		private void onDiscardData(ScienceData data)
 		{
+			resultsDialog = null;
+
 			if (storedScienceReports.Count > 0)
 			{
 				if (experimentLimit != 0)
@@ -1105,23 +1208,27 @@ namespace DMagic.Part_Modules
 
 		private void onKeepData(ScienceData data)
 		{
+			resultsDialog = null;
 		}
 
 		private void onTransmitData(ScienceData data)
 		{
-			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
-			if (tranList.Count > 0 && storedScienceReports.Count > 0)
+			resultsDialog = null;
+			IScienceDataTransmitter bestTransmitter = ScienceUtil.GetBestTransmitter(vessel);
+			if (bestTransmitter != null)
 			{
-				DMUtils.Logging("Sending data to vessel comms. {0} devices to choose from. Will try to pick the best one", tranList.Count);
-				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
+				bestTransmitter.TransmitData(new List<ScienceData> { data });
 				DumpData(data);
 			}
+			else if (CommNet.CommNetScenario.CommNetEnabled)
+				ScreenMessages.PostScreenMessage("No usable, in-range Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
 			else
 				ScreenMessages.PostScreenMessage("No Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void onSendToLab(ScienceData data)
 		{
+			resultsDialog = null;
 			ScienceLabSearch labSearch = new ScienceLabSearch(vessel, data);
 
 			if (labSearch.NextLabForDataFound)
@@ -1135,6 +1242,7 @@ namespace DMagic.Part_Modules
 
 		private void onDiscardInitialData(ScienceData data)
 		{
+			resultsDialog = null;
 			if (scienceReports.Count > 0)
 			{
 				scienceReports.Remove(data);
@@ -1145,6 +1253,7 @@ namespace DMagic.Part_Modules
 
 		private void onKeepInitialData(ScienceData data)
 		{
+			resultsDialog = null;
 			if (experimentNumber >= experimentLimit)
 			{
 				ScreenMessages.PostScreenMessage(storageFullMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
@@ -1167,10 +1276,37 @@ namespace DMagic.Part_Modules
 
 		private void onTransmitInitialData(ScienceData data)
 		{
-			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
-			if (tranList.Count > 0 && scienceReports.Count > 0)
+			resultsDialog = null;
+
+			if (experimentLimit != 0)
 			{
-				DMUtils.Logging("Sending data to vessel comms. {0} devices to choose from. Will try to pick the best one", tranList.Count);
+				if (!string.IsNullOrEmpty(sampleAnim))
+					secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
+				if (!string.IsNullOrEmpty(indicatorAnim))
+					secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
+			}
+
+			IScienceDataTransmitter bestTransmitter = ScienceUtil.GetBestTransmitter(vessel);
+			if (bestTransmitter != null)
+			{
+				bestTransmitter.TransmitData(new List<ScienceData> { data });
+				DumpInitialData(data);
+				experimentNumber++;
+			}
+			else if (CommNet.CommNetScenario.CommNetEnabled)
+				ScreenMessages.PostScreenMessage("No usable, in-range Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
+			else
+				ScreenMessages.PostScreenMessage("No Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
+
+		}
+
+		private void onSendInitialToLab(ScienceData data)
+		{
+			resultsDialog = null;
+			ScienceLabSearch labSearch = new ScienceLabSearch(vessel, data);
+
+			if (labSearch.NextLabForDataFound)
+			{
 				if (experimentLimit != 0)
 				{
 					if (!string.IsNullOrEmpty(sampleAnim))
@@ -1178,22 +1314,10 @@ namespace DMagic.Part_Modules
 					if (!string.IsNullOrEmpty(indicatorAnim))
 						secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
 				}
-				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
+
+				StartCoroutine(labSearch.NextLabForData.ProcessData(data, null));
 				DumpInitialData(data);
 				experimentNumber++;
-			}
-			else
-				ScreenMessages.PostScreenMessage("No Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
-		}
-
-		private void onSendInitialToLab(ScienceData data)
-		{
-			ScienceLabSearch labSearch = new ScienceLabSearch(vessel, data);
-
-			if (labSearch.NextLabForDataFound)
-			{
-				StartCoroutine(labSearch.NextLabForData.ProcessData(data, null));
-				DumpData(data);
 			}
 			else
 				labSearch.PostErrorToScreen();
@@ -1240,7 +1364,12 @@ namespace DMagic.Part_Modules
 
 		new public ScienceData[] GetData()
 		{
-			return storedScienceReports.ToArray();
+			List<ScienceData> DataList = new List<ScienceData>();
+
+			DataList.AddRange(storedScienceReports);
+			DataList.AddRange(scienceReports);
+
+			return DataList.ToArray();
 		}
 
 		new public int GetScienceCount()
@@ -1300,6 +1429,19 @@ namespace DMagic.Part_Modules
 				lastInOperableState = Inoperable;
 				Deployed = Inoperable;
 				storedScienceReports.Remove(data);
+			}
+			else if (scienceReports.Contains(data))
+			{
+				if (experimentLimit != 0)
+				{
+					if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
+				}
+
+				DumpInitialData(data);
+				experimentNumber++;
 			}
 		}
 

@@ -102,10 +102,19 @@ namespace DMagic.Part_Modules
 		private Transform dishArm;
 		private float targetDistance = 0f;
 		private float[] astWidth = new float[6] { 4, 8, 14, 20, 26, 40 };
+		private ExperimentsResultDialog resultsDialog;
+		private bool hasContainer;
 
 		#endregion
 
 		#region PartModule
+
+		public override void OnAwake()
+		{
+			GameEvents.onGamePause.Add(onPause);
+			GameEvents.onGameUnpause.Add(onUnPause);
+			GameEvents.onVesselStandardModification.Add(onVesselModified);
+		}
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -133,6 +142,7 @@ namespace DMagic.Part_Modules
 
 			if (FlightGlobals.Bodies.Count >= 17)
 				asteroidBodyNameFixed = FlightGlobals.Bodies[16].bodyName;
+			findContainers();
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -154,6 +164,53 @@ namespace DMagic.Part_Modules
 					ScienceData data = new ScienceData(storedDataNode);
 					scienceReports.Add(data);
 				}
+			}
+		}
+
+		private void OnDestroy()
+		{
+			GameEvents.onGamePause.Remove(onPause);
+			GameEvents.onGameUnpause.Remove(onUnPause);
+			GameEvents.onVesselStandardModification.Remove(onVesselModified);
+		}
+
+		private void onPause()
+		{
+			if (resultsDialog != null)
+				resultsDialog.gameObject.SetActive(false);
+		}
+
+		private void onUnPause()
+		{
+			if (resultsDialog != null)
+				resultsDialog.gameObject.SetActive(true);
+		}
+
+		private void onVesselModified(Vessel v)
+		{
+			if (v == vessel && HighLogic.LoadedSceneIsFlight)
+				findContainers();
+		}
+
+		private void findContainers()
+		{
+			for (int i = vessel.Parts.Count - 1; i >= 0; i--)
+			{
+				Part p = vessel.Parts[i];
+
+				if (p == null)
+					continue;
+
+				if (p.State == PartStates.DEAD)
+					continue;
+
+				ModuleScienceContainer container = p.FindModuleImplementing<ModuleScienceContainer>();
+
+				if (container == null)
+					continue;
+
+				hasContainer = container.canBeTransferredToInVessel;
+				break;
 			}
 		}
 
@@ -318,6 +375,7 @@ namespace DMagic.Part_Modules
 			Events["DeployExperiment"].active = scienceReports.Count == 0 && !Deployed && !Inoperable && asteroidInSight;
 			Events["ReviewDataEvent"].active = scienceReports.Count > 0;
 			Events["toggleLine"].active = fullyDeployed;
+			Events["TransferDataEvent"].active = hasContainer && dataIsCollectable && scienceReports.Count > 0;
 		}
 
 		//Point the dish at the target
@@ -597,6 +655,78 @@ namespace DMagic.Part_Modules
 			Events["editorRetractEvent"].active = false;
 		}
 
+		[KSPEvent(guiActive = true, guiName = "Transfer Data", active = false)]
+		public void TransferDataEvent()
+		{
+			if (PartItemTransfer.Instance != null)
+			{
+				ScreenMessages.PostScreenMessage("<b><color=orange>A transfer is already in progress.</color></b>", 3f, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+
+			ExperimentTransfer.Create(part, this, new Callback<PartItemTransfer.DismissAction, Part>(transferData));
+		}
+
+		private void transferData(PartItemTransfer.DismissAction dismiss, Part p)
+		{
+			if (dismiss != PartItemTransfer.DismissAction.ItemMoved)
+				return;
+
+			if (p == null)
+				return;
+
+			if (scienceReports.Count <= 0)
+			{
+				ScreenMessages.PostScreenMessage(string.Format("[{0}]: has no data to transfer.", part.partInfo.title), 6, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+
+			ModuleScienceContainer container = p.FindModuleImplementing<ModuleScienceContainer>();
+
+			if (container == null)
+			{
+				ScreenMessages.PostScreenMessage(string.Format("<color=orange>[{0}]: {1} has no data container, canceling transfer.<color>", part.partInfo.title, p.partInfo.title), 6, ScreenMessageStyle.UPPER_CENTER);
+				return;
+			}
+
+			if (!rerunnable)
+			{
+				List<DialogGUIBase> dialog = new List<DialogGUIBase>();
+				dialog.Add(new DialogGUIButton<ModuleScienceContainer>("Remove Data", new Callback<ModuleScienceContainer>(onTransferData), container));
+				dialog.Add(new DialogGUIButton("Cancel", null, true));
+
+				PopupDialog.SpawnPopupDialog(
+					new Vector2(0.5f, 0.5f),
+					new Vector2(0.5f, 0.5f),
+					new MultiOptionDialog(
+						"Removing the experiment data will render this module inoperable.\n\nRestoring functionality will require a Scientist.",
+						part.partInfo.title + "Warning!",
+						UISkinManager.defaultSkin,
+						dialog.ToArray()
+						),
+					false,
+					UISkinManager.defaultSkin,
+					true,
+					""
+					);
+			}
+			else
+				onTransferData(container);
+		}
+
+		private void onTransferData(ModuleScienceContainer target)
+		{
+			if (target == null)
+				return;
+
+			int i = scienceReports.Count;
+
+			if (target.StoreData(new List<IScienceDataContainer> { this }, false))
+				ScreenMessages.PostScreenMessage(string.Format("[{0}]: {1} Data stored.", target.part.partInfo.title, i), 6, ScreenMessageStyle.UPPER_LEFT);
+			else
+				ScreenMessages.PostScreenMessage(string.Format("<color=orange>[{0}]: Not all data was stored.</color>", target.part.partInfo.title), 6, ScreenMessageStyle.UPPER_LEFT);
+		}
+
 		[KSPEvent(guiActive = true, guiActiveUnfocused = true, externalToEVAOnly = true, guiName = "Reset Asteroid Scanner", active = false)]
 		public void ResetExperiment()
 		{
@@ -871,12 +1001,13 @@ namespace DMagic.Part_Modules
 			if (scienceReports.Count > 0)
 			{
 				ExperimentResultDialogPage page = new ExperimentResultDialogPage(part, data, data.baseTransmitValue, data.transmitBonus, false, "", true, new ScienceLabSearch(vessel, data), new Callback<ScienceData>(onDiscardData), new Callback<ScienceData>(onKeepData), new Callback<ScienceData>(onTransmitData), new Callback<ScienceData>(onSendToLab));
-				ExperimentsResultDialog.DisplayResult(page);
+				resultsDialog = ExperimentsResultDialog.DisplayResult(page);
 			}
 		}
 
 		private void onDiscardData(ScienceData data)
 		{
+			resultsDialog = null;
 			if (scienceReports.Count > 0)
 			{
 				scienceReports.Clear();
@@ -886,23 +1017,29 @@ namespace DMagic.Part_Modules
 
 		private void onKeepData(ScienceData data)
 		{
+			resultsDialog = null;
 		}
 
 		private void onTransmitData(ScienceData data)
 		{
-			List<IScienceDataTransmitter> tranList = vessel.FindPartModulesImplementing<IScienceDataTransmitter>();
-			if (tranList.Count > 0 && scienceReports.Count > 0)
+			resultsDialog = null;
+
+			IScienceDataTransmitter bestTransmitter = ScienceUtil.GetBestTransmitter(vessel);
+			if (bestTransmitter != null)
 			{
-				DMUtils.Logging("Sending data to vessel comms. {0} devices to choose from. Will try to pick the best one", tranList.Count);
-				tranList.OrderBy(ScienceUtil.GetTransmitterScore).First().TransmitData(new List<ScienceData> { data });
+				bestTransmitter.TransmitData(new List<ScienceData> { data });
 				DumpData(data);
 			}
+			else if (CommNet.CommNetScenario.CommNetEnabled)
+				ScreenMessages.PostScreenMessage("No usable, in-range Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
 			else
 				ScreenMessages.PostScreenMessage("No Comms Devices on this vessel. Cannot Transmit Data.", 3f, ScreenMessageStyle.UPPER_CENTER);
 		}
 
 		private void onSendToLab(ScienceData data)
 		{
+			resultsDialog = null;
+
 			ScienceLabSearch labSearch = new ScienceLabSearch(vessel, data);
 
 			if (labSearch.NextLabForDataFound)
