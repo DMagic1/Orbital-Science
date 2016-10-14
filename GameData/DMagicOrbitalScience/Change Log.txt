@@ -1,4 +1,26 @@
-﻿v1.3.2
+﻿v1.3.3
+- Update for KSP 1.2
+
+- Add data transfer function to all parts
+- Support CommNet
+    - Experiments respect CommNet antenna selection
+	- SIGINT dish works as a long range Direct transmitter
+- Detect new anomaly types
+- Add KerbNet Modules
+    - Terrain for Basic Orbital Telescope 
+	- Terrain, Biomes and Anomalies for the Imaging Platform
+	- Terrain and Anomalies for the Recon Telescopes
+
+- Fixed error with out-of-power data return to recon telescopes
+- Add toggle for asteroid scanner targetting line
+- Add support for Science Relay data transmission
+- Fix some error with asteroid science values not taking the Science multiplier into account
+- Fix some errors with recon contract orbits
+- Remove EC usage from Universal Storage environmental sensors
+- Support new SCANsat EC usage
+- Various KSP 1.2-related updates and bug fixes
+
+v1.3.2
 - Fixes a bug related to recon contracts
 
 v1.3.1
