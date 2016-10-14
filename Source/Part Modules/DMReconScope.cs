@@ -170,7 +170,7 @@ namespace DMagic.Part_Modules
 
 		override protected void ReturnDataOverRide(ScienceData data)
 		{
-			base.ReturnData(data);
+			base.ReturnDataOverRide(data);
 
 			int i = experimentsReturned;
 

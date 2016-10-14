@@ -99,7 +99,7 @@ namespace DMagic
 			return string.Concat(s).TrimEnd('|');
 		}
 
-		internal static string stringConcat(Dictionary<int, List<string>> source)
+		internal static string stringConcat(DictionaryValueList<int, List<string>> source)
 		{
 			if (source.Count == 0)
 				return "";
@@ -107,7 +107,7 @@ namespace DMagic
 			string[] result = new string[source.Count];
 			for (int i = 0; i < source.Count; i++)
 			{
-				List<string> group = source.ElementAt(i).Value;
+				List<string> group = source.At(i);
 
 				if (group.Count == 0)
 				{
@@ -146,9 +146,9 @@ namespace DMagic
 			return fixedList;
 		}
 
-		internal static Dictionary<int, List<string>> stringSplit(string source)
+		internal static DictionaryValueList<int, List<string>> stringSplit(string source)
 		{
-			Dictionary<int, List<string>> result = new Dictionary<int,List<string>>();
+			DictionaryValueList<int, List<string>> result = new DictionaryValueList<int, List<string>>();
 
 			string[] groups = source.Split('|');
 
@@ -285,10 +285,8 @@ namespace DMagic
 
 		internal static double timeInDays(double D)
 		{
-			if (GameSettings.KERBIN_TIME)
-				D /= ((KSPUtil.DefaultDateTimeFormatter)KSPUtil.dateTimeFormatter).KerbinDay;
-			else
-				D /= ((KSPUtil.DefaultDateTimeFormatter)KSPUtil.dateTimeFormatter).EarthDay;
+			D /= KSPUtil.dateTimeFormatter.Day;
+
 			return D;
 		}
 

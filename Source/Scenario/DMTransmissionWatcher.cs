@@ -59,6 +59,8 @@ namespace DMagic.Scenario
 			if (DMScienceScenario.SciScenario == null)
 				return;
 
+			sci /= HighLogic.CurrentGame.Parameters.Career.ScienceGainMultiplier;
+
 			if (HighLogic.LoadedSceneIsFlight)
 			{
 				DMScienceData DMData = DMScienceScenario.SciScenario.getDMScience(sub.title);

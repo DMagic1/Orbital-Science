@@ -191,7 +191,7 @@ namespace DMagic.Contracts
 			double inclination = incMod * ((double)rand.Next(7, 14) / 10d);
 			if (inclination > 75) inclination = 75;
 
-			Dictionary<int, List<string>> parts = new Dictionary<int, List<string>>();
+			DictionaryValueList<int, List<string>> parts = new DictionaryValueList<int, List<string>>();
 			parts.Add(0, DMContractDefs.DMMagnetic.magParts);
 			parts.Add(1, DMContractDefs.DMMagnetic.rpwsParts);
 
@@ -245,7 +245,7 @@ namespace DMagic.Contracts
 				this.agent = AgentList.Instance.GetAgentRandom();
 
 			base.SetExpiry(DMContractDefs.DMMagnetic.Expire.MinimumExpireDays, DMContractDefs.DMMagnetic.Expire.MaximumExpireDays);
-			base.SetDeadlineDays((float)(time / ((KSPUtil.DefaultDateTimeFormatter)KSPUtil.dateTimeFormatter).KerbinDay) * DMContractDefs.DMMagnetic.Expire.DeadlineModifier * (this.GetDestinationWeight(body) / 1.8f) * primaryModifier, null);
+			base.SetDeadlineDays((float)(time / 3600) * DMContractDefs.DMMagnetic.Expire.DeadlineModifier * (this.GetDestinationWeight(body) / 1.8f) * primaryModifier, null);
 			base.SetReputation(DMContractDefs.DMMagnetic.Reputation.BaseReward * Mod, DMContractDefs.DMMagnetic.Reputation.BaseFailure * Mod, null);
 			base.SetFunds(DMContractDefs.DMMagnetic.Funds.BaseAdvance * Mod, DMContractDefs.DMMagnetic.Funds.BaseReward * Mod, DMContractDefs.DMMagnetic.Funds.BaseFailure * Mod, body);
 			base.SetScience(DMContractDefs.DMMagnetic.Science.BaseReward * Mod, body);

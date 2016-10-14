@@ -100,9 +100,11 @@ namespace DMagic.Part_Modules
 					spinDishDown();
 			}
 		}
-
-		new private void OnDestroy()
+		
+		protected override void OnDestroy()
 		{
+			base.OnDestroy();
+
 			DMAnomalyList.ScannerUpdating = false;
 			if (!HighLogic.LoadedSceneIsEditor)
 			{
@@ -242,11 +244,11 @@ namespace DMagic.Part_Modules
 			if (body.pqsController == null)
 				return;
 
-			PQSCity[] Cities = body.pqsController.GetComponentsInChildren<PQSCity>();
+			PQSSurfaceObject[] Cities = body.pqsSurfaceObjects;
 
 			for (int i = 0; i < Cities.Length; i++)
 			{
-				PQSCity city = Cities[i];
+				PQSSurfaceObject city = Cities[i];
 
 				if (city == null)
 					continue;
@@ -254,7 +256,7 @@ namespace DMagic.Part_Modules
 				if (city.transform.parent.name != body.name)
 					continue;
 
-				if (city.name != name)
+				if (city.SurfaceObjectName != name)
 					continue;
 
 				currentAnomaly = new DMAnomalyObject(city);
@@ -499,6 +501,8 @@ namespace DMagic.Part_Modules
 				case "Icehenge":
 				case "Pyramid":
 					return anomName;
+				case "Randolith":
+					return "Random Monolith";
 				case "IslandAirfield":
 					return "Island Airfield";
 				case "KSC2":

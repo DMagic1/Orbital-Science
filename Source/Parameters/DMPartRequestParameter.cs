@@ -44,9 +44,9 @@ namespace DMagic.Parameters
 {
 	public class DMPartRequestParameter : WaypointParameter
 	{
-		private Dictionary<Guid, Vessel> suitableVessels = new Dictionary<Guid, Vessel>();
-		private Dictionary<Vessel, Waypoint> wps = new Dictionary<Vessel, Waypoint>();
-		private Dictionary<int, List<string>> requiredParts = new Dictionary<int, List<string>>();
+		private DictionaryValueList<Guid, Vessel> suitableVessels = new DictionaryValueList<Guid, Vessel>();
+		private DictionaryValueList<Vessel, Waypoint> wps = new DictionaryValueList<Vessel, Waypoint>();
+		private DictionaryValueList<int, List<string>> requiredParts = new DictionaryValueList<int, List<string>>();
 		private List<string> partTitles = new List<string>();
 		private string vesselNames;
 		private bool updatingVesselState;
@@ -56,7 +56,7 @@ namespace DMagic.Parameters
 
 		public DMPartRequestParameter() { }
 
-		public DMPartRequestParameter(Dictionary<int, List<string>> parts, bool b, CelestialBody body)
+		public DMPartRequestParameter(DictionaryValueList<int, List<string>> parts, bool b, CelestialBody body)
 		{
 			requiredParts = parts;
 			TargetBody = body;
@@ -69,7 +69,7 @@ namespace DMagic.Parameters
 		{
 			for (int i = 0; i < requiredParts.Count; i++)
 			{
-				string s = requiredParts.ElementAt(i).Value.FirstOrDefault();
+				string s = requiredParts.At(i).FirstOrDefault();
 				AvailablePart aPart = PartLoader.getPartInfoByName(s);
 				if (aPart == null)
 					continue;
@@ -85,7 +85,7 @@ namespace DMagic.Parameters
 		public Vessel getVessel(int index)
 		{
 			if (suitableVessels.Count > index)
-				return suitableVessels.ElementAt(index).Value;
+				return suitableVessels.At(index);
 
 			return null;
 		}
@@ -203,10 +203,48 @@ namespace DMagic.Parameters
 			getPartTitles();
 
 			vesselNames = node.parse("Vessels", "");
-			if (!string.IsNullOrEmpty(vesselNames) && !HighLogic.LoadedSceneIsEditor && this.Root.ContractState == Contract.State.Active)
-			{
 
-				List<Guid> ids = node.parse("Vessels", new List<Guid>());
+			ContractSystem.Instance.StartCoroutine(loadVessels(vesselNames));
+
+			//if (!string.IsNullOrEmpty(vesselNames) && !HighLogic.LoadedSceneIsEditor && this.Root.ContractState == Contract.State.Active)
+			//{
+
+			//	List<Guid> ids = node.parse("Vessels", new List<Guid>());
+			//	if (ids.Count > 0)
+			//	{
+			//		foreach (Guid id in ids)
+			//		{
+			//			try
+			//			{
+			//				Vessel V = FlightGlobals.Vessels.FirstOrDefault(v => v.id == id);
+			//				addVessel(V);
+			//				DMUtils.DebugLog("Vessel {0} Loaded", V.vesselName);
+			//			}
+			//			catch
+			//			{
+			//				DMUtils.Logging("Failed To Load Vessel; DM Part Request Parameter Reset");
+			//				if (HighLogic.LoadedSceneIsFlight)
+			//				{
+			//					DMUtils.Logging("Checking If Currently Loaded Vessel Is Appropriate");
+			//					if (vesselEquipped(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody))
+			//						addVessel(FlightGlobals.ActiveVessel);
+			//				}
+			//			}
+			//		}
+			//	}
+			//}
+
+			this.disableOnStateChange = false;
+		}
+
+		private IEnumerator loadVessels(string vessels)
+		{
+			while (!FlightGlobals.ready && FlightGlobals.Vessels.Count <= 0)
+				yield return null;
+
+			if (!HighLogic.LoadedSceneIsEditor && this.Root.ContractState == Contract.State.Active)
+			{
+				List<Guid> ids = vessels.parse(new List<Guid>());
 				if (ids.Count > 0)
 				{
 					foreach (Guid id in ids)
@@ -230,8 +268,6 @@ namespace DMagic.Parameters
 					}
 				}
 			}
-
-			this.disableOnStateChange = false;
 		}
 
 		public override void UpdateWaypoints(bool focused)
@@ -239,27 +275,31 @@ namespace DMagic.Parameters
 			if (!useWaypoints)
 				return;
 
-			for (int i = 0; i < wps.Count; i++)
-			{
-				var pair = wps.ElementAt(i);
+			var enumerator = wps.GetDictEnumerator();
 
-				if (pair.Key == null)
+			while (enumerator.MoveNext())
+			{
+				var pair = enumerator.Current;
+
+				Vessel v = pair.Key;
+
+				if (v == null)
 					continue;
 
 				Waypoint wp = pair.Value;
 
 				if (wp == null)
 				{
-					wp = setupNewWaypoint(pair.Key);
-					wps[pair.Key] = wp;
+					wp = setupNewWaypoint(v);
+					wps[v] = wp;
 				}
 
 				Orbit o;
 
-				if (pair.Key.loaded)
-					o = pair.Key.orbit;
+				if (v.loaded)
+					o = v.orbit;
 				else
-					o = pair.Key.protoVessel.orbitSnapShot.Load();
+					o = v.protoVessel.orbitSnapShot.Load();
 
 				wp.celestialName = TargetBody.GetName();
 				wp.isOnSurface = false;
@@ -317,7 +357,7 @@ namespace DMagic.Parameters
 
 		private void removeWaypoint(Vessel v)
 		{
-			if (wps.ContainsKey(v))
+			if (wps.Contains(v))
 			{
 				Waypoint wp = wps[v];
 
@@ -332,7 +372,7 @@ namespace DMagic.Parameters
 
 		private void addVessel(Vessel v)
 		{
-			if (!suitableVessels.ContainsKey(v.id))
+			if (!suitableVessels.Contains(v.id))
 				suitableVessels.Add(v.id, v);
 			else
 				DMUtils.Logging("Vessel: [{0}] Already Included In DM Part Request List", v.name);
@@ -342,14 +382,14 @@ namespace DMagic.Parameters
 
 			if (HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.TRACKSTATION)
 			{
-				if (!wps.ContainsKey(v))
+				if (!wps.Contains(v))
 					wps.Add(v, setupNewWaypoint(v));
 			}
 		}
 
 		private void removeVessel(Vessel v)
 		{
-			if (suitableVessels.ContainsKey(v.id))
+			if (suitableVessels.Contains(v.id))
 				suitableVessels.Remove(v.id);
 
 			if (!useWaypoints)
@@ -365,7 +405,7 @@ namespace DMagic.Parameters
 			{
 				for (int i = 0; i < requiredParts.Count; i++)
 				{
-					List<string> parts = requiredParts.ElementAt(i).Value;
+					List<string> parts = requiredParts.At(i);
 
 					if (parts.Count <= 0)
 						return false;

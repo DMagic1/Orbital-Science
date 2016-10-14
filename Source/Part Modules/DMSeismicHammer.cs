@@ -149,8 +149,10 @@ namespace DMagic.Part_Modules
 			base.OnSave(node);
 		}
 
-		private void OnDestroy()
+		protected override void OnDestroy()
 		{
+			base.OnDestroy();
+
 			GameEvents.onVesselWasModified.Remove(onVesselModified);
 			GameEvents.onPartCouple.Remove(onCouple);
 		}

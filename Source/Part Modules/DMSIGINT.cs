@@ -433,6 +433,11 @@ namespace DMagic.Part_Modules
 
 		}
 
+		public string ScalarModuleID
+		{
+			get { return "dmsigint"; }
+		}
+
 		public override void OnUpdate()
 		{
 			base.OnUpdate();

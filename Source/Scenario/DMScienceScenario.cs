@@ -30,6 +30,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -179,11 +180,30 @@ namespace DMagic.Scenario
 				}
 			}
 		}
-
+		
 		private void Start()
 		{
 			if (HighLogic.LoadedSceneIsFlight)
-				updateRemainingData();
+				StartCoroutine(updateWhenReady());
+		}
+
+		private IEnumerator updateWhenReady()
+		{
+			while (!FlightGlobals.ready)
+				yield return null;
+
+			while (FlightGlobals.ActiveVessel == null)
+				yield return null;
+
+			int timer = 0;
+
+			while (timer < 30)
+			{
+				timer++;
+				yield return null;
+			}
+
+			updateRemainingData();
 		}
 
 		private void addDMScience(DMScienceData data)
@@ -242,7 +262,8 @@ namespace DMagic.Scenario
 			{
 				foreach (IScienceDataContainer container in FlightGlobals.ActiveVessel.FindPartModulesImplementing<IScienceDataContainer>())
 				{
-					dataList.AddRange(container.GetData());
+					if (container.GetData() != null && container.GetData().Length > 0)
+						dataList.AddRange(container.GetData());
 				}
 				if (dataList.Count > 0)
 				{

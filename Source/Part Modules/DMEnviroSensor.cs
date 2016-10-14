@@ -50,7 +50,6 @@ namespace DMagic.Part_Modules
 		private Transform rotor3 = null;
 		private Transform tilt1 = null;
 		private Vector3 indicatorPosition = new Vector3(0, 0, 0);
-		private int sensorInt = 0;
 		private List<DMEnviroSensor> modList = new List<DMEnviroSensor>();
 		private float timeDelay = 0f;
 		private float lastValue = 0f;
@@ -58,24 +57,27 @@ namespace DMagic.Part_Modules
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
-			if (HighLogic.LoadedSceneIsFlight) {
-				sensorInt = sensorTypeInt(sensorType);
-				Fields["readoutInfo"].guiName = guiReadout(sensorInt);
+			if (HighLogic.LoadedSceneIsFlight)
+			{
+				Fields["readoutInfo"].guiName = sensorType.ToString();
 				//Assign transforms for all of the indicator needles, etc.. for each part type
-				if (sensorInt == 1 || sensorInt == 2 || sensorInt == 3)
-					indicator = part.FindModelTransform(sensorType);
-				if (sensorInt == 3)
+				if (sensorType != SensorType.ACC)
+					indicator = part.FindModelTransform(sensorType.ToString());
+				if (sensorType == SensorType.TEMP)
 					indicatorPosition = indicator.localPosition;
-				if (sensorInt == 4) {
+				if (sensorType == SensorType.ACC)
+				{
 					rotor1 = part.FindModelTransform(sensorType + "_000");
 					rotor2 = part.FindModelTransform(sensorType + "_001");
 					rotor3 = part.FindModelTransform(sensorType + "_002");
 					tilt1 = part.FindModelTransform(sensorType + "_003");
 				}
 				//Prevent multiple modules from interfering with each other
-				if (primary) {
+				if (primary)
+				{
 					modList = this.part.FindModulesImplementing<DMEnviroSensor>();
-					if (modList.Count > 1) {
+					if (modList.Count > 1)
+					{
 						modList[0].Events["toggleSensor"].active = true;
 						modList[1].Events["toggleSensor"].active = false;
 					}
@@ -83,41 +85,19 @@ namespace DMagic.Part_Modules
 			}
 		}
 
-		public override string GetInfo()
-		{
-			string info = base.GetInfo();
-			if (primary)	
-				info += "Requires:\n- " + resourceName + ": " + powerConsumption.ToString() + "/s\n";
-			return info;
-		}
-
 		[KSPEvent(guiActiveUnfocused = true, externalToEVAOnly = true, guiActive = false, guiName = "Activate", active = false)]
 		public void toggleSensor()
 		{
-			foreach (DMEnviroSensor DMES in modList) {
-				DMES.sensorActive= !DMES.sensorActive;
-				if (DMES.primary) {
+			foreach (DMEnviroSensor DMES in modList)
+			{
+				DMES.sensorActive = !DMES.sensorActive;
+				if (DMES.primary)
+				{
 					if (DMES.sensorActive)
 						Events["toggleSensor"].guiName = "Deactivate";
 					else
 						Events["toggleSensor"].guiName = "Activate";
 				}
-			}
-		}
-
-		 private int sensorTypeInt(string type)
-		{
-			switch (type) {
-				case "PRES":
-					return 1;
-				case "GRAV":
-					return 2;
-				case "TEMP":
-					return 3;
-				case "ACC":
-					return 4;
-				default:
-					return 0;
 			}
 		}
 
@@ -128,32 +108,36 @@ namespace DMagic.Part_Modules
 
 		private void animateIndicator()
 		{
-			if (indicator != null || rotor1 != null) {
+			if (indicator != null || rotor1 != null)
+			{
 				float maxSensorValue = 0f;
 				float currentSensorValue = 0f;
 				float normSensorValue = 0f;
-				if (sensorActive) {
+				if (sensorActive)
+				{
 					if (timeDelay <= 1f)
 						timeDelay += TimeWarp.deltaTime;
-					maxSensorValue = sensorValue(sensorInt);
+					maxSensorValue = sensorValue(sensorType);
 					currentSensorValue = parseSensor();
-					if (sensorInt == 3)
+					if (sensorType == SensorType.TEMP)
 						currentSensorValue += 429; //For negative temp values
 					if (maxSensorValue != 0)
 						normSensorValue = Mathf.Clamp(currentSensorValue / maxSensorValue, 0f, 1f);
 					normSensorValue *= timeDelay;
 					lastValue = normSensorValue;
 				}
-				else {
+				else
+				{
 					if (timeDelay >= 0f)
 						timeDelay -= TimeWarp.deltaTime;
 					normSensorValue = lastValue * timeDelay;
 				}
-				if (sensorInt == 1 || sensorInt == 2)
+				if (sensorType == SensorType.PRES || sensorType == SensorType.GRAV)
 					indicator.localRotation = Quaternion.Euler(Mathf.Lerp(min, max, normSensorValue), 0f, 0f);
-				if (sensorInt == 3)
+				if (sensorType == SensorType.TEMP)
 					indicator.localPosition = Vector3.MoveTowards(indicator.localPosition, indicatorPosition + new Vector3(0f, 0f, 0.12f * normSensorValue), Time.deltaTime);
-				if (sensorInt == 4) {
+				if (sensorType == SensorType.ACC)
+				{
 					rotor1.Rotate(1000 * TimeWarp.deltaTime, 0f, 0f);
 					rotor2.Rotate(0f, 0f, 3000 * normSensorValue * TimeWarp.deltaTime);
 					rotor3.Rotate(0f, 3000 * normSensorValue * TimeWarp.deltaTime, 0f);
@@ -168,9 +152,11 @@ namespace DMagic.Part_Modules
 			float parseValue = 0f;
 			if (float.TryParse(readoutInfo, out parseValue))
 				return parseValue;
-			else {
+			else
+			{
 				string a = "";
-				for (int i = 0; i < readoutInfo.Length; i++) {
+				for (int i = 0; i < readoutInfo.Length; i++)
+				{
 					if (Char.IsDigit(readoutInfo[i]) || readoutInfo[i] == '.' || readoutInfo[i] == '-')
 						a += readoutInfo[i];
 				}
@@ -180,36 +166,21 @@ namespace DMagic.Part_Modules
 			return parseValue;
 		}
 
-		//Some imperically determined max values for each sensor
-		private float sensorValue(int type)
+		//Some emperically determined max values for each sensor
+		private float sensorValue(ModuleEnviroSensor.SensorType type)
 		{
-			switch (type) {
-				case 1:
+			switch (type)
+			{
+				case SensorType.PRES:
 					return 3;
-				case 2:
+				case SensorType.GRAV:
 					return 30;
-				case 3:
+				case SensorType.TEMP:
 					return 1500;
-				case 4:
+				case SensorType.ACC:
 					return 10;
 				default:
-					return 1;
-			}
-		}
-
-		private string guiReadout(int type)
-		{
-			switch (type) {
-				case 1:
-					return "PRES";
-				case 2:
-					return "GRAV";
-				case 3:
-					return "TEMP";
-				case 4:
-					return "ACC";
-				default:
-					return "Display";
+					return 0;
 			}
 		}
 
