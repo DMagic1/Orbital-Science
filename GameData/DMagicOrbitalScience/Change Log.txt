@@ -1,4 +1,11 @@
-﻿v1.3.3
+﻿v1.4.4
+- Fix bugs in long term contracts
+	- Not recognizing vessels in the correct orbit
+	- Continuing to track vessels that are no longer in orbit around the target planet
+
+- Adjust tech tree position for some Universal Storage parts
+	
+v1.3.3
 - Update for KSP 1.2
 
 - Add data transfer function to all parts
