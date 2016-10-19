@@ -98,6 +98,7 @@ namespace DMagic.Parameters
 			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
 			GameEvents.onVesselCreate.Add(newVesselCheck);
 			GameEvents.onPartCouple.Add(dockCheck);
+			GameEvents.onVesselSOIChanged.Add(soiChange);
 
 			registered = true;
 		}
@@ -115,6 +116,7 @@ namespace DMagic.Parameters
 			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
 			GameEvents.onVesselCreate.Remove(newVesselCheck);
 			GameEvents.onPartCouple.Remove(dockCheck);
+			GameEvents.onVesselSOIChanged.Remove(soiChange);
 		}
 
 		protected override string GetTitle()
@@ -204,47 +206,9 @@ namespace DMagic.Parameters
 
 			vesselNames = node.parse("Vessels", "");
 
-			ContractSystem.Instance.StartCoroutine(loadVessels(vesselNames));
-
-			//if (!string.IsNullOrEmpty(vesselNames) && !HighLogic.LoadedSceneIsEditor && this.Root.ContractState == Contract.State.Active)
-			//{
-
-			//	List<Guid> ids = node.parse("Vessels", new List<Guid>());
-			//	if (ids.Count > 0)
-			//	{
-			//		foreach (Guid id in ids)
-			//		{
-			//			try
-			//			{
-			//				Vessel V = FlightGlobals.Vessels.FirstOrDefault(v => v.id == id);
-			//				addVessel(V);
-			//				DMUtils.DebugLog("Vessel {0} Loaded", V.vesselName);
-			//			}
-			//			catch
-			//			{
-			//				DMUtils.Logging("Failed To Load Vessel; DM Part Request Parameter Reset");
-			//				if (HighLogic.LoadedSceneIsFlight)
-			//				{
-			//					DMUtils.Logging("Checking If Currently Loaded Vessel Is Appropriate");
-			//					if (vesselEquipped(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody))
-			//						addVessel(FlightGlobals.ActiveVessel);
-			//				}
-			//			}
-			//		}
-			//	}
-			//}
-
-			this.disableOnStateChange = false;
-		}
-
-		private IEnumerator loadVessels(string vessels)
-		{
-			while (!FlightGlobals.ready && FlightGlobals.Vessels.Count <= 0)
-				yield return null;
-
-			if (!HighLogic.LoadedSceneIsEditor && this.Root.ContractState == Contract.State.Active)
+			if (!string.IsNullOrEmpty(vesselNames) && !HighLogic.LoadedSceneIsEditor && this.Root.ContractState == Contract.State.Active)
 			{
-				List<Guid> ids = vessels.parse(new List<Guid>());
+				List<Guid> ids = node.parse("Vessels", new List<Guid>());
 				if (ids.Count > 0)
 				{
 					foreach (Guid id in ids)
@@ -268,6 +232,8 @@ namespace DMagic.Parameters
 					}
 				}
 			}
+
+			this.disableOnStateChange = false;
 		}
 
 		public override void UpdateWaypoints(bool focused)
@@ -401,7 +367,7 @@ namespace DMagic.Parameters
 		private bool vesselEquipped(Vessel v, CelestialBody b)
 		{
 			//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
-			if (v.situation == Vessel.Situations.ORBITING)
+			if ((v.loaded ? v.situation : v.protoVessel.situation) == Vessel.Situations.ORBITING)
 			{
 				for (int i = 0; i < requiredParts.Count; i++)
 				{
@@ -434,8 +400,29 @@ namespace DMagic.Parameters
 			if (b != TargetBody)
 				return;
 
-			if (vesselEquipped(v, b))
+			if (!vesselEquipped(v, b))
+				return;
+
+			if (!suitableVessels.Contains(v.id))
 				addVessel(v);
+		}
+
+		private void soiChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> action)
+		{
+			if (this.Root.ContractState != Contract.State.Active)
+				return;
+
+			if (action.host == null)
+				return;
+
+			if (action.from == null || action.to == null)
+				return;
+
+			if (!suitableVessels.Contains(action.host.id))
+				return;
+
+			if (action.to != TargetBody)
+				removeVessel(action.host);
 		}
 
 		private void dockCheck(GameEvents.FromToAction<Part, Part> Parts)
