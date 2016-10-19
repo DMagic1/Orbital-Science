@@ -130,7 +130,7 @@ namespace DMagic.Parameters
 
 				if (type == 0)
 				{
-					if (v.orbit.eccentricity > orbitalParameter && v.situation == Vessel.Situations.ORBITING)
+					if (v.orbit.eccentricity > orbitalParameter && (v.loaded ? v.situation : v.protoVessel.situation) == Vessel.Situations.ORBITING)
 					{
 						this.SetComplete();
 						return;
@@ -138,14 +138,14 @@ namespace DMagic.Parameters
 				}
 				else if (type == 1)
 				{
-					if (Math.Abs(v.orbit.inclination) > orbitalParameter && Math.Abs(v.orbit.inclination) < (180 - orbitalParameter) && v.situation == Vessel.Situations.ORBITING)
+					if (Math.Abs(v.orbit.inclination) > orbitalParameter && Math.Abs(v.orbit.inclination) < (180 - orbitalParameter) && (v.loaded ? v.situation : v.protoVessel.situation) == Vessel.Situations.ORBITING)
 					{
 						this.SetComplete();
 						return;
 					}
 				}
 			}
-					
+
 			this.SetIncomplete();
 		}
 
