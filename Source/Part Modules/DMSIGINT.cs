@@ -117,6 +117,7 @@ namespace DMagic.Part_Modules
 			if (IsDeployed)
 			{
 				deployScalar = 1;
+				scalar = 1;
 				return;
 			}
 
@@ -249,6 +250,7 @@ namespace DMagic.Part_Modules
 			}
 
 			deployScalar = 1;
+			scalar = 1;
 
 			base.deployEvent();
 		}
@@ -259,6 +261,7 @@ namespace DMagic.Part_Modules
 				return;
 
 			deployScalar = 0;
+			scalar = 0;
 
 			base.retractEvent();
 		}
@@ -382,7 +385,7 @@ namespace DMagic.Part_Modules
 		{
 			if (oneShot && isLocked)
 			{
-				scalar = t;
+				scalar = 1;
 				deployScalar = 1;
 				moving = false;
 
