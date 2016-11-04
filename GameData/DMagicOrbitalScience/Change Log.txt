@@ -1,4 +1,7 @@
-﻿v1.3.5
+﻿v1.3.6
+- Fix bug preventing SIGINT from working as a comms antenna
+
+v1.3.5
 - Update for KSP 1.2.1
 
 - Fix bug in anomaly scanner when loading with an anomaly nearby
