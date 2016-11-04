@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("5428988e-53a6-4d8e-8af4-014572513e22")]
 
-[assembly: AssemblyVersion("1.3.0.4")]
-[assembly: AssemblyFileVersion("1.3.0.4")]
-[assembly: AssemblyInformationalVersion("v1.3.4")]
+[assembly: AssemblyVersion("1.3.0.5")]
+[assembly: AssemblyFileVersion("1.3.0.5")]
+[assembly: AssemblyInformationalVersion("v1.3.5")]
 [assembly: KSPAssembly("DMagic", 1, 4)]
