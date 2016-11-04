@@ -1277,18 +1277,18 @@ namespace DMagic.Part_Modules
 		private void onTransmitInitialData(ScienceData data)
 		{
 			resultsDialog = null;
-
-			if (experimentLimit != 0)
-			{
-				if (!string.IsNullOrEmpty(sampleAnim))
-					secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
-				if (!string.IsNullOrEmpty(indicatorAnim))
-					secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
-			}
-
+			
 			IScienceDataTransmitter bestTransmitter = ScienceUtil.GetBestTransmitter(vessel);
 			if (bestTransmitter != null)
 			{
+				if (experimentLimit != 0)
+				{
+					if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[indicatorAnim].length / experimentLimit);
+				}
+
 				bestTransmitter.TransmitData(new List<ScienceData> { data });
 				DumpInitialData(data);
 				experimentNumber++;
@@ -1374,7 +1374,7 @@ namespace DMagic.Part_Modules
 
 		new public int GetScienceCount()
 		{
-			return storedScienceReports.Count;
+			return storedScienceReports.Count + scienceReports.Count;
 		}
 
 		new public void ReturnData(ScienceData data)

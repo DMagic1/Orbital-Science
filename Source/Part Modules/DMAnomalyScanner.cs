@@ -67,6 +67,7 @@ namespace DMagic.Part_Modules
 				dish = part.FindModelTransform(dishTransform);
 				GameEvents.OnPQSCityLoaded.Add(PQSloaded);
 				GameEvents.OnPQSCityUnloaded.Add(PQSunloaded);
+				loadNearbyAnomalies();
 			}
 		}
 
@@ -233,6 +234,27 @@ namespace DMagic.Part_Modules
 
 		#region anomaly detection
 		
+		private void loadNearbyAnomalies()
+		{
+			var anomalies = vessel.mainBody.pqsSurfaceObjects;
+
+			for (int i = anomalies.Length - 1; i >= 0; i--)
+			{
+				PQSSurfaceObject pqs = anomalies[i];
+
+				if (pqs == null)
+					continue;
+
+				Vector3 worldLocation = pqs.transform.position;
+
+				if ((worldLocation - vessel.transform.position).magnitude > 2500)
+					continue;
+
+				currentAnomaly = new DMAnomalyObject(pqs);
+				break;
+			}
+		}
+
 		private void PQSloaded(CelestialBody body, string name)
 		{
 			if (body == null)
@@ -276,10 +298,8 @@ namespace DMagic.Part_Modules
 
 			if (currentAnomalies == null)
 			{
-				if (currentAnomaly == null)
-					return;
-
-				checkAnomalyDistance(currentAnomaly);
+				if (currentAnomaly != null)
+					checkAnomalyDistance(currentAnomaly);
 			}
 			else
 			{

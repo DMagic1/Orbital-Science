@@ -1,4 +1,12 @@
-﻿v1.4.4
+﻿v1.3.5
+- Update for KSP 1.2.1
+
+- Fix bug in anomaly scanner when loading with an anomaly nearby
+- Fix bug in anomaly scanner animation
+
+- Adjust CTT node positions
+
+v1.3.4
 - Fix bugs in long term contracts
 	- Not recognizing vessels in the correct orbit
 	- Continuing to track vessels that are no longer in orbit around the target planet
