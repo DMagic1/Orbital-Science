@@ -34,7 +34,7 @@ using UnityEngine;
 
 namespace DMagic.Part_Modules
 {
-	class DMSoilMoisture: DMModuleScienceAnimate
+	class DMSoilMoisture: DMModuleScienceAnimate, IScalarModule
 	{
 
 		private bool fullyDeployed = false;
@@ -43,12 +43,31 @@ namespace DMagic.Part_Modules
 		private Transform dish;
 		private const string dishTransform = "armBase";
 
+		private float scalar;
+		private float deployScalar;
+		private float scalarStep;
+		private bool moving;
+
+		EventData<float> onStop;
+		EventData<float, float> onMove;
+
 		public override void OnStart(PartModule.StartState state)
 		{
+			onStop = new EventData<float>("SoilMoisture_" + part.flightID + "_OnStop");
+			onMove = new EventData<float, float>("SoilMoisture_" + part.flightID + "_OnMove");
+
 			base.OnStart(state);
 			dish = part.FindModelTransform(dishTransform);
 			if (IsDeployed)
+			{
 				fullyDeployed = true;
+				isLocked = true;
+				deployScalar = 1;
+				scalar = 1;
+			}
+
+			if (anim != null && anim[animationName] != null)
+				scalarStep = 1 / anim[animationName].length;
 		}
 
 		protected override void Update()
@@ -65,6 +84,24 @@ namespace DMagic.Part_Modules
 
 				if (!fullyDeployed && rotating)
 					spinDishDown();
+
+				if (!moving)
+					return;
+
+				if (scalar >= 0.95f)
+				{
+					isLocked = true;
+					moving = false;
+					deployEvent();
+					onStop.Fire(anim[animationName].normalizedTime);
+				}
+				else if (scalar <= 0.05f)
+				{
+					isLocked = false;
+					moving = false;
+					retractEvent();
+					onStop.Fire(anim[animationName].normalizedTime);
+				}
 			}
 		}
 
@@ -72,6 +109,7 @@ namespace DMagic.Part_Modules
 		{
 			if (!IsDeployed && fullyDeployed)
 				StopCoroutine("retractEnumerator");
+
 			StartCoroutine("deployEnumerator");
 		}
 
@@ -79,21 +117,28 @@ namespace DMagic.Part_Modules
 		{
 			base.deployEvent();
 
-			yield return new WaitForSeconds(anim[animationName].length);
+			yield return new WaitForSeconds((1 - anim[animationName].normalizedTime) * anim[animationName].length);
 
 			fullyDeployed = true;
+			isLocked = true;
+			deployScalar = 1;
+			scalar = 1;
 		}
 
 		public override void retractEvent()
 		{
 			if (IsDeployed && !fullyDeployed)
 				StopCoroutine("deployEnumerator");
+
 			StartCoroutine("retractEnumerator");
 		}
 
 		private IEnumerator retractEnumerator()
 		{
 			fullyDeployed = false;
+			isLocked = false;
+			deployScalar = 0;
+			scalar = 0;
 
 			if (dish != null)
 			{
@@ -122,5 +167,90 @@ namespace DMagic.Part_Modules
 			}
 		}
 
+		#region IScalar
+
+		public bool CanMove
+		{
+			get
+			{
+				if (anim.IsPlaying(animationName))
+				{
+					scalar = anim[animationName].normalizedTime;
+					deployScalar = scalar;
+				}
+
+				if (deployScalar < 0.95f)
+					isLocked = false;
+
+				return true;
+			}
+		}
+
+		public float GetScalar
+		{
+			get { return scalar; }
+		}
+
+		public EventData<float, float> OnMoving
+		{
+			get { return onMove; }
+		}
+
+		public EventData<float> OnStop
+		{
+			get { return OnStop; }
+		}
+
+		public string ScalarModuleID
+		{
+			get { return "dmsoil"; }
+		}
+
+		public bool IsMoving()
+		{
+			if (anim == null)
+				return false;
+
+			if (anim.isPlaying && anim[animationName] != null && anim[animationName].speed != 0f)
+				return true;
+
+			return moving;
+		}
+
+		public void SetScalar(float t)
+		{
+			if (isLocked)
+			{
+				scalar = 1;
+				deployScalar = 1;
+				moving = false;
+
+				return;
+			}
+
+			anim[animationName].speed = 0f;
+			anim[animationName].enabled = true;
+
+			moving = true;
+
+			t = Mathf.MoveTowards(scalar, t, scalarStep * Time.deltaTime);
+
+			anim[animationName].normalizedTime = t;
+			anim.Blend(animationName);
+			scalar = t;
+			deployScalar = scalar;
+		}
+
+		public void SetUIRead(bool state)
+		{
+
+		}
+
+		public void SetUIWrite(bool state)
+		{
+
+		}
+
+		#endregion
 	}
 }
