@@ -230,6 +230,9 @@ namespace DMagic.Part_Modules
 			if (!transformState)
 				setTransformState(true);
 
+			if (isLocked)
+				return;
+
 			if (useFairings)
 			{
 				if (HighLogic.LoadedSceneIsEditor)

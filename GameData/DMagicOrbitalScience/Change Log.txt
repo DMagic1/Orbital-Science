@@ -1,4 +1,9 @@
-﻿v1.3.6
+﻿v1.3.7
+- Fix a bug with resetting experiments with an EVA Kerbal
+- Add Module Data Transmitter to Soil Moisture instrument
+- Add antenna upgrade package to turn all Orbital Science antenna parts into relays and boost signal strength
+
+v1.3.6
 - Fix bug preventing SIGINT from working as a comms antenna
 
 v1.3.5
