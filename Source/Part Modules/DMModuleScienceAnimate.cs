@@ -665,9 +665,9 @@ namespace DMagic.Part_Modules
 			if (!FlightGlobals.ActiveVessel.isEVA)
 				return;
 
-			if (FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].HasEffect<ScienceResetSkill>())
+			if (!FlightGlobals.ActiveVessel.parts[0].protoModuleCrew[0].HasEffect<ScienceResetSkill>())
 			{
-				ScreenMessages.PostScreenMessage(string.Format("<b><color=orange>[{0}]: A scientist is needed to reset this experiment.</color></b>", part.partInfo.title), 6f, ScreenMessageStyle.UPPER_LEFT);
+				ScreenMessages.PostScreenMessage(string.Format("<b><color=orange>[{0}]: A Kerbal with the Science Reset Skill is needed to reset this experiment.</color></b>", part.partInfo.title), 6f, ScreenMessageStyle.UPPER_LEFT);
 				return;
 			}
 

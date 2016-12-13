@@ -393,15 +393,15 @@ namespace DMagic.Part_Modules
 			if (v.parts[0].protoModuleCrew.Count <= 0)
 				return;
 
-			if (v.parts[0].protoModuleCrew[0].HasEffect<RepairSkill>())
+			if (!v.parts[0].protoModuleCrew[0].HasEffect<RepairSkill>())
 			{
-				ScreenMessages.PostScreenMessage(string.Format("An engineer of at least level [{0}] is required to repair this instrument.", fixLevel), 6f, ScreenMessageStyle.UPPER_CENTER);
+				ScreenMessages.PostScreenMessage(string.Format("<b><color=orange>A Kerbal with the Repair Skill is required to fix this instrument.</color></b>", fixLevel), 6f, ScreenMessageStyle.UPPER_CENTER);
 				return;
 			}
 
 			if (v.parts[0].protoModuleCrew[0].experienceLevel < fixLevel)
 			{
-				ScreenMessages.PostScreenMessage(string.Format("An engineer of at least level [{0}] is required to repair this instrument.", fixLevel), 6f, ScreenMessageStyle.UPPER_CENTER);
+				ScreenMessages.PostScreenMessage(string.Format("<b><color=orange>An engineer of at least level [{0}] is required to repair this instrument.</color></b>", fixLevel), 6f, ScreenMessageStyle.UPPER_CENTER);
 				return;
 			}
 
