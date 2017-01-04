@@ -206,29 +206,54 @@ namespace DMagic.Parameters
 
 			vesselNames = node.parse("Vessels", "");
 
-			if (!string.IsNullOrEmpty(vesselNames) && !HighLogic.LoadedSceneIsEditor && this.Root.ContractState == Contract.State.Active)
+			if (!HighLogic.LoadedSceneIsEditor && this.Root.ContractState == Contract.State.Active)
 			{
-				List<Guid> ids = node.parse("Vessels", new List<Guid>());
-				if (ids.Count > 0)
+				if (!string.IsNullOrEmpty(vesselNames))
 				{
-					foreach (Guid id in ids)
+					List<Guid> ids = node.parse("Vessels", new List<Guid>());
+					if (ids.Count > 0)
 					{
-						try
+						foreach (Guid id in ids)
 						{
-							Vessel V = FlightGlobals.Vessels.FirstOrDefault(v => v.id == id);
-							addVessel(V);
-							DMUtils.DebugLog("Vessel {0} Loaded", V.vesselName);
-						}
-						catch
-						{
-							DMUtils.Logging("Failed To Load Vessel; DM Part Request Parameter Reset");
-							if (HighLogic.LoadedSceneIsFlight)
+							try
 							{
-								DMUtils.Logging("Checking If Currently Loaded Vessel Is Appropriate");
-								if (vesselEquipped(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody))
-									addVessel(FlightGlobals.ActiveVessel);
+								Vessel V = FlightGlobals.Vessels.FirstOrDefault(v => v.id == id);
+								addVessel(V);
+								DMUtils.DebugLog("Vessel {0} Loaded", V.vesselName);
+							}
+							catch
+							{
+								DMUtils.Logging("Failed To Load Vessel; DM Part Request Parameter Reset");
+								if (HighLogic.LoadedSceneIsFlight)
+								{
+									DMUtils.Logging("Checking If Currently Loaded Vessel Is Appropriate");
+									if (vesselEquipped(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody))
+										addVessel(FlightGlobals.ActiveVessel);
+								}
 							}
 						}
+					}
+				}
+				else
+				{
+					for (int i = 0; i < FlightGlobals.Vessels.Count; i++)
+					{
+						Vessel V = FlightGlobals.Vessels[i];
+
+						if (V == null)
+							continue;
+
+						if (V.mainBody == null)
+							continue;
+
+						if (V.mainBody != TargetBody)
+							continue;
+
+						if (!vesselEquipped(V, V.mainBody))
+							continue;
+
+						if (!suitableVessels.Contains(V.id))
+							addVessel(V);
 					}
 				}
 			}
