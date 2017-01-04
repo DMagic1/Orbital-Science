@@ -75,6 +75,7 @@ namespace DMagic.Part_Modules
 			GameEvents.onStageSeparation.Add(onDecouple);
 			GameEvents.onVesselCreate.Add(onNewVessel);
 			GameEvents.onPartCouple.Add(onCouple);
+			GameEvents.onVesselSOIChanged.Add(SOIChange);
 
 			Transform l1 = part.FindModelTransform("SignalLight.004");
 			Transform l2 = part.FindModelTransform("SignalLight.003");
@@ -125,12 +126,29 @@ namespace DMagic.Part_Modules
 			base.OnSave(node);
 		}
 
-		private void OnDestroy()
+		protected override void OnDestroy()
 		{
+			base.OnDestroy();
+
 			GameEvents.onVesselWasModified.Remove(onVesselModified);
 			GameEvents.onStageSeparation.Remove(onDecouple);
 			GameEvents.onVesselCreate.Remove(onNewVessel);
 			GameEvents.onPartCouple.Remove(onCouple);
+			GameEvents.onVesselSOIChanged.Remove(SOIChange);
+		}
+
+		private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
+		{
+			if (VB.host == null)
+				return;
+
+			if (!VB.host.loaded)
+				return;
+
+			if (VB.host != vessel)
+				return;
+
+			values = null;
 		}
 
 		private void onDecouple(EventReport e)

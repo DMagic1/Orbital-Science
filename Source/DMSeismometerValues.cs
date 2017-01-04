@@ -60,6 +60,8 @@ namespace DMagic
 				bool.TryParse(pm.moduleValues.GetValue("IsDeployed"), out armed);
 			if (pm.moduleValues.HasValue("baseExperimentValue"))
 				float.TryParse(pm.moduleValues.GetValue("baseExperimentValue"), out baseScore);
+			else
+				baseScore = h ? 0.4f : 0.2f;
 
 			hammer = h;
 
