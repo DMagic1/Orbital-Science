@@ -95,6 +95,8 @@ namespace DMagic.Part_Modules
 
 			GameEvents.onVesselWasModified.Add(onVesselModified);
 			GameEvents.onPartCouple.Add(onCouple);
+			GameEvents.onVesselCreate.Add(onNewVessel);
+			GameEvents.onVesselSOIChanged.Add(SOIChange);
 
 			Transform l1 = part.FindModelTransform("SignalLight.004");
 			Transform l2 = part.FindModelTransform("SignalLight.003");
@@ -155,6 +157,8 @@ namespace DMagic.Part_Modules
 
 			GameEvents.onVesselWasModified.Remove(onVesselModified);
 			GameEvents.onPartCouple.Remove(onCouple);
+			GameEvents.onVesselCreate.Remove(onNewVessel);
+			GameEvents.onVesselSOIChanged.Remove(SOIChange);
 		}
 
 		private void onCouple(GameEvents.FromToAction<Part, Part> p)
@@ -184,6 +188,37 @@ namespace DMagic.Part_Modules
 			}
 
 			DMSeismicHandler.Instance.addLoadedSeismometer(part.flightID, this);
+		}
+
+		private void onNewVessel(Vessel v)
+		{
+			if (v == null)
+				return;
+
+			if (!v.loaded)
+				return;
+
+			if (v != vessel)
+				return;
+
+			if (values == null)
+				return;
+
+			values.VesselRef = v;
+		}
+
+		private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
+		{
+			if (VB.host == null)
+				return;
+
+			if (!VB.host.loaded)
+				return;
+
+			if (VB.host != vessel)
+				return;
+
+			values = null;
 		}
 
 		private void onVesselModified(Vessel v)
@@ -695,7 +730,7 @@ namespace DMagic.Part_Modules
 					int i = 0; //Just to prevent this from getting stuck in a loop
 					while (hitT != null && i < 30)
 					{
-						if (hitT.name.Contains(vessel.mainBody.name))
+						if (hitT == vessel.mainBody.bodyTransform)
 						{
 							d = hit.distance;
 							return true;
@@ -710,6 +745,8 @@ namespace DMagic.Part_Modules
 
 		private void getScienceData(bool asteroid, bool silent, float score)
 		{
+			values.VesselRef = vessel;
+
 			ScienceData data = DMSeismicHandler.makeData(values, score, exp, experimentID, false, asteroid);
 
 			if (data == null)

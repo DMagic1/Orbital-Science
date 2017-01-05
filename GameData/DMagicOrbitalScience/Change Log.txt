@@ -1,4 +1,9 @@
-﻿v1.3.7
+﻿v1.3.8
+- Fix for magnetic field and reconnaissance contracts when using a vessel already in orbit
+- Fix for Seismic impact hammer experiments when decoupling or undocking from another vessel
+- Fix for X-Ray and Seismic impact hammer experiments when using Kopernicus and planet packs that replace Kerbin
+
+v1.3.7
 - Fix a bug with resetting experiments with an EVA Kerbal
 - Add Module Data Transmitter to Soil Moisture instrument
 - Add antenna upgrade package to turn all Orbital Science antenna parts into relays and boost signal strength

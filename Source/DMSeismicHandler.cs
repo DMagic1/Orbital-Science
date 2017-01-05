@@ -63,6 +63,8 @@ namespace DMagic
 		private Dictionary<uint, DMSeismometerValues> seismometers = new Dictionary<uint, DMSeismometerValues>();
 		private Dictionary<uint, DMSeismometerValues> hammers = new Dictionary<uint, DMSeismometerValues>();
 
+		private bool loaded;
+
 		private static string bodyNameFixed = "Eeloo";
 
 		private void Start()
@@ -70,6 +72,7 @@ namespace DMagic
 			instance = this;
 
 			GameEvents.onPartDie.Add(onPartDestroyed);
+			GameEvents.onVesselSOIChanged.Add(SOIChange);
 
 			if (FlightGlobals.Bodies.Count >= 17)
 				bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
@@ -80,18 +83,43 @@ namespace DMagic
 		private void OnDestroy()
 		{
 			GameEvents.onPartDie.Remove(onPartDestroyed);
+			GameEvents.onVesselSOIChanged.Remove(SOIChange);
 		}
 
 		private void Update()
 		{
-			if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+			if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready && loaded)
 				updatePositions();
+		}
+
+		private void SOIChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> VB)
+		{
+			if (VB.host == null)
+				return;
+
+			if (VB.host != FlightGlobals.ActiveVessel)
+				return;
+
+			loaded = false;
+
+			seismometers.Clear();
+			hammers.Clear();
+
+			StartCoroutine(loadSensors());
 		}
 
 		private IEnumerator loadSensors()
 		{
 			while (!FlightGlobals.ready)
 				yield return null;
+
+			int timer = 0;
+
+			while (timer < 20)
+			{
+				timer++;
+				yield return null;
+			}
 
 			for (int i = FlightGlobals.Vessels.Count - 1; i >= 0; i--)
 			{
@@ -142,6 +170,8 @@ namespace DMagic
 					}
 				}
 			}
+
+			loaded = true;
 		}
 
 		public void addLoadedSeismometer(uint id, IDMSeismometer sensor)
