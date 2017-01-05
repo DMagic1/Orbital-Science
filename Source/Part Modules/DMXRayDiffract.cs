@@ -90,7 +90,7 @@ namespace DMagic.Part_Modules
 					int i = 0; //Just to prevent this from getting stuck in a loop
 					while (hitT != null && i < 200)
 					{
-						if (hitT.name.Contains(vessel.mainBody.name))
+						if (hitT == vessel.mainBody.bodyTransform)
 							return true;
 						hitT = hitT.parent;
 						i++;

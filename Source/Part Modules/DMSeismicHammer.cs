@@ -730,7 +730,7 @@ namespace DMagic.Part_Modules
 					int i = 0; //Just to prevent this from getting stuck in a loop
 					while (hitT != null && i < 30)
 					{
-						if (hitT.name.Contains(vessel.mainBody.name))
+						if (hitT == vessel.mainBody.bodyTransform)
 						{
 							d = hit.distance;
 							return true;
