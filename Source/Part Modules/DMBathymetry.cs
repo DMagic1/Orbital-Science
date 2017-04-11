@@ -308,15 +308,15 @@ namespace DMagic.Part_Modules
 			if (b.EndsWith("Shallow"))
 			{
 				b = b.Remove(b.LastIndexOf("Shallow"));
-				return string.Format(" from the shallows of {0}'s {1}", vessel.mainBody.theName, b);
+				return string.Format(" from the shallows of {0}'s {1}", vessel.mainBody.displayName, b);
 			}
 			else if (b.EndsWith("Deep"))
 			{
 				b = b.Remove(b.LastIndexOf("Deep"));
-				return string.Format(" from deep in {0}'s {1}", vessel.mainBody.theName, b);
+				return string.Format(" from deep in {0}'s {1}", vessel.mainBody.displayName, b);
 			}
 			else
-				return string.Format("In {0}'s {1}", vessel.mainBody.theName, b);
+				return string.Format("In {0}'s {1}", vessel.mainBody.displayName, b);
 		}
 	}
 }

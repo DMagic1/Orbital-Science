@@ -298,7 +298,7 @@ namespace DMagic.Contracts
 				return "Whoops. Something bad happened here...";
 
 			string story = DMContractDefs.DMRecon.backStory[rand.Next(0, DMContractDefs.DMRecon.backStory.Count)];
-			return string.Format(story, this.agent.Name, body.theName);
+			return string.Format(story, this.agent.Name, body.displayName);
 		}
 
 		protected override string GetHashString()
@@ -317,11 +317,11 @@ namespace DMagic.Contracts
 			switch(prestige)
 			{
 				case ContractPrestige.Trivial:
-					return string.Format("We want you to conduct a detailed orbital reconnaissance survey of {0} using a long-term research vessel.", body.theName);
+					return string.Format("We want you to conduct a detailed orbital reconnaissance survey of {0} using a long-term research vessel.", body.displayName);
 				case ContractPrestige.Significant:
-					return string.Format("The intitial orbital survey of {0} has revealed several interesting findings; we now want you to conduct a long-term radio reconnaissance survey.", body.theName);
+					return string.Format("The intitial orbital survey of {0} has revealed several interesting findings; we now want you to conduct a long-term radio reconnaissance survey.", body.displayName);
 				default:
-					return string.Format("Very high resolution, stereographic images of {0}'s surface are required to complete our reconnaissance survey; place a long-term research vessel into orbit.", body.theName);
+					return string.Format("Very high resolution, stereographic images of {0}'s surface are required to complete our reconnaissance survey; place a long-term research vessel into orbit.", body.displayName);
 			}
 		}
 
@@ -345,7 +345,7 @@ namespace DMagic.Contracts
 					break;
 			}
 
-			return string.Format("Conduct a long term {0} reconnaissance survey of {1}", t, body.theName);
+			return string.Format("Conduct a long term {0} reconnaissance survey of {1}", t, body.displayName);
 		}
 
 		protected override string MessageCompleted()
@@ -356,11 +356,11 @@ namespace DMagic.Contracts
 			switch (prestige)
 			{
 				case ContractPrestige.Trivial:
-					return string.Format("Well done. You've completed an initial orbital survey of {0}; we'll begin analyzing the data immediately.", body.theName);
+					return string.Format("Well done. You've completed an initial orbital survey of {0}; we'll begin analyzing the data immediately.", body.displayName);
 				case ContractPrestige.Significant:
-					return string.Format("Well done. This radio signal survey of {0} has provided us with much valuable data; we'll begin analyzing it for follow up studies immediately.", body.theName);
+					return string.Format("Well done. This radio signal survey of {0} has provided us with much valuable data; we'll begin analyzing it for follow up studies immediately.", body.displayName);
 				default:
-					return string.Format("Well done. This completes our orbital reconnaissance surveys of {0}.", body.theName);
+					return string.Format("Well done. This completes our orbital reconnaissance surveys of {0}.", body.displayName);
 			}
 		}
 

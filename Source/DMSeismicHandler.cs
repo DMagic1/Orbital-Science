@@ -389,6 +389,7 @@ namespace DMagic
 			Vessel v = sensor.VesselRef;
 			CelestialBody body = v.mainBody;
 			string biome = ((int)exp.biomeMask & (int)ExperimentSituations.SrfLanded) == 0 ? "" : ScienceUtil.GetExperimentBiome(body, v.latitude, v.longitude);
+			string displayBiome = "";
 
 			DMAsteroidScience newAsteroid = null;
 
@@ -399,7 +400,7 @@ namespace DMagic
 				biome = newAsteroid.AType + newAsteroid.ASeed.ToString();
 			}
 
-			ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, ExperimentSituations.SrfLanded, body, biome);
+			ScienceSubject sub = ResearchAndDevelopment.GetExperimentSubject(exp, ExperimentSituations.SrfLanded, body, biome, displayBiome);
 
 			if (sub == null)
 			{
@@ -438,7 +439,7 @@ namespace DMagic
 						sub.scientificValue = 1 - ((sub.science / sub.subjectValue) / (science / sub.dataScale));
 				}
 				DMUtils.OnAnomalyScience.Fire(body, expID, biome);
-				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.theName, biome);
+				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.displayName, biome);
 			}
 
 			return new ScienceData(science, 1f, 0, sub.id, sub.title, false, sensor.ID);

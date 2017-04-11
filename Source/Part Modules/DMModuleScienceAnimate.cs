@@ -726,6 +726,7 @@ namespace DMagic.Part_Modules
 					new Vector2(0.5f, 0.5f),
 					new Vector2(0.5f, 0.5f),
 					new MultiOptionDialog(
+						"TransferWarning",
 						collectWarningText,
 						part.partInfo.title + "Warning!",
 						UISkinManager.defaultSkin,
@@ -934,17 +935,17 @@ namespace DMagic.Part_Modules
 				switch (expSit)
 				{
 					case ExperimentSituations.SrfLanded:
-						return " from  " + vessel.mainBody.theName + "'s surface";
+						return " from  " + vessel.mainBody.displayName + "'s surface";
 					case ExperimentSituations.SrfSplashed:
-						return " from " + vessel.mainBody.theName + "'s oceans";
+						return " from " + vessel.mainBody.displayName + "'s oceans";
 					case ExperimentSituations.FlyingLow:
-						return " while flying at " + vessel.mainBody.theName;
+						return " while flying at " + vessel.mainBody.displayName;
 					case ExperimentSituations.FlyingHigh:
-						return " from " + vessel.mainBody.theName + "'s upper atmosphere";
+						return " from " + vessel.mainBody.displayName + "'s upper atmosphere";
 					case ExperimentSituations.InSpaceLow:
-						return " while in space near " + vessel.mainBody.theName;
+						return " while in space near " + vessel.mainBody.displayName;
 					default:
-						return " while in space high over " + vessel.mainBody.theName;
+						return " while in space high over " + vessel.mainBody.displayName;
 				}
 			}
 			else
@@ -952,17 +953,17 @@ namespace DMagic.Part_Modules
 				switch (expSit)
 				{
 					case ExperimentSituations.SrfLanded:
-						return " from " + vessel.mainBody.theName + "'s " + b;
+						return " from " + vessel.mainBody.displayName + "'s " + b;
 					case ExperimentSituations.SrfSplashed:
-						return " from " + vessel.mainBody.theName + "'s " + b;
+						return " from " + vessel.mainBody.displayName + "'s " + b;
 					case ExperimentSituations.FlyingLow:
-						return " while flying over " + vessel.mainBody.theName + "'s " + b;
+						return " while flying over " + vessel.mainBody.displayName + "'s " + b;
 					case ExperimentSituations.FlyingHigh:
-						return " from the upper atmosphere over " + vessel.mainBody.theName + "'s " + b;
+						return " from the upper atmosphere over " + vessel.mainBody.displayName + "'s " + b;
 					case ExperimentSituations.InSpaceLow:
-						return " from space just above " + vessel.mainBody.theName + "'s " + b;
+						return " from space just above " + vessel.mainBody.displayName + "'s " + b;
 					default:
-						return " while in space high over " + vessel.mainBody.theName + "'s " + b;
+						return " while in space high over " + vessel.mainBody.displayName + "'s " + b;
 				}
 			}
 		}
@@ -1059,7 +1060,7 @@ namespace DMagic.Part_Modules
 				return null;
 			}
 
-			sub = ResearchAndDevelopment.GetExperimentSubject(scienceExp, vesselSituation, mainBody, biome);
+			sub = ResearchAndDevelopment.GetExperimentSubject(scienceExp, vesselSituation, mainBody, biome, "");
 			if (sub == null)
 			{
 				Debug.LogError("[DMOS] Something Went Wrong Here; Null Subject Returned; Please Report This On The KSP Forum With Output.log Data");

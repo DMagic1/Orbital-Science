@@ -193,7 +193,7 @@ namespace DMagic.Contracts
 			if (body == null)
 				return "Whoops. Something bad happened here...";
 
-			return string.Format("Conduct an orbital survey of {0}", body.theName);
+			return string.Format("Conduct an orbital survey of {0}", body.displayName);
 		}
 
 		protected override string GetDescription()
@@ -202,7 +202,7 @@ namespace DMagic.Contracts
 				return "Whoops. Something bad happened here...";
 
 			string story = DMContractDefs.DMSurvey.backStory[rand.Next(0, DMContractDefs.DMSurvey.backStory.Count)];
-			return string.Format(story, this.agent.Name, "orbital", body.theName);
+			return string.Format(story, this.agent.Name, "orbital", body.displayName);
 		}
 
 		protected override string GetSynopsys()
@@ -210,7 +210,7 @@ namespace DMagic.Contracts
 			if (body == null)
 				return "Whoops. Something bad happened here...";
 
-			return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit multiple scientific observations.", body.theName);
+			return string.Format("We would like you to conduct a detailed orbital survey of {0}. Collect and return or transmit multiple scientific observations.", body.displayName);
 		}
 
 		protected override string MessageCompleted()
@@ -218,7 +218,7 @@ namespace DMagic.Contracts
 			if (body == null)
 				return "Whoops. Something bad happened here...";
 
-			return string.Format("You completed a survey of {0}, well done.", body.theName);
+			return string.Format("You completed a survey of {0}, well done.", body.displayName);
 		}
 
 		protected override void OnLoad(ConfigNode node)

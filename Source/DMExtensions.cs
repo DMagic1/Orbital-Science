@@ -315,7 +315,7 @@ namespace DMagic
 				c = FlightGlobals.Bodies[body];
 			else
 			{
-				//DMUtils.DebugLog("Parsing value [{0}] = {1}", name, c.theName);
+				//DMUtils.DebugLog("Parsing value [{0}] = {1}", name, c.displayName);
 				return original;
 			}
 

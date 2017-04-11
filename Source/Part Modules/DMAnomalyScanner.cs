@@ -553,9 +553,9 @@ namespace DMagic.Part_Modules
 		protected override string situationCleanup(ExperimentSituations expSit, string b)
 		{
 			if (expSit == ExperimentSituations.SrfLanded)
-				return string.Format(" of the {0} from {1}'s surface", b, vessel.mainBody.theName);
+				return string.Format(" of the {0} from {1}'s surface", b, vessel.mainBody.displayName);
 			if (expSit == ExperimentSituations.FlyingLow)
-				return string.Format(" while flying above the {0} on {1}", b, vessel.mainBody.theName);
+				return string.Format(" while flying above the {0} on {1}", b, vessel.mainBody.displayName);
 			return "Dummy";
 		}
 

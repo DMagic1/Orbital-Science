@@ -152,32 +152,32 @@ namespace DMagic.Parameters
 				if (!string.IsNullOrEmpty(biomeName))
 				{
 					if (scienceLocation == ExperimentSituations.InSpaceHigh)
-						return string.Format("{0} data from high orbit above {1}'s {2}", scienceContainer.Exp.experimentTitle, body.theName, biomeName);
+						return string.Format("{0} data from high orbit above {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
 					else if (scienceLocation == ExperimentSituations.InSpaceLow)
-						return string.Format("{0} data from low orbit above {1}'s {2}", scienceContainer.Exp.experimentTitle, body.theName, biomeName);
+						return string.Format("{0} data from low orbit above {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
 					else if (scienceLocation == ExperimentSituations.SrfLanded)
-						return string.Format("{0} data from the surface at {1}'s {2}", scienceContainer.Exp.experimentTitle, body.theName, biomeName);
+						return string.Format("{0} data from the surface at {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
 					else if (scienceLocation == ExperimentSituations.SrfSplashed)
-						return string.Format("{0} data from the oceans at {1}'s {2}", scienceContainer.Exp.experimentTitle, body.theName, biomeName);
+						return string.Format("{0} data from the oceans at {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
 					else if (scienceLocation == ExperimentSituations.FlyingHigh)
-						return string.Format("{0} data during high altitude flight over {1}'s {2}", scienceContainer.Exp.experimentTitle, body.theName, biomeName);
+						return string.Format("{0} data during high altitude flight over {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
 					else if (scienceLocation == ExperimentSituations.FlyingLow)
-						return string.Format("{0} data during low altitude flight over {1}'s {2}", scienceContainer.Exp.experimentTitle, body.theName, biomeName);
+						return string.Format("{0} data during low altitude flight over {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
 				}
 				else
 				{
 					if (scienceLocation == ExperimentSituations.InSpaceHigh)
-						return string.Format("{0} data from high orbit above {1}", scienceContainer.Exp.experimentTitle, body.theName);
+						return string.Format("{0} data from high orbit above {1}", scienceContainer.Exp.experimentTitle, body.displayName);
 					else if (scienceLocation == ExperimentSituations.InSpaceLow)
-						return string.Format("{0} data from low orbit above {1}", scienceContainer.Exp.experimentTitle, body.theName);
+						return string.Format("{0} data from low orbit above {1}", scienceContainer.Exp.experimentTitle, body.displayName);
 					else if (scienceLocation == ExperimentSituations.SrfLanded)
-						return string.Format("{0} data from the surface of {1}", scienceContainer.Exp.experimentTitle, body.theName);
+						return string.Format("{0} data from the surface of {1}", scienceContainer.Exp.experimentTitle, body.displayName);
 					else if (scienceLocation == ExperimentSituations.SrfSplashed)
-						return string.Format("{0} data from the oceans of {1}", scienceContainer.Exp.experimentTitle, body.theName);
+						return string.Format("{0} data from the oceans of {1}", scienceContainer.Exp.experimentTitle, body.displayName);
 					else if (scienceLocation == ExperimentSituations.FlyingHigh)
-						return string.Format("{0} data during high altitude flight at {1}", scienceContainer.Exp.experimentTitle, body.theName);
+						return string.Format("{0} data during high altitude flight at {1}", scienceContainer.Exp.experimentTitle, body.displayName);
 					else if (scienceLocation == ExperimentSituations.FlyingLow)
-						return string.Format("{0} data during low altitude flight at {1}", scienceContainer.Exp.experimentTitle, body.theName);
+						return string.Format("{0} data during low altitude flight at {1}", scienceContainer.Exp.experimentTitle, body.displayName);
 				}
 				return "Stupid Code Is Stupid";
 			}

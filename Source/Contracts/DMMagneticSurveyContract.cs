@@ -272,7 +272,7 @@ namespace DMagic.Contracts
 			if (body == null)
 				return "Whoops. Something bad happened here...";
 
-			return string.Format("Conduct a survey of the magnetic field environment around {0}", body.theName);
+			return string.Format("Conduct a survey of the magnetic field environment around {0}", body.displayName);
 		}
 
 		protected override string GetDescription()
@@ -281,7 +281,7 @@ namespace DMagic.Contracts
 				return "Whoops. Something bad happened here...";
 
 			string story = DMContractDefs.DMMagnetic.backStory[rand.Next(0, DMContractDefs.DMMagnetic.backStory.Count)];
-			return string.Format(story, this.agent.Name, body.theName);
+			return string.Format(story, this.agent.Name, body.displayName);
 		}
 
 		protected override string GetSynopsys()
@@ -289,7 +289,7 @@ namespace DMagic.Contracts
 			if (body == null)
 				return "Whoops. Something bad happened here...";
 
-			return string.Format("Study the magnetic field environment around {0} by inserting a long-term research vessel into orbit.", body.theName);
+			return string.Format("Study the magnetic field environment around {0} by inserting a long-term research vessel into orbit.", body.displayName);
 		}
 
 		protected override string MessageCompleted()
@@ -297,7 +297,7 @@ namespace DMagic.Contracts
 			if (body == null)
 				return "Whoops. Something bad happened here...";
 
-			return string.Format("You completed a survey of {0}, well done.", body.theName);
+			return string.Format("You completed a survey of {0}, well done.", body.displayName);
 		}
 
 		protected override void OnLoad(ConfigNode node)
