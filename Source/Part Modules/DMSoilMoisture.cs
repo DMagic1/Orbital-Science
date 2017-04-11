@@ -36,6 +36,10 @@ namespace DMagic.Part_Modules
 {
 	class DMSoilMoisture: DMModuleScienceAnimate, IScalarModule
 	{
+		[KSPField(isPersistant = true)]
+		public bool allowTransmission = true;
+		[KSPField(guiActive = true, guiName = "Science Transmission")]
+		public string scienceTransmission = "Enabled";
 
 		private bool fullyDeployed = false;
 		private bool rotating = false;
@@ -65,6 +69,9 @@ namespace DMagic.Part_Modules
 				deployScalar = 1;
 				scalar = 1;
 			}
+
+			Events["ToggleScienceTransmission"].guiName = allowTransmission ? "Disable Science Transmission" : "Enable Science Transmission";
+			scienceTransmission = allowTransmission ? "Enabled" : "Disabled";
 
 			if (anim != null && anim[animationName] != null)
 				scalarStep = 1 / anim[animationName].length;
@@ -167,6 +174,15 @@ namespace DMagic.Part_Modules
 			}
 		}
 
+		[KSPEvent(guiActive = true, guiActiveEditor = true, active = true)]
+		public void ToggleScienceTransmission()
+		{
+			allowTransmission = !allowTransmission;
+
+			Events["ToggleScienceTransmission"].guiName = allowTransmission ? "Disable Science Transmission" : "Enable Science Transmission";
+			scienceTransmission = allowTransmission ? "Enabled" : "Disabled";
+		}
+
 		#region IScalar
 
 		public bool CanMove
@@ -221,7 +237,7 @@ namespace DMagic.Part_Modules
 		{
 			if (isLocked)
 			{
-				scalar = 1;
+				scalar = t;
 				deployScalar = 1;
 				moving = false;
 
