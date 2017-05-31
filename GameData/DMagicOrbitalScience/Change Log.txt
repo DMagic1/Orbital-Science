@@ -1,4 +1,11 @@
-﻿v1.3.8
+﻿v1.3.9
+- Updated for KSP 1.3
+
+- Fix several bugs with SIGINT and Soil Moisture antenna usage
+- Add option to disable transmsission from these parts
+- Change these antennas to Relay type and remove the part upgrade functions
+
+v1.3.8
 - Fix for magnetic field and reconnaissance contracts when using a vessel already in orbit
 - Fix for Seismic impact hammer experiments when decoupling or undocking from another vessel
 - Fix for X-Ray and Seismic impact hammer experiments when using Kopernicus and planet packs that replace Kerbin

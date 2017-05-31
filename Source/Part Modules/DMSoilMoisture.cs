@@ -36,6 +36,10 @@ namespace DMagic.Part_Modules
 {
 	class DMSoilMoisture: DMModuleScienceAnimate, IScalarModule
 	{
+		[KSPField(isPersistant = true)]
+		public bool allowTransmission = true;
+		[KSPField(guiActive = true, guiName = "Science Transmission")]
+		public string scienceTransmission = "Enabled";
 
 		private bool fullyDeployed = false;
 		private bool rotating = false;
@@ -58,6 +62,7 @@ namespace DMagic.Part_Modules
 
 			base.OnStart(state);
 			dish = part.FindModelTransform(dishTransform);
+
 			if (IsDeployed)
 			{
 				fullyDeployed = true;
@@ -65,6 +70,9 @@ namespace DMagic.Part_Modules
 				deployScalar = 1;
 				scalar = 1;
 			}
+
+			Events["ToggleScienceTransmission"].guiName = allowTransmission ? "Disable Science Transmission" : "Enable Science Transmission";
+			scienceTransmission = allowTransmission ? "Enabled" : "Disabled";
 
 			if (anim != null && anim[animationName] != null)
 				scalarStep = 1 / anim[animationName].length;
@@ -90,9 +98,9 @@ namespace DMagic.Part_Modules
 
 				if (scalar >= 0.95f)
 				{
+					deployEvent();
 					isLocked = true;
 					moving = false;
-					deployEvent();
 					onStop.Fire(anim[animationName].normalizedTime);
 				}
 				else if (scalar <= 0.05f)
@@ -167,12 +175,24 @@ namespace DMagic.Part_Modules
 			}
 		}
 
+		[KSPEvent(guiActive = true, guiActiveEditor = true, active = true)]
+		public void ToggleScienceTransmission()
+		{
+			allowTransmission = !allowTransmission;
+
+			Events["ToggleScienceTransmission"].guiName = allowTransmission ? "Disable Science Transmission" : "Enable Science Transmission";
+			scienceTransmission = allowTransmission ? "Enabled" : "Disabled";
+		}
+
 		#region IScalar
 
 		public bool CanMove
 		{
 			get
 			{
+				if (!allowTransmission)
+					return false;
+
 				if (anim.IsPlaying(animationName))
 				{
 					scalar = anim[animationName].normalizedTime;
@@ -188,7 +208,13 @@ namespace DMagic.Part_Modules
 
 		public float GetScalar
 		{
-			get { return scalar; }
+			get
+			{
+				if (!allowTransmission)
+					return 0;
+
+				return scalar;
+			}
 		}
 
 		public EventData<float, float> OnMoving
@@ -221,7 +247,7 @@ namespace DMagic.Part_Modules
 		{
 			if (isLocked)
 			{
-				scalar = 1;
+				scalar = t;
 				deployScalar = 1;
 				moving = false;
 

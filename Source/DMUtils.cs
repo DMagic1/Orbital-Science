@@ -401,7 +401,7 @@ namespace DMagic
 				for (int j = 0; j < b.BiomeMap.Attributes.Length; j++)
 				{
 					string bName = b.BiomeMap.Attributes[j].name;
-					string subId = string.Format("{0}@{1}{2}{3}", exp.id, b.name, sit, bName.Replace(" ", ""));
+					string subId = string.Format("{0}@{1}{2}{3}", exp.id, b.bodyName, sit, bName.Replace(" ", ""));
 
 					if (ResearchAndDevelopment.GetSubjects().Any(a => a.id == subId))
 					{

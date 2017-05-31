@@ -43,6 +43,10 @@ namespace DMagic.Part_Modules
 		public bool useFairings;
 		[KSPField]
 		public bool stagingDeploy;
+		[KSPField(isPersistant = true)]
+		public bool allowTransmission = true;
+		[KSPField(guiActive = true, guiName = "Science Transmission")]
+		public string scienceTransmission = "Enabled";
 
 		private readonly string[] dishTransformNames = new string[7] { "dish_Armature.000", "dish_Armature.001", "dish_Armature.002", "dish_Armature.003", "focalColumn", "dishCenter", "focalHead" };
 		private readonly string[] dishMeshNames = new string[7] { "dish_Mesh.000", "dish_Mesh.001", "dish_Mesh.002", "dish_Mesh.003", "focalColumn", "dishCenter", "focalHead" };
@@ -80,6 +84,8 @@ namespace DMagic.Part_Modules
 				scalarStep = 1 / anim[animationName].length;
 
 			Events["fixPart"].guiName = "Fix Dish";
+			Events["ToggleScienceTransmission"].guiName = allowTransmission ? "Disable Science Transmission" : "Enable Science Transmission";
+			scienceTransmission = allowTransmission ? "Enabled" : "Disabled";
 
 			if (useFairings)
 			{
@@ -230,9 +236,6 @@ namespace DMagic.Part_Modules
 			if (!transformState)
 				setTransformState(true);
 
-			if (isLocked)
-				return;
-
 			if (useFairings)
 			{
 				if (HighLogic.LoadedSceneIsEditor)
@@ -341,10 +344,22 @@ namespace DMagic.Part_Modules
 			Actions["jettisonAction"].active = false;
 		}
 
+		[KSPEvent(guiActive = true, guiActiveEditor = true, active = true)]
+		public void ToggleScienceTransmission()
+		{
+			allowTransmission = !allowTransmission;
+
+			Events["ToggleScienceTransmission"].guiName = allowTransmission ? "Disable Science Transmission" : "Enable Science Transmission";
+			scienceTransmission = allowTransmission ? "Enabled" : "Disabled";
+		}
+
 		public bool CanMove
 		{
 			get
 			{
+				if (!allowTransmission)
+					return false;
+
 				if (anim.IsPlaying(animationName))
 				{
 					scalar = anim[animationName].normalizedTime;
@@ -360,7 +375,16 @@ namespace DMagic.Part_Modules
 
 		public float GetScalar
 		{
-			get { return scalar; }
+			get
+			{
+				if (!allowTransmission)
+					return 0;
+
+				if (broken)
+					return 0;
+
+				return scalar;
+			}
 		}
 
 		public EventData<float, float> OnMoving
@@ -388,10 +412,9 @@ namespace DMagic.Part_Modules
 		{
 			if (oneShot && isLocked)
 			{
-				scalar = 1;
+				scalar = t;
 				deployScalar = 1;
 				moving = false;
-
 				return;
 			}
 
@@ -471,7 +494,7 @@ namespace DMagic.Part_Modules
 
 		public void scanPlanet(CelestialBody b)
 		{
-			DMAnomalyStorage anom = DMAnomalyList.getAnomalyStorage(b.name);
+			DMAnomalyStorage anom = DMAnomalyList.getAnomalyStorage(b.bodyName);
 
 			if (anom == null)
 				anom = new DMAnomalyStorage(b, false);
@@ -480,7 +503,7 @@ namespace DMagic.Part_Modules
 				return;
 
 			if (anom.scanBody())
-				DMAnomalyList.addAnomalyStorage(b.name, anom);
+				DMAnomalyList.addAnomalyStorage(b.bodyName, anom);
 		}
 
 		protected override void getGameObjects()

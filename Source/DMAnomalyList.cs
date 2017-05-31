@@ -99,7 +99,7 @@ namespace DMagic
 
 				for (int i = 0; i < anomalies.Count; i++)
 				{
-					CelestialBody c = FlightGlobals.Bodies.FirstOrDefault(a => a.name == anomalies.At(i).Body.bodyName);
+					CelestialBody c = FlightGlobals.Bodies.FirstOrDefault(a => a.bodyName == anomalies.At(i).Body.bodyName);
 
 					if (c == null)
 						continue;
@@ -113,11 +113,11 @@ namespace DMagic
 
 		public static void updateCoordinates(CelestialBody b)
 		{
-			if (anomalies.Contains(b.name))
+			if (anomalies.Contains(b.bodyName))
 			{
-				for (int i = 0; i < anomalies[b.name].AnomalyCount; i++)
+				for (int i = 0; i < anomalies[b.bodyName].AnomalyCount; i++)
 				{
-					DMAnomalyObject anom = anomalies[b.name].getAnomaly(i);
+					DMAnomalyObject anom = anomalies[b.bodyName].getAnomaly(i);
 
 					if (anom == null)
 						continue;

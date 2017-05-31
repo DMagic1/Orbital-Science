@@ -417,6 +417,7 @@ namespace DMagic.Part_Modules
 					new Vector2(0.5f, 0.5f),
 					new Vector2(0.5f, 0.5f),
 					new MultiOptionDialog(
+						"TransferWarning",
 						"Removing the experiment data will render this module inoperable.\n\nRestoring functionality will require a Scientist.",
 						part.partInfo.title + "Warning!",
 						UISkinManager.defaultSkin,

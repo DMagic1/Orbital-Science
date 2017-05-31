@@ -699,6 +699,7 @@ namespace DMagic.Part_Modules
 					new Vector2(0.5f, 0.5f),
 					new Vector2(0.5f, 0.5f),
 					new MultiOptionDialog(
+						"TransferWarning",
 						"Removing the experiment data will render this module inoperable.\n\nRestoring functionality will require a Scientist.",
 						part.partInfo.title + "Warning!",
 						UISkinManager.defaultSkin,
@@ -938,7 +939,7 @@ namespace DMagic.Part_Modules
 				return null;
 			}
 
-			sub = ResearchAndDevelopment.GetExperimentSubject(exp, ExperimentSituations.InSpaceLow, body, biome);
+			sub = ResearchAndDevelopment.GetExperimentSubject(exp, ExperimentSituations.InSpaceLow, body, biome, "");
 
 			if (sub == null)
 			{

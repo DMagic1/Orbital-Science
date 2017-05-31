@@ -227,7 +227,7 @@ namespace DMagic.Contracts
 			if (Planetarium.fetch.Home.orbitingBodies.Count < 2)
 				return GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
 			else
-				return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.orbitingBodies[1].name, "Orbit" }) && GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
+				return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.orbitingBodies[1].bodyName, "Orbit" }) && GameVariables.Instance.UnlockedSpaceObjectDiscovery(ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.TrackingStation));
 		}
 
 		public string AsteroidSize
