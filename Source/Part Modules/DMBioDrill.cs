@@ -51,7 +51,7 @@ namespace DMagic.Part_Modules
 		{
 			if (base.canConduct())
 			{
-				if (vessel.mainBody.name == "Eve" || vessel.mainBody.name == "Kerbin" || vessel.mainBody.name == "Duna" || vessel.mainBody.name == "Laythe" || vessel.mainBody.name == "Bop" || vessel.mainBody.name == "Vall" || vessel.mainBody.name == "Slate" || vessel.mainBody.atmosphere)
+				if (vessel.mainBody.bodyName == "Eve" || vessel.mainBody.bodyName == "Kerbin" || vessel.mainBody.bodyName == "Duna" || vessel.mainBody.bodyName == "Laythe" || vessel.mainBody.bodyName == "Bop" || vessel.mainBody.bodyName == "Vall" || vessel.mainBody.bodyName == "Slate" || vessel.mainBody.atmosphere)
 					return true;
 
 				failMessage = customFailMessage;
@@ -62,7 +62,7 @@ namespace DMagic.Part_Modules
 
 		public override void gatherScienceData(bool silent = false)
 		{
-			if (vessel.mainBody.name == "Eve")
+			if (vessel.mainBody.bodyName == "Eve")
 				base.scienceBoost = 2f;
 			else
 				base.scienceBoost = 1f;

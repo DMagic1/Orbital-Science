@@ -439,7 +439,7 @@ namespace DMagic
 						sub.scientificValue = 1 - ((sub.science / sub.subjectValue) / (science / sub.dataScale));
 				}
 				DMUtils.OnAnomalyScience.Fire(body, expID, biome);
-				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.displayName, biome);
+				sub.title = exp.experimentTitle + string.Format(" from {0}'s {1}", body.displayName.LocalizeBodyName(), biome);
 			}
 
 			return new ScienceData(science, 1f, 0, sub.id, sub.title, false, sensor.ID);

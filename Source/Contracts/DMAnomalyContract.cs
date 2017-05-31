@@ -113,7 +113,7 @@ namespace DMagic.Contracts
 			{
 				CelestialBody b = customReachedBodies[i];
 
-				DMAnomalyStorage stor = DMAnomalyList.getAnomalyStorage(b.name);
+				DMAnomalyStorage stor = DMAnomalyList.getAnomalyStorage(b.bodyName);
 
 				if (stor == null)
 					continue;
@@ -265,7 +265,7 @@ namespace DMagic.Contracts
 			if (targetAnomaly == null)
 				return "Whoops. Something bad happened here...";
 
-			return string.Format("Study the source of the anomalous readings coming from {0}'s surface", targetAnomaly.Body.displayName);
+			return string.Format("Study the source of the anomalous readings coming from {0}'s surface", targetAnomaly.Body.displayName.LocalizeBodyName());
 		}
 
 		protected override string GetNotes()
@@ -279,7 +279,7 @@ namespace DMagic.Contracts
 				return "Whoops. Something bad happened here...";
 
 			string story = DMContractDefs.DMAnomaly.backStory[rand.Next(0, DMContractDefs.DMAnomaly.backStory.Count)];
-			return string.Format(story, this.agent.Name, targetAnomaly.Body.displayName);
+			return string.Format(story, this.agent.Name, targetAnomaly.Body.displayName.LocalizeBodyName());
 		}
 
 		protected override string GetSynopsys()
@@ -287,7 +287,7 @@ namespace DMagic.Contracts
 			if (targetAnomaly == null)
 				return "Whoops. Something bad happened here...";
 
-			return string.Format("We would like you to travel to a specific location on {0}. Once there attempt to locate and study the source of the anomalous signal.", targetAnomaly.Body.displayName);
+			return string.Format("We would like you to travel to a specific location on {0}. Once there attempt to locate and study the source of the anomalous signal.", targetAnomaly.Body.displayName.LocalizeBodyName());
 		}
 
 		protected override string MessageCompleted()
@@ -295,7 +295,7 @@ namespace DMagic.Contracts
 			if (targetAnomaly == null)
 				return "Whoops. Something bad happened here...";
 
-			return string.Format("You successfully returned data from the {0} on {1}, well done.", hash, targetAnomaly.Body.displayName);
+			return string.Format("You successfully returned data from the {0} on {1}, well done.", hash, targetAnomaly.Body.displayName.LocalizeBodyName());
 		}
 
 		protected override void OnLoad(ConfigNode node)
@@ -357,7 +357,7 @@ namespace DMagic.Contracts
 
 		public override bool MeetRequirements()
 		{
-			return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.name, "Orbit" });
+			return ProgressTracking.Instance.NodeComplete(new string[] { Planetarium.fetch.Home.bodyName, "Orbit" });
 		}
 
 		/// <summary>

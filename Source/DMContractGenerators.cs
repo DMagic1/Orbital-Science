@@ -217,7 +217,7 @@ namespace DMagic
 			}
 
 			//Make sure that our chosen science subject has science remaining to be gathered
-			string subId = string.Format("{0}@{1}{2}{3}", DMScience.Exp.id, body.name, targetSituation, biome.Replace(" ", ""));
+			string subId = string.Format("{0}@{1}{2}{3}", DMScience.Exp.id, body.bodyName, targetSituation, biome.Replace(" ", ""));
 
 			if (ResearchAndDevelopment.GetSubjects().Any(s => s.id == subId))
 			{
@@ -276,7 +276,7 @@ namespace DMagic
 			}
 			else
 			{
-				string subId = string.Format("{0}@{1}{2}", DMScience.Exp.id, Body.name, targetSituation);
+				string subId = string.Format("{0}@{1}{2}", DMScience.Exp.id, Body.bodyName, targetSituation);
 
 				if (ResearchAndDevelopment.GetSubjects().Any(s => s.id == subId))
 				{
@@ -358,7 +358,7 @@ namespace DMagic
 
 			anomName = DMagic.Part_Modules.DMAnomalyScanner.anomalyCleanup(City.Name);
 
-			string subId = string.Format("AnomalyScan@{0}{1}{2}", Body.name, targetSituation, anomName);
+			string subId = string.Format("AnomalyScan@{0}{1}{2}", Body.bodyName, targetSituation, anomName);
 
 			if (ResearchAndDevelopment.GetSubjects().Any(s => s.id == subId))
 			{

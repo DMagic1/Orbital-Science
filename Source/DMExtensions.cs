@@ -32,12 +32,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KSP.Localization;
 using UnityEngine;
 
 namespace DMagic
 {
 	public static class DMExtensions
 	{
+		public static string LocalizeBodyName(this string input)
+		{
+			return Localizer.Format("<<1>>", input);
+		}
 
 		public static string parse(this ConfigNode node, string name, string original)
 		{

@@ -261,13 +261,13 @@ namespace DMagic.Parameters
 			if (!collected)
 				return;
 
-			string id = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.name, situation);
+			string id = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.bodyName, situation);
 
 			if (sub.id.Contains(id))
 				base.SetComplete();
 
 			if (situation == ExperimentSituations.InSpaceLow)
-				id = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.name, ExperimentSituations.InSpaceHigh);
+				id = string.Format("{0}@{1}{2}", scienceContainer.Exp.id, root.TargetAnomaly.Body.bodyName, ExperimentSituations.InSpaceHigh);
 			else
 				return;
 

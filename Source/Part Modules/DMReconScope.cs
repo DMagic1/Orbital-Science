@@ -396,7 +396,7 @@ namespace DMagic.Part_Modules
 
 		public void scanPlanet(CelestialBody b)
 		{
-			DMAnomalyStorage anom = DMAnomalyList.getAnomalyStorage(b.name);
+			DMAnomalyStorage anom = DMAnomalyList.getAnomalyStorage(b.bodyName);
 
 			if (anom == null)
 				anom = new DMAnomalyStorage(b, false);
@@ -405,7 +405,7 @@ namespace DMagic.Part_Modules
 				return;
 
 			if (anom.scanBody())
-				DMAnomalyList.addAnomalyStorage(b.name, anom);
+				DMAnomalyList.addAnomalyStorage(b.bodyName, anom);
 		}
 	}
 }

@@ -67,7 +67,7 @@ namespace DMagic.Parameters
 			if (scienceContainer != null)
 				partName = scienceContainer.SciPart;
 
-			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.Exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
+			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.Exp.id, body.bodyName, scienceLocation, biomeName.Replace(" ", ""));
 		}
 
 		/// <summary>
@@ -122,7 +122,7 @@ namespace DMagic.Parameters
 
 		protected override string GetHashString()
 		{
-			return body.name;
+			return body.bodyName;
 		}
 
 		protected override string GetNotes()
@@ -152,32 +152,32 @@ namespace DMagic.Parameters
 				if (!string.IsNullOrEmpty(biomeName))
 				{
 					if (scienceLocation == ExperimentSituations.InSpaceHigh)
-						return string.Format("{0} data from high orbit above {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
+						return string.Format("{0} data from high orbit above {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName(), biomeName);
 					else if (scienceLocation == ExperimentSituations.InSpaceLow)
-						return string.Format("{0} data from low orbit above {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
+						return string.Format("{0} data from low orbit above {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName(), biomeName);
 					else if (scienceLocation == ExperimentSituations.SrfLanded)
-						return string.Format("{0} data from the surface at {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
+						return string.Format("{0} data from the surface at {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName(), biomeName);
 					else if (scienceLocation == ExperimentSituations.SrfSplashed)
-						return string.Format("{0} data from the oceans at {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
+						return string.Format("{0} data from the oceans at {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName(), biomeName);
 					else if (scienceLocation == ExperimentSituations.FlyingHigh)
-						return string.Format("{0} data during high altitude flight over {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
+						return string.Format("{0} data during high altitude flight over {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName(), biomeName);
 					else if (scienceLocation == ExperimentSituations.FlyingLow)
-						return string.Format("{0} data during low altitude flight over {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName, biomeName);
+						return string.Format("{0} data during low altitude flight over {1}'s {2}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName(), biomeName);
 				}
 				else
 				{
 					if (scienceLocation == ExperimentSituations.InSpaceHigh)
-						return string.Format("{0} data from high orbit above {1}", scienceContainer.Exp.experimentTitle, body.displayName);
+						return string.Format("{0} data from high orbit above {1}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName());
 					else if (scienceLocation == ExperimentSituations.InSpaceLow)
-						return string.Format("{0} data from low orbit above {1}", scienceContainer.Exp.experimentTitle, body.displayName);
+						return string.Format("{0} data from low orbit above {1}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName());
 					else if (scienceLocation == ExperimentSituations.SrfLanded)
-						return string.Format("{0} data from the surface of {1}", scienceContainer.Exp.experimentTitle, body.displayName);
+						return string.Format("{0} data from the surface of {1}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName());
 					else if (scienceLocation == ExperimentSituations.SrfSplashed)
-						return string.Format("{0} data from the oceans of {1}", scienceContainer.Exp.experimentTitle, body.displayName);
+						return string.Format("{0} data from the oceans of {1}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName());
 					else if (scienceLocation == ExperimentSituations.FlyingHigh)
-						return string.Format("{0} data during high altitude flight at {1}", scienceContainer.Exp.experimentTitle, body.displayName);
+						return string.Format("{0} data during high altitude flight at {1}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName());
 					else if (scienceLocation == ExperimentSituations.FlyingLow)
-						return string.Format("{0} data during low altitude flight at {1}", scienceContainer.Exp.experimentTitle, body.displayName);
+						return string.Format("{0} data during low altitude flight at {1}", scienceContainer.Exp.experimentTitle, body.displayName.LocalizeBodyName());
 				}
 				return "Stupid Code Is Stupid";
 			}
@@ -268,7 +268,7 @@ namespace DMagic.Parameters
 
 			returnedScience = node.parse("Returned_Science", (float)0);
 
-			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.Exp.id, body.name, scienceLocation, biomeName.Replace(" ", ""));
+			subject = string.Format("{0}@{1}{2}{3}", scienceContainer.Exp.id, body.bodyName, scienceLocation, biomeName.Replace(" ", ""));
 		}
 
 		private void removeThis(string message)

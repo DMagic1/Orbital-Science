@@ -309,7 +309,7 @@ namespace DMagic.Part_Modules
 						Cities.Clear();
 						if (!DMAnomalyList.ScannerUpdating)
 						{
-							currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
+							currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.bodyName);
 
 							if (currentAnomalies != null)
 							{
@@ -331,7 +331,7 @@ namespace DMagic.Part_Modules
 						}
 						else
 						{
-							currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
+							currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.bodyName);
 
 							if (currentAnomalies != null)
 							{

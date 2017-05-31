@@ -935,17 +935,17 @@ namespace DMagic.Part_Modules
 				switch (expSit)
 				{
 					case ExperimentSituations.SrfLanded:
-						return " from  " + vessel.mainBody.displayName + "'s surface";
+						return " from  " + vessel.mainBody.displayName.LocalizeBodyName() + "'s surface";
 					case ExperimentSituations.SrfSplashed:
-						return " from " + vessel.mainBody.displayName + "'s oceans";
+						return " from " + vessel.mainBody.displayName.LocalizeBodyName() + "'s oceans";
 					case ExperimentSituations.FlyingLow:
-						return " while flying at " + vessel.mainBody.displayName;
+						return " while flying at " + vessel.mainBody.displayName.LocalizeBodyName();
 					case ExperimentSituations.FlyingHigh:
-						return " from " + vessel.mainBody.displayName + "'s upper atmosphere";
+						return " from " + vessel.mainBody.displayName.LocalizeBodyName() + "'s upper atmosphere";
 					case ExperimentSituations.InSpaceLow:
-						return " while in space near " + vessel.mainBody.displayName;
+						return " while in space near " + vessel.mainBody.displayName.LocalizeBodyName();
 					default:
-						return " while in space high over " + vessel.mainBody.displayName;
+						return " while in space high over " + vessel.mainBody.displayName.LocalizeBodyName();
 				}
 			}
 			else
@@ -953,17 +953,17 @@ namespace DMagic.Part_Modules
 				switch (expSit)
 				{
 					case ExperimentSituations.SrfLanded:
-						return " from " + vessel.mainBody.displayName + "'s " + b;
+						return " from " + vessel.mainBody.displayName.LocalizeBodyName() + "'s " + b;
 					case ExperimentSituations.SrfSplashed:
-						return " from " + vessel.mainBody.displayName + "'s " + b;
+						return " from " + vessel.mainBody.displayName.LocalizeBodyName() + "'s " + b;
 					case ExperimentSituations.FlyingLow:
-						return " while flying over " + vessel.mainBody.displayName + "'s " + b;
+						return " while flying over " + vessel.mainBody.displayName.LocalizeBodyName() + "'s " + b;
 					case ExperimentSituations.FlyingHigh:
-						return " from the upper atmosphere over " + vessel.mainBody.displayName + "'s " + b;
+						return " from the upper atmosphere over " + vessel.mainBody.displayName.LocalizeBodyName() + "'s " + b;
 					case ExperimentSituations.InSpaceLow:
-						return " from space just above " + vessel.mainBody.displayName + "'s " + b;
+						return " from space just above " + vessel.mainBody.displayName.LocalizeBodyName() + "'s " + b;
 					default:
-						return " while in space high over " + vessel.mainBody.displayName + "'s " + b;
+						return " while in space high over " + vessel.mainBody.displayName.LocalizeBodyName() + "'s " + b;
 				}
 			}
 		}

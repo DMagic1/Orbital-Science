@@ -294,7 +294,7 @@ namespace DMagic.Part_Modules
 		{
 			anomInRange = false;
 
-			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
+			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.bodyName);
 
 			if (currentAnomalies == null)
 			{
@@ -327,6 +327,8 @@ namespace DMagic.Part_Modules
 				return false;
 
 			DMAnomalyList.updateAnomaly(vessel, a);
+
+			//DMUtils.Logging("Checking Anomaly: [{0}]\nDistance: {1:F4}m\nHeight: {2:F4}m\nHorizontal: {3:F4}m", a.Name, a.VDistance, a.VHeight, a.VHorizontal);
 
 			if (a.VDistance >= 50000)
 				return false;
@@ -370,7 +372,7 @@ namespace DMagic.Part_Modules
 			anomScienceInRange = false;
 			closestAnom = "";
 
-			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.name);
+			currentAnomalies = DMAnomalyList.getAnomalyStorage(vessel.mainBody.bodyName);
 
 			if (currentAnomalies == null)
 			{
@@ -397,6 +399,8 @@ namespace DMagic.Part_Modules
 				return false;
 
 			DMAnomalyList.updateAnomaly(vessel, a);
+
+			//DMUtils.Logging("Checking Anomaly For Science: [{0}]\nDistance: {1:F4}m\nHeight: {2:F4}m\nHorizontal: {3:F4}m", a.Name, a.VDistance, a.VHeight, a.VHorizontal);
 
 			if (a.VDistance >= 50000)
 				return false;
@@ -553,9 +557,9 @@ namespace DMagic.Part_Modules
 		protected override string situationCleanup(ExperimentSituations expSit, string b)
 		{
 			if (expSit == ExperimentSituations.SrfLanded)
-				return string.Format(" of the {0} from {1}'s surface", b, vessel.mainBody.displayName);
+				return string.Format(" of the {0} from {1}'s surface", b, vessel.mainBody.displayName.LocalizeBodyName());
 			if (expSit == ExperimentSituations.FlyingLow)
-				return string.Format(" while flying above the {0} on {1}", b, vessel.mainBody.displayName);
+				return string.Format(" while flying above the {0} on {1}", b, vessel.mainBody.displayName.LocalizeBodyName());
 			return "Dummy";
 		}
 
