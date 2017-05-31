@@ -62,6 +62,7 @@ namespace DMagic.Part_Modules
 
 			base.OnStart(state);
 			dish = part.FindModelTransform(dishTransform);
+
 			if (IsDeployed)
 			{
 				fullyDeployed = true;
@@ -97,9 +98,9 @@ namespace DMagic.Part_Modules
 
 				if (scalar >= 0.95f)
 				{
+					deployEvent();
 					isLocked = true;
 					moving = false;
-					deployEvent();
 					onStop.Fire(anim[animationName].normalizedTime);
 				}
 				else if (scalar <= 0.05f)
@@ -189,6 +190,9 @@ namespace DMagic.Part_Modules
 		{
 			get
 			{
+				if (!allowTransmission)
+					return false;
+
 				if (anim.IsPlaying(animationName))
 				{
 					scalar = anim[animationName].normalizedTime;
@@ -204,7 +208,13 @@ namespace DMagic.Part_Modules
 
 		public float GetScalar
 		{
-			get { return scalar; }
+			get
+			{
+				if (!allowTransmission)
+					return 0;
+
+				return scalar;
+			}
 		}
 
 		public EventData<float, float> OnMoving
