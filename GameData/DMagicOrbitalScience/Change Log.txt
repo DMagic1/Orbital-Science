@@ -1,4 +1,9 @@
-﻿v1.3.9
+﻿v1.3.10
+- Fix error in ground detection for XRay and Seismic experiments
+
+- Add options to disable the science functions or antenna functions for SIGINT and Soil Moisture
+
+v1.3.9
 - Updated for KSP 1.3
 
 - Fix several bugs with SIGINT and Soil Moisture antenna usage

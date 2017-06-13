@@ -707,38 +707,29 @@ namespace DMagic.Part_Modules
 			Vector3 p = t.position;
 			Ray r = new Ray(p, -1f * t.forward);
 			d = 0f;
+			int layer = 32769;
 
-			Physics.Raycast(r, out hit, max * s);
+			Physics.Raycast(r, out hit, max * s, layer);
 			if (hit.collider != null)
 			{
 				if (b)
 				{
-					Part a = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
+					if (hit.collider.gameObject.layer == 0)
+					{
+						Part a = Part.FromGO(hit.transform.gameObject) ?? hit.transform.gameObject.GetComponentInParent<Part>();
 
-					if (a != null)
-					{
-						if (a.Modules.Contains("ModuleAsteroid"))
+						if (a != null)
 						{
-							d = hit.distance;
-							return true;
+							if (a.Modules.Contains("ModuleAsteroid"))
+							{
+								d = hit.distance;
+								return true;
+							}
 						}
 					}
 				}
-				else
-				{
-					Transform hitT = hit.collider.transform;
-					int i = 0; //Just to prevent this from getting stuck in a loop
-					while (hitT != null && i < 30)
-					{
-						if (hitT == vessel.mainBody.bodyTransform)
-						{
-							d = hit.distance;
-							return true;
-						}
-						hitT = hitT.parent;
-						i++;
-					}
-				}
+				else if (hit.collider.gameObject.layer == 15)
+					return true;
 			}
 			return false;
 		}
