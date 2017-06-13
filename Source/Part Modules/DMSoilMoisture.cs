@@ -40,6 +40,10 @@ namespace DMagic.Part_Modules
 		public bool allowTransmission = true;
 		[KSPField(guiActive = true, guiName = "Science Transmission")]
 		public string scienceTransmission = "Enabled";
+		[KSPField]
+		public bool noScience = false;
+		[KSPField]
+		public bool noAntenna = false;
 
 		private bool fullyDeployed = false;
 		private bool rotating = false;
@@ -71,8 +75,22 @@ namespace DMagic.Part_Modules
 				scalar = 1;
 			}
 
+			Fields["scienceTransmission"].guiActive = !noAntenna;
+			Events["ToggleScienceTransmission"].active = !noAntenna;
 			Events["ToggleScienceTransmission"].guiName = allowTransmission ? "Disable Science Transmission" : "Enable Science Transmission";
-			scienceTransmission = allowTransmission ? "Enabled" : "Disabled";
+			scienceTransmission = allowTransmission && !noAntenna ? "Enabled" : "Disabled";
+
+			if (noScience)
+			{
+				Actions["DeployAction"].active = false;
+				Events["CollectDataExternalEvent"].active = false;
+				Events["ResetExperimentExternal"].active = false;
+				Events["ResetExperiment"].active = false;
+				Events["DeployExperiment"].active = false;
+				Events["TransferDataEvent"].active = false;
+				Events["CleanUpExperimentExternal"].active = false;
+				Deployed = true;
+			}
 
 			if (anim != null && anim[animationName] != null)
 				scalarStep = 1 / anim[animationName].length;
@@ -84,6 +102,18 @@ namespace DMagic.Part_Modules
 
 			if (HighLogic.LoadedSceneIsFlight)
 			{
+				if (noScience)
+				{
+					Events["CollectDataExternalEvent"].active = false;
+					Events["ResetExperimentExternal"].active = false;
+					Events["ResetExperiment"].active = false;
+					Events["DeployExperiment"].active = false;
+					Events["DeployExperimentExternal"].active = false;
+					Events["TransferDataEvent"].active = false;
+					Events["CleanUpExperimentExternal"].active = false;
+					Deployed = true;
+				}
+
 				if (IsDeployed && fullyDeployed)
 				{
 					rotating = true;
@@ -190,7 +220,7 @@ namespace DMagic.Part_Modules
 		{
 			get
 			{
-				if (!allowTransmission)
+				if (!allowTransmission || noAntenna)
 					return false;
 
 				if (anim.IsPlaying(animationName))
@@ -210,7 +240,7 @@ namespace DMagic.Part_Modules
 		{
 			get
 			{
-				if (!allowTransmission)
+				if (!allowTransmission || noAntenna)
 					return 0;
 
 				return scalar;

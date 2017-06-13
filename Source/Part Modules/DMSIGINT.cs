@@ -47,6 +47,10 @@ namespace DMagic.Part_Modules
 		public bool allowTransmission = true;
 		[KSPField(guiActive = true, guiName = "Science Transmission")]
 		public string scienceTransmission = "Enabled";
+		[KSPField]
+		public bool noScience = false;
+		[KSPField]
+		public bool noAntenna = false;
 
 		private readonly string[] dishTransformNames = new string[7] { "dish_Armature.000", "dish_Armature.001", "dish_Armature.002", "dish_Armature.003", "focalColumn", "dishCenter", "focalHead" };
 		private readonly string[] dishMeshNames = new string[7] { "dish_Mesh.000", "dish_Mesh.001", "dish_Mesh.002", "dish_Mesh.003", "focalColumn", "dishCenter", "focalHead" };
@@ -74,7 +78,7 @@ namespace DMagic.Part_Modules
 
 			base.OnStart(state);
 
-			if (scienceExp != null)
+			if (scienceExp != null && !noScience)
 			{
 				sitMask = (int)scienceExp.situationMask;
 				bioMask = sitMask;
@@ -84,8 +88,22 @@ namespace DMagic.Part_Modules
 				scalarStep = 1 / anim[animationName].length;
 
 			Events["fixPart"].guiName = "Fix Dish";
+			Fields["scienceTransmission"].guiActive = !noAntenna;
+			Events["ToggleScienceTransmission"].active = !noAntenna;
 			Events["ToggleScienceTransmission"].guiName = allowTransmission ? "Disable Science Transmission" : "Enable Science Transmission";
-			scienceTransmission = allowTransmission ? "Enabled" : "Disabled";
+			scienceTransmission = allowTransmission && !noAntenna ? "Enabled" : "Disabled";
+
+			if (noScience)
+			{
+				Actions["DeployAction"].active = false;
+				Events["CollectDataExternalEvent"].active = false;
+				Events["ResetExperimentExternal"].active = false;
+				Events["ResetExperiment"].active = false;				
+				Events["DeployExperiment"].active = false;
+				Events["TransferDataEvent"].active = false;
+				Events["CleanUpExperimentExternal"].active = false;
+				Deployed = true;
+			}
 
 			if (useFairings)
 			{
@@ -357,7 +375,7 @@ namespace DMagic.Part_Modules
 		{
 			get
 			{
-				if (!allowTransmission)
+				if (!allowTransmission || noAntenna)
 					return false;
 
 				if (anim.IsPlaying(animationName))
@@ -377,7 +395,7 @@ namespace DMagic.Part_Modules
 		{
 			get
 			{
-				if (!allowTransmission)
+				if (!allowTransmission || noAntenna)
 					return 0;
 
 				if (broken)
@@ -467,9 +485,21 @@ namespace DMagic.Part_Modules
 			get { return "dmsigint"; }
 		}
 
-		public override void OnUpdate()
+		protected override void Update()
 		{
-			base.OnUpdate();
+			base.Update();
+
+			if (noScience)
+			{
+				Events["CollectDataExternalEvent"].active = false;
+				Events["ResetExperimentExternal"].active = false;
+				Events["ResetExperiment"].active = false;
+				Events["DeployExperiment"].active = false;
+				Events["DeployExperimentExternal"].active = false;
+				Events["TransferDataEvent"].active = false;
+				Events["CleanUpExperimentExternal"].active = false;
+				Deployed = true;
+			}
 
 			if (!moving)
 				return;
