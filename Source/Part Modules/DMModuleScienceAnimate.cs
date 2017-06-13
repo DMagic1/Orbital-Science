@@ -369,7 +369,7 @@ namespace DMagic.Part_Modules
 				enviroList = this.part.FindModulesImplementing<DMEnviroSensor>();
 			if (waitForAnimationTime == -1 && animSpeed != 0)
 				waitForAnimationTime = anim[animationName].length / animSpeed;
-			if (experimentID != null)
+			if (!string.IsNullOrEmpty(experimentID))
 			{
 				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
 				if (scienceExp != null)
@@ -1015,6 +1015,12 @@ namespace DMagic.Part_Modules
 			else if ((sitMask & (int)getSituation()) == 0)
 			{
 				failMessage = customFailMessage;
+				return false;
+			}
+			else if (scienceExp == null)
+			{
+				failMessage = "Error: Science Experiment Definition Invalid";
+				Debug.LogError("[DMOS] Something Went Wrong Here; Null Experiment Returned; Please Report This On The KSP Forum With Output.log Data");
 				return false;
 			}
 			else if (scienceExp.requireAtmosphere && !vessel.mainBody.atmosphere)
