@@ -1,4 +1,10 @@
-﻿v1.3.10
+﻿v1.3.11
+- Fix some Module Manager related problems with Universal Storage and Community Tech Tree experiments
+- Fix some potential errors in detecting orbit for magnetic field and reconnaissance survey contracts
+- Fix agency title
+- Fix survey contract experiment titles
+
+v1.3.10
 - Fix error in ground detection for XRay and Seismic experiments
 
 - Add options to disable the science functions or antenna functions for SIGINT and Soil Moisture
