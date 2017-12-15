@@ -95,7 +95,8 @@ namespace DMagic.Parameters
 			if (registered)
 				return;
 
-			GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
+            GameEvents.onVesselSituationChange.Add(vesselOrbit);
+			//GameEvents.VesselSituation.onOrbit.Add(vesselOrbit);
 			GameEvents.onVesselCreate.Add(newVesselCheck);
 			GameEvents.onPartCouple.Add(dockCheck);
 			GameEvents.onVesselSOIChanged.Add(soiChange);
@@ -113,7 +114,8 @@ namespace DMagic.Parameters
 
 			registered = false;
 
-			GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
+            GameEvents.onVesselSituationChange.Remove(vesselOrbit);
+            //GameEvents.VesselSituation.onOrbit.Remove(vesselOrbit);
 			GameEvents.onVesselCreate.Remove(newVesselCheck);
 			GameEvents.onPartCouple.Remove(dockCheck);
 			GameEvents.onVesselSOIChanged.Remove(soiChange);
@@ -227,7 +229,7 @@ namespace DMagic.Parameters
 								if (HighLogic.LoadedSceneIsFlight)
 								{
 									DMUtils.Logging("Checking If Currently Loaded Vessel Is Appropriate");
-									if (vesselEquipped(FlightGlobals.ActiveVessel, FlightGlobals.currentMainBody))
+									if (vesselEquipped(FlightGlobals.ActiveVessel))
 										addVessel(FlightGlobals.ActiveVessel);
 								}
 							}
@@ -249,7 +251,7 @@ namespace DMagic.Parameters
 						if (V.mainBody != TargetBody)
 							continue;
 
-						if (!vesselEquipped(V, V.mainBody))
+						if (!vesselEquipped(V))
 							continue;
 
 						if (!suitableVessels.Contains(V.id))
@@ -389,7 +391,7 @@ namespace DMagic.Parameters
 			removeWaypoint(v);
 		}
 
-		private bool vesselEquipped(Vessel v, CelestialBody b)
+		private bool vesselEquipped(Vessel v)
 		{
 			//If the vessels enters orbit around the correct body and has the right parts set to inOrbit
 			if ((v.loaded ? v.situation : v.protoVessel.situation) == Vessel.Situations.ORBITING)
@@ -411,27 +413,30 @@ namespace DMagic.Parameters
 			return false;
 		}
 
-		private void vesselOrbit(Vessel v, CelestialBody b)
-		{
-			if (this.Root.ContractState != Contract.State.Active)
-				return;
+        private void vesselOrbit(GameEvents.HostedFromToAction<Vessel, Vessel.Situations> vs)
+        {
+            if (this.Root.ContractState != Contract.State.Active)
+                return;
 
-			if (v == null)
-				return;
+            if (vs.to != Vessel.Situations.ORBITING)
+                return;
 
-			if (b == null)
-				return;
+            if (vs.host == null)
+                return;
 
-			if (b != TargetBody)
-				return;
+            if (vs.host.mainBody == null)
+                return;
 
-			if (!vesselEquipped(v, b))
-				return;
+            if (vs.host.mainBody != TargetBody)
+                return;
 
-			if (!suitableVessels.Contains(v.id))
-				addVessel(v);
-		}
+            if (!vesselEquipped(vs.host))
+                return;
 
+            if (!suitableVessels.Contains(vs.host.id))
+                addVessel(vs.host);
+        }
+        
 		private void soiChange(GameEvents.HostedFromToAction<Vessel, CelestialBody> action)
 		{
 			if (this.Root.ContractState != Contract.State.Active)
@@ -481,7 +486,7 @@ namespace DMagic.Parameters
 
 			updatingVesselState = false;
 
-			if (vesselEquipped(FlightGlobals.ActiveVessel, TargetBody))
+			if (vesselEquipped(FlightGlobals.ActiveVessel))
 				addVessel(FlightGlobals.ActiveVessel);
 			else
 				removeVessel(FlightGlobals.ActiveVessel);
@@ -521,10 +526,10 @@ namespace DMagic.Parameters
 			updatingVesselState = false;
 
 			//If the new vessel retains the proper instruments
-			if (vesselEquipped(newV, TargetBody))
+			if (vesselEquipped(newV))
 				addVessel(newV);
 			//If the currently active, hopefully old, vessel retains the proper instruments
-			else if (vesselEquipped(FlightGlobals.ActiveVessel, TargetBody))
+			else if (vesselEquipped(FlightGlobals.ActiveVessel))
 				addVessel(FlightGlobals.ActiveVessel);
 			//If the proper instruments are spread across the two vessels
 			else
