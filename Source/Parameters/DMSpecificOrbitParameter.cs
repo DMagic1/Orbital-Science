@@ -72,10 +72,22 @@ namespace DMagic.Parameters
 
 		private void setupOrbit(bool ksc)
 		{
-			if (ksc)
-				KSCOrbit = new Orbit(inc, ecc, sma, lan, aop, mae, epo, body);
-			else
-				SetupRenderer();
+            if (ksc)
+            {
+                //KSCOrbit = new Orbit(inc, ecc, sma, lan, aop, mae, epo, body);
+                KSCOrbit = new Orbit();
+
+                KSCOrbit.inclination = inc;
+                KSCOrbit.eccentricity = ecc;
+                KSCOrbit.semiMajorAxis = sma;
+                KSCOrbit.LAN = lan;
+                KSCOrbit.argumentOfPeriapsis = aop;
+                KSCOrbit.meanAnomalyAtEpoch = mae;
+                KSCOrbit.epoch = epo;
+                KSCOrbit.referenceBody = body;
+            }
+            else
+                SetupRenderer();
 				//orbitRenderer = ContractOrbitRenderer.Setup(Root, new Orbit(inc, ecc, sma, lan, aop, mae, epo, body));
 
 			orbitLoaded = true;

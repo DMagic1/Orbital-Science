@@ -148,9 +148,10 @@ namespace DMagic.Part_Modules
 				setup();
 				if (IsDeployed)
 					primaryAnimator(1f, 1f, WrapMode.Default, animationName, anim);
+                
+			    findContainers();
 			}
 
-			findContainers();
 		}
 
 		public override void OnSave(ConfigNode node)

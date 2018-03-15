@@ -66,7 +66,10 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public float componentMass = 0.1f;
 
-		public override void OnStart(PartModule.StartState state)
+        private bool dragDeploying;
+        private bool dragRetracting;
+
+        public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
 
@@ -76,12 +79,12 @@ namespace DMagic.Part_Modules
 			if (!string.IsNullOrEmpty(forwardTransformName))
 				forwardTransform = part.FindModelTransform(forwardTransformName);
 
-			if (broken)
-			{
-				setTransformState(false);
-				base.Events["retractEvent"].active = base.IsDeployed && showEndEvent;
-				base.Events["deployEvent"].active = false;
-			}
+            if (broken)
+            {
+                setTransformState(false);
+                base.Events["retractEvent"].active = base.IsDeployed && showEndEvent;
+                base.Events["deployEvent"].active = false;
+            }
 
 			Events["fixPart"].active = fixable && breakable && broken;
 			Events["fixPart"].unfocusedRange = interactionRange;
@@ -104,22 +107,78 @@ namespace DMagic.Part_Modules
 			return info;
 		}
 
-		public override void OnFixedUpdate()
-		{
-			base.OnFixedUpdate();
+        protected override void FixedUpdate()
+        {
+            base.FixedUpdate();
 
-			if (!breakable)
-				return;
+            if (!breakable)
+                return;
 
-			//BForce = breakingForce.ToString("F2");
+            if (!IsDeployed)
+                return;
 
-			if (broken)
-				return;
+            //BForce = breakingForce.ToString("F2");
 
-			checkForces();
-		}
+            if (broken)
+                return;
 
-		public override bool canConduct()
+            checkForces();
+        }
+
+  //      public override void OnFixedUpdate()
+		//{
+		//	base.OnFixedUpdate();
+
+		//	if (!breakable)
+		//		return;
+
+		//	//BForce = breakingForce.ToString("F2");
+
+		//	if (broken)
+		//		return;
+
+		//	checkForces();
+		//}
+
+        protected override void Update()
+        {
+            base.Update();
+
+            if (dragDeploying)
+            {
+                float time = anim[animationName].normalizedTime;
+
+                SetDragWeight(time);
+
+                if (time >= 0.95f)
+                {
+                    dragDeploying = false;
+                    dragRetracting = false;
+                    SetDragWeight(1);
+                }
+            }
+            else if (dragRetracting)
+            {
+                float time = anim[animationName].normalizedTime;
+
+                SetDragWeight(time);
+
+                if (time <= 0.05f)
+                {
+                    dragDeploying = false;
+                    dragRetracting = false;
+                    SetDragWeight(0);
+                }
+            }
+        }
+
+        private void SetDragWeight(float scalar)
+        {
+            part.DragCubes.SetCubeWeight("Deployed", scalar);
+            part.DragCubes.SetCubeWeight("Clean", 1f - scalar);
+        }
+
+        public override bool canConduct()
 		{
 			if (broken)
 			{
@@ -134,11 +193,20 @@ namespace DMagic.Part_Modules
 		{
 			base.deployEvent();
 
-			if (broken && !oneWayAnimation)
+            dragDeploying = true;
+
+            if (broken && !oneWayAnimation)
 				base.Events["retractEvent"].active = true;
 		}
 
-		protected virtual void setTransformState(bool on)
+        public override void retractEvent()
+        {
+            base.retractEvent();
+
+            dragRetracting = true;
+        }
+
+        protected virtual void setTransformState(bool on)
 		{
 			if (!breakable)
 				return;
@@ -165,23 +233,23 @@ namespace DMagic.Part_Modules
 
 			if (!IsDeployed)
 				return;
-
+            
 			if (forwardTransform == null)
 				return;
-
-			if (anim != null)
+            
+            if (anim != null)
 			{
 				if (anim.IsPlaying(animationName))
 					return;
 			}
-
-			if (vessel.HoldPhysics)
+            
+            if (vessel.HoldPhysics)
 				return;
-
-			if (shieldedState())
+            
+            if (shieldedState())
 				return;
-
-			float velocity = Mathf.Abs(Vector3.Dot(vessel.srf_velocity.normalized, forwardTransform.forward.normalized));
+            
+            float velocity = Mathf.Abs(Vector3.Dot(vessel.srf_velocity.normalized, forwardTransform.forward.normalized));
 			if (velocity < 0.0001f)
 				velocity = 0.0001f;
 			float pressure = velocity * (float)(part.dynamicPressurekPa + part.submergedDynamicPressurekPa);
@@ -413,6 +481,8 @@ namespace DMagic.Part_Modules
 			breakObjects();
 
 			broken = true;
+
+            SetDragWeight(0);
 
 			if (fixable)
 				Events["fixPart"].active = true;

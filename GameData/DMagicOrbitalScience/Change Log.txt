@@ -1,4 +1,15 @@
-﻿v1.3.11
+﻿v1.3.12
+- Update for KSP 1.4
+
+- Fix drag cubes for oversized science parts; recon and SIGINT
+- Set drag cubes for deployed SIGINT dishes
+	- Makes them essentially unusable in an atmosphere
+- Fix some errors when initializing parts in the editor
+- Increase seismic pod crash tolerance
+- Fix an error with specific orbit contracts
+- Update SCANsat MM patches
+
+v1.3.11
 - Fix some Module Manager related problems with Universal Storage and Community Tech Tree experiments
 - Fix some potential errors in detecting orbit for magnetic field and reconnaissance survey contracts
 - Fix agency title
