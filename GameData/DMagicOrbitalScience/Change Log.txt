@@ -7,7 +7,7 @@
 - Fix some errors when initializing parts in the editor
 - Increase seismic pod crash tolerance
 - Fix an error with specific orbit contracts
-
+- Update SCANsat MM patches
 
 v1.3.11
 - Fix some Module Manager related problems with Universal Storage and Community Tech Tree experiments
