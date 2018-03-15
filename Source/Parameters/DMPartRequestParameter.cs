@@ -332,7 +332,7 @@ namespace DMagic.Parameters
 			wp.altitude = 0;
 			wp.index = 0;
 			wp.id = "dmVessel";
-			wp.iconSize = 32;
+			wp.iconSize = 48;
 			wp.blocksInput = false;
 			wp.seed = SystemUtilities.SuperSeed(this.Root);
 			wp.isOnSurface = false;
