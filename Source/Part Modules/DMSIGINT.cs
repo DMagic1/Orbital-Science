@@ -62,7 +62,7 @@ namespace DMagic.Part_Modules
 		private float scalar;
 		private float scalarStep;
 		private bool moving;
-		private float deployScalar;
+        private float deployScalar;
 		private bool transformState = true;
 
 		EventData<float> onStop;
@@ -75,7 +75,7 @@ namespace DMagic.Part_Modules
 
 			assignTransforms();
 			assignObjects();
-
+            
 			base.OnStart(state);
 
 			if (scienceExp != null && !noScience)
@@ -127,8 +127,8 @@ namespace DMagic.Part_Modules
 
 					Events["jettison"].active = !IsDeployed;
 					Actions["jettisonAction"].active = !IsDeployed;
-				}
-			}
+				}                
+            }
 			else
 			{
 				Events["jettison"].active = false;
@@ -137,6 +137,8 @@ namespace DMagic.Part_Modules
 
 			if (state == StartState.Editor)
 				return;
+
+            StartCoroutine(WaitForDragCubes());
 
 			if (IsDeployed)
 			{
@@ -154,14 +156,71 @@ namespace DMagic.Part_Modules
 						if (j == null)
 							continue;
 
-						if (j.isJettisoned)
-							return;
+                        if (j.isJettisoned)
+                        {
+                            part.stackIcon.SetIconColor(XKCDColors.SlateGrey);
+
+                            return;
+                        }
 					}
 				}
 			}
 
 			setTransformState(false);
 		}
+
+        private IEnumerator WaitForDragCubes()
+        {
+            yield return new WaitForEndOfFrame();
+
+            bool jettisoned = false;
+
+            if (useFairings)
+            {
+                if (fairings.Count > 0)
+                {
+                    foreach (ModuleJettison j in fairings)
+                    {
+                        if (j == null)
+                            continue;
+                        
+                        if (j.isJettisoned)
+                        {
+                            jettisoned = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (!IsDeployed)
+            {
+                if (jettisoned)
+                {
+                    part.DragCubes.SetCubeWeight("Fairing", 0);
+                    part.DragCubes.SetCubeWeight("Clean", 1);
+                    part.DragCubes.SetCubeWeight("Deployed", 0);
+                }
+                else
+                {
+                    part.DragCubes.SetCubeWeight("Fairing", useFairings ? 1 : 0);
+                    part.DragCubes.SetCubeWeight("Clean", useFairings ? 0 : 1);
+                    part.DragCubes.SetCubeWeight("Deployed", 0);
+                }
+            }
+            else if (breakable && broken)
+            {
+                part.DragCubes.SetCubeWeight("Fairing", 0);
+                part.DragCubes.SetCubeWeight("Clean", 1);
+                part.DragCubes.SetCubeWeight("Deployed", 0);
+            }
+            else
+            {
+                part.DragCubes.SetCubeWeight("Fairing", 0);
+                part.DragCubes.SetCubeWeight("Clean", 0);
+                part.DragCubes.SetCubeWeight("Deployed", 1);
+            }
+        }
 
 		private void assignTransforms()
 		{
@@ -253,7 +312,7 @@ namespace DMagic.Part_Modules
 
 			if (!transformState)
 				setTransformState(true);
-
+            
 			if (useFairings)
 			{
 				if (HighLogic.LoadedSceneIsEditor)
@@ -283,8 +342,8 @@ namespace DMagic.Part_Modules
 		{
 			if (moving)
 				return;
-
-			deployScalar = 0;
+            
+            deployScalar = 0;
 			scalar = 0;
 
 			base.retractEvent();
@@ -299,6 +358,13 @@ namespace DMagic.Part_Modules
 				deployEvent();
 				return;
 			}
+
+            if (IsDeployed)
+            {
+                Events["jettison"].active = false;
+                Actions["jettisonAction"].active = false;
+                return;
+            }
 
 			if (useFairings && stagingEnabled && !string.IsNullOrEmpty(part.stagingIcon))
 			{
@@ -458,12 +524,14 @@ namespace DMagic.Part_Modules
 				}
 			}
 
-			anim[animationName].speed = 0f;
+            anim[animationName].speed = 0f;
 			anim[animationName].enabled = true;
 
 			moving = true;
 
 			t = Mathf.MoveTowards(scalar, t, scalarStep * Time.deltaTime);
+
+            SetDragWeight(t);
 
 			anim[animationName].normalizedTime = t;
 			anim.Blend(animationName);
@@ -479,6 +547,12 @@ namespace DMagic.Part_Modules
 		{
 
 		}
+
+        private void SetDragWeight(float scalar)
+        {
+            part.DragCubes.SetCubeWeight("Deployed", scalar);
+            part.DragCubes.SetCubeWeight("Clean", 1f - scalar);
+        }
 
 		public string ScalarModuleID
 		{
@@ -500,7 +574,7 @@ namespace DMagic.Part_Modules
 				Events["CleanUpExperimentExternal"].active = false;
 				Deployed = true;
 			}
-
+            
 			if (!moving)
 				return;
 
