@@ -142,7 +142,9 @@ namespace DMagic.Part_Modules
 
 			if (FlightGlobals.Bodies.Count >= 17)
 				asteroidBodyNameFixed = FlightGlobals.Bodies[16].bodyName;
-			findContainers();
+
+            if (!HighLogic.LoadedSceneIsEditor)
+			    findContainers();
 		}
 
 		public override void OnSave(ConfigNode node)
