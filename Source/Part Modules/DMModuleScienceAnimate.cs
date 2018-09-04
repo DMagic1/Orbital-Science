@@ -1016,7 +1016,6 @@ namespace DMagic.Part_Modules
 			}
 			else if ((sitMask & (int)getSituation()) == 0)
 			{
-				MonoBehaviour.print("[XXX 1] sitMask " + sitMask + " situation " + (int)getSituation());
 				failMessage = customFailMessage;
 				return false;
 			}
@@ -1028,7 +1027,6 @@ namespace DMagic.Part_Modules
 			}
 			else if (scienceExp.requireAtmosphere && !vessel.mainBody.atmosphere)
 			{
-				MonoBehaviour.print("[XXX 2] reqatmo " + scienceExp.requireAtmosphere + " inatmo " + vessel.mainBody.atmosphere);
 				failMessage = customFailMessage;
 				return false;
 			}
