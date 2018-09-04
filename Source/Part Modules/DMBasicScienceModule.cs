@@ -138,8 +138,7 @@ namespace DMagic.Part_Modules
 
 		public override void OnStart(PartModule.StartState state)
 		{
-			if (!string.IsNullOrEmpty(animationName))
-				anim = part.FindModelAnimators(animationName)[0];
+			anim = DMUtils.GetAnimation(part, animationName);
 
 			if (state == StartState.Editor)
 				editorSetup();

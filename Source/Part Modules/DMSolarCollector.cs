@@ -42,8 +42,7 @@ namespace DMagic.Part_Modules
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
-			if (string.IsNullOrEmpty(loopingAnim))
-				anim = part.FindModelAnimators(loopingAnim)[0];
+			anim = DMUtils.GetAnimation(part, loopingAnim);
 			if (IsDeployed)
 				primaryAnimator(1f, 0f, WrapMode.Loop, loopingAnim, anim);
 		}

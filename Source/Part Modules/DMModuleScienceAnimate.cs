@@ -178,26 +178,26 @@ namespace DMagic.Part_Modules
 
 		public override void OnStart(StartState state)
 		{
-			if (!string.IsNullOrEmpty(animationName))
-				anim = part.FindModelAnimators(animationName)[0];
+			anim = DMUtils.GetAnimation(part, animationName);
+
 			if (!string.IsNullOrEmpty(sampleAnim))
 			{
-				anim2 = part.FindModelAnimators(sampleAnim)[0];
+				anim2 = DMUtils.GetAnimation(part, sampleAnim);
 				if (experimentLimit != 0)
 					secondaryAnimator(sampleAnim, 0f, experimentNumber * (1f / experimentLimit), 1f);
 			}
 			if (!string.IsNullOrEmpty(indicatorAnim))
 			{
-				anim2 = part.FindModelAnimators(indicatorAnim)[0];
+				anim2 = DMUtils.GetAnimation(part, indicatorAnim);
 				if (experimentLimit != 0)
 					secondaryAnimator(indicatorAnim, 0f, experimentNumber * (1f / experimentLimit), 1f);
 			}
 			if (!string.IsNullOrEmpty(sampleEmptyAnim))
-				anim2 = part.FindModelAnimators(sampleEmptyAnim)[0];
+				anim2 = DMUtils.GetAnimation(part, sampleEmptyAnim);
 			if (!string.IsNullOrEmpty(looperAnimation))
-				anim3 = part.FindModelAnimators(looperAnimation)[0];
+				anim3 = DMUtils.GetAnimation(part, looperAnimation);
 			if (!string.IsNullOrEmpty(bayAnimation))
-				anim4 = part.FindModelAnimators(bayAnimation)[0];
+				anim4 = DMUtils.GetAnimation(part, bayAnimation);
 			if (state == StartState.Editor) editorSetup();
 			else
 			{
@@ -367,7 +367,7 @@ namespace DMagic.Part_Modules
 			}
 			if (USStock)
 				enviroList = this.part.FindModulesImplementing<DMEnviroSensor>();
-			if (waitForAnimationTime == -1 && animSpeed != 0)
+			if (waitForAnimationTime == -1 && animSpeed != 0 && anim != null)
 				waitForAnimationTime = anim[animationName].length / animSpeed;
 			if (!string.IsNullOrEmpty(experimentID))
 			{
@@ -604,12 +604,14 @@ namespace DMagic.Part_Modules
 		{
 			if (experimentLimit > 1)
 			{
-				if (!string.IsNullOrEmpty(sampleEmptyAnim))
-					secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
-				else if (!string.IsNullOrEmpty(sampleAnim))
-					secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
-				if (!string.IsNullOrEmpty(indicatorAnim))
-					secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+				if(anim2 != null) {
+					if (!string.IsNullOrEmpty(sampleEmptyAnim))
+						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), experimentNumber * (anim2[sampleEmptyAnim].length / experimentLimit));
+					else if (!string.IsNullOrEmpty(sampleAnim))
+						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[sampleAnim].length / experimentLimit));
+					if (!string.IsNullOrEmpty(indicatorAnim))
+						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), experimentNumber * (anim2[indicatorAnim].length / experimentLimit));
+				}
 
 				foreach (ScienceData data in storedScienceReports)
 					experimentNumber--;
@@ -1014,6 +1016,7 @@ namespace DMagic.Part_Modules
 			}
 			else if ((sitMask & (int)getSituation()) == 0)
 			{
+				MonoBehaviour.print("[XXX 1] sitMask " + sitMask + " situation " + (int)getSituation());
 				failMessage = customFailMessage;
 				return false;
 			}
@@ -1025,6 +1028,7 @@ namespace DMagic.Part_Modules
 			}
 			else if (scienceExp.requireAtmosphere && !vessel.mainBody.atmosphere)
 			{
+				MonoBehaviour.print("[XXX 2] reqatmo " + scienceExp.requireAtmosphere + " inatmo " + vessel.mainBody.atmosphere);
 				failMessage = customFailMessage;
 				return false;
 			}
@@ -1198,11 +1202,11 @@ namespace DMagic.Part_Modules
 			{
 				if (experimentLimit != 0)
 				{
-					if (!string.IsNullOrEmpty(sampleEmptyAnim))
+					if (!string.IsNullOrEmpty(sampleEmptyAnim) && anim2 != null)
 						secondaryAnimator(sampleEmptyAnim, animSpeed, 1f - (experimentNumber * (1f / experimentLimit)), anim2[sampleEmptyAnim].length / experimentLimit);
-					else if (!string.IsNullOrEmpty(sampleAnim))
+					else if (!string.IsNullOrEmpty(sampleAnim) && anim2 != null)
 						secondaryAnimator(sampleAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
-					if (!string.IsNullOrEmpty(indicatorAnim))
+					if (!string.IsNullOrEmpty(indicatorAnim) && anim != null)
 						secondaryAnimator(indicatorAnim, -1f * animSpeed, experimentNumber * (1f / experimentLimit), anim[indicatorAnim].length / experimentLimit);
 				}
 				storedScienceReports.Remove(data);
@@ -1269,7 +1273,7 @@ namespace DMagic.Part_Modules
 			}
 			else if (scienceReports.Count > 0)
 			{
-				if (experimentLimit != 0)
+				if (experimentLimit != 0 && anim2 != null)
 				{
 					if (!string.IsNullOrEmpty(sampleAnim))
 						secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
@@ -1289,7 +1293,7 @@ namespace DMagic.Part_Modules
 			IScienceDataTransmitter bestTransmitter = ScienceUtil.GetBestTransmitter(vessel);
 			if (bestTransmitter != null)
 			{
-				if (experimentLimit != 0)
+				if (experimentLimit != 0 && anim2 != null)
 				{
 					if (!string.IsNullOrEmpty(sampleAnim))
 						secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
@@ -1315,7 +1319,7 @@ namespace DMagic.Part_Modules
 
 			if (labSearch.NextLabForDataFound)
 			{
-				if (experimentLimit != 0)
+				if (experimentLimit != 0 && anim2 != null)
 				{
 					if (!string.IsNullOrEmpty(sampleAnim))
 						secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);
@@ -1440,7 +1444,7 @@ namespace DMagic.Part_Modules
 			}
 			else if (scienceReports.Contains(data))
 			{
-				if (experimentLimit != 0)
+				if (experimentLimit != 0 && anim2 != null)
 				{
 					if (!string.IsNullOrEmpty(sampleAnim))
 						secondaryAnimator(sampleAnim, animSpeed, experimentNumber * (1f / experimentLimit), anim2[sampleAnim].length / experimentLimit);

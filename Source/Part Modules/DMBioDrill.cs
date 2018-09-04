@@ -43,8 +43,7 @@ namespace DMagic.Part_Modules
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
-			if (!string.IsNullOrEmpty(verticalDrill))
-				anim = part.FindModelAnimators(verticalDrill)[0];
+			anim = DMUtils.GetAnimation(part, verticalDrill);
 		}
 
 		public override bool canConduct()

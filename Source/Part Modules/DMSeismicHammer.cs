@@ -72,8 +72,7 @@ namespace DMagic.Part_Modules
 
 		public override void OnStart(PartModule.StartState state)
 		{
-			if (!string.IsNullOrEmpty(hammerAnimation))
-				Anim = part.FindModelAnimators(hammerAnimation)[0];
+			Anim = DMUtils.GetAnimation(part, hammerAnimation);
 			RotationTransform = part.FindModelTransform(rotationTransformName);
 			ExtensionTransform = part.FindModelTransform(extensionTransformName);
 			modelTransform = part.transform.GetChild(0).GetChild(0);

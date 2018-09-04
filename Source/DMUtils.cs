@@ -54,6 +54,17 @@ namespace DMagic
 		private static Regex closeBraket = new Regex(@"(?<=\{\d+:?\w?\d?)\]");
 		private static Regex newLines = new Regex(@"\\n");
 
+		internal static Animation GetAnimation(Part part, String name)
+		{
+			if (string.IsNullOrEmpty(name)) return null;
+			Animation[] animators = part.FindModelAnimators(name);
+			if(animators.Length == 0) {
+				Debug.LogWarning("[DMOS] No animation named '" + name + "' found for part " + part.name);
+				return null;
+			}
+			return animators[0];
+		}
+
 		internal static float fixSubjectVal(ExperimentSituations s, float f, CelestialBody body)
 		{
 			float subV = f;

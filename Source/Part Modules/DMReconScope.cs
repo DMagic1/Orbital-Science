@@ -61,8 +61,7 @@ namespace DMagic.Part_Modules
 				bioMask = sitMask;
 			}
 
-			if (!string.IsNullOrEmpty(loopingAnimName))
-				loopingAnim = part.FindModelAnimators(loopingAnimName)[0];
+			loopingAnim = DMUtils.GetAnimation(part, loopingAnimName);
 
 			if (IsDeployed)
 				startLoopingAnimation(1f);

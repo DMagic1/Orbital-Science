@@ -118,14 +118,10 @@ namespace DMagic.Part_Modules
 
 		public override void OnStart(PartModule.StartState state)
 		{
-			if (!string.IsNullOrEmpty(animationName))
-				Anim = part.FindModelAnimators(animationName)[0];
-			if (!string.IsNullOrEmpty(greenLight))
-				IndicatorAnim1 = part.FindModelAnimators(greenLight)[0];
-			if (!string.IsNullOrEmpty(yellowLight))
-				IndicatorAnim2 = part.FindModelAnimators(yellowLight)[0];
-			if (USScience && !string.IsNullOrEmpty(USBayAnimation))
-				USAnim = part.FindModelAnimators(USBayAnimation)[0];
+			Anim = DMUtils.GetAnimation(part, animationName);
+			IndicatorAnim1 = DMUtils.GetAnimation(part, greenLight);
+			IndicatorAnim2 = DMUtils.GetAnimation(part, yellowLight);
+			if (USScience) USAnim = DMUtils.GetAnimation(part, USBayAnimation);
 			if (!string.IsNullOrEmpty(experimentID))
 				exp = ResearchAndDevelopment.GetExperiment(experimentID);
 			if (IsDeployed)

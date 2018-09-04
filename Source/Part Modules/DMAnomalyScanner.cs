@@ -56,8 +56,9 @@ namespace DMagic.Part_Modules
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
-			animSecondary = part.FindModelAnimators(camAnimate)[0];
-			animSecondary = part.FindModelAnimators(foundAnimate)[0];
+			// erm... animSecondary was assigned twice, no matter what
+			animSecondary = DMUtils.GetAnimation(part, camAnimate);
+			if (animSecondary == null) animSecondary = DMUtils.GetAnimation(part, foundAnimate);
 			if (IsDeployed)
 				fullyDeployed = true;
 			base.Events["CollectDataExternalEvent"].active = false;
