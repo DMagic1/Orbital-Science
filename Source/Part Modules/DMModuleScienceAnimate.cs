@@ -128,7 +128,7 @@ namespace DMagic.Part_Modules
 		protected Animation anim;
 		protected Animation anim2;
 		private Animation anim3;
-		private Animation anim4;
+        protected Animation anim4;
 		internal ScienceExperiment scienceExp;
 		protected bool resourceOn;
 		private int dataIndex;
@@ -301,7 +301,7 @@ namespace DMagic.Part_Modules
 					if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
 					{
 						float cost = resourceExpCost * TimeWarp.fixedDeltaTime;
-						if (part.RequestResource(resourceExperiment, cost) < cost)
+						if (part.RequestResource(resourceExperiment, cost, ResourceFlowMode.ALL_VESSEL) < cost)
 						{
 							StopCoroutine("WaitForAnimation");
 							resourceOn = false;

@@ -119,12 +119,12 @@ namespace DMagic.Part_Modules
 				return;
 
 			float cost = lightResourceCost * TimeWarp.fixedDeltaTime;
-			float available = part.RequestResource(lightResource, cost);
+			double available = part.RequestResource(lightResource, cost, ResourceFlowMode.ALL_VESSEL);
 
 			float lightModifier = 0;
 
 			if (available != 0)
-				lightModifier = cost / available;
+				lightModifier = cost / (float)available;
 
 			float redNow = redLight.intensity;
 			float blueNow = blueLight.intensity;

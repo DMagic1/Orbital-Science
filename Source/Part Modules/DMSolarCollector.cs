@@ -35,7 +35,6 @@ namespace DMagic.Part_Modules
 {
 	class DMSolarCollector: DMModuleScienceAnimate
 	{
-
 		[KSPField]
 		public string loopingAnim = "";
 
