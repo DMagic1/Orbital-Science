@@ -82,7 +82,7 @@ namespace DMagic.Part_Modules
 					if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
 					{
 						float cost = resourceCost * Time.deltaTime;
-						part.RequestResource(resourceExperiment, cost);
+						part.RequestResource(resourceExperiment, cost, ResourceFlowMode.ALL_VESSEL);
 					}
 					if (fullyDeployed)
 					{

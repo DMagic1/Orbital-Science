@@ -126,7 +126,7 @@ namespace DMagic.Part_Modules
 
 				if (TimeWarp.CurrentRate < 15000)
 				{
-					part.RequestResource(resourceToUse, resourceCost * TimeWarp.fixedDeltaTime);
+					part.RequestResource(resourceToUse, resourceCost * TimeWarp.fixedDeltaTime, ResourceFlowMode.ALL_VESSEL);
 				}
 			}
 		}
