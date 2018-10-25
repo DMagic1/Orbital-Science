@@ -1,4 +1,10 @@
-﻿v1.3.12
+﻿v1.4
+- Update for Universal Storage II
+    - New versions of Orbital Science parts for Universal Storage
+	- Stock science parts no longer available for US (will be added by US at a later date)
+	- Old Universal Storage I parts are still included, but not available from the R&D Center or for use in the VAB/SPH
+
+v1.3.12
 - Update for KSP 1.4
 
 - Fix drag cubes for oversized science parts; recon and SIGINT
