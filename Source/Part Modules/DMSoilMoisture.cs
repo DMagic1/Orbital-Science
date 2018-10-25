@@ -34,7 +34,7 @@ using UnityEngine;
 
 namespace DMagic.Part_Modules
 {
-	class DMSoilMoisture: DMModuleScienceAnimate, IScalarModule
+	public class DMSoilMoisture: DMModuleScienceAnimate, IScalarModule
 	{
 		[KSPField(isPersistant = true)]
 		public bool allowTransmission = true;
