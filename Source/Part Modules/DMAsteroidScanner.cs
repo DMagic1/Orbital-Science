@@ -55,7 +55,11 @@ namespace DMagic.Part_Modules
 		public string USBayAnimation = "";
 		[KSPField]
 		public bool USScience = false;
-		[KSPField]
+        [KSPField]
+        public bool USTwoScience = false;
+        [KSPField]
+        public string RaySourceTransform = String.Empty;
+        [KSPField]
 		public string experimentResource = "ElectricCharge";
 		[KSPField]
 		public bool rerunnable = true;
@@ -100,10 +104,14 @@ namespace DMagic.Part_Modules
 		private Transform dishBase;
 		private Transform dish;
 		private Transform dishArm;
-		private float targetDistance = 0f;
+        private Transform _raySource;
+        private float targetDistance = 0f;
 		private float[] astWidth = new float[6] { 4, 8, 14, 20, 26, 40 };
 		private ExperimentsResultDialog resultsDialog;
 		private bool hasContainer;
+
+        private Shader lineShader;
+        private Material lineMaterial;
 
 		#endregion
 
@@ -120,18 +128,27 @@ namespace DMagic.Part_Modules
 		{
 			if (!string.IsNullOrEmpty(animationName))
 				Anim = part.FindModelAnimators(animationName)[0];
+
 			if (!string.IsNullOrEmpty(greenLight))
 				IndicatorAnim1 = part.FindModelAnimators(greenLight)[0];
+
 			if (!string.IsNullOrEmpty(yellowLight))
 				IndicatorAnim2 = part.FindModelAnimators(yellowLight)[0];
+
 			if (USScience && !string.IsNullOrEmpty(USBayAnimation))
 				USAnim = part.FindModelAnimators(USBayAnimation)[0];
-			if (!string.IsNullOrEmpty(experimentID))
+
+            if (USTwoScience && !string.IsNullOrEmpty(RaySourceTransform))
+                _raySource = part.FindModelTransform(RaySourceTransform);
+
+            if (!string.IsNullOrEmpty(experimentID))
 				exp = ResearchAndDevelopment.GetExperiment(experimentID);
+
 			if (IsDeployed)
 			{
 				fullyDeployed = true;
 				animator(0f, 1f, Anim, animationName);
+
 				if (USScience)
 					animator(0f, 1f, USAnim, USBayAnimation);
 			}
@@ -411,11 +428,24 @@ namespace DMagic.Part_Modules
 		{
 			GameObject line = new GameObject();
 			line.transform.position = start;
-			line.AddComponent<LineRenderer>();
-			LineRenderer lr = line.GetComponent<LineRenderer>();
-			lr.material = new Material(Shader.Find("Particles/Alpha Blended Premultiply"));
-			lr.SetColors(c, c * 0.3f);
-			lr.SetWidth(0.1f, 0.05f);
+            LineRenderer lr = line.AddComponent<LineRenderer>();
+
+            if (lineShader == null)
+                lineShader = Shader.Find("Particles/Alpha Blended Premultiply");
+
+            if (lineMaterial == null)
+                lineMaterial = new Material(lineShader);
+
+            lr.material = lineMaterial;
+
+            lr.startColor = c;
+            lr.endColor = c * 0.3f;
+
+            lr.startWidth = 0.1f;
+            lr.endWidth = 0.05f;
+
+            //lr.SetColors(c, c * 0.3f);
+            //lr.SetWidth(0.1f, 0.05f);
 
 			lr.SetPosition(0, start);
 			lr.SetPosition(1, end);
@@ -500,7 +530,7 @@ namespace DMagic.Part_Modules
 							float cost = 0.001f;
 							if (resourceOn)
 								cost = resourceCost * TimeWarp.fixedDeltaTime;
-							if (part.RequestResource(experimentResource, cost) < cost)
+							if (part.RequestResource(experimentResource, cost, ResourceFlowMode.ALL_VESSEL) < cost)
 								resourceOn = false;
 							else
 								resourceOn = true;
@@ -577,9 +607,116 @@ namespace DMagic.Part_Modules
 
 		private IEnumerator deployEvent()
 		{
-			IsDeployed = true;
+            if (USTwoScience)
+            {
+                RaycastHit hit;
+                
+                if (_raySource != null && Physics.Raycast(_raySource.position, _raySource.forward, out hit, 1f, LayerUtil.DefaultEquivalent))
+                {
+                    if (hit.collider != null)
+                    {
+                        bool primary = false;
+                        bool secondary = false;
+
+                        if (hit.collider.gameObject.name == "PrimaryDoorCollider")
+                            primary = true;
+                        else if (hit.collider.gameObject.name == "SecondaryDoorCollider")
+                            secondary = true;
+
+                        if (primary || secondary)
+                        {
+                            Part p = Part.GetComponentUpwards<Part>(hit.collider.gameObject);
+
+                            if (p != null)
+                            {
+                                IScalarModule scalar = null;
+                                float deployLimit = 1;
+                                PartModule USAnimate = null;
+
+                                for (int i = p.Modules.Count - 1; i >= 0; i--)
+                                {
+                                    if (p.Modules[i].moduleName == "USAnimateGeneric")
+                                    {
+                                        USAnimate = p.Modules[i];
+
+                                        if (USAnimate is IScalarModule)
+                                            scalar = USAnimate as IScalarModule;
+
+                                        break;
+                                    }
+                                }
+
+                                if (USAnimate != null && scalar != null)
+                                {
+                                    BaseEvent doorEvent = null;
+                                    BaseField doorLimit = null;
+
+                                    if (primary)
+                                    {
+                                        doorEvent = USAnimate.Events["toggleEventPrimary"];
+
+                                        doorLimit = USAnimate.Fields["primaryDeployLimit"];
+                                    }
+                                    else if (secondary)
+                                    {
+                                        doorEvent = USAnimate.Events["toggleEventSecondary"];
+
+                                        doorLimit = USAnimate.Fields["secondaryDeployLimit"];
+                                    }
+
+                                    if (doorLimit != null)
+                                        deployLimit = doorLimit.GetValue<float>(USAnimate) * 0.01f;
+
+                                    if (doorEvent != null)
+                                    {
+                                        if (doorEvent.active && doorEvent.guiActive)
+                                        {
+                                            doorEvent.Invoke();
+
+                                            DMUtils.Logging("Door Invoked");
+
+                                            while (scalar.GetScalar < deployLimit)
+                                                yield return null;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var ownColliders = part.GetComponentsInChildren<Collider>();
+
+                            bool flag = false;
+
+                            for (int i = ownColliders.Length - 1; i >= 0; i--)
+                            {
+                                if (hit.collider == ownColliders[i])
+                                {
+                                    flag = true;
+
+                                    break;
+                                }
+                            }
+
+                            if (!flag)
+                            {
+                                ScreenMessages.PostScreenMessage(
+                                    string.Format(
+                                    "<b><color=orange>Obstruction detected preventing {0} from being deployed.</color></b>"
+                                    , part.partInfo.title)
+                                    , 5f, ScreenMessageStyle.UPPER_CENTER);
+
+                                yield break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            IsDeployed = true;
 
 			animator(1f, 0f, Anim, animationName);
+
 			if (USScience)
 				animator(1f, 0f, USAnim, USBayAnimation);
 
@@ -598,6 +735,7 @@ namespace DMagic.Part_Modules
 			IsDeployed = false;
 
 			animator(-1f, 1f, Anim, animationName);
+
 			if (USScience)
 			{
 				if (Anim[animationName].length > USAnim[USBayAnimation].length && USAnim[USBayAnimation].length != 0)
@@ -618,12 +756,14 @@ namespace DMagic.Part_Modules
 			{
 				if (!fullyDeployed)
 					StopCoroutine("deployEvent");
+
 				StartCoroutine("retractEvent");
 			}
 			else
 			{
 				if (fullyDeployed)
 					StopCoroutine("retractEvent");
+
 				StartCoroutine("deployEvent");
 			}
 		}
