@@ -1,4 +1,7 @@
-﻿v1.4
+﻿v1.4.1
+- Fixed problems with parts that consume Electricity or other resources
+
+v1.4
 - Update for Universal Storage II
     - New versions of Orbital Science parts for Universal Storage
 	- Stock science parts no longer available for US (will be added by US at a later date)
