@@ -36,6 +36,7 @@ using UnityEngine;
 using DMagic.Scenario;
 using KSP.UI.Screens.Flight.Dialogs;
 using Experience.Effects;
+using KSP.Localization;
 
 namespace DMagic.Part_Modules
 {
@@ -89,10 +90,6 @@ namespace DMagic.Part_Modules
 		[KSPField]
 		public bool oneShot = false;
 		[KSPField]
-		public string resourceExperiment = "ElectricCharge";
-		[KSPField]
-		public float resourceExpCost = 0;
-		[KSPField]
 		public bool asteroidReports = false;
 		[KSPField]
 		public bool asteroidTypeDependent = false;
@@ -142,6 +139,9 @@ namespace DMagic.Part_Modules
 		protected float scienceBoost = 1f;
 		protected string failMessage = "";
 		private ExperimentsResultDialog resultsDialog;
+
+        protected string resError;
+        protected bool useResources;
 
 		/// <summary>
 		/// For external use to determine if a module can conduct science
@@ -292,26 +292,22 @@ namespace DMagic.Part_Modules
 			if (keepDeployedMode == 0) retractEvent();
 		}
 
-		protected virtual void FixedUpdate()
-		{
-			if (HighLogic.LoadedSceneIsFlight)
-			{
-				if (resourceOn)
-				{
-					if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
-					{
-						float cost = resourceExpCost * TimeWarp.fixedDeltaTime;
-						if (part.RequestResource(resourceExperiment, cost, ResourceFlowMode.ALL_VESSEL) < cost)
-						{
-							StopCoroutine("WaitForAnimation");
-							resourceOn = false;
-							ScreenMessages.PostScreenMessage("Not enough " + resourceExperiment + ", shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
-							if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
-						}
-					}
-				}
-			}
-		}
+        protected virtual void FixedUpdate()
+        {
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                if (resourceOn && useResources)
+                {
+                    if (!resHandler.UpdateModuleResourceInputs(ref resError, 1, 0.9, true, false))
+                    {
+                        StopCoroutine("WaitForAnimation");
+                        resourceOn = false;
+                        ScreenMessages.PostScreenMessage("Not enough " + Localizer.Format(resHandler.inputResources[0].title) + ", shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
+                        if (keepDeployedMode == 0 || keepDeployedMode == 1) retractEvent();
+                    }
+                }
+            }
+        }
 
 		public override string GetInfo()
 		{
@@ -324,63 +320,68 @@ namespace DMagic.Part_Modules
 				info += string.Format("Max Samples: {0}\n", experimentLimit);
 				info += string.Format("Scientist Level For Reset: {0}\n", resetLevel);
 			}
-			if (resourceExpCost > 0)
-			{
-				float time = waitForAnimationTime;
-				if (time == -1 && anim != null && !string.IsNullOrEmpty(animationName))
-					time = anim[animationName].length;
-				info += string.Format("Requires:\n-{0}: {1}/s for {2} s\n", resourceExperiment, resourceExpCost, waitForAnimationTime);
-			}
+            if (resHandler != null && resHandler.inputResources != null && resHandler.inputResources.Count > 0 && resHandler.inputResources[0].rate > 0)
+            {
+                if (waitForAnimationTime <= 0)
+                    info += string.Format("Requires:\n-{0}: {1:F1}/s\n", Localizer.Format(resHandler.inputResources[0].title), resHandler.inputResources[0].rate);
+                else
+                    info += string.Format("Requires:\n-{0}: {1:F1}/s for {2} s\n", Localizer.Format(resHandler.inputResources[0].title), resHandler.inputResources[0].rate, waitForAnimationTime);
+            }
 			if (oneShot)
 				info += string.Format("OneShot: {0}\n", RUIutils.GetYesNoUIString(oneShot));
 			return info;
 		}
 
-		private void setup()
-		{
-			Events["deployEvent"].guiActive = showStartEvent || oneShot;
-			Events["retractEvent"].guiActive = showEndEvent && !oneShot;
-			Events["toggleEvent"].guiActive = showToggleEvent;
-			Events["deployEvent"].guiName = startEventGUIName;
-			Events["retractEvent"].guiName = endEventGUIName;
-			Events["toggleEvent"].guiName = toggleEventGUIName;
-			Events["CollectDataExternalEvent"].guiName = collectActionName;
-			Events["ResetExperimentExternal"].guiName = resetActionName;
-			Events["ResetExperiment"].guiName = resetActionName;
-			Events["DeployExperiment"].guiName = experimentActionName;
-			Events["DeployExperiment"].guiActiveUnfocused = externalDeploy;
-			Events["DeployExperiment"].externalToEVAOnly = externalDeploy;
-			Events["DeployExperiment"].unfocusedRange = interactionRange;
-			Actions["DeployAction"].active = useActionGroups;
-			Actions["deployAction"].guiName = startEventGUIName;
-			Actions["retractAction"].guiName = endEventGUIName;
-			Actions["toggleAction"].guiName = toggleEventGUIName;
-			Actions["DeployAction"].guiName = experimentActionName;
-			if (!primary)
-			{
-				primaryList = this.part.FindModulesImplementing<DMModuleScienceAnimate>();
-				if (primaryList.Count > 0)
-				{
-					foreach (DMModuleScienceAnimate DMS in primaryList)
-						if (DMS.primary) primaryModule = DMS;
-				}
-			}
-			if (USStock)
-				enviroList = this.part.FindModulesImplementing<DMEnviroSensor>();
-			if (waitForAnimationTime == -1 && animSpeed != 0)
-				waitForAnimationTime = anim[animationName].length / animSpeed;
-			if (!string.IsNullOrEmpty(experimentID))
-			{
-				scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
-				if (scienceExp != null)
-				{
-					sitMask = (int)scienceExp.situationMask;
-					bioMask = (int)scienceExp.biomeMask;
-				}
-			}
-			if (FlightGlobals.Bodies.Count >= 17)
-				bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
-		}
+        private void setup()
+        {
+            Events["deployEvent"].guiActive = showStartEvent || oneShot;
+            Events["retractEvent"].guiActive = showEndEvent && !oneShot;
+            Events["toggleEvent"].guiActive = showToggleEvent;
+            Events["deployEvent"].guiName = startEventGUIName;
+            Events["retractEvent"].guiName = endEventGUIName;
+            Events["toggleEvent"].guiName = toggleEventGUIName;
+            Events["CollectDataExternalEvent"].guiName = collectActionName;
+            Events["ResetExperimentExternal"].guiName = resetActionName;
+            Events["ResetExperiment"].guiName = resetActionName;
+            Events["DeployExperiment"].guiName = experimentActionName;
+            Events["DeployExperiment"].guiActiveUnfocused = externalDeploy;
+            Events["DeployExperiment"].externalToEVAOnly = externalDeploy;
+            Events["DeployExperiment"].unfocusedRange = interactionRange;
+            Actions["DeployAction"].active = useActionGroups;
+            Actions["deployAction"].guiName = startEventGUIName;
+            Actions["retractAction"].guiName = endEventGUIName;
+            Actions["toggleAction"].guiName = toggleEventGUIName;
+            Actions["DeployAction"].guiName = experimentActionName;
+            if (!primary)
+            {
+                primaryList = this.part.FindModulesImplementing<DMModuleScienceAnimate>();
+                if (primaryList.Count > 0)
+                {
+                    foreach (DMModuleScienceAnimate DMS in primaryList)
+                        if (DMS.primary) primaryModule = DMS;
+                }
+            }
+            if (USStock)
+                enviroList = this.part.FindModulesImplementing<DMEnviroSensor>();
+            if (waitForAnimationTime == -1 && animSpeed != 0)
+                waitForAnimationTime = anim[animationName].length / animSpeed;
+            if (!string.IsNullOrEmpty(experimentID))
+            {
+                scienceExp = ResearchAndDevelopment.GetExperiment(experimentID);
+                if (scienceExp != null)
+                {
+                    sitMask = (int)scienceExp.situationMask;
+                    bioMask = (int)scienceExp.biomeMask;
+                }
+            }
+            if (resHandler != null && resHandler.inputResources != null && resHandler.inputResources.Count > 0 && resHandler.inputResources[0].rate > 0)
+                useResources = true;
+            else
+                useResources = false;
+
+            if (FlightGlobals.Bodies.Count >= 17)
+                bodyNameFixed = FlightGlobals.Bodies[16].bodyName;
+        }
 
 		private void editorSetup()
 		{
@@ -791,14 +792,15 @@ namespace DMagic.Part_Modules
 								ScreenMessages.PostScreenMessage(deployingMessage, 5f, ScreenMessageStyle.UPPER_CENTER);
 							if (experimentWaitForAnimation)
 							{
-								if (resourceExpCost > 0)
+								if (useResources)
 									resourceOn = true;
+
 								StartCoroutine("WaitForAnimation", silent);
 							}
 							else
 								runExperiment(getSituation(), silent);
 						}
-						else if (resourceExpCost > 0)
+						else if (useResources)
 						{
 							resourceOn = true;
 							StartCoroutine("WaitForAnimation", silent);

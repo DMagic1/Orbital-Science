@@ -35,6 +35,7 @@ using System.Linq;
 using UnityEngine;
 using DMagic.Scenario;
 using KSP.UI.Screens.Flight.Dialogs;
+using KSP.Localization;
 
 namespace DMagic.Part_Modules
 {
@@ -59,14 +60,10 @@ namespace DMagic.Part_Modules
         public bool USTwoScience = false;
         [KSPField]
         public string RaySourceTransform = String.Empty;
-        [KSPField]
-		public string experimentResource = "ElectricCharge";
 		[KSPField]
 		public bool rerunnable = true;
 		[KSPField]
 		public bool dataIsCollectable = true;
-		[KSPField]
-		public float resourceCost = 0f;
 		[KSPField]
 		public float transmitValue = 1f;
 		[KSPField(isPersistant=true)]
@@ -113,11 +110,14 @@ namespace DMagic.Part_Modules
         private Shader lineShader;
         private Material lineMaterial;
 
-		#endregion
+        private string resError;
+        private bool useResources;
 
-		#region PartModule
+        #endregion
 
-		public override void OnAwake()
+        #region PartModule
+
+        public override void OnAwake()
 		{
 			GameEvents.onGamePause.Add(onPause);
 			GameEvents.onGameUnpause.Add(onUnPause);
@@ -157,7 +157,12 @@ namespace DMagic.Part_Modules
 			dish = part.FindModelTransform(transformName);
 			dishArm = part.FindModelTransform(transformRotatorName);
 
-			if (FlightGlobals.Bodies.Count >= 17)
+            if (resHandler != null && resHandler.inputResources != null && resHandler.inputResources.Count > 0 && resHandler.inputResources[0].rate > 0)
+                useResources = true;
+            else
+                useResources = false;
+
+            if (FlightGlobals.Bodies.Count >= 17)
 				asteroidBodyNameFixed = FlightGlobals.Bodies[16].bodyName;
 
             if (!HighLogic.LoadedSceneIsEditor)
@@ -360,7 +365,7 @@ namespace DMagic.Part_Modules
 						searchForTarget();
 					rotating = true;
 				}
-				else if (fullyDeployed && !resourceOn && resourceCost > 0f)
+				else if (fullyDeployed && !resourceOn && useResources)
 				{
 					s = "No Power";
 					targetDistance = 0f;
@@ -510,9 +515,9 @@ namespace DMagic.Part_Modules
 		{
 			string info = base.GetInfo();
 			info += string.Format("Transmission: {0:P0}\n", transmitValue);
-			if (resourceCost > 0f && PartResourceLibrary.Instance.GetDefinition(experimentResource) != null)
-			{
-				info += string.Format("Requires:\n-{0}: {1}/s\n", experimentResource, resourceCost);
+            if (resHandler != null && resHandler.inputResources != null && resHandler.inputResources.Count > 0 && resHandler.inputResources[0].rate > 0)
+            {
+				info += string.Format("Requires:\n-{0}: {1:F1}/s\n", Localizer.Format(resHandler.inputResources[0].title), resHandler.inputResources[0].rate);
 			}
 			return info;
 		}
@@ -521,21 +526,24 @@ namespace DMagic.Part_Modules
 		{
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-				if (resourceCost > 0f)
+				if (useResources)
 				{
-					if (IsDeployed)
-					{
-						if (PartResourceLibrary.Instance.GetDefinition(experimentResource) != null)
-						{
-							float cost = 0.001f;
-							if (resourceOn)
-								cost = resourceCost * TimeWarp.fixedDeltaTime;
-							if (part.RequestResource(experimentResource, cost, ResourceFlowMode.ALL_VESSEL) < cost)
-								resourceOn = false;
-							else
-								resourceOn = true;
-						}
-					}
+                    if (IsDeployed)
+                    {
+                        if (resHandler.UpdateModuleResourceInputs(ref resError, 1, 0.9, true, false))
+                            resourceOn = true;
+                        else
+                        {
+                            if (!fullyDeployed)
+                                StopCoroutine("deployEvent");
+
+                            StartCoroutine("retractEvent");
+
+                            ScreenMessages.PostScreenMessage("Not enough " + Localizer.Format(resHandler.inputResources[0].title) + ", shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
+
+                            resourceOn = false;
+                        }
+                    }
 				}
 				else
 					resourceOn = true;

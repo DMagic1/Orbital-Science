@@ -48,10 +48,6 @@ namespace DMagic.Part_Modules
 		public string redLightMaterial = "redLightMaterial";
 		[KSPField]
 		public string blueLightMaterial = "blueLightMaterial";
-		[KSPField]
-		public string lightResource = "ElectricCharge";
-		[KSPField]
-		public float lightResourceCost = 0.04f;
 		[KSPField(isPersistant = true)]
 		public bool lightsOn = false;
 
@@ -62,6 +58,8 @@ namespace DMagic.Part_Modules
 		private Color redLightColor = new Color(0.8f, 0.082f, 0.082f, 1);
 		private Color blueLightColor = new Color(0.596f, 0.890f, 0.933f, 1);
 		private Color offColor = new Color();
+
+        private string resError;
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -111,21 +109,12 @@ namespace DMagic.Part_Modules
 
 			if (redLight == null || blueLight == null)
 				return;
-
-			if (!lightsOn || lightResourceCost <= 0)
+            
+			if (!lightsOn)
 				return;
-
-			if (PartResourceLibrary.Instance.GetDefinition(lightResource) == null)
-				return;
-
-			float cost = lightResourceCost * TimeWarp.fixedDeltaTime;
-			double available = part.RequestResource(lightResource, cost, ResourceFlowMode.ALL_VESSEL);
-
-			float lightModifier = 0;
-
-			if (available != 0)
-				lightModifier = cost / (float)available;
-
+            
+            float lightModifier = (float)resHandler.UpdateModuleResourceInputs(ref resError, 1, 0.9, false, false, false);
+            
 			float redNow = redLight.intensity;
 			float blueNow = blueLight.intensity;
 			float redNext = 1 * lightModifier;

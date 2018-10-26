@@ -34,6 +34,7 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using KSP.Localization;
 
 namespace DMagic.Part_Modules
 {
@@ -78,16 +79,14 @@ namespace DMagic.Part_Modules
 
 		[KSPField]
 		public bool runMagnetometer;
-		[KSPField]
-		public string resourceToUse = "ElectricCharge";
-		[KSPField]
-		public float resourceCost = 0;
 
 		private DMModuleScienceAnimate primaryModule = null;
 		private float lastUpdate = 0f;
 		private float updateInterval = 0.2f;
 		private List<DMAnomalyObject> Cities = new List<DMAnomalyObject>();
 		private DMAnomalyStorage currentAnomalies;
+
+        private string resError;
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -99,7 +98,10 @@ namespace DMagic.Part_Modules
 		public override string GetInfo()
 		{
 			string info = base.GetInfo();
-			info += "Requires:\n- " + resourceToUse + ": " + resourceCost.ToString() + "/s\n";
+            if (resHandler != null && resHandler.inputResources != null && resHandler.inputResources.Count > 0 && resHandler.inputResources[0].rate > 0)
+            {
+                info += "Requires:\n- " + Localizer.Format(resHandler.inputResources[0].title) + ": " + resHandler.inputResources[0].rate.ToString("F1") + "/s\n";
+            }
 			return info;
 		}
 
@@ -126,7 +128,7 @@ namespace DMagic.Part_Modules
 
 				if (TimeWarp.CurrentRate < 15000)
 				{
-					part.RequestResource(resourceToUse, resourceCost * TimeWarp.fixedDeltaTime, ResourceFlowMode.ALL_VESSEL);
+                    resHandler.UpdateModuleResourceInputs(ref resError, 1, 0.9, false, false);
 				}
 			}
 		}

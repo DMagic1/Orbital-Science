@@ -32,6 +32,7 @@
 using DMagic.Scenario;
 using System.Collections;
 using UnityEngine;
+using KSP.Localization;
 
 namespace DMagic.Part_Modules
 {
@@ -41,8 +42,6 @@ namespace DMagic.Part_Modules
 		public string camAnimate = "";
 		[KSPField]
 		public string foundAnimate = "";
-		[KSPField]
-		public float resourceCost = 0f;
 
 		private string closestAnom = "";
 		private bool anomCloseRange, anomInRange, anomScienceInRange, camDeployed, rotating, closeRange, fullyDeployed = false;
@@ -52,6 +51,8 @@ namespace DMagic.Part_Modules
 		private DMAnomalyObject currentAnomaly;
 		private const string camTransform = "camBase";
 		private const string dishTransform = "radarBaseArmNode0";
+
+        private bool resourcesRunning;
 
 		public override void OnStart(PartModule.StartState state)
 		{
@@ -79,12 +80,12 @@ namespace DMagic.Part_Modules
 			{
 				if (IsDeployed)
 				{
-					if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
-					{
-						float cost = resourceCost * Time.deltaTime;
-						part.RequestResource(resourceExperiment, cost, ResourceFlowMode.ALL_VESSEL);
-					}
-					if (fullyDeployed)
+					//if (PartResourceLibrary.Instance.GetDefinition(resourceExperiment) != null)
+					//{
+					//	float cost = resourceCost * Time.deltaTime;
+					//	part.RequestResource(resourceExperiment, cost, ResourceFlowMode.ALL_VESSEL);
+					//}
+					if (fullyDeployed && resourcesRunning)
 					{
 						inRange();
 						rotating = true;
@@ -101,8 +102,29 @@ namespace DMagic.Part_Modules
 					spinDishDown();
 			}
 		}
-		
-		protected override void OnDestroy()
+
+        protected override void FixedUpdate()
+        {
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                if (IsDeployed)
+                {
+                    if (useResources)
+                    {
+                        if (resHandler.UpdateModuleResourceInputs(ref resError, 1, 0.9, true, false))
+                            resourcesRunning = true;
+                        else
+                        {
+                            retractEvent();
+                            ScreenMessages.PostScreenMessage("Not enough " + Localizer.Format(resHandler.inputResources[0].title) + ", shutting down experiment", 4f, ScreenMessageStyle.UPPER_CENTER);
+                            resourcesRunning = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        protected override void OnDestroy()
 		{
 			base.OnDestroy();
 
