@@ -40,7 +40,7 @@ namespace DMagic.Part_Modules
 
                     if (primary || secondary)
                     {
-                        Part p = Part.GetComponentUpwards<Part>(hit.collider.gameObject);
+                        Part p = FlightGlobals.GetPartUpwardsCached(hit.collider.gameObject);// Part.GetComponentUpwards<Part>(hit.collider.gameObject);
 
                         if (p != null)
                         {
