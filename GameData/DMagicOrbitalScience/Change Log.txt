@@ -1,4 +1,8 @@
-﻿v1.4.2
+﻿v1.4.3
+- Update for KSP 1.8
+- Fix Community Tech Tree for Universal Storage 2 parts
+
+v1.4.2
 - Update all contract configs to work with new Universal Storage science parts
 - Update Community Tech Tree configs to place all US2 parts in the same category as their standard versions
 - Update SCANsat configs for US2 parts
