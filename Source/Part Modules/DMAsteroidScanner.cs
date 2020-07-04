@@ -436,7 +436,7 @@ namespace DMagic.Part_Modules
             LineRenderer lr = line.AddComponent<LineRenderer>();
 
             if (lineShader == null)
-                lineShader = Shader.Find("Particles/Alpha Blended Premultiply");
+                lineShader = Shader.Find("Legacy Shaders/Particles/Alpha Blended Premultiply");
 
             if (lineMaterial == null)
                 lineMaterial = new Material(lineShader);
@@ -633,7 +633,7 @@ namespace DMagic.Part_Modules
 
                         if (primary || secondary)
                         {
-                            Part p = Part.GetComponentUpwards<Part>(hit.collider.gameObject);
+                            Part p = FlightGlobals.GetPartUpwardsCached(hit.collider.gameObject);// Part.GetComponentUpwards<Part>(hit.collider.gameObject);
 
                             if (p != null)
                             {
